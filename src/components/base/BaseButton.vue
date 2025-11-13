@@ -17,7 +17,7 @@
     <i v-if="loading" class="fas fa-spinner fa-spin button-loading-icon" />
 
     <!-- 图标 -->
-    <i v-if="icon && !loading" :class="iconClasses" />
+    <i v-if="icon && !loading" :class="[iconClasses, icon]" />
 
     <!-- 按钮内容 -->
     <span v-if="$slots.default || text" class="button-text">

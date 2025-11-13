@@ -296,7 +296,9 @@ const searchResults = computed(() => {
 })
 
 const tags = computed(() => tagStore.tags)
-const categories = computed(() => categoryStore.categories)
+const categories = computed(() => {
+  return [...categoryStore.categories].sort((a, b) => a.order - b.order)
+})
 
 // 辅助函数
 const getWebsiteTags = (tagIds: string[]) => {

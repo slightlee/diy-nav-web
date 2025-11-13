@@ -8,16 +8,42 @@
       </h3>
       <form class="manage-categories-modal__add-form" @submit.prevent="handleAddCategory">
         <div class="manage-categories-modal__form-row">
+          <div class="manage-categories-modal__icon-select">
+            <BaseButton
+              class="manage-categories-modal__icon-btn"
+              variant="secondary"
+              size="lg"
+              shape="rounded"
+              :icon="newCategory.icon || 'fas fa-folder'"
+              aria-label="选择图标"
+              @click="toggleIconPanel"
+            />
+            <div v-if="showIconPanel" class="manage-categories-modal__icon-panel">
+              <button
+                v-for="icon in iconOptions"
+                :key="icon"
+                type="button"
+                class="manage-categories-modal__icon-item"
+                :class="{ 'is-active': (newCategory.icon || 'fas fa-folder') === icon }"
+                @click="selectIcon(icon)"
+              >
+                <i :class="icon" />
+              </button>
+            </div>
+          </div>
           <BaseInput
             ref="categoryNameInputRef"
             v-model="newCategory.name"
             placeholder="分类名称"
             required
             :maxlength="20"
+            size="lg"
+            :show-char-count="false"
           />
           <BaseButton
             type="submit"
             variant="primary"
+            size="lg"
             :loading="adding"
             :disabled="!newCategory.name.trim()"
           >
@@ -60,6 +86,10 @@
             :key="category.id"
             class="manage-categories-modal__category-item"
             :class="{ 'manage-categories-modal__category-item--editing': editingId === category.id }"
+            :draggable="editingId !== category.id"
+            @dragstart="onDragStart(category.id)"
+            @dragover.prevent
+            @drop="onDrop(category.id)"
           >
             <!-- 查看模式 -->
             <div v-if="editingId !== category.id" class="manage-categories-modal__category-view">
@@ -68,7 +98,7 @@
               </div>
 
               <div class="manage-categories-modal__category-icon">
-                <i class="fas fa-folder" />
+                <i :class="category.icon || 'fas fa-folder'" />
               </div>
 
               <div class="manage-categories-modal__category-info">
@@ -116,13 +146,40 @@
               class="manage-categories-modal__category-edit"
               @submit.prevent="handleUpdateCategory"
             >
-              <BaseInput
-                ref="editNameInputRef"
-                v-model="editingCategory.name"
-                placeholder="分类名称"
-                required
-                :maxlength="20"
-              />
+              <div class="manage-categories-modal__form-row">
+                <div class="manage-categories-modal__icon-select">
+                  <BaseButton
+                    class="manage-categories-modal__icon-btn"
+                    variant="secondary"
+                    size="lg"
+                    shape="rounded"
+                    :icon="editingCategory.icon || 'fas fa-folder'"
+                    aria-label="选择图标"
+                    @click="toggleEditIconPanel"
+                  />
+                  <div v-if="showEditIconPanel" class="manage-categories-modal__icon-panel">
+                    <button
+                      v-for="icon in iconOptions"
+                      :key="icon"
+                      type="button"
+                      class="manage-categories-modal__icon-item"
+                      :class="{ 'is-active': (editingCategory.icon || 'fas fa-folder') === icon }"
+                      @click="selectEditIcon(icon)"
+                    >
+                      <i :class="icon" />
+                    </button>
+                  </div>
+                </div>
+                <BaseInput
+                  ref="editNameInputRef"
+                  v-model="editingCategory.name"
+                  placeholder="分类名称"
+                  required
+                  :maxlength="20"
+                  size="lg"
+                  :show-char-count="false"
+                />
+              </div>
               <BaseInput
                 v-model="editingCategory.description"
                 placeholder="分类描述"
@@ -194,19 +251,54 @@ const editNameInputRef = ref()
 // 表单数据
 const newCategory = ref({
   name: '',
-  description: ''
+  description: '',
+  icon: 'fas fa-folder'
 })
 
 // 编辑状态
 const editingId = ref<string | null>(null)
 const editingCategory = ref({
   name: '',
-  description: ''
+  description: '',
+  icon: 'fas fa-folder'
 })
 
 // 加载状态
 const adding = ref(false)
 const updating = ref(false)
+
+const showIconPanel = ref(false)
+const showEditIconPanel = ref(false)
+const iconOptions = [
+  'fas fa-folder',
+  'fas fa-bookmark',
+  'fas fa-briefcase',
+  'fas fa-code',
+  'fas fa-globe',
+  'fas fa-star',
+  'fas fa-chart-bar',
+  'fas fa-graduation-cap',
+  'fas fa-music',
+  'fas fa-film',
+  'fas fa-cog',
+  'fas fa-lightbulb',
+  'fas fa-heart',
+  'fas fa-bolt'
+]
+const toggleIconPanel = () => {
+  showIconPanel.value = !showIconPanel.value
+}
+const toggleEditIconPanel = () => {
+  showEditIconPanel.value = !showEditIconPanel.value
+}
+const selectIcon = (icon: string) => {
+  newCategory.value.icon = icon
+  showIconPanel.value = false
+}
+const selectEditIcon = (icon: string) => {
+  editingCategory.value.icon = icon
+  showEditIconPanel.value = false
+}
 
 // 计算属性
 const categories = computed(() => categoryStore.categories)
@@ -214,6 +306,28 @@ const categories = computed(() => categoryStore.categories)
 const sortedCategories = computed(() => {
   return [...categories.value].sort((a, b) => a.order - b.order)
 })
+
+const draggingId = ref<string | null>(null)
+const onDragStart = (id: string) => {
+  draggingId.value = id
+}
+const onDrop = (targetId: string) => {
+  if (!draggingId.value || draggingId.value === targetId) {
+    draggingId.value = null
+    return
+  }
+  const orderIds = sortedCategories.value.map(c => c.id)
+  const from = orderIds.indexOf(draggingId.value)
+  const to = orderIds.indexOf(targetId)
+  if (from === -1 || to === -1) {
+    draggingId.value = null
+    return
+  }
+  orderIds.splice(from, 1)
+  orderIds.splice(to, 0, draggingId.value)
+  categoryStore.reorderCategories(orderIds)
+  draggingId.value = null
+}
 
 // 获取分类下的网站数量
 const getWebsiteCount = (categoryId: string): number => {
@@ -242,6 +356,7 @@ const handleAddCategory = async () => {
     categoryStore.addCategory({
       name: newCategory.value.name.trim(),
       description: newCategory.value.description.trim(),
+      icon: newCategory.value.icon,
       order: categories.value.length + 1,
       websiteCount: 0,
       createdAt: new Date(),
@@ -251,7 +366,7 @@ const handleAddCategory = async () => {
     uiStore.showToast('分类添加成功', 'success')
 
     // 重置表单
-    newCategory.value = { name: '', description: '' }
+    newCategory.value = { name: '', description: '', icon: 'fas fa-folder' }
 
     // 聚焦到输入框
     await nextTick()
@@ -269,7 +384,8 @@ const startEdit = async (category: Category) => {
   editingId.value = category.id
   editingCategory.value = {
     name: category.name,
-    description: category.description || ''
+    description: category.description || '',
+    icon: category.icon || 'fas fa-folder'
   }
 
   await nextTick()
@@ -287,7 +403,8 @@ const handleUpdateCategory = async () => {
   try {
     await categoryStore.updateCategory(editingId.value, {
       name: editingCategory.value.name.trim(),
-      description: editingCategory.value.description.trim()
+      description: editingCategory.value.description.trim(),
+      icon: editingCategory.value.icon
     })
 
     uiStore.showToast('分类更新成功', 'success')
@@ -303,7 +420,8 @@ const handleUpdateCategory = async () => {
 // 取消编辑
 const cancelEdit = () => {
   editingId.value = null
-  editingCategory.value = { name: '', description: '' }
+  editingCategory.value = { name: '', description: '', icon: 'fas fa-folder' }
+  showEditIconPanel.value = false
 }
 
 // 处理删除分类
@@ -405,6 +523,10 @@ onUnmounted(() => {
   border-bottom: 1px solid $color-border;
 }
 
+.manage-categories-modal__add-section .manage-categories-modal__section-title {
+  margin-bottom: $spacing-md;
+}
+
 .manage-categories-modal__add-form {
   display: flex;
   flex-direction: column;
@@ -414,7 +536,69 @@ onUnmounted(() => {
 .manage-categories-modal__form-row {
   display: flex;
   gap: $spacing-sm;
-  align-items: flex-end;
+  align-items: stretch;
+
+  > .base-input {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.manage-categories-modal__icon-select {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.manage-categories-modal__form-row .base-button {
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.manage-categories-modal__icon-btn {
+  width: 48px;
+  min-width: 48px;
+  height: 100%;
+  padding: 0;
+  background-color: $color-white;
+  border-color: $color-border;
+  border-radius: $border-radius-md;
+}
+
+.manage-categories-modal__icon-panel {
+  position: absolute;
+  top: calc(100% + #{$spacing-xs});
+  left: 0;
+  background-color: $color-white;
+  border: 1px solid $color-border;
+  border-radius: $border-radius-md;
+  box-shadow: $shadow-md;
+  padding: $spacing-sm;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: $spacing-sm;
+  z-index: 10;
+}
+
+.manage-categories-modal__icon-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid $color-border;
+  border-radius: $border-radius-sm;
+  background-color: $color-neutral-50;
+  cursor: pointer;
+  transition: all $transition-fast;
+}
+
+.manage-categories-modal__icon-item:hover {
+  background-color: $color-neutral-100;
+}
+
+.manage-categories-modal__icon-item.is-active {
+  border-color: $color-primary;
+  box-shadow: 0 0 0 3px rgba($color-primary, 0.12);
 }
 
 .manage-categories-modal__description-input {
@@ -451,7 +635,7 @@ onUnmounted(() => {
 // 查看模式
 .manage-categories-modal__category-view {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: $spacing-sm;
   padding: $spacing-md;
 }
@@ -595,6 +779,12 @@ onUnmounted(() => {
     flex-direction: column;
     align-items: stretch;
     gap: $spacing-md;
+  }
+
+  .manage-categories-modal__icon-btn {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
   }
 
   .manage-categories-modal__category-drag-handle {

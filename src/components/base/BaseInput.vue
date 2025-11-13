@@ -83,7 +83,7 @@
 
     <!-- 字符计数 -->
     <div
-      v-if="showCharCount || maxlength"
+      v-if="showCharCount ?? !!maxlength"
       class="base-input__char-count"
       :class="{ 'base-input__char-count--error': charCountError }"
     >
