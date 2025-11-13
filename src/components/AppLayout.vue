@@ -451,7 +451,7 @@ onUnmounted(() => {
 .header-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 0.75rem 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -464,19 +464,19 @@ onUnmounted(() => {
 }
 
 .logo-icon {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
   background-color: #3B82F6;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 1.125rem;
 }
 
 .app-title {
-  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
   font-weight: bold;
   color: #1F2937;
   margin: 0;
@@ -485,14 +485,14 @@ onUnmounted(() => {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .add-site-btn {
   background-color: #3B82F6;
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.75rem;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -501,11 +501,11 @@ onUnmounted(() => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 
   &:hover {
     background-color: #2563EB;
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
     transform: translateY(-1px);
   }
 }
@@ -515,8 +515,8 @@ onUnmounted(() => {
 }
 
 .settings-btn {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
   background-color: #F3F4F6;
   border: none;
@@ -540,7 +540,7 @@ onUnmounted(() => {
   width: 192px;
   background-color: white;
   border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
   padding: 8px 0;
   z-index: 50;
 }
@@ -575,7 +575,7 @@ onUnmounted(() => {
 // 主内容区域样式
 .main-content {
   flex: 1;
-  padding: 2rem 0;
+  padding: 1.5rem 0;
 }
 
 .container {
@@ -586,28 +586,28 @@ onUnmounted(() => {
 
 // 搜索区域样式
 .search-section {
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
 }
 
 .search-container {
   position: relative;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .search-input {
   width: 100%;
-  padding: 1rem 3rem 1rem 1.25rem;
+  padding: 0.75rem 2.75rem 0.75rem 1rem;
   border: 1px solid #E5E7EB;
-  border-radius: 12px;
+  border-radius: 10px;
   font-size: 1rem;
   background-color: white;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   transition: all 0.2s ease-in-out;
 
   &:focus {
     outline: none;
     border-color: #3B82F6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 4px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12), 0 2px 12px rgba(0, 0, 0, 0.08);
   }
 
   &::placeholder {
@@ -623,7 +623,7 @@ onUnmounted(() => {
   background: none;
   border: none;
   color: #9CA3AF;
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   cursor: pointer;
   transition: color 0.2s;
 
@@ -634,7 +634,7 @@ onUnmounted(() => {
 
 // 标签筛选样式
 .tag-filter-section {
-  margin-top: 2rem;
+  margin-top: 1.25rem;
 }
 
 .filter-header {
@@ -692,7 +692,7 @@ onUnmounted(() => {
 .filter-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .clear-tags-btn {
@@ -717,11 +717,11 @@ onUnmounted(() => {
 .tag-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .tag-item {
-  padding: 6px 12px;
+  padding: 5px 10px;
   border-radius: 9999px;
   font-size: 0.875rem;
   border: 1px solid transparent;
@@ -742,7 +742,7 @@ onUnmounted(() => {
   }
 
   .tag-remove-icon {
-    margin-left: 4px;
+    margin-left: 3px;
     font-size: 0.75rem;
     opacity: 0.7;
     transition: opacity 0.2s;
@@ -755,17 +755,17 @@ onUnmounted(() => {
 
 // 分类筛选样式
 .category-section {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .category-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .category-tag {
-  padding: 6px 12px;
+  padding: 5px 10px;
   border-radius: 9999px;
   font-size: 0.875rem;
   background-color: #F3F4F6;
@@ -786,9 +786,9 @@ onUnmounted(() => {
   }
 
   .dot {
-    margin-left: 4px;
-    width: 6px;
-    height: 6px;
+    margin-left: 3px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     background-color: #D1D5DB;
 
@@ -802,8 +802,8 @@ onUnmounted(() => {
 .website-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: 0.875rem;
+  margin-bottom: 1.5rem;
 
   @media (min-width: 640px) {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -811,13 +811,13 @@ onUnmounted(() => {
 
   @media (min-width: 768px) {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1rem;
+    gap: 0.875rem;
   }
 
   @media (min-width: 1024px) {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1rem;
-  }
+    gap: 0.875rem;
+}
 }
 
 // 添加网站卡片样式
@@ -825,13 +825,13 @@ onUnmounted(() => {
   background-color: white;
   border: 2px dashed #E5E7EB;
   border-radius: 8px;
-  padding: 1.5rem;
+  padding: 1.25rem;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 160px;
+  min-height: 140px;
 
   &:hover {
     border-color: #3B82F6;
@@ -843,31 +843,31 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   color: #6B7280;
 }
 
 .add-icon {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background-color: #F3F4F6;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 1.125rem;
 }
 
 // 搜索结果样式
 .search-results-section {
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
 }
 
 .results-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 
   h3 {
     font-size: 1.125rem;
@@ -899,7 +899,7 @@ onUnmounted(() => {
 // 响应式调整
 @media (max-width: 768px) {
   .header-content {
-    padding: 1rem;
+    padding: 0.75rem;
   }
 
   .header-actions {
