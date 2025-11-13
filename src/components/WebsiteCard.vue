@@ -38,18 +38,9 @@
             {{ website.name }}
           </a>
         </h3>
-        <p v-if="website.description" class="website-card__description" :title="website.description">
-          {{ website.description }}
+        <p class="website-card__description" :title="website.description || ''">
+          {{ website.description || '' }}
         </p>
-      </div>
-
-      <!-- 状态指示器 -->
-      <div class="website-card__status">
-        <div
-          class="website-card__status-dot"
-          :class="{ 'website-card__status-dot--online': website.isOnline }"
-          :title="website.isOnline ? '网站在线' : '网站离线'"
-        />
       </div>
     </header>
 
@@ -64,23 +55,25 @@
       </div>
 
       <!-- 标签列表 -->
-      <div v-if="websiteTags.length > 0" class="website-card__tags">
-        <span
-          v-for="tag in websiteTags.slice(0, maxVisibleTags)"
-          :key="tag.id"
-          class="website-card__tag"
-          :style="{ backgroundColor: tag.color }"
-          :title="tag.name"
-        >
-          {{ tag.name }}
-        </span>
-        <span
-          v-if="websiteTags.length > maxVisibleTags"
-          class="website-card__tag website-card__tag--more"
-          :title="getMoreTagsTitle()"
-        >
-          +{{ websiteTags.length - maxVisibleTags }}
-        </span>
+      <div class="website-card__tags">
+        <template v-if="websiteTags.length > 0">
+          <span
+            v-for="tag in websiteTags.slice(0, maxVisibleTags)"
+            :key="tag.id"
+            class="website-card__tag"
+            :style="{ backgroundColor: tag.color }"
+            :title="tag.name"
+          >
+            {{ tag.name }}
+          </span>
+          <span
+            v-if="websiteTags.length > maxVisibleTags"
+            class="website-card__tag website-card__tag--more"
+            :title="getMoreTagsTitle()"
+          >
+            +{{ websiteTags.length - maxVisibleTags }}
+          </span>
+        </template>
       </div>
     </main>
 
@@ -510,6 +503,7 @@ onUnmounted(() => {
   font-size: $font-size-sm;
   line-height: $line-height-normal;
   @include text-truncate(2);
+  min-height: calc(2 * #{$line-height-normal} * 1em);
 
   .website-card--sm & {
     display: none;
@@ -566,6 +560,7 @@ onUnmounted(() => {
   flex-wrap: wrap;
   gap: $spacing-xs;
   align-items: center;
+  min-height: 24px;
 }
 
 .website-card__tag {
