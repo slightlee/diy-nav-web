@@ -520,6 +520,7 @@ onUnmounted(() => {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+  padding-bottom: $spacing-lg;
 }
 
 .manage-tags-modal__tag-list {

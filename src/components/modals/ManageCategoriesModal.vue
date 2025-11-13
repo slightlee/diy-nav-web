@@ -210,16 +210,6 @@
         </TransitionGroup>
       </div>
     </div>
-
-    <!-- 操作区域 -->
-    <div class="manage-categories-modal__actions">
-      <BaseButton
-        variant="ghost"
-        @click="handleClose"
-      >
-        完成
-      </BaseButton>
-    </div>
   </div>
 </template>
 
@@ -607,6 +597,7 @@ onUnmounted(() => {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+  padding-bottom: $spacing-lg;
 }
 
 .manage-categories-modal__category-list {
@@ -733,13 +724,7 @@ onUnmounted(() => {
   margin-top: $spacing-sm;
 }
 
-// 操作按钮
-.manage-categories-modal__actions {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: $spacing-lg;
-  border-top: 1px solid $color-border;
-}
+
 
 // 动画
 .category-item-enter-active,
