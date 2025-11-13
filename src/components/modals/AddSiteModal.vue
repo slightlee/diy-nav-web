@@ -484,6 +484,12 @@ const tags = computed(() => tagStore.tags)
   cursor: pointer;
 }
 
+.favicon-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .favicon-card {
   display: flex;
   align-items: center;
@@ -491,6 +497,17 @@ const tags = computed(() => tagStore.tags)
   padding: $spacing-sm;
   border: 1px solid $color-border;
   border-radius: $border-radius-md;
+  transition: all $transition-fast;
+}
+
+.favicon-option input:checked + .favicon-card {
+  border-color: $color-primary;
+  box-shadow: 0 0 0 3px rgba($color-primary, 0.12);
+  background-color: rgba($color-primary, 0.02);
+}
+
+.favicon-card:hover {
+  border-color: $color-neutral-300;
 }
 
 .favicon-img {
