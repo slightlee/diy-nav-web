@@ -508,7 +508,7 @@ onUnmounted(() => {
   font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
   color: $color-neutral-800;
-  margin: 0;
+  margin: 0 0 $spacing-md 0;
 }
 
 .manage-categories-modal__count {
@@ -523,9 +523,6 @@ onUnmounted(() => {
   border-bottom: 1px solid $color-border;
 }
 
-.manage-categories-modal__add-section .manage-categories-modal__section-title {
-  margin-bottom: $spacing-md;
-}
 
 .manage-categories-modal__add-form {
   display: flex;

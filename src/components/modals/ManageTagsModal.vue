@@ -69,6 +69,10 @@
             :key="tag.id"
             class="manage-tags-modal__tag-item"
             :class="{ 'manage-tags-modal__tag-item--editing': editingId === tag.id }"
+            :draggable="editingId !== tag.id"
+            @dragstart="onDragStart(tag.id)"
+            @dragover.prevent
+            @drop="onDrop(tag.id)"
           >
             <!-- 查看模式 -->
             <div v-if="editingId !== tag.id" class="manage-tags-modal__tag-view">
@@ -228,6 +232,33 @@ const sortedTags = computed(() => {
 })
 
 const tagColors = computed(() => tagStore.tagColors)
+
+const draggingId = ref<string | null>(null)
+const onDragStart = (id: string) => {
+  draggingId.value = id
+}
+const onDrop = (targetId: string) => {
+  if (!draggingId.value || draggingId.value === targetId) {
+    draggingId.value = null
+    return
+  }
+  const orderIds = sortedTags.value.map(t => t.id)
+  const from = orderIds.indexOf(draggingId.value)
+  const to = orderIds.indexOf(targetId)
+  if (from === -1 || to === -1) {
+    draggingId.value = null
+    return
+  }
+  orderIds.splice(from, 1)
+  orderIds.splice(to, 0, draggingId.value)
+
+  const newOrder = orderIds
+    .map(id => tags.value.find(t => t.id === id))
+    .filter((t): t is Tag => !!t)
+
+  tagStore.reorderTags(newOrder)
+  draggingId.value = null
+}
 
 // 获取标签下的网站数量
 const getWebsiteCount = (tagId: string): number => {
@@ -411,7 +442,7 @@ onUnmounted(() => {
   font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
   color: $color-neutral-800;
-  margin: 0;
+  margin: 0 0 $spacing-md 0;
 }
 
 .manage-tags-modal__count {
@@ -435,13 +466,19 @@ onUnmounted(() => {
 .manage-tags-modal__form-row {
   display: flex;
   gap: $spacing-sm;
-  align-items: flex-end;
+  align-items: center;
+
+  > .base-input {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 // 颜色选择器
 .manage-tags-modal__color-picker {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: $spacing-sm;
   flex: 1;
 }
@@ -508,7 +545,7 @@ onUnmounted(() => {
 // 查看模式
 .manage-tags-modal__tag-view {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: $spacing-sm;
   padding: $spacing-md;
 }
@@ -596,7 +633,8 @@ onUnmounted(() => {
 
 .manage-tags-modal__edit-color {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: $spacing-sm;
 }
 
