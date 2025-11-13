@@ -175,7 +175,7 @@
           v-if="filteredWebsites.length === 0 && !searchKeyword"
           type="no-websites"
           :show-action-button="true"
-          @add-website="handleAddSite"
+          @action="handleAddSite"
         />
       </div>
     </main>
@@ -185,11 +185,12 @@
       v-if="uiStore.modalState.addSite"
       :is-open="uiStore.modalState.addSite"
       title="添加新网站"
-      @close="() => uiStore.closeModal('addSite')"
+      @close="closeAddSite"
     >
       <AddSiteModal
         :website="uiStore.getModalData('addSite')"
-        @close="() => uiStore.closeModal('addSite')"
+        :context-category-id="addSiteContextCategoryId"
+        @close="closeAddSite"
       />
     </BaseModal>
 
@@ -232,7 +233,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import type { Website } from '@/types'
 import { useWebsiteStore } from '@/stores/website'
 import { useCategoryStore } from '@/stores/category'
@@ -261,6 +262,7 @@ const searchKeyword = ref('')
 const selectedTags = ref<string[]>([])
 const selectedCategory = ref('all')
 const showSettingsDropdown = ref(false)
+const addSiteContextCategoryId = ref('')
 
 // 计算属性
 const filteredWebsites = computed(() => {
@@ -312,6 +314,17 @@ const getWebsiteTags = (tagIds: string[]) => {
 const handleAddSite = () => {
   uiStore.openModal('addSite')
 }
+
+const closeAddSite = () => {
+  uiStore.closeModal('addSite')
+  addSiteContextCategoryId.value = ''
+}
+
+watch(() => uiStore.modalState.addSite, isOpen => {
+  if (isOpen) {
+    addSiteContextCategoryId.value = selectedCategory.value !== 'all' ? selectedCategory.value : ''
+  }
+})
 
 // 添加键盘快捷键支持
 const handleKeydown = (event: KeyboardEvent) => {

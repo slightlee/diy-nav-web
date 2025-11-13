@@ -75,7 +75,7 @@ const typeConfig = computed(() => {
     case 'no-websites':
       return {
         title: props.title || '还没有添加任何网站',
-        description: props.description || '点击下方按钮开始添加第一个网站',
+        description: props.description || '还没有添加任何网站，点击下方按钮开始添加第一个网站',
         icon: props.icon || 'fas fa-globe',
         actionButtonText: props.actionButtonText || '添加网站',
         actionButtonIcon: props.actionButtonIcon || 'fas fa-plus',

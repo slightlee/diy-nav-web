@@ -39,8 +39,8 @@
         />
       </div>
 
-      <div class="add-site-modal__form-group">
-        <label class="add-site-modal__label">分类</label>
+      <div v-if="!props.contextCategoryId" class="add-site-modal__form-group">
+        <label class="add-site-modal__label add-site-modal__label--required">分类</label>
         <select
           v-model="formData.categoryId"
           class="add-site-modal__select"
@@ -141,6 +141,7 @@ import type { Website } from '@/types'
 
 interface Props {
   website?: Website
+  contextCategoryId?: string
 }
 
 interface Emits {
@@ -358,7 +359,7 @@ const initializeForm = () => {
       name: '',
       url: '',
       description: '',
-      categoryId: '',
+      categoryId: props.contextCategoryId || '',
       tagIds: []
     }
     faviconSource.value = 'default'
@@ -367,8 +368,8 @@ const initializeForm = () => {
   errors.value = {}
 }
 
-// 监听website属性变化
 watch(() => props.website, initializeForm, { immediate: true })
+watch(() => props.contextCategoryId, initializeForm)
 // 标签选择
 const toggleTag = (tagId: string) => {
   const i = formData.value.tagIds.indexOf(tagId)
@@ -411,6 +412,11 @@ const tags = computed(() => tagStore.tags)
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
   color: $color-neutral-800;
+}
+
+.add-site-modal__label--required::after {
+  content: ' *';
+  color: $color-error;
 }
 
 .add-site-modal__select {
