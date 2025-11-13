@@ -265,10 +265,11 @@ const getMoreTagsTitle = (): string => {
 }
 
 // 事件处理
-const handleCardClick = () => {
-  if (props.clickable && !props.loading) {
-    emit('click', props.website)
-  }
+const handleCardClick = (event: MouseEvent) => {
+  if (!props.clickable || props.loading) return
+  const target = event.target as HTMLElement
+  if (target && target.closest('.website-card__actions')) return
+  visitWebsite()
 }
 
 const handleMouseEnter = () => {
@@ -281,10 +282,12 @@ const handleMouseLeave = () => {
 
 const handleWebsiteVisit = (event: MouseEvent) => {
   event.preventDefault()
+  visitWebsite()
+}
+
+const visitWebsite = () => {
   emit('visit', props.website)
   websiteStore.incrementVisitCount(props.website.id)
-
-  // 在新标签页打开网站
   window.open(props.website.url, '_blank', 'noopener,noreferrer')
 }
 
@@ -322,7 +325,7 @@ const handleKeydown = (event: KeyboardEvent) => {
     case ' ':
       if (props.clickable) {
         event.preventDefault()
-        handleCardClick()
+        visitWebsite()
       }
       break
     case 'e':
