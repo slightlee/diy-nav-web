@@ -1,0 +1,222 @@
+// 类型定义，避免未使用变量错误
+export interface SimpleWebsite {
+  id: string;
+  name: string;
+  url: string;
+  description?: string;
+  favicon?: string;
+  categoryId?: string;
+  tagIds?: string[];
+  visitCount?: number;
+  isOnline?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SimpleCategory {
+  id: string;
+  name: string;
+  description?: string;
+  order?: number;
+  websiteCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SimpleTag {
+  id: string;
+  name: string;
+  color: string;
+  order?: number;
+  usageCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// 类型定义，避免未使用变量错误
+export interface ApiResponse<T = unknown> {
+  data?: T;
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  success: boolean;
+  message?: string;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+// 生成唯一ID
+export const generateId = (): string => {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2)
+}
+
+// URL验证
+export const isValidUrl = (url: string): boolean => {
+  try {
+    const urlObj = new URL(url)
+    return urlObj.protocol === 'http:' || urlObj.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+// 格式化URL
+export const formatUrl = (url: string): string => {
+  if (!url) return ''
+
+  // 如果没有协议，默认添加https
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return `https://${url}`
+  }
+
+  return url
+}
+
+// 获取网站favicon
+export const getFaviconUrl = (url: string): string => {
+  try {
+    const urlObj = new URL(formatUrl(url))
+    return `${urlObj.protocol}//${urlObj.hostname}/favicon.ico`
+  } catch {
+    return ''
+  }
+}
+
+// 通过公共服务获取网站favicon
+export const getServiceFaviconUrl = (url: string, size = 64): string => {
+  try {
+    const urlObj = new URL(formatUrl(url))
+    const hostname = urlObj.hostname
+    return `https://www.google.com/s2/favicons?domain=${hostname}&sz=${size}`
+  } catch {
+    return ''
+  }
+}
+
+export const getLetterFavicon = (text: string, size = 64): string => {
+  const letter = (text || 'W').trim().charAt(0).toUpperCase()
+  const palette = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#6B7280']
+  const idx = letter ? letter.charCodeAt(0) % palette.length : 0
+  const bg = palette[idx]
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'><rect width='${size}' height='${size}' rx='12' fill='${bg}'/><text x='50%' y='60%' text-anchor='middle' font-size='${Math.round(size*0.56)}' font-family='-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' fill='#ffffff'>${letter}</text></svg>`
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg)
+}
+
+// 格式化访问次数
+export const formatVisitCount = (count: number): string => {
+  if (count === 0) return '未访问'
+  if (count === 1) return '访问1次'
+  if (count < 1000) return `访问${count}次`
+  return `访问${(count / 1000).toFixed(1)}k次`
+}
+
+// 格式化日期
+export const formatDate = (date: Date | string | undefined): string => {
+  if (!date) return ''
+
+  const d = new Date(date)
+  const now = new Date()
+  const diff = now.getTime() - d.getTime()
+
+  const minute = 60 * 1000
+  const hour = 60 * minute
+  const day = 24 * hour
+
+  if (diff < minute) {
+    return '刚刚'
+  } else if (diff < hour) {
+    return `${Math.floor(diff / minute)}分钟前`
+  } else if (diff < day) {
+    return `${Math.floor(diff / hour)}小时前`
+  } else {
+    return d.toLocaleDateString('zh-CN')
+  }
+}
+
+// 截断文本
+export const truncateText = (text: string, maxLength: number): string => {
+  if (!text) return ''
+  if (text.length <= maxLength) return text
+  return text.substring(0, maxLength) + '...'
+}
+
+// 防抖函数
+export const debounce = <T extends (...args: unknown[]) => unknown>(
+  func: T,
+  wait: number
+): ((...args: Parameters<T>) => void) => {
+  let timeout: NodeJS.Timeout | null = null
+
+  return (...args: Parameters<T>) => {
+    if (timeout) {
+      clearTimeout(timeout)
+    }
+
+    timeout = setTimeout(() => {
+      func(...args)
+      timeout = null
+    }, wait)
+  }
+}
+
+// 节流函数
+export const throttle = <T extends (...args: unknown[]) => unknown>(
+  func: T,
+  limit: number
+): ((...args: Parameters<T>) => void) => {
+  let inThrottle = false
+
+  return (...args: Parameters<T>) => {
+    if (!inThrottle) {
+      func(...args)
+      inThrottle = true
+
+      setTimeout(() => {
+        inThrottle = false
+      }, limit)
+    }
+  }
+}
+
+// 验证邮箱格式
+export const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
+// 生成随机颜色
+export const getRandomColor = (): string => {
+  const colors = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899']
+  return colors[Math.floor(Math.random() * colors.length)]
+}
+
+// 获取网站域名
+export const getDomain = (url: string): string => {
+  try {
+    const urlObj = new URL(formatUrl(url))
+    return urlObj.hostname
+  } catch {
+    return url
+  }
+}
+
+// 下载文件
+export const downloadFile = (content: string, filename: string): void => {
+  const blob = new Blob([content], { type: 'application/octet-stream' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}

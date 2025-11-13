@@ -1,0 +1,253 @@
+// 核心mixins - 直接使用变量，不使用map
+@use 'sass:math';
+@use 'sass:color';
+@use 'variables' as *;
+
+// 文本截断mixin
+@mixin text-truncate($lines: 1) {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+}
+
+// 响应式网格mixin
+@mixin responsive-grid {
+  display: grid;
+  gap: $spacing-md;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+
+  @media (min-width: $breakpoint-sm) {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: $spacing-sm;
+  }
+
+  @media (min-width: $breakpoint-md) {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: $spacing-md;
+  }
+
+  @media (min-width: $breakpoint-lg) {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: $spacing-lg;
+  }
+}
+
+// 按钮基础样式
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-sm $spacing-md;
+  border: 2px solid transparent;
+  border-radius: $border-radius-md;
+  font-family: $font-family-sans;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: $color-neutral;
+  background-color: $color-neutral-50;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all $transition-normal;
+  outline: none;
+
+  &:focus {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+
+  &:hover {
+    background-color: $color-primary;
+    color: $color-white;
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: $opacity-disabled;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+// 按钮变体
+@mixin button-primary {
+  @include button-base;
+  background-color: $color-primary;
+  color: $color-white;
+
+  &:hover {
+    background-color: $color-primary-dark;
+  }
+}
+
+@mixin button-secondary {
+  @include button-base;
+  background-color: $color-neutral;
+  color: $color-neutral-800;
+
+  &:hover {
+    background-color: $color-neutral-dark;
+    color: $color-white;
+  }
+}
+
+// 输入框基础样式
+@mixin input-base {
+  width: 100%;
+  padding: $spacing-sm;
+  border: 1px solid $color-border;
+  border-radius: $border-radius-md;
+  font-family: $font-family-sans;
+  font-size: $font-size-base;
+  background-color: $color-white;
+  color: $color-neutral-800;
+  transition: all $transition-normal;
+  outline: none;
+
+  &:focus {
+    border-color: $color-primary;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+}
+
+// 容器基础样式
+@mixin container {
+  max-width: $container-max-width;
+  margin: 0 auto;
+  padding: 0 $container-padding;
+}
+
+// 卡片布局
+@mixin card-layout {
+  background-color: $color-white;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow-card;
+  border: 1px solid $color-border;
+  padding: $spacing-lg;
+  transition: all $transition-normal;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: $shadow-card-hover;
+  }
+}
+
+// 卡片悬停效果
+@mixin card-hover {
+  transition: all $transition-normal;
+
+  &:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: $shadow-card-hover;
+  }
+}
+
+// 搜索结果信息样式
+@mixin search-results-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-sm 0;
+  margin-top: auto;
+  font-size: $font-size-sm;
+  color: $color-neutral-600;
+}
+
+// 卡片阴影效果
+@mixin card-shadow {
+  box-shadow: $shadow-card;
+}
+
+// 卡片悬停阴影
+@mixin card-shadow-hover {
+  box-shadow: $shadow-card-hover;
+}
+
+// 标签基础样式
+@mixin tag-base {
+  display: inline-flex;
+  align-items: center;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $border-radius-pill;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-neutral;
+  transition: all $transition-fast;
+  cursor: pointer;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+// 标签变体
+@mixin tag-removable {
+  position: relative;
+
+  .remove-icon {
+    opacity: 0;
+    transition: opacity $transition-normal;
+  }
+
+  &:hover .remove-icon {
+    opacity: 1;
+  }
+}
+
+// 无障碍支持
+@mixin focus-visible {
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+// 响应式断点
+@mixin mobile {
+  @media (max-width: $breakpoint-md) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: $breakpoint-md) and (max-width: $breakpoint-lg) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: $breakpoint-lg) {
+    @content;
+  }
+}
+
+// 加载动画
+@mixin skeleton-loading {
+  @keyframes skeleton {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  background: linear-gradient(
+    90deg,
+    rgba(209, 213, 219, 0.15) 0%,
+    rgba(209, 213, 219, 0.3) 50%,
+    rgba(209, 213, 219, 0.5) 75%,
+    rgba(209, 213, 219, 0.65) 85%,
+    rgba(209, 213, 219, 0.8) 95%,
+    rgba(209, 213, 219, 0.95) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton 1.5s ease-in-out infinite;
+}

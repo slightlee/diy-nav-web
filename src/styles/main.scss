@@ -1,0 +1,154 @@
+// 导入设计令牌
+@use 'sass:math';
+@use 'sass:color';
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// 重置基础样式
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: $font-family-sans;
+  background-color: $color-neutral-50;
+  color: $color-neutral-800;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+// 主题变量支持
+:root {
+  --primary-color: #{$color-primary};
+  --secondary-color: #{$color-secondary};
+  --accent-color: #{$color-accent};
+  --neutral-color: #{$color-neutral};
+  --neutral-dark-color: #{$color-neutral-dark};
+  --border-color: #{$color-border};
+  --primary-rgb: #{$color-primary-rgb};
+  --border-radius: #{$border-radius-md};
+  --font-family: #{$font-family-sans};
+  --transition-duration: #{$transition-normal};
+  --spacing-unit: #{$spacing-unit};
+  --z-index-modal: #{$z-index-modal};
+  --z-index-dropdown: #{$z-index-dropdown};
+  --z-index-toast: #{$z-index-toast};
+  --shadow-card: #{$shadow-card};
+  --shadow-card-hover: #{$shadow-card-hover};
+}
+
+// 暗色主题类
+.dark-theme {
+  --primary-color: #{$color-primary};
+  --secondary-color: #{$color-secondary};
+  --accent-color: #{$color-accent};
+  --neutral-color: #{$color-neutral-900};
+  --neutral-dark-color: #{$color-neutral-100};
+  --border-color: #{$color-neutral-700};
+  --primary-rgb: #{$color-primary-rgb};
+  --border-radius: #{$border-radius-md};
+  --font-family: #{$font-family-sans};
+  --transition-duration: #{$transition-normal};
+  --spacing-unit: #{$spacing-unit};
+  --z-index-modal: #{$z-index-modal};
+  --z-index-dropdown: #{$z-index-dropdown};
+  --z-index-toast: #{$z-index-toast};
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+// 暗色主题支持
+@media (prefers-color-scheme: dark) {
+  :root {
+    --neutral-color: #{$color-neutral-900};
+    --neutral-dark-color: #{$color-neutral-100};
+    --border-color: #{$color-neutral-700};
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+}
+
+// 滚动条样式
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background-color: $color-neutral-300;
+  border-radius: $border-radius-sm;
+}
+
+::-webkit-scrollbar-track {
+  background-color: $color-neutral-50;
+  border-radius: $border-radius-sm;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: $color-neutral-500;
+  border-radius: $border-radius-sm;
+
+  &:hover {
+    background-color: $color-neutral-600;
+  }
+}
+
+// 焦点样式
+::-moz-selection {
+  background-color: $color-primary;
+  color: $color-white;
+}
+
+::selection {
+  background-color: $color-primary;
+  color: $color-white;
+}
+
+// 焦点轮廓样式
+:focus-visible {
+  outline: 2px solid $color-primary;
+  outline-offset: 2px;
+}
+
+// 减少动画偏好
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// 打印样式
+@media print {
+  body {
+    background-color: $color-white;
+    color: $color-black;
+  }
+
+  * {
+    box-shadow: none !important;
+  }
+}
+
+// 高对比度模式支持
+@media (prefers-contrast: high) {
+  :root {
+    --border-color: $color-black;
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.25);
+  }
+}
+
+// 触摸设备优化
+@media (hover: none) and (pointer: coarse) {
+  button, .btn, a, input, select {
+    min-height: 44px;
+    min-width: 44px;
+    font-size: 16px;
+  }
+}
