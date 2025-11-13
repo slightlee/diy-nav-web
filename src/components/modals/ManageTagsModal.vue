@@ -94,7 +94,7 @@
                 <div class="manage-tags-modal__tag-stats">
                   <span class="manage-tags-modal__usage-count">
                     <i class="fas fa-tag" />
-                    {{ tag.usageCount }} 个网站
+                    {{ getWebsiteCount(tag.id) }} 个网站
                   </span>
                   <span class="manage-tags-modal__created-time">
                     创建于 {{ formatDate(tag.createdAt) }}
