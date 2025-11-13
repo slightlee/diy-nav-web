@@ -134,7 +134,6 @@
   overflow: hidden;
 
   &:hover {
-    transform: translateY(-2px) scale(1.02);
     box-shadow: $shadow-card-hover;
   }
 }

@@ -385,7 +385,6 @@ onUnmounted(() => {
   }
 
   &--hovered {
-    transform: translateY(-2px);
     box-shadow: $shadow-card-hover;
   }
 

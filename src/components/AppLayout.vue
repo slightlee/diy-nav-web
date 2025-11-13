@@ -802,7 +802,7 @@ onUnmounted(() => {
 .website-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 0.875rem;
+  gap: $spacing-xl;
   margin-bottom: 1.5rem;
 
   @media (min-width: 640px) {
@@ -811,12 +811,12 @@ onUnmounted(() => {
 
   @media (min-width: 768px) {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 0.875rem;
+    gap: $spacing-xl;
   }
 
   @media (min-width: 1024px) {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 0.875rem;
+    gap: $spacing-xl;
 }
 }
 
@@ -920,7 +920,7 @@ onUnmounted(() => {
 
   .website-grid {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 0.75rem;
+    gap: $spacing-lg;
   }
 }
 
