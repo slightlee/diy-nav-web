@@ -210,6 +210,28 @@
         </TransitionGroup>
       </div>
     </div>
+
+    <BaseModal
+      v-if="deleteConfirmOpen"
+      :is-open="deleteConfirmOpen"
+      title="删除分类"
+      @close="closeDeleteConfirm"
+    >
+      <div class="manage-categories-modal__confirm-content">
+        <p>确定要删除该分类吗？此操作不可恢复。</p>
+      </div>
+      <template #footer>
+        <div class="manage-categories-modal__confirm-actions">
+          <BaseButton variant="secondary" @click="closeDeleteConfirm">
+            取消
+          </BaseButton>
+          <BaseButton variant="danger" :loading="deleting" @click="confirmDeleteCategory">
+            <i class="fas fa-trash" />
+            删除
+          </BaseButton>
+        </div>
+      </template>
+    </BaseModal>
   </div>
 </template>
 
@@ -221,6 +243,7 @@ import { useUIStore } from '@/stores/ui'
 import BaseInput from '../base/BaseInput.vue'
 import BaseButton from '../base/BaseButton.vue'
 import EmptyState from '../EmptyState.vue'
+import BaseModal from '../base/BaseModal.vue'
 import type { Category } from '@/types'
 
 interface Emits {
@@ -426,17 +449,8 @@ const handleDeleteCategory = async (category: Category) => {
     return
   }
 
-  if (!confirm(`确定要删除分类"${category.name}"吗？此操作不可恢复。`)) {
-    return
-  }
-
-  try {
-    await categoryStore.deleteCategory(category.id)
-    uiStore.showToast('分类删除成功', 'success')
-  } catch (error) {
-    console.error('删除分类失败:', error)
-    uiStore.showToast('删除失败，请重试', 'error')
-  }
+  deleteTargetId.value = category.id
+  deleteConfirmOpen.value = true
 }
 
 // 处理关闭
@@ -475,6 +489,29 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
 })
+
+const deleteConfirmOpen = ref(false)
+const deleteTargetId = ref<string>('')
+const deleting = ref(false)
+
+const closeDeleteConfirm = () => {
+  deleteConfirmOpen.value = false
+  deleteTargetId.value = ''
+}
+
+const confirmDeleteCategory = async () => {
+  if (!deleteTargetId.value || deleting.value) return
+  deleting.value = true
+  try {
+    await categoryStore.deleteCategory(deleteTargetId.value)
+    uiStore.showToast('分类删除成功', 'success')
+    closeDeleteConfirm()
+  } catch (error) {
+    uiStore.showToast('删除失败，请重试', 'error')
+  } finally {
+    deleting.value = false
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -806,4 +843,13 @@ onUnmounted(() => {
     transition: none;
   }
 }
+  .manage-categories-modal__confirm-content {
+    padding: $spacing-md 0;
+  }
+
+  .manage-categories-modal__confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: $spacing-md;
+  }
 </style>

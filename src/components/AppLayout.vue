@@ -228,6 +228,27 @@
     </BaseModal>
 
     <!-- Toast容器 -->
+    <BaseModal
+      v-if="websiteDeleteConfirmOpen"
+      :is-open="websiteDeleteConfirmOpen"
+      title="删除网站"
+      @close="closeWebsiteDeleteConfirm"
+    >
+      <div class="app-layout__confirm-content">
+        <p>确定要删除该网站吗？此操作不可恢复。</p>
+      </div>
+      <template #footer>
+        <div class="app-layout__confirm-actions">
+          <BaseButton variant="secondary" @click="closeWebsiteDeleteConfirm">
+            取消
+          </BaseButton>
+          <BaseButton variant="danger" :loading="deletingWebsite" @click="confirmDeleteWebsite">
+            <i class="fas fa-trash" />
+            删除
+          </BaseButton>
+        </div>
+      </template>
+    </BaseModal>
     <ToastContainer />
   </div>
 </template>
@@ -240,6 +261,7 @@ import { useCategoryStore } from '@/stores/category'
 import { useTagStore } from '@/stores/tag'
 import { useUIStore } from '@/stores/ui'
 import BaseModal from '@/components/base/BaseModal.vue'
+import BaseButton from '@/components/base/BaseButton.vue'
 import WebsiteCard from '@/components/WebsiteCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import AddSiteModal from '@/components/modals/AddSiteModal.vue'
@@ -353,11 +375,32 @@ const handleEditWebsite = (website: Website) => {
   uiStore.openModal('addSite', website)
 }
 
-const handleDeleteWebsite = (websiteId: string) => {
-  if (confirm('确定要删除这个网站吗？')) {
-    websiteStore.deleteWebsite(websiteId)
+const websiteDeleteConfirmOpen = ref(false)
+const websiteDeleteTargetId = ref<string>('')
+const deletingWebsite = ref(false)
+
+const closeWebsiteDeleteConfirm = () => {
+  websiteDeleteConfirmOpen.value = false
+  websiteDeleteTargetId.value = ''
+}
+
+const confirmDeleteWebsite = () => {
+  if (!websiteDeleteTargetId.value || deletingWebsite.value) return
+  deletingWebsite.value = true
+  try {
+    websiteStore.deleteWebsite(websiteDeleteTargetId.value)
     uiStore.showToast('网站删除成功', 'success')
+    closeWebsiteDeleteConfirm()
+  } catch (error) {
+    uiStore.showToast('删除失败，请重试', 'error')
+  } finally {
+    deletingWebsite.value = false
   }
+}
+
+const handleDeleteWebsite = (websiteId: string) => {
+  websiteDeleteTargetId.value = websiteId
+  websiteDeleteConfirmOpen.value = true
 }
 
 const toggleTag = (tagId: string) => {
@@ -928,5 +971,15 @@ onUnmounted(() => {
   .website-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.app-layout__confirm-content {
+  padding: $spacing-md 0;
+}
+
+.app-layout__confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-md;
 }
 </style>

@@ -179,6 +179,27 @@
         </TransitionGroup>
       </div>
     </div>
+    <BaseModal
+      v-if="deleteConfirmOpen"
+      :is-open="deleteConfirmOpen"
+      title="删除标签"
+      @close="closeDeleteConfirm"
+    >
+      <div class="manage-tags-modal__confirm-content">
+        <p>确定要删除该标签吗？此操作不可恢复。</p>
+      </div>
+      <template #footer>
+        <div class="manage-tags-modal__confirm-actions">
+          <BaseButton variant="secondary" @click="closeDeleteConfirm">
+            取消
+          </BaseButton>
+          <BaseButton variant="danger" :loading="deleting" @click="confirmDeleteTag">
+            <i class="fas fa-trash" />
+            删除
+          </BaseButton>
+        </div>
+      </template>
+    </BaseModal>
   </div>
 </template>
 
@@ -190,6 +211,7 @@ import { useUIStore } from '@/stores/ui'
 import BaseInput from '../base/BaseInput.vue'
 import BaseButton from '../base/BaseButton.vue'
 import EmptyState from '../EmptyState.vue'
+import BaseModal from '../base/BaseModal.vue'
 import type { Tag } from '@/types'
 
 interface Emits {
@@ -371,17 +393,8 @@ const handleDeleteTag = (tag: Tag) => {
     return
   }
 
-  if (!confirm(`确定要删除标签"${tag.name}"吗？此操作不可恢复。`)) {
-    return
-  }
-
-  try {
-    tagStore.deleteTag(tag.id)
-    uiStore.showToast('标签删除成功', 'success')
-  } catch (error) {
-    console.error('删除标签失败:', error)
-    uiStore.showToast('删除失败，请重试', 'error')
-  }
+  deleteTargetId.value = tag.id
+  deleteConfirmOpen.value = true
 }
 
 // 处理关闭
@@ -419,6 +432,29 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
 })
+
+const deleteConfirmOpen = ref(false)
+const deleteTargetId = ref<string>('')
+const deleting = ref(false)
+
+const closeDeleteConfirm = () => {
+  deleteConfirmOpen.value = false
+  deleteTargetId.value = ''
+}
+
+const confirmDeleteTag = () => {
+  if (!deleteTargetId.value || deleting.value) return
+  deleting.value = true
+  try {
+    tagStore.deleteTag(deleteTargetId.value)
+    uiStore.showToast('标签删除成功', 'success')
+    closeDeleteConfirm()
+  } catch (error) {
+    uiStore.showToast('删除失败，请重试', 'error')
+  } finally {
+    deleting.value = false
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -727,4 +763,13 @@ onUnmounted(() => {
     transition: none;
   }
 }
+  .manage-tags-modal__confirm-content {
+    padding: $spacing-md 0;
+  }
+
+  .manage-tags-modal__confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: $spacing-md;
+  }
 </style>
