@@ -57,7 +57,7 @@
             <input
               v-model="searchKeyword"
               type="text"
-              placeholder="搜索标签..."
+              placeholder="根据网站名称、标签、描述搜索"
               class="search-input"
             />
             <button class="search-button">
