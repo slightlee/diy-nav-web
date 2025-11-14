@@ -24,7 +24,6 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useUIStore } from '@/stores/ui'
-import type { ToastMessage } from '@/types'
 import ToastItem from './ToastItem.vue'
 
 interface Props {

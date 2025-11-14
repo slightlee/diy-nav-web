@@ -253,7 +253,6 @@ onUnmounted(() => {
   }
 })
 
-// 暴露方法
 const focus = () => {
   toastRef.value?.focus()
 }

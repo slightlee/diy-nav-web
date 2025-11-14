@@ -274,6 +274,9 @@ onUnmounted(() => {
 .theme-hover-tooltip .active {
   color: var(--color-primary);
   font-weight: 600;
+  background-color: rgba(var(--color-primary-rgb), 0.06);
+  border-radius: 4px;
+  padding: 0 6px;
 }
 
 .settings-dropdown {

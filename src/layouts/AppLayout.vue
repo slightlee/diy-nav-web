@@ -103,13 +103,13 @@ import { useUIStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
 import BaseModal from '@/components/base/BaseModal.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
-import HeaderBar from '@/components/HeaderBar.vue'
+import HeaderBar from '@/components/header/HeaderBar.vue'
 import SearchSection from '@/components/SearchSection.vue'
 import AddSiteModal from '@/components/modals/AddSiteModal.vue'
 import ManageCategoriesModal from '@/components/modals/ManageCategoriesModal.vue'
 import ManageTagsModal from '@/components/modals/ManageTagsModal.vue'
 import SettingsModal from '@/components/modals/SettingsModal.vue'
-import ToastContainer from '@/components/ToastContainer.vue'
+import ToastContainer from '@/components/toast/ToastContainer.vue'
 
 // 确保有这些组件文件存在
 // 如果不存在，先创建简单版本
