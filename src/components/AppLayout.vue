@@ -20,6 +20,15 @@
             <span>添加网站</span>
           </button>
 
+          <div class="theme-toggle">
+            <button class="theme-toggle-btn" :title="themeToggleTitle" @click="cycleTheme">
+              <i :class="themeToggleIcon" />
+            </button>
+            <div v-if="showClickTooltip" class="theme-click-tooltip">
+              {{ themeToggleTitle }}
+            </div>
+          </div>
+
           <div class="settings-dropdown">
             <button class="settings-btn" @click="toggleSettingsDropdown">
               <i class="fas fa-cog" />
@@ -37,10 +46,6 @@
               <a href="#" class="dropdown-item" @click="openImportExport">
                 <i class="fas fa-exchange-alt" />
                 导入/导出数据
-              </a>
-              <a href="#" class="dropdown-item" @click="toggleTheme">
-                <i class="fas fa-moon" />
-                主题设置
               </a>
             </div>
           </div>
@@ -260,6 +265,7 @@ import { useWebsiteStore } from '@/stores/website'
 import { useCategoryStore } from '@/stores/category'
 import { useTagStore } from '@/stores/tag'
 import { useUIStore } from '@/stores/ui'
+import { useSettingsStore } from '@/stores/settings'
 import BaseModal from '@/components/base/BaseModal.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
 import WebsiteCard from '@/components/WebsiteCard.vue'
@@ -278,6 +284,7 @@ const websiteStore = useWebsiteStore()
 const categoryStore = useCategoryStore()
 const tagStore = useTagStore()
 const uiStore = useUIStore()
+const settingsStore = useSettingsStore()
 
 // 响应式状态
 const searchKeyword = ref('')
@@ -285,6 +292,31 @@ const selectedTags = ref<string[]>([])
 const selectedCategory = ref('all')
 const showSettingsDropdown = ref(false)
 const addSiteContextCategoryId = ref('')
+const currentTheme = computed(() => settingsStore.settings.theme)
+
+const themeToggleIcon = computed(() => {
+  switch (currentTheme.value) {
+    case 'light':
+      return 'fas fa-sun'
+    case 'dark':
+      return 'fas fa-moon'
+    default:
+      return 'fas fa-adjust'
+  }
+})
+
+const themeToggleTitle = computed(() => {
+  const names: Record<'light' | 'dark' | 'auto', string> = {
+    light: '浅色',
+    dark: '深色',
+    auto: '跟随系统'
+  }
+  return names[currentTheme.value]
+})
+
+const showClickTooltip = ref(false)
+let clickTooltipTimer: number | undefined
+
 
 // 计算属性
 const filteredWebsites = computed(() => {
@@ -443,9 +475,23 @@ const openImportExport = () => {
   showSettingsDropdown.value = false
 }
 
-const toggleTheme = () => {
-  uiStore.openModal('settings')
+const setTheme = (theme: 'light' | 'dark' | 'auto') => {
+  settingsStore.setTheme(theme)
   showSettingsDropdown.value = false
+}
+
+const cycleTheme = () => {
+  const order: Array<'light' | 'dark' | 'auto'> = ['light', 'dark', 'auto']
+  const idx = order.indexOf(currentTheme.value)
+  const next = order[(idx + 1) % order.length]
+  settingsStore.setTheme(next)
+  showClickTooltip.value = true
+  if (clickTooltipTimer) {
+    clearTimeout(clickTooltipTimer)
+  }
+  clickTooltipTimer = window.setTimeout(() => {
+    showClickTooltip.value = false
+  }, 1200)
 }
 
 // 点击外部关闭下拉菜单
@@ -576,6 +622,45 @@ onUnmounted(() => {
   }
 }
 
+.theme-toggle {
+  position: relative;
+}
+
+.theme-toggle-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: var(--color-neutral-100);
+  border: none;
+  color: var(--color-neutral-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    background-color: var(--color-neutral-200);
+    color: var(--color-primary);
+  }
+}
+
+.theme-click-tooltip {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  background-color: var(--color-neutral-100);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  padding: 6px 8px;
+  z-index: 60;
+  font-size: 0.8125rem;
+  color: var(--color-neutral-700);
+  white-space: nowrap;
+  display: inline-block;
+}
+
 .dropdown-menu {
   position: absolute;
   right: 0;
@@ -614,6 +699,7 @@ onUnmounted(() => {
   background-color: var(--color-neutral-300);
   margin: 4px 0;
 }
+
 
 // 主内容区域样式
 .main-content {
