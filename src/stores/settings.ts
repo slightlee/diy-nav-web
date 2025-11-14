@@ -27,12 +27,13 @@ export const useSettingsStore = defineStore('settings', () => {
         const parsedSettings = JSON.parse(stored)
         settings.value = { ...DEFAULT_SETTINGS, ...parsedSettings }
       } catch (e) {
-        // 如果解析失败，使用默认设置
         settings.value = { ...DEFAULT_SETTINGS }
       }
     } else {
       settings.value = { ...DEFAULT_SETTINGS }
     }
+    applyTheme()
+    applyFontSize()
   }
 
   const updateSettings = (updates: Partial<UserSettings>) => {

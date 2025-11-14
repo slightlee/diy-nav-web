@@ -477,20 +477,20 @@ const confirmDeleteTag = () => {
   gap: $spacing-xs;
   font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
-  color: $color-neutral-800;
+  color: var(--color-neutral-800);
   margin: 0 0 $spacing-md 0;
 }
 
 .manage-tags-modal__count {
   font-size: $font-size-sm;
-  color: $color-neutral-500;
+  color: var(--color-neutral-500);
   font-weight: $font-weight-normal;
 }
 
 // 添加区域
 .manage-tags-modal__add-section {
   padding-bottom: $spacing-lg;
-  border-bottom: 1px solid $color-border;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .manage-tags-modal__add-form {
@@ -522,7 +522,7 @@ const confirmDeleteTag = () => {
 .manage-tags-modal__color-label {
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
-  color: $color-neutral-700;
+  color: var(--color-neutral-700);
 }
 
 .manage-tags-modal__color-list {
@@ -535,19 +535,19 @@ const confirmDeleteTag = () => {
   width: 32px;
   height: 32px;
   border-radius: $border-radius-md;
-  border: 2px solid $color-border;
+  border: 2px solid var(--color-border);
   cursor: pointer;
   transition: all $transition-fast;
   position: relative;
 
   &:hover {
     transform: scale(1.1);
-    border-color: $color-neutral-300;
+    border-color: var(--color-neutral-300);
   }
 
   &--selected {
-    border-color: $color-primary;
-    box-shadow: 0 0 0 2px rgba($color-primary, 0.2);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
   }
 }
 
@@ -567,15 +567,15 @@ const confirmDeleteTag = () => {
 
 // 标签项
 .manage-tags-modal__tag-item {
-  background-color: $color-white;
-  border: 1px solid $color-border;
+  background-color: var(--color-neutral-100);
+  border: 1px solid var(--color-border);
   border-radius: $border-radius-md;
   overflow: hidden;
   transition: all $transition-fast;
 
   &--editing {
-    border-color: $color-primary;
-    box-shadow: 0 0 0 2px rgba($color-primary, 0.1);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.12);
   }
 }
 
@@ -594,14 +594,14 @@ const confirmDeleteTag = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: $color-neutral-400;
+  color: var(--color-neutral-400);
   cursor: move;
   border-radius: $border-radius-sm;
   transition: all $transition-fast;
 
   &:hover {
-    color: $color-neutral-600;
-    background-color: $color-neutral-100;
+    color: var(--color-neutral-600);
+    background-color: var(--color-neutral-100);
   }
 }
 
@@ -620,7 +620,7 @@ const confirmDeleteTag = () => {
   width: 20px;
   height: 20px;
   border-radius: $border-radius-pill;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--color-border);
 }
 
 .manage-tags-modal__tag-info {
@@ -631,7 +631,7 @@ const confirmDeleteTag = () => {
 .manage-tags-modal__tag-name {
   font-size: $font-size-base;
   font-weight: $font-weight-medium;
-  color: $color-neutral-800;
+  color: var(--color-neutral-800);
   margin: 0 0 $spacing-xs 0;
   @include text-truncate(1);
 }
@@ -640,7 +640,7 @@ const confirmDeleteTag = () => {
   display: flex;
   gap: $spacing-md;
   font-size: $font-size-xs;
-  color: $color-neutral-500;
+  color: var(--color-neutral-500);
 }
 
 .manage-tags-modal__usage-count,
@@ -651,11 +651,11 @@ const confirmDeleteTag = () => {
 }
 
 .manage-tags-modal__delete-btn {
-  color: $color-neutral-500;
+  color: var(--color-neutral-500);
 
   &:hover {
-    color: $color-error;
-    background-color: rgba($color-error, 0.1);
+    color: var(--color-error);
+    background-color: var(--color-neutral-100);
   }
 }
 
@@ -665,7 +665,7 @@ const confirmDeleteTag = () => {
   flex-direction: column;
   gap: $spacing-sm;
   padding: $spacing-md;
-  background-color: rgba($color-primary, 0.02);
+  background-color: rgba(var(--color-primary-rgb), 0.06);
 }
 
 .manage-tags-modal__edit-color {

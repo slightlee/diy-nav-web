@@ -367,8 +367,8 @@ onUnmounted(() => {
   position: relative;
   cursor: default;
   transition: all $transition-normal;
-  border: 1px solid $color-border;
-  background-color: $color-white;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-neutral-100);
   border-radius: $border-radius-lg;
   overflow: hidden;
   min-height: 160px;
@@ -379,7 +379,7 @@ onUnmounted(() => {
     cursor: pointer;
 
     &:hover {
-      border-color: $color-primary;
+      border-color: var(--color-primary);
       box-shadow: $shadow-card-hover;
     }
   }
@@ -434,7 +434,7 @@ onUnmounted(() => {
   height: 32px;
   border-radius: $border-radius-sm;
   overflow: hidden;
-  background-color: $color-neutral-100;
+  background-color: var(--color-neutral-100);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -457,7 +457,7 @@ onUnmounted(() => {
 }
 
 .website-card__favicon-placeholder {
-  color: $color-neutral-400;
+  color: var(--color-neutral-400);
   font-size: $font-size-sm;
 }
 
@@ -489,11 +489,11 @@ onUnmounted(() => {
   @include text-truncate(1);
 
   &:hover {
-    color: $color-primary;
+    color: var(--color-primary);
   }
 
   &:focus {
-    outline: 2px solid $color-primary;
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
     border-radius: $border-radius-sm;
   }
@@ -501,7 +501,7 @@ onUnmounted(() => {
 
 .website-card__description {
   margin: 0;
-  color: $color-neutral-600;
+  color: var(--color-neutral-600);
   font-size: $font-size-sm;
   line-height: $line-height-normal;
   @include text-truncate(2);
@@ -521,10 +521,10 @@ onUnmounted(() => {
   width: 8px;
   height: 8px;
   border-radius: $border-radius-full;
-  background-color: $color-error;
+  background-color: var(--color-error);
 
   &--online {
-    background-color: $color-success;
+    background-color: var(--color-success);
   }
 }
 
@@ -542,7 +542,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: $spacing-xs;
-  color: $color-neutral-500;
+  color: var(--color-neutral-500);
   font-size: $font-size-sm;
   font-family: $font-family-mono;
 }
@@ -570,14 +570,14 @@ onUnmounted(() => {
   border-radius: $border-radius-pill;
   font-size: $font-size-xs;
   font-weight: $font-weight-medium;
-  color: $color-white;
-  background-color: $color-primary;
+  color: var(--color-white);
+  background-color: var(--color-primary);
   @include text-truncate(1);
   max-width: 80px;
 
   &--more {
-    background-color: $color-neutral-300;
-    color: $color-neutral-600;
+    background-color: var(--color-neutral-300);
+    color: var(--color-neutral-600);
   }
 }
 
@@ -589,7 +589,7 @@ onUnmounted(() => {
   gap: $spacing-sm;
   margin-top: auto;
   padding-top: $spacing-sm;
-  border-top: 1px solid $color-neutral-100;
+  border-top: 1px solid var(--color-neutral-200);
 }
 
 // 统计信息
@@ -605,7 +605,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: $spacing-xs;
-  color: $color-neutral-500;
+  color: var(--color-neutral-500);
   font-size: $font-size-xs;
   @include text-truncate(1);
 }
@@ -633,8 +633,8 @@ onUnmounted(() => {
   height: 32px;
   border: none;
   border-radius: $border-radius-sm;
-  background-color: $color-neutral-100;
-  color: $color-neutral-500;
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-500);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -647,18 +647,18 @@ onUnmounted(() => {
   }
 
   &:focus {
-    outline: 2px solid $color-primary;
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
 
   &--edit:hover {
-    background-color: $color-primary;
-    color: $color-white;
+    background-color: var(--color-primary);
+    color: var(--color-white);
   }
 
   &--delete:hover {
-    background-color: $color-error;
-    color: $color-white;
+    background-color: var(--color-error);
+    color: var(--color-white);
   }
 
   .website-card--sm & {
@@ -681,7 +681,7 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: $color-white;
+  background-color: var(--color-neutral-100);
   border-radius: $border-radius-lg;
   display: flex;
   flex-direction: column;
@@ -756,7 +756,7 @@ onUnmounted(() => {
   }
 
   .website-card__action-btn {
-    border: 1px solid $color-border;
+    border: 1px solid var(--color-border);
   }
 }
 
@@ -777,7 +777,7 @@ onUnmounted(() => {
 @media print {
   .website-card {
     box-shadow: none;
-    border: 1px solid $color-black;
+    border: 1px solid var(--color-black);
     break-inside: avoid;
   }
 

@@ -476,15 +476,15 @@ onUnmounted(() => {
 
 .app-container {
   min-height: 100vh;
-  background-color: #F9FAFB;
+  background-color: var(--color-neutral-50);
   display: flex;
   flex-direction: column;
 }
 
 // 顶部区域样式
 .header {
-  background-color: white;
-  border-bottom: 1px solid #E5E7EB;
+  background-color: var(--color-neutral-100);
+  border-bottom: 1px solid var(--color-border);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   position: sticky;
   top: 0;
@@ -510,8 +510,8 @@ onUnmounted(() => {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background-color: #3B82F6;
-  color: white;
+  background-color: var(--color-primary);
+  color: var(--color-white);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -521,7 +521,7 @@ onUnmounted(() => {
 .app-title {
   font-size: clamp(1.25rem, 2.5vw, 1.75rem);
   font-weight: bold;
-  color: #1F2937;
+  color: var(--color-neutral-800);
   margin: 0;
 }
 
@@ -532,8 +532,8 @@ onUnmounted(() => {
 }
 
 .add-site-btn {
-  background-color: #3B82F6;
-  color: white;
+  background-color: var(--color-primary);
+  color: var(--color-white);
   border: none;
   padding: 0.4rem 0.75rem;
   border-radius: 8px;
@@ -547,7 +547,7 @@ onUnmounted(() => {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 
   &:hover {
-    background-color: #2563EB;
+    background-color: var(--color-primary-dark);
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
     transform: translateY(-1px);
   }
@@ -561,9 +561,9 @@ onUnmounted(() => {
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background-color: #F3F4F6;
+  background-color: var(--color-neutral-100);
   border: none;
-  color: #374151;
+  color: var(--color-neutral-700);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -571,8 +571,8 @@ onUnmounted(() => {
   transition: all 0.2s ease-in-out;
 
   &:hover {
-    background-color: #E5E7EB;
-    color: #3B82F6;
+    background-color: var(--color-neutral-200);
+    color: var(--color-primary);
   }
 }
 
@@ -581,7 +581,7 @@ onUnmounted(() => {
   right: 0;
   top: calc(100% + 8px);
   width: 192px;
-  background-color: white;
+  background-color: var(--color-neutral-100);
   border-radius: 8px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
   padding: 8px 0;
@@ -592,26 +592,26 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   padding: 8px 16px;
-  color: #374151;
+  color: var(--color-neutral-700);
   text-decoration: none;
   font-size: 0.875rem;
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: #F3F4F6;
-    color: #3B82F6;
+    background-color: var(--color-neutral-200);
+    color: var(--color-primary);
   }
 
   i {
     margin-right: 8px;
-    color: #6B7280;
+    color: var(--color-neutral-600);
     width: 12px;
   }
 }
 
 .dropdown-divider {
   height: 1px;
-  background-color: #E5E7EB;
+  background-color: var(--color-neutral-300);
   margin: 4px 0;
 }
 
@@ -640,21 +640,21 @@ onUnmounted(() => {
 .search-input {
   width: 100%;
   padding: 0.75rem 2.75rem 0.75rem 1rem;
-  border: 1px solid #E5E7EB;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   font-size: 1rem;
-  background-color: white;
+  background-color: var(--color-neutral-100);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   transition: all 0.2s ease-in-out;
 
   &:focus {
     outline: none;
-    border-color: #3B82F6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12), 0 2px 12px rgba(0, 0, 0, 0.08);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.12), 0 2px 12px rgba(0, 0, 0, 0.08);
   }
 
   &::placeholder {
-    color: #9CA3AF;
+    color: var(--color-neutral-400);
   }
 }
 
@@ -665,13 +665,13 @@ onUnmounted(() => {
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: #9CA3AF;
+  color: var(--color-neutral-400);
   font-size: 1.125rem;
   cursor: pointer;
   transition: color 0.2s;
 
   &:hover {
-    color: #3B82F6;
+    color: var(--color-primary);
   }
 }
 
@@ -772,15 +772,15 @@ onUnmounted(() => {
   transition: all 0.2s ease-in-out;
   display: flex;
   align-items: center;
-  background-color: #F3F4F6;
-  color: #374151;
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-700);
 
   &:hover {
     transform: scale(1.02);
   }
 
   &.active {
-    color: white;
+    color: var(--color-white);
     border-color: transparent;
   }
 
@@ -811,8 +811,8 @@ onUnmounted(() => {
   padding: 5px 10px;
   border-radius: 9999px;
   font-size: 0.875rem;
-  background-color: #F3F4F6;
-  color: #374151;
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-700);
   border: none;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
@@ -820,12 +820,12 @@ onUnmounted(() => {
   align-items: center;
 
   &:hover {
-    background-color: #E5E7EB;
+    background-color: var(--color-neutral-200);
   }
 
   &.active {
-    background-color: #3B82F6;
-    color: white;
+    background-color: var(--color-primary);
+    color: var(--color-white);
   }
 
   .dot {
@@ -833,10 +833,11 @@ onUnmounted(() => {
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background-color: #D1D5DB;
+    background-color: var(--color-neutral-300);
 
     .active & {
       background-color: white;
+
     }
   }
 }
@@ -865,8 +866,8 @@ onUnmounted(() => {
 
 // 添加网站卡片样式
 .add-card {
-  background-color: white;
-  border: 2px dashed #E5E7EB;
+  background-color: var(--color-neutral-100);
+  border: 2px dashed var(--color-border);
   border-radius: 8px;
   padding: 1.25rem;
   cursor: pointer;
@@ -877,8 +878,8 @@ onUnmounted(() => {
   min-height: 140px;
 
   &:hover {
-    border-color: #3B82F6;
-    background-color: #F0F9FF;
+    border-color: var(--color-primary);
+    background-color: rgba(var(--color-primary-rgb), 0.06);
   }
 }
 
@@ -887,14 +888,14 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 0.4rem;
-  color: #6B7280;
+  color: var(--color-neutral-600);
 }
 
 .add-icon {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background-color: #F3F4F6;
+  background-color: var(--color-neutral-100);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -915,14 +916,14 @@ onUnmounted(() => {
   h3 {
     font-size: 1.125rem;
     font-weight: 600;
-    color: #1F2937;
+    color: var(--color-neutral-800);
     margin: 0;
   }
 }
 
 .clear-search-btn {
   font-size: 0.875rem;
-  color: #6B7280;
+  color: var(--color-neutral-600);
   background: none;
   border: none;
   cursor: pointer;
@@ -931,7 +932,7 @@ onUnmounted(() => {
   transition: color 0.2s;
 
   &:hover {
-    color: #374151;
+    color: var(--color-neutral-700);
   }
 
   i {

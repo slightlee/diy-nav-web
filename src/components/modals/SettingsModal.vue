@@ -329,18 +329,15 @@ const saveSettings = () => {
 
 // 应用设置
 const applySettings = () => {
-  // 应用主题
   const root = document.documentElement
-  if (settings.value.theme === 'dark') {
-    root.classList.add('dark-theme')
-  } else if (settings.value.theme === 'light') {
-    root.classList.remove('dark-theme')
+
+  if (settings.value.theme === 'auto') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    root.setAttribute('data-theme', prefersDark ? 'dark' : 'light')
   } else {
-    // auto模式由CSS媒体查询处理
-    root.classList.remove('dark-theme')
+    root.setAttribute('data-theme', settings.value.theme)
   }
 
-  // 应用字体大小
   const fontSizeMap = {
     small: '14px',
     medium: '16px',
@@ -348,7 +345,6 @@ const applySettings = () => {
   }
   root.style.fontSize = fontSizeMap[settings.value.fontSize]
 
-  // 应用网格密度
   root.classList.remove('grid-compact', 'grid-normal', 'grid-loose')
   root.classList.add(`grid-${settings.value.gridDensity}`)
 }
@@ -529,13 +525,13 @@ onMounted(() => {
 // 区域样式
 .settings-modal__section {
   padding: $spacing-lg;
-  background-color: $color-white;
-  border: 1px solid $color-border;
+  background-color: var(--color-neutral-100);
+  border: 1px solid var(--color-border);
   border-radius: $border-radius-lg;
 
   &--danger {
-    border-color: $color-error;
-    background-color: rgba($color-error, 0.02);
+    border-color: var(--color-error);
+    background-color: var(--color-neutral-100);
   }
 }
 
@@ -545,7 +541,7 @@ onMounted(() => {
   gap: $spacing-xs;
   font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
-  color: $color-neutral-800;
+  color: var(--color-neutral-800);
   margin: 0 0 $spacing-lg 0;
 }
 
@@ -558,26 +554,26 @@ onMounted(() => {
 
 .settings-modal__data-action {
   padding: $spacing-md;
-  border: 1px solid $color-neutral-200;
+  border: 1px solid var(--color-neutral-200);
   border-radius: $border-radius-md;
   transition: all $transition-fast;
 
   &:hover {
-    border-color: $color-primary;
-    background-color: rgba($color-primary, 0.02);
+    border-color: var(--color-primary);
+    background-color: rgba(var(--color-primary-rgb), 0.06);
   }
 }
 
 .settings-modal__action-title {
   font-size: $font-size-base;
   font-weight: $font-weight-medium;
-  color: $color-neutral-800;
+  color: var(--color-neutral-800);
   margin: 0 0 $spacing-xs 0;
 }
 
 .settings-modal__action-description {
   font-size: $font-size-sm;
-  color: $color-neutral-600;
+  color: var(--color-neutral-600);
   margin: 0 0 $spacing-md 0;
   line-height: $line-height-normal;
 }
@@ -603,8 +599,8 @@ onMounted(() => {
   pointer-events: none;
 
   &:checked + .settings-modal__theme-card {
-    border-color: $color-primary;
-    box-shadow: 0 0 0 2px rgba($color-primary, 0.2);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
   }
 }
 
@@ -614,12 +610,12 @@ onMounted(() => {
   align-items: center;
   gap: $spacing-sm;
   padding: $spacing-md;
-  border: 2px solid $color-border;
+  border: 2px solid var(--color-border);
   border-radius: $border-radius-md;
   transition: all $transition-fast;
 
   &:hover {
-    border-color: $color-neutral-300;
+    border-color: var(--color-neutral-300);
   }
 }
 
@@ -652,7 +648,7 @@ onMounted(() => {
 .settings-modal__theme-name {
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
-  color: $color-neutral-700;
+  color: var(--color-neutral-700);
 }
 
 // 设置组
@@ -672,20 +668,20 @@ onMounted(() => {
 .settings-modal__setting-label {
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
-  color: $color-neutral-700;
+  color: var(--color-neutral-700);
 }
 
 .settings-modal__setting-select {
   padding: $spacing-xs $spacing-sm;
-  border: 1px solid $color-border;
+  border: 1px solid var(--color-border);
   border-radius: $border-radius-sm;
-  background-color: $color-white;
-  color: $color-neutral-700;
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-700);
   font-size: $font-size-sm;
   transition: all $transition-fast;
 
   &:focus {
-    outline: 2px solid $color-primary;
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
 }
@@ -701,19 +697,19 @@ onMounted(() => {
 .settings-modal__checkbox {
   width: 16px;
   height: 16px;
-  accent-color: $color-primary;
+  accent-color: var(--color-primary);
   margin-top: 2px;
 }
 
 .settings-modal__checkbox-text {
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
-  color: $color-neutral-700;
+  color: var(--color-neutral-700);
 }
 
 .settings-modal__checkbox-description {
   font-size: $font-size-xs;
-  color: $color-neutral-500;
+  color: var(--color-neutral-500);
   margin-top: $spacing-xs;
 }
 
@@ -721,7 +717,7 @@ onMounted(() => {
 .settings-modal__shortcuts-section {
   margin-top: $spacing-lg;
   padding-top: $spacing-lg;
-  border-top: 1px solid $color-neutral-200;
+  border-top: 1px solid var(--color-neutral-200);
 }
 
 .settings-modal__shortcuts-title {
@@ -730,7 +726,7 @@ onMounted(() => {
   gap: $spacing-xs;
   font-size: $font-size-base;
   font-weight: $font-weight-medium;
-  color: $color-neutral-800;
+  color: var(--color-neutral-800);
   margin: 0 0 $spacing-md 0;
 }
 
@@ -745,23 +741,23 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: $spacing-xs $spacing-sm;
-  background-color: $color-neutral-50;
+  background-color: var(--color-neutral-50);
   border-radius: $border-radius-sm;
 }
 
 .settings-modal__shortcut-name {
   font-size: $font-size-sm;
-  color: $color-neutral-700;
+  color: var(--color-neutral-700);
 }
 
 .settings-modal__shortcut-key {
   padding: $spacing-xs $spacing-sm;
-  background-color: $color-neutral-200;
-  border: 1px solid $color-neutral-300;
+  background-color: var(--color-neutral-200);
+  border: 1px solid var(--color-neutral-300);
   border-radius: $border-radius-sm;
   font-size: $font-size-xs;
   font-family: $font-family-mono;
-  color: $color-neutral-700;
+  color: var(--color-neutral-700);
 }
 
 // 危险操作
@@ -786,7 +782,7 @@ onMounted(() => {
   gap: $spacing-sm;
   justify-content: flex-end;
   padding-top: $spacing-lg;
-  border-top: 1px solid $color-border;
+  border-top: 1px solid var(--color-border);
 }
 
 // 响应式适配

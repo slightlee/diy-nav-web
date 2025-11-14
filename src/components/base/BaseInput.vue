@@ -501,25 +501,25 @@ defineExpose({
 .base-input__label {
   display: block;
   font-weight: $font-weight-medium;
-  color: $color-neutral-700;
+  color: var(--color-neutral-700);
   margin-bottom: $spacing-xs;
   transition: color $transition-fast;
 
   &--required::after {
     content: ' *';
-    color: $color-error;
+    color: var(--color-error);
   }
 
   .base-input--focused & {
-    color: $color-primary;
+    color: var(--color-primary);
   }
 
   .base-input--disabled & {
-    color: $color-neutral-400;
+    color: var(--color-neutral-400);
   }
 
   .base-input--error & {
-    color: $color-error;
+    color: var(--color-error);
   }
 }
 
@@ -528,51 +528,51 @@ defineExpose({
   position: relative;
   display: flex;
   align-items: center;
-  background-color: $color-white;
-  border: 1px solid $color-border;
+  background-color: var(--color-neutral-100);
+  border: 1px solid var(--color-border);
   transition: all $transition-fast;
 
   &:hover {
-    border-color: $color-neutral-300;
+    border-color: var(--color-neutral-300);
   }
 
   &--focused {
-    border-color: $color-primary;
-    box-shadow: 0 0 0 3px rgba($color-primary, 0.1);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
   }
 
   &--disabled {
-    background-color: $color-neutral-50;
-    border-color: $color-neutral-200;
+    background-color: var(--color-neutral-100);
+    border-color: var(--color-neutral-200);
     cursor: not-allowed;
   }
 
   &--readonly {
-    background-color: $color-neutral-50;
-    border-color: $color-neutral-200;
+    background-color: var(--color-neutral-100);
+    border-color: var(--color-neutral-200);
   }
 
   &--error {
-    border-color: $color-error;
+    border-color: var(--color-error);
 
     &:focus {
-      box-shadow: 0 0 0 3px rgba($color-error, 0.1);
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
     }
   }
 
   &--success {
-    border-color: $color-success;
+    border-color: var(--color-success);
 
     &:focus {
-      box-shadow: 0 0 0 3px rgba($color-success, 0.1);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
     }
   }
 
   &--warning {
-    border-color: $color-warning;
+    border-color: var(--color-warning);
 
     &:focus {
-      box-shadow: 0 0 0 3px rgba($color-warning, 0.1);
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
     }
   }
 }
@@ -584,18 +584,18 @@ defineExpose({
   border: none;
   outline: none;
   background: transparent;
-  color: $color-neutral-800;
+  color: var(--color-neutral-800);
   font-family: $font-family-sans;
   resize: vertical;
   transition: all $transition-fast;
 
   &::placeholder {
-    color: $color-neutral-400;
+    color: var(--color-neutral-400);
   }
 
   &:disabled {
     cursor: not-allowed;
-    color: $color-neutral-400;
+    color: var(--color-neutral-400);
   }
 
   &:readonly {
@@ -624,7 +624,7 @@ defineExpose({
 // 图标
 .base-input__icon {
   position: absolute;
-  color: $color-neutral-400;
+  color: var(--color-neutral-400);
   transition: color $transition-fast;
   pointer-events: none;
 
@@ -651,23 +651,23 @@ defineExpose({
 
 // 清除按钮
 .base-input__clear-btn {
-  color: $color-neutral-400;
+  color: var(--color-neutral-400);
   cursor: pointer;
   transition: color $transition-fast;
 
   &:hover {
-    color: $color-neutral-600;
+    color: var(--color-neutral-600);
   }
 }
 
 // 密码切换按钮
 .base-input__password-toggle {
-  color: $color-neutral-400;
+  color: var(--color-neutral-400);
   cursor: pointer;
   transition: color $transition-fast;
 
   &:hover {
-    color: $color-neutral-600;
+    color: var(--color-neutral-600);
   }
 }
 
@@ -680,24 +680,24 @@ defineExpose({
 .base-input__char-count {
   text-align: right;
   font-size: $font-size-xs;
-  color: $color-neutral-500;
+  color: var(--color-neutral-500);
   margin-top: $spacing-xs;
   transition: color $transition-fast;
 
   &--error {
-    color: $color-error;
+    color: var(--color-error);
   }
 }
 
 // 帮助文本
 .base-input__help-text {
   font-size: $font-size-sm;
-  color: $color-neutral-500;
+  color: var(--color-neutral-500);
   margin-top: $spacing-xs;
   transition: color $transition-fast;
 
   &--error {
-    color: $color-error;
+    color: var(--color-error);
   }
 }
 

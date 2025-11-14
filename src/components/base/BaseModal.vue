@@ -220,7 +220,7 @@ onUnmounted(() => {
 
 // 模态框容器
 .modal-container {
-  background-color: $color-white;
+  background-color: var(--color-neutral-100);
   border-radius: $border-radius-lg;
   box-shadow: $shadow-xl;
   max-height: 90vh;
@@ -265,14 +265,14 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: $spacing-lg;
-  border-bottom: 1px solid $color-border;
+  border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
 .modal-title {
   font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
-  color: $color-neutral-800;
+  color: var(--color-neutral-800);
   margin: 0;
   flex: 1;
 }
@@ -282,7 +282,7 @@ onUnmounted(() => {
   height: 32px;
   border: none;
   background: none;
-  color: $color-neutral-500;
+  color: var(--color-neutral-500);
   border-radius: $border-radius-sm;
   cursor: pointer;
   display: flex;
@@ -291,12 +291,12 @@ onUnmounted(() => {
   transition: all $transition-fast;
 
   &:hover {
-    background-color: $color-neutral-100;
-    color: $color-neutral-700;
+    background-color: var(--color-neutral-100);
+    color: var(--color-neutral-700);
   }
 
   &:focus {
-    outline: 2px solid $color-primary;
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
 }
@@ -321,7 +321,7 @@ onUnmounted(() => {
 // 模态框底部
 .modal-footer {
   padding: $spacing-lg;
-  border-top: 1px solid $color-border;
+  border-top: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -388,7 +388,7 @@ onUnmounted(() => {
 
   .modal-container {
     box-shadow: none;
-    border: 1px solid $color-border;
+    border: 1px solid var(--color-border);
     max-height: none;
   }
 }

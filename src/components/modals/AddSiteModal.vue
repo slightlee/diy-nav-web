@@ -411,31 +411,31 @@ const tags = computed(() => tagStore.tags)
 .add-site-modal__label {
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
-  color: $color-neutral-800;
+  color: var(--color-neutral-800);
 }
 
 .add-site-modal__label--required::after {
   content: ' *';
-  color: $color-error;
+  color: var(--color-error);
 }
 
 .add-site-modal__select {
   padding: $spacing-sm $spacing-md;
-  border: 1px solid $color-border;
+  border: 1px solid var(--color-border);
   border-radius: $border-radius-md;
-  background-color: $color-white;
-  color: $color-neutral-800;
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-800);
   font-size: $font-size-base;
   min-height: 40px;
   transition: all $transition-fast;
 
   &:hover {
-    border-color: $color-neutral-300;
+    border-color: var(--color-neutral-300);
   }
 
   &:focus {
-    border-color: $color-primary;
-    box-shadow: 0 0 0 3px rgba($color-primary, 0.1);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.12);
     outline: none;
   }
 }
@@ -455,14 +455,14 @@ const tags = computed(() => tagStore.tags)
   padding: 6px 12px;
   border-radius: $border-radius-pill;
   font-size: $font-size-sm;
-  background-color: $color-neutral-100;
-  color: $color-neutral-800;
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-800);
   border: 1px solid transparent;
   cursor: pointer;
   transition: all $transition-fast;
 
   &:hover {
-    background-color: $color-neutral-200;
+    background-color: var(--color-neutral-200);
   }
 }
 
@@ -495,19 +495,19 @@ const tags = computed(() => tagStore.tags)
   align-items: center;
   gap: $spacing-sm;
   padding: $spacing-sm;
-  border: 1px solid $color-border;
+  border: 1px solid var(--color-border);
   border-radius: $border-radius-md;
   transition: all $transition-fast;
 }
 
 .favicon-option input:checked + .favicon-card {
-  border-color: $color-primary;
-  box-shadow: 0 0 0 3px rgba($color-primary, 0.12);
-  background-color: rgba($color-primary, 0.02);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.12);
+  background-color: rgba(var(--color-primary-rgb), 0.06);
 }
 
 .favicon-card:hover {
-  border-color: $color-neutral-300;
+  border-color: var(--color-neutral-300);
 }
 
 .favicon-img {
@@ -522,12 +522,12 @@ const tags = computed(() => tagStore.tags)
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: $color-neutral-600;
+  color: var(--color-neutral-600);
 }
 
 .favicon-text {
   font-size: $font-size-sm;
-  color: $color-neutral-700;
+  color: var(--color-neutral-700);
 }
 
 .add-site-modal__actions {

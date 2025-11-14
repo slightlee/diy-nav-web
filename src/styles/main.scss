@@ -13,8 +13,8 @@
 
 body {
   font-family: $font-family-sans;
-  background-color: $color-neutral-50;
-  color: $color-neutral-800;
+  background-color: var(--color-neutral-50);
+  color: var(--color-neutral-800);
   line-height: 1.6;
   min-height: 100vh;
 }
@@ -36,13 +36,30 @@ html {
 
 // 主题变量支持
 :root {
-  --primary-color: #{$color-primary};
-  --secondary-color: #{$color-secondary};
-  --accent-color: #{$color-accent};
-  --neutral-color: #{$color-neutral};
-  --neutral-dark-color: #{$color-neutral-dark};
-  --border-color: #{$color-border};
-  --primary-rgb: #{$color-primary-rgb};
+  --color-primary: #{$color-primary};
+  --color-primary-dark: #{$color-primary-dark};
+  --color-primary-rgb: #{$color-primary-rgb};
+  --color-secondary: #{$color-secondary};
+  --color-accent: #{$color-accent};
+  --color-white: #{$color-white};
+  --color-black: #{$color-black};
+  --color-neutral: #{$color-neutral};
+  --color-neutral-dark: #{$color-neutral-dark};
+  --color-neutral-50: #{$color-neutral-50};
+  --color-neutral-100: #{$color-neutral-100};
+  --color-neutral-200: #{$color-neutral-200};
+  --color-neutral-300: #{$color-neutral-300};
+  --color-neutral-400: #{$color-neutral-400};
+  --color-neutral-500: #{$color-neutral-500};
+  --color-neutral-600: #{$color-neutral-600};
+  --color-neutral-700: #{$color-neutral-700};
+  --color-neutral-800: #{$color-neutral-800};
+  --color-neutral-900: #{$color-neutral-900};
+  --color-success: #{$color-success};
+  --color-warning: #{$color-warning};
+  --color-error: #{$color-error};
+  --color-info: #{$color-info};
+  --color-border: #{$color-border};
   --border-radius: #{$border-radius-md};
   --font-family: #{$font-family-sans};
   --transition-duration: #{$transition-normal};
@@ -54,36 +71,31 @@ html {
   --shadow-card-hover: #{$shadow-card-hover};
 }
 
-// 暗色主题类
-.dark-theme {
-  --primary-color: #{$color-primary};
-  --secondary-color: #{$color-secondary};
-  --accent-color: #{$color-accent};
-  --neutral-color: #{$color-neutral-900};
-  --neutral-dark-color: #{$color-neutral-100};
-  --border-color: #{$color-neutral-700};
-  --primary-rgb: #{$color-primary-rgb};
-  --border-radius: #{$border-radius-md};
-  --font-family: #{$font-family-sans};
-  --transition-duration: #{$transition-normal};
-  --spacing-unit: #{$spacing-unit};
-  --z-index-modal: #{$z-index-modal};
-  --z-index-dropdown: #{$z-index-dropdown};
-  --z-index-toast: #{$z-index-toast};
+[data-theme="dark"] {
+  --color-neutral-50: #{$color-neutral-900};
+  --color-neutral-100: #{$color-neutral-800};
+  --color-neutral-200: #{$color-neutral-700};
+  --color-neutral-300: #{$color-neutral-600};
+  --color-neutral-400: #{$color-neutral-500};
+  --color-neutral-500: #{$color-neutral-400};
+  --color-neutral-600: #{$color-neutral-300};
+  --color-neutral-700: #{$color-neutral-200};
+  --color-neutral-800: #{$color-neutral-100};
+  --color-neutral-900: #{$color-neutral-50};
+  --color-border: #{$color-neutral-700};
   --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
-// 暗色主题支持
-@media (prefers-color-scheme: dark) {
-  :root {
-    --neutral-color: #{$color-neutral-900};
-    --neutral-dark-color: #{$color-neutral-100};
-    --border-color: #{$color-neutral-700};
-    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.3);
-    --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.4);
-  }
+// 暗色主题类
+[data-theme="dark"] {
+  --color-primary: #{$color-primary};
+  --color-primary-dark: #{$color-primary-dark};
+  --color-secondary: #{$color-secondary};
+  --color-accent: #{$color-accent};
 }
+
+// 移除系统暗色的默认覆盖，统一通过 data-theme 控制
 
 // 滚动条样式
 ::-webkit-scrollbar {

@@ -534,20 +534,20 @@ const confirmDeleteCategory = async () => {
   gap: $spacing-xs;
   font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
-  color: $color-neutral-800;
+  color: var(--color-neutral-800);
   margin: 0 0 $spacing-md 0;
 }
 
 .manage-categories-modal__count {
   font-size: $font-size-sm;
-  color: $color-neutral-500;
+  color: var(--color-neutral-500);
   font-weight: $font-weight-normal;
 }
 
 // 添加区域
 .manage-categories-modal__add-section {
   padding-bottom: $spacing-lg;
-  border-bottom: 1px solid $color-border;
+  border-bottom: 1px solid var(--color-border);
 }
 
 
@@ -583,8 +583,8 @@ const confirmDeleteCategory = async () => {
   min-width: 48px;
   height: 100%;
   padding: 0;
-  background-color: $color-white;
-  border-color: $color-border;
+  background-color: var(--color-neutral-100);
+  border-color: var(--color-border);
   border-radius: $border-radius-md;
 }
 
@@ -592,8 +592,8 @@ const confirmDeleteCategory = async () => {
   position: absolute;
   top: calc(100% + #{$spacing-xs});
   left: 0;
-  background-color: $color-white;
-  border: 1px solid $color-border;
+  background-color: var(--color-neutral-100);
+  border: 1px solid var(--color-border);
   border-radius: $border-radius-md;
   box-shadow: $shadow-md;
   padding: $spacing-sm;
@@ -609,20 +609,20 @@ const confirmDeleteCategory = async () => {
   justify-content: center;
   width: 36px;
   height: 36px;
-  border: 1px solid $color-border;
+  border: 1px solid var(--color-border);
   border-radius: $border-radius-sm;
-  background-color: $color-neutral-50;
+  background-color: var(--color-neutral-100);
   cursor: pointer;
   transition: all $transition-fast;
 }
 
 .manage-categories-modal__icon-item:hover {
-  background-color: $color-neutral-100;
+  background-color: var(--color-neutral-200);
 }
 
 .manage-categories-modal__icon-item.is-active {
-  border-color: $color-primary;
-  box-shadow: 0 0 0 3px rgba($color-primary, 0.12);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.12);
 }
 
 .manage-categories-modal__description-input {
@@ -645,15 +645,15 @@ const confirmDeleteCategory = async () => {
 
 // 分类项
 .manage-categories-modal__category-item {
-  background-color: $color-white;
-  border: 1px solid $color-border;
+  background-color: var(--color-neutral-100);
+  border: 1px solid var(--color-border);
   border-radius: $border-radius-md;
   overflow: hidden;
   transition: all $transition-fast;
 
   &--editing {
-    border-color: $color-primary;
-    box-shadow: 0 0 0 2px rgba($color-primary, 0.1);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.12);
   }
 }
 
@@ -672,14 +672,14 @@ const confirmDeleteCategory = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: $color-neutral-400;
+  color: var(--color-neutral-400);
   cursor: move;
   border-radius: $border-radius-sm;
   transition: all $transition-fast;
 
   &:hover {
-    color: $color-neutral-600;
-    background-color: $color-neutral-100;
+    color: var(--color-neutral-600);
+    background-color: var(--color-neutral-100);
   }
 }
 
@@ -687,8 +687,8 @@ const confirmDeleteCategory = async () => {
   flex-shrink: 0;
   width: 40px;
   height: 40px;
-  background-color: rgba($color-primary, 0.1);
-  color: $color-primary;
+  background-color: rgba(var(--color-primary-rgb), 0.12);
+  color: var(--color-primary);
   border-radius: $border-radius-md;
   display: flex;
   align-items: center;
@@ -704,14 +704,14 @@ const confirmDeleteCategory = async () => {
 .manage-categories-modal__category-name {
   font-size: $font-size-base;
   font-weight: $font-weight-medium;
-  color: $color-neutral-800;
+  color: var(--color-neutral-800);
   margin: 0 0 $spacing-xs 0;
   @include text-truncate(1);
 }
 
 .manage-categories-modal__category-description {
   font-size: $font-size-sm;
-  color: $color-neutral-600;
+  color: var(--color-neutral-600);
   margin: 0 0 $spacing-sm 0;
   @include text-truncate(2);
 }
@@ -720,7 +720,7 @@ const confirmDeleteCategory = async () => {
   display: flex;
   gap: $spacing-md;
   font-size: $font-size-xs;
-  color: $color-neutral-500;
+  color: var(--color-neutral-500);
 }
 
 .manage-categories-modal__website-count,
@@ -737,11 +737,11 @@ const confirmDeleteCategory = async () => {
 }
 
 .manage-categories-modal__delete-btn {
-  color: $color-neutral-500;
+  color: var(--color-neutral-500);
 
   &:hover {
-    color: $color-error;
-    background-color: rgba($color-error, 0.1);
+    color: var(--color-error);
+    background-color: var(--color-neutral-100);
   }
 }
 
@@ -751,7 +751,7 @@ const confirmDeleteCategory = async () => {
   flex-direction: column;
   gap: $spacing-sm;
   padding: $spacing-md;
-  background-color: rgba($color-primary, 0.02);
+  background-color: rgba(var(--color-primary-rgb), 0.06);
 }
 
 .manage-categories-modal__edit-actions {

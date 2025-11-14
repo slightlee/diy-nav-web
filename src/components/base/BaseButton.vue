@@ -230,7 +230,7 @@ defineExpose({
 
   // 边框
   &--bordered {
-    border: 1px solid $color-border;
+    border: 1px solid var(--color-border);
   }
 
   // 形状变体
@@ -309,13 +309,13 @@ defineExpose({
 
   // 颜色变体
   &--primary {
-    background-color: $color-primary;
-    color: $color-white;
-    border-color: $color-primary;
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    border-color: var(--color-primary);
 
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
-      background-color: $color-primary-dark;
-      border-color: $color-primary-dark;
+      background-color: var(--color-primary-dark);
+      border-color: var(--color-primary-dark);
       transform: translateY(-1px);
       box-shadow: $shadow-md;
     }
@@ -326,13 +326,13 @@ defineExpose({
   }
 
   &--secondary {
-    background-color: $color-neutral-100;
-    color: $color-neutral-800;
-    border-color: $color-neutral-200;
+    background-color: var(--color-neutral-100);
+    color: var(--color-neutral-800);
+    border-color: var(--color-neutral-200);
 
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
-      background-color: $color-neutral-200;
-      color: $color-neutral-900;
+      background-color: var(--color-neutral-200);
+      color: var(--color-neutral-900);
       transform: translateY(-1px);
       box-shadow: $shadow-sm;
     }
@@ -340,12 +340,12 @@ defineExpose({
 
   &--outline {
     background-color: transparent;
-    color: $color-primary;
-    border-color: $color-primary;
+    color: var(--color-primary);
+    border-color: var(--color-primary);
 
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
-      background-color: $color-primary;
-      color: $color-white;
+      background-color: var(--color-primary);
+      color: var(--color-white);
       transform: translateY(-1px);
       box-shadow: $shadow-sm;
     }
@@ -353,12 +353,12 @@ defineExpose({
 
   &--ghost {
     background-color: transparent;
-    color: $color-primary;
+    color: var(--color-primary);
     border-color: transparent;
 
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
-      background-color: rgba($color-primary, 0.1);
-      color: $color-primary-dark;
+      background-color: rgba(var(--color-primary-rgb), 0.1);
+      color: var(--color-primary-dark);
       transform: translateY(-1px);
     }
   }
