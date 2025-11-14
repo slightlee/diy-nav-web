@@ -53,60 +53,6 @@
       </div>
     </div>
 
-    <!-- 主题设置 -->
-    <div class="settings-modal__section">
-      <h3 class="settings-modal__section-title">
-        <i class="fas fa-palette" />
-        主题设置
-      </h3>
-
-      <div class="settings-modal__theme-options">
-        <label class="settings-modal__theme-option">
-          <input
-            v-model="settings.theme"
-            type="radio"
-            value="light"
-            class="settings-modal__theme-radio"
-          />
-          <div class="settings-modal__theme-card">
-            <div class="settings-modal__theme-preview settings-modal__theme-preview--light">
-              <i class="fas fa-sun" />
-            </div>
-            <span class="settings-modal__theme-name">浅色主题</span>
-          </div>
-        </label>
-
-        <label class="settings-modal__theme-option">
-          <input
-            v-model="settings.theme"
-            type="radio"
-            value="dark"
-            class="settings-modal__theme-radio"
-          />
-          <div class="settings-modal__theme-card">
-            <div class="settings-modal__theme-preview settings-modal__theme-preview--dark">
-              <i class="fas fa-moon" />
-            </div>
-            <span class="settings-modal__theme-name">深色主题</span>
-          </div>
-        </label>
-
-        <label class="settings-modal__theme-option">
-          <input
-            v-model="settings.theme"
-            type="radio"
-            value="auto"
-            class="settings-modal__theme-radio"
-          />
-          <div class="settings-modal__theme-card">
-            <div class="settings-modal__theme-preview settings-modal__theme-preview--auto">
-              <i class="fas fa-adjust" />
-            </div>
-            <span class="settings-modal__theme-name">跟随系统</span>
-          </div>
-        </label>
-      </div>
-    </div>
 
     <!-- 显示设置 -->
     <div class="settings-modal__section">
@@ -330,21 +276,12 @@ const saveSettings = () => {
 // 应用设置
 const applySettings = () => {
   const root = document.documentElement
-
-  if (settings.value.theme === 'auto') {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    root.setAttribute('data-theme', prefersDark ? 'dark' : 'light')
-  } else {
-    root.setAttribute('data-theme', settings.value.theme)
-  }
-
   const fontSizeMap = {
     small: '14px',
     medium: '16px',
     large: '18px'
   }
   root.style.fontSize = fontSizeMap[settings.value.fontSize]
-
   root.classList.remove('grid-compact', 'grid-normal', 'grid-loose')
   root.classList.add(`grid-${settings.value.gridDensity}`)
 }
