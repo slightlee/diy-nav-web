@@ -15,7 +15,8 @@
     "vue-tsc": "vue-tsc",
     "vue-tsc:watch": "vue-tsc --watch",
     "build-only": "vite build",
-    "preview-only": "vite preview"
+    "preview-only": "vite preview",
+    "stylelint": "stylelint \"src/**/*.{vue,scss,css}\""
   },
   "keywords": [],
   "author": "",
@@ -31,7 +32,13 @@
     "eslint": "^9.15.0",
     "eslint-plugin-vue": "^9.30.0",
     "globals": "^15.12.0",
+    "postcss-html": "^1.8.0",
+    "postcss-scss": "^4.0.9",
     "prettier": "^3.3.3",
+    "stylelint": "^16.25.0",
+    "stylelint-config-standard-scss": "^16.0.0",
+    "stylelint-config-standard-vue": "^1.0.0",
+    "stylelint-scss": "^6.12.1",
     "typescript": "^5.1.3",
     "typescript-eslint": "^8.15.0",
     "vite": "^7.2.2",

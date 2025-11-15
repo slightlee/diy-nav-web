@@ -366,10 +366,10 @@ onUnmounted(() => {
   @include card-layout;
   position: relative;
   cursor: default;
-  transition: all $transition-normal;
+  transition: all var(--transition-normal);
   border: 1px solid var(--color-border);
   background-color: var(--color-neutral-100);
-  border-radius: $border-radius-lg;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   min-height: 160px;
   display: flex;
@@ -380,12 +380,12 @@ onUnmounted(() => {
 
     &:hover {
       border-color: var(--color-primary);
-      box-shadow: $shadow-card-hover;
+      box-shadow: var(--shadow-card-hover);
     }
   }
 
   &--hovered {
-    box-shadow: $shadow-card-hover;
+    box-shadow: var(--shadow-card-hover);
   }
 
   &--loading {
@@ -396,34 +396,28 @@ onUnmounted(() => {
   // 尺寸变体
   &--sm {
     min-height: 120px;
-    padding: $spacing-sm;
+    padding: var(--spacing-sm);
   }
 
   &--md {
     min-height: 160px;
-    padding: $spacing-md;
+    padding: var(--spacing-md);
   }
 
   &--lg {
     min-height: 200px;
-    padding: $spacing-lg;
+    padding: var(--spacing-lg);
   }
 
-  // 操作按钮可见性
-  &--actions-visible {
-    .website-card__actions {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+  // 操作按钮可见性（已通过 .website-card__actions 内部选择器处理）
 }
 
 // 卡片头部
 .website-card__header {
   display: flex;
   align-items: flex-start;
-  gap: $spacing-sm;
-  margin-bottom: $spacing-sm;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
   flex-shrink: 0;
 }
 
@@ -432,7 +426,7 @@ onUnmounted(() => {
   flex-shrink: 0;
   width: 32px;
   height: 32px;
-  border-radius: $border-radius-sm;
+  border-radius: var(--radius-sm);
   overflow: hidden;
   background-color: var(--color-neutral-100);
   display: flex;
@@ -458,7 +452,7 @@ onUnmounted(() => {
 
 .website-card__favicon-placeholder {
   color: var(--color-neutral-400);
-  font-size: $font-size-sm;
+  font-size: var(--font-size-sm);
 }
 
 // 标题区域
@@ -469,17 +463,17 @@ onUnmounted(() => {
 
 .website-card__title {
   margin: 0;
-  font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
-  line-height: $line-height-tight;
-  margin-bottom: $spacing-xs;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--spacing-xs);
 
   .website-card--sm & {
-    font-size: $font-size-sm;
+    font-size: var(--font-size-sm);
   }
 
   .website-card--lg & {
-    font-size: $font-size-lg;
+    font-size: var(--font-size-lg);
   }
 }
 
@@ -495,17 +489,17 @@ onUnmounted(() => {
   &:focus {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
-    border-radius: $border-radius-sm;
+    border-radius: var(--radius-sm);
   }
 }
 
 .website-card__description {
   margin: 0;
   color: var(--color-neutral-600);
-  font-size: $font-size-sm;
-  line-height: $line-height-normal;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
   @include text-truncate(2);
-  min-height: calc(2 * #{$line-height-normal} * 1em);
+  min-height: calc(2 * var(--line-height-normal) * 1em);
 
   .website-card--sm & {
     display: none;
@@ -520,7 +514,7 @@ onUnmounted(() => {
 .website-card__status-dot {
   width: 8px;
   height: 8px;
-  border-radius: $border-radius-full;
+  border-radius: var(--radius-full);
   background-color: var(--color-error);
 
   &--online {
@@ -533,23 +527,23 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
-  margin-bottom: $spacing-sm;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
 }
 
 // URL显示
 .website-card__url {
   display: flex;
   align-items: center;
-  gap: $spacing-xs;
+  gap: var(--spacing-xs);
   color: var(--color-neutral-500);
-  font-size: $font-size-sm;
-  font-family: $font-family-mono;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family-mono);
 }
 
 .website-card__url-icon {
   flex-shrink: 0;
-  font-size: $font-size-xs;
+  font-size: var(--font-size-xs);
 }
 
 .website-card__url-text {
@@ -560,16 +554,16 @@ onUnmounted(() => {
 .website-card__tags {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-xs;
+  gap: var(--spacing-xs);
   align-items: center;
   min-height: 24px;
 }
 
 .website-card__tag {
-  padding: $spacing-xs $spacing-sm;
-  border-radius: $border-radius-pill;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
   color: var(--color-white);
   background-color: var(--color-primary);
   @include text-truncate(1);
@@ -586,16 +580,16 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
   margin-top: auto;
-  padding-top: $spacing-sm;
+  padding-top: var(--spacing-sm);
   border-top: 1px solid var(--color-neutral-200);
 }
 
 // 统计信息
 .website-card__stats {
   display: flex;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
   align-items: center;
   flex: 1;
   min-width: 0;
@@ -604,9 +598,9 @@ onUnmounted(() => {
 .website-card__stat {
   display: flex;
   align-items: center;
-  gap: $spacing-xs;
+  gap: var(--spacing-xs);
   color: var(--color-neutral-500);
-  font-size: $font-size-xs;
+  font-size: var(--font-size-xs);
   @include text-truncate(1);
 }
 
@@ -617,10 +611,10 @@ onUnmounted(() => {
 // 操作按钮
 .website-card__actions {
   display: flex;
-  gap: $spacing-xs;
+  gap: var(--spacing-xs);
   opacity: 0;
   transform: translateY(4px);
-  transition: all $transition-fast;
+  transition: all var(--transition-fast);
 
   .website-card--actions-visible & {
     opacity: 1;
@@ -632,15 +626,15 @@ onUnmounted(() => {
   width: 32px;
   height: 32px;
   border: none;
-  border-radius: $border-radius-sm;
+  border-radius: var(--radius-sm);
   background-color: var(--color-neutral-100);
   color: var(--color-neutral-500);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all $transition-fast;
-  font-size: $font-size-sm;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-sm);
 
   &:hover {
     transform: scale(1.05);
@@ -664,13 +658,13 @@ onUnmounted(() => {
   .website-card--sm & {
     width: 28px;
     height: 28px;
-    font-size: $font-size-xs;
+    font-size: var(--font-size-xs);
   }
 
   .website-card--lg & {
     width: 36px;
     height: 36px;
-    font-size: $font-size-base;
+    font-size: var(--font-size-base);
   }
 }
 
@@ -682,30 +676,30 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   background-color: var(--color-neutral-100);
-  border-radius: $border-radius-lg;
+  border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
-  padding: $spacing-md;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
   z-index: 1;
 }
 
 .website-card__skeleton-header {
   display: flex;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
   align-items: center;
 }
 
 .website-card__skeleton-favicon {
   width: 32px;
   height: 32px;
-  border-radius: $border-radius-sm;
+  border-radius: var(--radius-sm);
   @include skeleton-loading;
 }
 
 .website-card__skeleton-text {
   height: 16px;
-  border-radius: $border-radius-sm;
+  border-radius: var(--radius-sm);
   @include skeleton-loading;
 
   &--title {
@@ -725,22 +719,22 @@ onUnmounted(() => {
 // 响应式适配
 @include mobile {
   .website-card {
-    padding: $spacing-sm;
+    padding: var(--spacing-sm);
     min-height: 140px;
   }
 
   .website-card__title {
-    font-size: $font-size-sm;
+    font-size: var(--font-size-sm);
   }
 
   .website-card__description {
-    font-size: $font-size-xs;
+    font-size: var(--font-size-xs);
   }
 
   .website-card__footer {
     flex-direction: column;
     align-items: flex-start;
-    gap: $spacing-xs;
+    gap: var(--spacing-xs);
   }
 
   .website-card__actions {

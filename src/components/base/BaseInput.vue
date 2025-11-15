@@ -416,7 +416,7 @@ defineExpose({
   }
 
   &--disabled {
-    opacity: $opacity-disabled;
+    opacity: var(--opacity-disabled);
     cursor: not-allowed;
   }
 
@@ -427,72 +427,72 @@ defineExpose({
   // 尺寸变体
   &--sm {
     .base-input__inner {
-      padding: $spacing-xs $spacing-sm;
-      font-size: $font-size-sm;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      font-size: var(--font-size-sm);
       min-height: 32px;
     }
 
     .base-input__label {
-      font-size: $font-size-sm;
-      margin-bottom: $spacing-xs;
+      font-size: var(--font-size-sm);
+      margin-bottom: var(--spacing-xs);
     }
   }
 
   &--md {
     .base-input__inner {
-      padding: $spacing-sm $spacing-md;
-      font-size: $font-size-base;
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: var(--font-size-base);
       min-height: 40px;
     }
 
     .base-input__label {
-      font-size: $font-size-base;
-      margin-bottom: $spacing-xs;
+      font-size: var(--font-size-base);
+      margin-bottom: var(--spacing-xs);
     }
   }
 
   &--lg {
     .base-input__inner {
-      padding: $spacing-md $spacing-lg;
-      font-size: $font-size-lg;
+      padding: var(--spacing-md) var(--spacing-lg);
+      font-size: var(--font-size-lg);
       min-height: 48px;
     }
 
     .base-input__label {
-      font-size: $font-size-lg;
-      margin-bottom: $spacing-sm;
+      font-size: var(--font-size-lg);
+      margin-bottom: var(--spacing-sm);
     }
   }
 
   // 状态变体
   &--success {
     .base-input__wrapper {
-      border-color: $color-success;
+      border-color: var(--color-success);
     }
   }
 
   &--warning {
     .base-input__wrapper {
-      border-color: $color-warning;
+      border-color: var(--color-warning);
     }
   }
 
   &--error {
     .base-input__wrapper {
-      border-color: $color-error;
+      border-color: var(--color-error);
     }
   }
 
   // 形状变体
   &--rounded {
     .base-input__wrapper {
-      border-radius: $border-radius-md;
+      border-radius: var(--radius-md);
     }
   }
 
   &--square {
     .base-input__wrapper {
-      border-radius: $border-radius-sm;
+      border-radius: var(--radius-sm);
     }
   }
 }
@@ -500,10 +500,10 @@ defineExpose({
 // 标签
 .base-input__label {
   display: block;
-  font-weight: $font-weight-medium;
+  font-weight: var(--font-weight-medium);
   color: var(--color-neutral-700);
-  margin-bottom: $spacing-xs;
-  transition: color $transition-fast;
+  margin-bottom: var(--spacing-xs);
+  transition: color var(--transition-fast);
 
   &--required::after {
     content: ' *';
@@ -530,7 +530,7 @@ defineExpose({
   align-items: center;
   background-color: var(--color-neutral-100);
   border: 1px solid var(--color-border);
-  transition: all $transition-fast;
+  transition: all var(--transition-fast);
 
   &:hover {
     border-color: var(--color-neutral-300);
@@ -556,7 +556,7 @@ defineExpose({
     border-color: var(--color-error);
 
     &:focus {
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+      box-shadow: 0 0 0 3px rgba(var(--color-error-rgb), 0.1);
     }
   }
 
@@ -564,7 +564,7 @@ defineExpose({
     border-color: var(--color-success);
 
     &:focus {
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+      box-shadow: 0 0 0 3px rgba(var(--color-success-rgb), 0.1);
     }
   }
 
@@ -572,7 +572,7 @@ defineExpose({
     border-color: var(--color-warning);
 
     &:focus {
-      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+      box-shadow: 0 0 0 3px rgba(var(--color-warning-rgb), 0.1);
     }
   }
 }
@@ -585,9 +585,9 @@ defineExpose({
   outline: none;
   background: transparent;
   color: var(--color-neutral-800);
-  font-family: $font-family-sans;
+  font-family: var(--font-family);
   resize: vertical;
-  transition: all $transition-fast;
+  transition: all var(--transition-fast);
 
   &::placeholder {
     color: var(--color-neutral-400);
@@ -598,25 +598,25 @@ defineExpose({
     color: var(--color-neutral-400);
   }
 
-  &:readonly {
+  &:read-only {
     cursor: default;
   }
 
   // 有前置图标的输入框
   &--with-prefix {
-    padding-left: $spacing-xl;
+    padding-left: var(--spacing-xl);
   }
 
   // 有后置图标的输入框
   &--with-suffix {
-    padding-right: $spacing-xl;
+    padding-right: var(--spacing-xl);
   }
 
   // Textarea特殊样式
   &.base-input__textarea {
-    line-height: $line-height-normal;
-    padding-top: $spacing-sm;
-    padding-bottom: $spacing-sm;
+    line-height: var(--line-height-normal);
+    padding-top: var(--spacing-sm);
+    padding-bottom: var(--spacing-sm);
     min-height: 80px;
   }
 }
@@ -625,16 +625,16 @@ defineExpose({
 .base-input__icon {
   position: absolute;
   color: var(--color-neutral-400);
-  transition: color $transition-fast;
+  transition: color var(--transition-fast);
   pointer-events: none;
 
   &--prefix {
-    left: $spacing-sm;
+    left: var(--spacing-sm);
     z-index: 1;
   }
 
   &--suffix {
-    right: $spacing-sm;
+    right: var(--spacing-sm);
     z-index: 1;
   }
 }
@@ -642,10 +642,10 @@ defineExpose({
 // 后置区域
 .base-input__suffix {
   position: absolute;
-  right: $spacing-sm;
+  right: var(--spacing-sm);
   display: flex;
   align-items: center;
-  gap: $spacing-xs;
+  gap: var(--spacing-xs);
   z-index: 1;
 }
 
@@ -673,15 +673,15 @@ defineExpose({
 
 // 加载图标
 .base-input__loading-icon {
-  color: $color-primary;
+  color: var(--color-primary);
 }
 
 // 字符计数
 .base-input__char-count {
   text-align: right;
-  font-size: $font-size-xs;
+  font-size: var(--font-size-xs);
   color: var(--color-neutral-500);
-  margin-top: $spacing-xs;
+  margin-top: var(--spacing-xs);
   transition: color $transition-fast;
 
   &--error {
@@ -691,9 +691,9 @@ defineExpose({
 
 // 帮助文本
 .base-input__help-text {
-  font-size: $font-size-sm;
+  font-size: var(--font-size-sm);
   color: var(--color-neutral-500);
-  margin-top: $spacing-xs;
+  margin-top: var(--spacing-xs);
   transition: color $transition-fast;
 
   &--error {

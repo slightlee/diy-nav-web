@@ -158,14 +158,14 @@ onUnmounted(() => {
 .header {
   background-color: var(--color-neutral-100);
   border-bottom: 1px solid var(--color-border);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-lg);
   position: sticky;
   top: 0;
   z-index: 100;
 }
 
 .header-content {
-  max-width: 1200px;
+  max-width: var(--container-max-width);
   margin: 0 auto;
   padding: 0.75rem 1rem;
   display: flex;
@@ -182,7 +182,7 @@ onUnmounted(() => {
 .logo-icon {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background-color: var(--color-primary);
   color: var(--color-white);
   display: flex;
@@ -209,19 +209,19 @@ onUnmounted(() => {
   color: var(--color-white);
   border: none;
   padding: 0.4rem 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
 
   &:hover {
     background-color: var(--color-primary-dark);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-md);
     transform: translateY(-1px);
   }
 }
@@ -233,7 +233,7 @@ onUnmounted(() => {
 .theme-toggle-btn {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background-color: var(--color-neutral-100);
   border: none;
   color: var(--color-neutral-700);
@@ -241,7 +241,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all var(--transition-fast);
 
   &:hover {
     background-color: var(--color-neutral-200);
@@ -255,8 +255,8 @@ onUnmounted(() => {
   top: calc(100% + 8px);
   background-color: var(--color-neutral-100);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
   padding: 6px 10px;
   z-index: 60;
   font-size: 0.8125rem;
@@ -286,7 +286,7 @@ onUnmounted(() => {
 .settings-btn {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background-color: var(--color-neutral-100);
   border: none;
   color: var(--color-neutral-700);
@@ -294,7 +294,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all var(--transition-fast);
 
   &:hover {
     background-color: var(--color-neutral-200);
@@ -308,8 +308,8 @@ onUnmounted(() => {
   top: calc(100% + 8px);
   width: 192px;
   background-color: var(--color-neutral-100);
-  border-radius: 8px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
   padding: 8px 0;
   z-index: 50;
 }
@@ -321,7 +321,7 @@ onUnmounted(() => {
   color: var(--color-neutral-700);
   text-decoration: none;
   font-size: 0.875rem;
-  transition: background-color 0.2s;
+  transition: background-color var(--transition-fast);
 
   &:hover {
     background-color: var(--color-neutral-200);

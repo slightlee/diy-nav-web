@@ -214,32 +214,26 @@ const handleAction = () => {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: $spacing-xl;
+  padding: var(--spacing-xl);
   min-height: 200px;
 }
 
-.empty-state--with-icon {
-  padding-top: $spacing-xl;
-}
+.empty-state--with-icon { padding-top: var(--spacing-xl); }
 
-.empty-state--with-description {
-  padding: 0 $spacing-lg;
-}
+.empty-state--with-description { padding: 0 var(--spacing-lg); }
 
-.empty-state--with-action {
-  padding-top: $spacing-lg;
-}
+.empty-state--with-action { padding-top: var(--spacing-lg); }
 
 .empty-state__icon {
-  margin-bottom: $spacing-lg;
+  margin-bottom: var(--spacing-lg);
   display: flex;
   align-items: center;
   justify-content: center;
   width: 80px;
   height: 80px;
-  border-radius: $border-radius-xl;
-  background-color: rgba($color-primary, 0.1);
-  color: $color-primary;
+  border-radius: var(--radius-xl);
+  background-color: rgba(var(--color-primary-rgb), 0.1);
+  color: var(--color-primary);
   font-size: 48px;
 }
 
@@ -255,20 +249,20 @@ const handleAction = () => {
 }
 
 .empty-state__title {
-  font-size: $font-size-xl;
-  font-weight: $font-weight-semibold;
-  color: $color-neutral-800;
-  margin: 0 0 $spacing-md 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-neutral-800);
+  margin: 0 0 var(--spacing-md) 0;
 }
 
 .empty-state__description {
-  font-size: $font-size-base;
-  color: $color-neutral-600;
-  margin: 0 0 $spacing-lg 0;
-  line-height: $line-height-relaxed;
+  font-size: var(--font-size-base);
+  color: var(--color-neutral-600);
+  margin: 0 0 var(--spacing-lg) 0;
+  line-height: var(--line-height-relaxed);
 }
 
 .empty-state__action-btn {
-  margin-top: $spacing-lg;
+  margin-top: var(--spacing-lg);
 }
 </style>

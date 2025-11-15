@@ -248,12 +248,12 @@ onUnmounted(() => {
 }
 
 .app-layout__confirm-content {
-  padding: $spacing-md 0;
+  padding: var(--spacing-md) 0;
 }
 
 .app-layout__confirm-actions {
   display: flex;
   justify-content: flex-end;
-  gap: $spacing-md;
+  gap: var(--spacing-md);
 }
 </style>

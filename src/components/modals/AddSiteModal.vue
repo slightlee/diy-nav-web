@@ -399,18 +399,18 @@ const tags = computed(() => tagStore.tags)
 .add-site-modal__form {
   display: flex;
   flex-direction: column;
-  gap: $spacing-lg;
+  gap: var(--spacing-lg);
 }
 
 .add-site-modal__form-group {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
 }
 
 .add-site-modal__label {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--color-neutral-800);
 }
 
@@ -420,14 +420,14 @@ const tags = computed(() => tagStore.tags)
 }
 
 .add-site-modal__select {
-  padding: $spacing-sm $spacing-md;
+  padding: var(--spacing-sm) var(--spacing-md);
   border: 1px solid var(--color-border);
-  border-radius: $border-radius-md;
+  border-radius: var(--radius-md);
   background-color: var(--color-neutral-100);
   color: var(--color-neutral-800);
-  font-size: $font-size-base;
+  font-size: var(--font-size-base);
   min-height: 40px;
-  transition: all $transition-fast;
+  transition: all var(--transition-fast);
 
   &:hover {
     border-color: var(--color-neutral-300);
@@ -441,25 +441,25 @@ const tags = computed(() => tagStore.tags)
 }
 
 .add-site-modal__error {
-  color: $color-error;
-  font-size: $font-size-xs;
+  color: var(--color-error);
+  font-size: var(--font-size-xs);
 }
 
 .tag-selector {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-xs;
+  gap: var(--spacing-xs);
 }
 
 .tag-selector__item {
   padding: 6px 12px;
-  border-radius: $border-radius-pill;
-  font-size: $font-size-sm;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm);
   background-color: var(--color-neutral-100);
   color: var(--color-neutral-800);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all $transition-fast;
+  transition: all var(--transition-fast);
 
   &:hover {
     background-color: var(--color-neutral-200);
@@ -467,20 +467,20 @@ const tags = computed(() => tagStore.tags)
 }
 
 .tag-selector__item--active {
-  color: $color-white;
+  color: var(--color-white);
 }
 
 .favicon-selector {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
 }
 
 .favicon-option {
   display: flex;
   align-items: flex-start;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
   cursor: pointer;
 }
 
@@ -493,11 +493,11 @@ const tags = computed(() => tagStore.tags)
 .favicon-card {
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
-  padding: $spacing-sm;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
   border: 1px solid var(--color-border);
-  border-radius: $border-radius-md;
-  transition: all $transition-fast;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
 }
 
 .favicon-option input:checked + .favicon-card {
@@ -526,13 +526,13 @@ const tags = computed(() => tagStore.tags)
 }
 
 .favicon-text {
-  font-size: $font-size-sm;
+  font-size: var(--font-size-sm);
   color: var(--color-neutral-700);
 }
 
 .add-site-modal__actions {
   display: flex;
-  gap: $spacing-md;
+  gap: var(--spacing-md);
   justify-content: flex-end;
 }
 </style>

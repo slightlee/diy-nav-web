@@ -455,16 +455,16 @@ onMounted(() => {
   max-height: 85vh;
   display: flex;
   flex-direction: column;
-  gap: $spacing-xl;
+  gap: var(--spacing-xl);
   overflow-y: auto;
 }
 
 // 区域样式
 .settings-modal__section {
-  padding: $spacing-lg;
+  padding: var(--spacing-lg);
   background-color: var(--color-neutral-100);
   border: 1px solid var(--color-border);
-  border-radius: $border-radius-lg;
+  border-radius: var(--radius-lg);
 
   &--danger {
     border-color: var(--color-error);
@@ -475,25 +475,25 @@ onMounted(() => {
 .settings-modal__section-title {
   display: flex;
   align-items: center;
-  gap: $spacing-xs;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-neutral-800);
-  margin: 0 0 $spacing-lg 0;
+  margin: 0 0 var(--spacing-lg) 0;
 }
 
 // 数据管理区域
 .settings-modal__data-actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: $spacing-lg;
+  gap: var(--spacing-lg);
 }
 
 .settings-modal__data-action {
-  padding: $spacing-md;
+  padding: var(--spacing-md);
   border: 1px solid var(--color-neutral-200);
-  border-radius: $border-radius-md;
-  transition: all $transition-fast;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
 
   &:hover {
     border-color: var(--color-primary);
@@ -502,17 +502,17 @@ onMounted(() => {
 }
 
 .settings-modal__action-title {
-  font-size: $font-size-base;
-  font-weight: $font-weight-medium;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
   color: var(--color-neutral-800);
-  margin: 0 0 $spacing-xs 0;
+  margin: 0 0 var(--spacing-xs) 0;
 }
 
 .settings-modal__action-description {
-  font-size: $font-size-sm;
+  font-size: var(--font-size-sm);
   color: var(--color-neutral-600);
-  margin: 0 0 $spacing-md 0;
-  line-height: $line-height-normal;
+  margin: 0 0 var(--spacing-md) 0;
+  line-height: var(--line-height-normal);
 }
 
 .settings-modal__action-btn {
@@ -523,7 +523,7 @@ onMounted(() => {
 .settings-modal__theme-options {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: $spacing-md;
+  gap: var(--spacing-md);
 }
 
 .settings-modal__theme-option {
@@ -545,11 +545,11 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-sm;
-  padding: $spacing-md;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
   border: 2px solid var(--color-border);
-  border-radius: $border-radius-md;
-  transition: all $transition-fast;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
 
   &:hover {
     border-color: var(--color-neutral-300);
@@ -559,32 +559,32 @@ onMounted(() => {
 .settings-modal__theme-preview {
   width: 48px;
   height: 48px;
-  border-radius: $border-radius-md;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: $font-size-lg;
+  font-size: var(--font-size-lg);
 
   &--light {
-    background-color: $color-white;
-    color: $color-neutral-800;
-    border: 1px solid $color-border;
+    background-color: var(--color-white);
+    color: var(--color-neutral-800);
+    border: 1px solid var(--color-border);
   }
 
   &--dark {
-    background-color: $color-neutral-800;
-    color: $color-white;
+    background-color: var(--color-neutral-800);
+    color: var(--color-white);
   }
 
   &--auto {
-    background: linear-gradient(135deg, $color-white 50%, $color-neutral-800 50%);
-    color: $color-primary;
-  }
+    background: linear-gradient(135deg, var(--color-white) 50%, var(--color-neutral-800) 50%);
+    color: var(--color-primary);
+}
 }
 
 .settings-modal__theme-name {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--color-neutral-700);
 }
 
@@ -592,30 +592,30 @@ onMounted(() => {
 .settings-modal__setting-group {
   display: flex;
   flex-direction: column;
-  gap: $spacing-md;
+  gap: var(--spacing-md);
 }
 
 .settings-modal__setting-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-md;
+  gap: var(--spacing-md);
 }
 
 .settings-modal__setting-label {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--color-neutral-700);
 }
 
 .settings-modal__setting-select {
-  padding: $spacing-xs $spacing-sm;
+  padding: var(--spacing-xs) var(--spacing-sm);
   border: 1px solid var(--color-border);
-  border-radius: $border-radius-sm;
+  border-radius: var(--radius-sm);
   background-color: var(--color-neutral-100);
   color: var(--color-neutral-700);
-  font-size: $font-size-sm;
-  transition: all $transition-fast;
+  font-size: var(--font-size-sm);
+  transition: all var(--transition-fast);
 
   &:focus {
     outline: 2px solid var(--color-primary);
@@ -627,7 +627,7 @@ onMounted(() => {
 .settings-modal__checkbox-setting {
   display: flex;
   align-items: flex-start;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
   cursor: pointer;
 }
 
@@ -639,86 +639,86 @@ onMounted(() => {
 }
 
 .settings-modal__checkbox-text {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--color-neutral-700);
 }
 
 .settings-modal__checkbox-description {
-  font-size: $font-size-xs;
+  font-size: var(--font-size-xs);
   color: var(--color-neutral-500);
-  margin-top: $spacing-xs;
+  margin-top: var(--spacing-xs);
 }
 
 // 快捷键
 .settings-modal__shortcuts-section {
-  margin-top: $spacing-lg;
-  padding-top: $spacing-lg;
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
   border-top: 1px solid var(--color-neutral-200);
 }
 
 .settings-modal__shortcuts-title {
   display: flex;
   align-items: center;
-  gap: $spacing-xs;
-  font-size: $font-size-base;
-  font-weight: $font-weight-medium;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
   color: var(--color-neutral-800);
-  margin: 0 0 $spacing-md 0;
+  margin: 0 0 var(--spacing-md) 0;
 }
 
 .settings-modal__shortcuts-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
 }
 
 .settings-modal__shortcut-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-xs $spacing-sm;
+  padding: var(--spacing-xs) var(--spacing-sm);
   background-color: var(--color-neutral-50);
-  border-radius: $border-radius-sm;
+  border-radius: var(--radius-sm);
 }
 
 .settings-modal__shortcut-name {
-  font-size: $font-size-sm;
+  font-size: var(--font-size-sm);
   color: var(--color-neutral-700);
 }
 
 .settings-modal__shortcut-key {
-  padding: $spacing-xs $spacing-sm;
+  padding: var(--spacing-xs) var(--spacing-sm);
   background-color: var(--color-neutral-200);
   border: 1px solid var(--color-neutral-300);
-  border-radius: $border-radius-sm;
-  font-size: $font-size-xs;
-  font-family: $font-family-mono;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-family-mono);
   color: var(--color-neutral-700);
 }
 
 // 危险操作
 .settings-modal__danger-description {
-  color: $color-error;
-  font-size: $font-size-sm;
-  margin: 0 0 $spacing-md 0;
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  margin: 0 0 var(--spacing-md) 0;
 }
 
 .settings-modal__danger-btn {
-  background-color: $color-error;
-  color: $color-white;
+  background-color: var(--color-error);
+  color: var(--color-white);
 
   &:hover {
-    background-color: color.mix(black, $color-error, 10%);
-  }
+    background-color: rgba(var(--color-error-rgb), 0.9);
+}
 }
 
 // 操作按钮
 .settings-modal__actions {
   display: flex;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
   justify-content: flex-end;
-  padding-top: $spacing-lg;
+  padding-top: var(--spacing-lg);
   border-top: 1px solid var(--color-border);
 }
 

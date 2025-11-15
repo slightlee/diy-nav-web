@@ -373,7 +373,7 @@ const onAddSite = () => {
 .website-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: $spacing-xl;
+  gap: var(--spacing-xl);
   margin-bottom: 1.5rem;
 
   @media (min-width: 640px) {
@@ -382,12 +382,12 @@ const onAddSite = () => {
 
   @media (min-width: 768px) {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: $spacing-xl;
+    gap: var(--spacing-xl);
   }
 
   @media (min-width: 1024px) {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: $spacing-xl;
+    gap: var(--spacing-xl);
   }
 }
 
@@ -472,7 +472,7 @@ const onAddSite = () => {
 
   .website-grid {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: $spacing-lg;
+    gap: var(--spacing-lg);
   }
 }
 

@@ -524,29 +524,29 @@ const confirmDeleteCategory = async () => {
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  gap: $spacing-xl;
+  gap: var(--spacing-xl);
 }
 
 // 区域标题
 .manage-categories-modal__section-title {
   display: flex;
   align-items: center;
-  gap: $spacing-xs;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-neutral-800);
-  margin: 0 0 $spacing-md 0;
+  margin: 0 0 var(--spacing-md) 0;
 }
 
 .manage-categories-modal__count {
-  font-size: $font-size-sm;
+  font-size: var(--font-size-sm);
   color: var(--color-neutral-500);
-  font-weight: $font-weight-normal;
+  font-weight: var(--font-weight-normal);
 }
 
 // 添加区域
 .manage-categories-modal__add-section {
-  padding-bottom: $spacing-lg;
+  padding-bottom: var(--spacing-lg);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -554,12 +554,12 @@ const confirmDeleteCategory = async () => {
 .manage-categories-modal__add-form {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
 }
 
 .manage-categories-modal__form-row {
   display: flex;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
   align-items: stretch;
 
   > .base-input {
@@ -585,21 +585,21 @@ const confirmDeleteCategory = async () => {
   padding: 0;
   background-color: var(--color-neutral-100);
   border-color: var(--color-border);
-  border-radius: $border-radius-md;
+  border-radius: var(--radius-md);
 }
 
 .manage-categories-modal__icon-panel {
   position: absolute;
-  top: calc(100% + #{$spacing-xs});
+  top: calc(100% + var(--spacing-xs));
   left: 0;
   background-color: var(--color-neutral-100);
   border: 1px solid var(--color-border);
-  border-radius: $border-radius-md;
-  box-shadow: $shadow-md;
-  padding: $spacing-sm;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-sm);
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
   z-index: 10;
 }
 
@@ -610,10 +610,10 @@ const confirmDeleteCategory = async () => {
   width: 36px;
   height: 36px;
   border: 1px solid var(--color-border);
-  border-radius: $border-radius-sm;
+  border-radius: var(--radius-sm);
   background-color: var(--color-neutral-100);
   cursor: pointer;
-  transition: all $transition-fast;
+  transition: all var(--transition-fast);
 }
 
 .manage-categories-modal__icon-item:hover {
@@ -626,7 +626,7 @@ const confirmDeleteCategory = async () => {
 }
 
 .manage-categories-modal__description-input {
-  margin-top: $spacing-sm;
+  margin-top: var(--spacing-sm);
 }
 
 // 列表区域
@@ -634,22 +634,22 @@ const confirmDeleteCategory = async () => {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-  padding-bottom: $spacing-lg;
+  padding-bottom: var(--spacing-lg);
 }
 
 .manage-categories-modal__category-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
 }
 
 // 分类项
 .manage-categories-modal__category-item {
   background-color: var(--color-neutral-100);
   border: 1px solid var(--color-border);
-  border-radius: $border-radius-md;
+  border-radius: var(--radius-md);
   overflow: hidden;
-  transition: all $transition-fast;
+  transition: all var(--transition-fast);
 
   &--editing {
     border-color: var(--color-primary);
@@ -661,8 +661,8 @@ const confirmDeleteCategory = async () => {
 .manage-categories-modal__category-view {
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
-  padding: $spacing-md;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
 }
 
 .manage-categories-modal__category-drag-handle {
@@ -674,8 +674,8 @@ const confirmDeleteCategory = async () => {
   justify-content: center;
   color: var(--color-neutral-400);
   cursor: move;
-  border-radius: $border-radius-sm;
-  transition: all $transition-fast;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
 
   &:hover {
     color: var(--color-neutral-600);
@@ -689,11 +689,11 @@ const confirmDeleteCategory = async () => {
   height: 40px;
   background-color: rgba(var(--color-primary-rgb), 0.12);
   color: var(--color-primary);
-  border-radius: $border-radius-md;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: $font-size-lg;
+  font-size: var(--font-size-lg);
 }
 
 .manage-categories-modal__category-info {
@@ -702,24 +702,24 @@ const confirmDeleteCategory = async () => {
 }
 
 .manage-categories-modal__category-name {
-  font-size: $font-size-base;
-  font-weight: $font-weight-medium;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
   color: var(--color-neutral-800);
-  margin: 0 0 $spacing-xs 0;
+  margin: 0 0 var(--spacing-xs) 0;
   @include text-truncate(1);
 }
 
 .manage-categories-modal__category-description {
-  font-size: $font-size-sm;
+  font-size: var(--font-size-sm);
   color: var(--color-neutral-600);
-  margin: 0 0 $spacing-sm 0;
+  margin: 0 0 var(--spacing-sm) 0;
   @include text-truncate(2);
 }
 
 .manage-categories-modal__category-stats {
   display: flex;
-  gap: $spacing-md;
-  font-size: $font-size-xs;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-xs);
   color: var(--color-neutral-500);
 }
 
@@ -727,13 +727,13 @@ const confirmDeleteCategory = async () => {
 .manage-categories-modal__created-time {
   display: flex;
   align-items: center;
-  gap: $spacing-xs;
+  gap: var(--spacing-xs);
 }
 
 .manage-categories-modal__category-actions {
   flex-shrink: 0;
   display: flex;
-  gap: $spacing-xs;
+  gap: var(--spacing-xs);
 }
 
 .manage-categories-modal__delete-btn {
@@ -749,16 +749,16 @@ const confirmDeleteCategory = async () => {
 .manage-categories-modal__category-edit {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
-  padding: $spacing-md;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
   background-color: rgba(var(--color-primary-rgb), 0.06);
 }
 
 .manage-categories-modal__edit-actions {
   display: flex;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
   justify-content: flex-end;
-  margin-top: $spacing-sm;
+  margin-top: var(--spacing-sm);
 }
 
 
@@ -766,7 +766,7 @@ const confirmDeleteCategory = async () => {
 // 动画
 .category-item-enter-active,
 .category-item-leave-active {
-  transition: all $transition-normal;
+  transition: all var(--transition-normal);
 }
 
 .category-item-enter-from {
@@ -780,7 +780,7 @@ const confirmDeleteCategory = async () => {
 }
 
 .category-item-move {
-  transition: transform $transition-normal;
+  transition: transform var(--transition-normal);
 }
 
 // 响应式适配
@@ -797,7 +797,7 @@ const confirmDeleteCategory = async () => {
   .manage-categories-modal__category-view {
     flex-direction: column;
     align-items: stretch;
-    gap: $spacing-md;
+    gap: var(--spacing-md);
   }
 
   .manage-categories-modal__icon-btn {
@@ -812,7 +812,7 @@ const confirmDeleteCategory = async () => {
 
   .manage-categories-modal__category-stats {
     flex-direction: column;
-    gap: $spacing-xs;
+    gap: var(--spacing-xs);
   }
 
   .manage-categories-modal__edit-actions {
@@ -844,12 +844,12 @@ const confirmDeleteCategory = async () => {
   }
 }
   .manage-categories-modal__confirm-content {
-    padding: $spacing-md 0;
+    padding: var(--spacing-md) 0;
   }
 
   .manage-categories-modal__confirm-actions {
     display: flex;
     justify-content: flex-end;
-    gap: $spacing-md;
+    gap: var(--spacing-md);
   }
 </style>

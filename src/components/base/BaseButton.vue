@@ -177,13 +177,13 @@ defineExpose({
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: $spacing-xs;
+  gap: var(--spacing-xs);
   white-space: nowrap;
   text-decoration: none;
   outline: none;
   user-select: none;
   cursor: pointer;
-  transition: all $transition-fast;
+  transition: all var(--transition-fast);
 
   &:focus-visible {
     @include focus-visible;
@@ -215,16 +215,16 @@ defineExpose({
 
   // 仅图标
   &--icon-only {
-    padding: $spacing-sm;
+    padding: var(--spacing-sm);
     min-width: auto;
   }
 
   // 阴影
   &--shadow {
-    box-shadow: $shadow-md;
+    box-shadow: var(--shadow-md);
 
     &:hover {
-      box-shadow: $shadow-lg;
+      box-shadow: var(--shadow-lg);
     }
   }
 
@@ -235,21 +235,21 @@ defineExpose({
 
   // 形状变体
   &--rounded {
-    border-radius: $border-radius-md;
+    border-radius: var(--radius-md);
   }
 
   &--square {
-    border-radius: $border-radius-sm;
+    border-radius: var(--radius-sm);
   }
 
   &--pill {
-    border-radius: $border-radius-pill;
+    border-radius: var(--radius-pill);
   }
 
   // 尺寸变体
   &--xs {
-    padding: $spacing-xs $spacing-sm;
-    font-size: $font-size-xs;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-xs);
     min-height: 24px;
 
     &--icon-only {
@@ -260,8 +260,8 @@ defineExpose({
   }
 
   &--sm {
-    padding: $spacing-xs $spacing-sm;
-    font-size: $font-size-sm;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-sm);
     min-height: 32px;
 
     &--icon-only {
@@ -272,8 +272,8 @@ defineExpose({
   }
 
   &--md {
-    padding: $spacing-sm $spacing-md;
-    font-size: $font-size-base;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-base);
     min-height: 40px;
 
     &--icon-only {
@@ -284,8 +284,8 @@ defineExpose({
   }
 
   &--lg {
-    padding: $spacing-md $spacing-lg;
-    font-size: $font-size-lg;
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--font-size-lg);
     min-height: 48px;
 
     &--icon-only {
@@ -296,8 +296,8 @@ defineExpose({
   }
 
   &--xl {
-    padding: $spacing-lg $spacing-xl;
-    font-size: $font-size-xl;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    font-size: var(--font-size-xl);
     min-height: 56px;
 
     &--icon-only {
@@ -317,7 +317,7 @@ defineExpose({
       background-color: var(--color-primary-dark);
       border-color: var(--color-primary-dark);
       transform: translateY(-1px);
-      box-shadow: $shadow-md;
+      box-shadow: var(--shadow-md);
     }
 
     &:active {
@@ -334,7 +334,7 @@ defineExpose({
       background-color: var(--color-neutral-200);
       color: var(--color-neutral-900);
       transform: translateY(-1px);
-      box-shadow: $shadow-sm;
+      box-shadow: var(--shadow-sm);
     }
   }
 
@@ -347,7 +347,7 @@ defineExpose({
       background-color: var(--color-primary);
       color: var(--color-white);
       transform: translateY(-1px);
-      box-shadow: $shadow-sm;
+      box-shadow: var(--shadow-sm);
     }
   }
 
@@ -364,54 +364,54 @@ defineExpose({
   }
 
   &--danger {
-    background-color: $color-error;
-    color: $color-white;
-    border-color: $color-error;
+    background-color: var(--color-error);
+    color: var(--color-white);
+    border-color: var(--color-error);
 
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
-        background-color: rgba(59, 130, 246, 0.1);
-      border-color: rgba(59, 130, 246, 0.1);
+      background-color: rgba(var(--color-error-rgb), 0.1);
+      border-color: rgba(var(--color-error-rgb), 0.1);
       transform: translateY(-1px);
-      box-shadow: $shadow-md;
+      box-shadow: var(--shadow-md);
     }
   }
 
   &--success {
-    background-color: $color-success;
-    color: $color-white;
-    border-color: $color-success;
+    background-color: var(--color-success);
+    color: var(--color-white);
+    border-color: var(--color-success);
 
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
-      background-color: color.mix(black, $color-success, 10%);
-      border-color: rgba(59, 130, 246, 0.1);
+      background-color: rgba(var(--color-success-rgb), 0.9);
+      border-color: rgba(var(--color-success-rgb), 0.1);
       transform: translateY(-1px);
-      box-shadow: $shadow-md;
+      box-shadow: var(--shadow-md);
     }
   }
 
   &--warning {
-    background-color: $color-warning;
-    color: $color-white;
-    border-color: $color-warning;
+    background-color: var(--color-warning);
+    color: var(--color-white);
+    border-color: var(--color-warning);
 
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
-      background-color: rgba(59, 130, 246, 0.1);
-      border-color: color.mix(black, $color-warning, 10%);
+      background-color: rgba(var(--color-warning-rgb), 0.1);
+      border-color: rgba(var(--color-warning-rgb), 0.9);
       transform: translateY(-1px);
-      box-shadow: $shadow-md;
+      box-shadow: var(--shadow-md);
     }
   }
 
   &--info {
-    background-color: $color-info;
-    color: $color-white;
-    border-color: $color-info;
+    background-color: var(--color-info);
+    color: var(--color-white);
+    border-color: var(--color-info);
 
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
-      background-color: rgba(59, 130, 246, 0.1);
-      border-color: color.mix(black, $color-info, 10%);
+      background-color: rgba(var(--color-info-rgb), 0.1);
+      border-color: rgba(var(--color-info-rgb), 0.9);
       transform: translateY(-1px);
-      box-shadow: $shadow-md;
+      box-shadow: var(--shadow-md);
     }
   }
 }
@@ -419,14 +419,14 @@ defineExpose({
 // 图标样式
 .base-button__icon {
   flex-shrink: 0;
-  transition: transform $transition-fast;
+  transition: transform var(--transition-fast);
 
   &--left {
-    margin-right: $spacing-xs;
+    margin-right: var(--spacing-xs);
   }
 
   &--right {
-    margin-left: $spacing-xs;
+    margin-left: var(--spacing-xs);
   }
 }
 
@@ -467,15 +467,15 @@ defineExpose({
 }
 
 // 高对比度模式
-@media (prefers-contrast: high) {
-  .base-button {
-    border-width: 2px;
+  @media (prefers-contrast: high) {
+    .base-button {
+      border-width: 2px;
 
-    &--ghost {
-      border-color: currentColor;
+      &--ghost {
+        border-color: currentcolor;
+      }
     }
   }
-}
 
 // 减少动画偏好
 @media (prefers-reduced-motion: reduce) {
@@ -496,23 +496,23 @@ defineExpose({
 @media print {
   .base-button {
     box-shadow: none;
-    border: 1px solid $color-black;
+    border: 1px solid var(--color-black);
 
     &--primary,
     &--success,
     &--info {
-      background-color: $color-black;
-      color: $color-white;
+      background-color: var(--color-black);
+      color: var(--color-white);
     }
 
     &--danger {
-      background-color: $color-error;
-      color: $color-white;
+      background-color: var(--color-error);
+      color: var(--color-white);
     }
 
     &--warning {
-      background-color: $color-warning;
-      color: $color-black;
+      background-color: var(--color-warning);
+      color: var(--color-black);
     }
   }
 }

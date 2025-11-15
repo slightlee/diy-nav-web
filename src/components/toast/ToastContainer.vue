@@ -109,29 +109,29 @@ onUnmounted(() => {
 // Toast容器
 .toast-container {
   position: fixed;
-  z-index: $z-index-toast;
+  z-index: var(--z-index-toast);
   pointer-events: none;
   max-width: 100vw;
 
   // 位置变体
   &--top-right {
-    top: $spacing-lg;
-    right: $spacing-lg;
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
     display: flex;
     flex-direction: column;
     align-items: flex-end;
   }
 
   &--top-left {
-    top: $spacing-lg;
-    left: $spacing-lg;
+    top: var(--spacing-lg);
+    left: var(--spacing-lg);
     display: flex;
     flex-direction: column;
     align-items: flex-start;
   }
 
   &--top-center {
-    top: $spacing-lg;
+    top: var(--spacing-lg);
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -140,23 +140,23 @@ onUnmounted(() => {
   }
 
   &--bottom-right {
-    bottom: $spacing-lg;
-    right: $spacing-lg;
+    bottom: var(--spacing-lg);
+    right: var(--spacing-lg);
     display: flex;
     flex-direction: column-reverse;
     align-items: flex-end;
   }
 
   &--bottom-left {
-    bottom: $spacing-lg;
-    left: $spacing-lg;
+    bottom: var(--spacing-lg);
+    left: var(--spacing-lg);
     display: flex;
     flex-direction: column-reverse;
     align-items: flex-start;
   }
 
   &--bottom-center {
-    bottom: $spacing-lg;
+    bottom: var(--spacing-lg);
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -184,7 +184,7 @@ onUnmounted(() => {
 .toast-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
   pointer-events: auto;
   max-width: 400px;
   width: 100%;
@@ -199,7 +199,7 @@ onUnmounted(() => {
 // Toast动画
 .toast-enter-active,
 .toast-leave-active {
-  transition: all $transition-normal;
+  transition: all var(--transition-normal);
 }
 
 .toast-enter-active {
@@ -213,7 +213,7 @@ onUnmounted(() => {
 }
 
 .toast-move {
-  transition: transform $transition-normal;
+  transition: transform var(--transition-normal);
 }
 
 .toast-enter-from {
@@ -244,15 +244,15 @@ onUnmounted(() => {
     &--top-left,
     &--bottom-right,
     &--bottom-left {
-      left: $spacing-md;
-      right: $spacing-md;
+      left: var(--spacing-md);
+      right: var(--spacing-md);
       align-items: center;
     }
 
     &--top-center,
     &--bottom-center {
-      left: $spacing-md;
-      right: $spacing-md;
+      left: var(--spacing-md);
+      right: var(--spacing-md);
       transform: none;
     }
   }

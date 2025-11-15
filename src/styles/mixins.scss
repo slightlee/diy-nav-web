@@ -15,23 +15,23 @@
 // 响应式网格mixin
 @mixin responsive-grid {
   display: grid;
-  gap: $spacing-md;
+  gap: var(--spacing-md);
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 
   @media (min-width: $breakpoint-sm) {
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: $spacing-sm;
+    gap: var(--spacing-sm);
   }
 
   @media (min-width: $breakpoint-md) {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: $spacing-md;
+    gap: var(--spacing-md);
   }
 
   @media (min-width: $breakpoint-lg) {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: $spacing-lg;
-  }
+    gap: var(--spacing-lg);
+}
 }
 
 // 按钮基础样式
@@ -39,27 +39,27 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: $spacing-sm $spacing-md;
+  padding: var(--spacing-sm) var(--spacing-md);
   border: 2px solid transparent;
-  border-radius: $border-radius-md;
-  font-family: $font-family-sans;
-  font-size: $font-size-base;
-  font-weight: $font-weight-medium;
-  color: $color-neutral;
-  background-color: $color-neutral-50;
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral);
+  background-color: var(--color-neutral-50);
   cursor: pointer;
   text-decoration: none;
-  transition: all $transition-normal;
+  transition: all var(--transition-normal);
   outline: none;
 
   &:focus {
-    outline: 2px solid $color-primary;
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
 
   &:hover {
-    background-color: $color-primary;
-    color: $color-white;
+    background-color: var(--color-primary);
+    color: var(--color-white);
     transform: translateY(-2px);
   }
 
@@ -68,7 +68,7 @@
   }
 
   &:disabled {
-    opacity: $opacity-disabled;
+    opacity: var(--opacity-disabled);
     cursor: not-allowed;
     transform: none;
   }
@@ -77,41 +77,41 @@
 // 按钮变体
 @mixin button-primary {
   @include button-base;
-  background-color: $color-primary;
-  color: $color-white;
+  background-color: var(--color-primary);
+  color: var(--color-white);
 
   &:hover {
-    background-color: $color-primary-dark;
+    background-color: var(--color-primary-dark);
   }
 }
 
 @mixin button-secondary {
   @include button-base;
-  background-color: $color-neutral;
-  color: $color-neutral-800;
+  background-color: var(--color-neutral);
+  color: var(--color-neutral-800);
 
   &:hover {
-    background-color: $color-neutral-dark;
-    color: $color-white;
+    background-color: var(--color-neutral-dark);
+    color: var(--color-white);
   }
 }
 
 // 输入框基础样式
 @mixin input-base {
   width: 100%;
-  padding: $spacing-sm;
-  border: 1px solid $color-border;
-  border-radius: $border-radius-md;
-  font-family: $font-family-sans;
-  font-size: $font-size-base;
-  background-color: $color-white;
-  color: $color-neutral-800;
-  transition: all $transition-normal;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  background-color: var(--color-white);
+  color: var(--color-neutral-800);
+  transition: all var(--transition-normal);
   outline: none;
 
   &:focus {
-    border-color: $color-primary;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
   }
 }
 
@@ -124,27 +124,27 @@
 
 // 卡片布局
 @mixin card-layout {
-  background-color: $color-white;
-  border-radius: $border-radius-lg;
-  box-shadow: $shadow-card;
-  border: 1px solid $color-border;
-  padding: $spacing-lg;
-  transition: all $transition-normal;
+  background-color: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--color-border);
+  padding: var(--spacing-lg);
+  transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
 
   &:hover {
-    box-shadow: $shadow-card-hover;
+    box-shadow: var(--shadow-card-hover);
   }
 }
 
 // 卡片悬停效果
 @mixin card-hover {
-  transition: all $transition-normal;
+  transition: all var(--transition-normal);
 
   &:hover {
     transform: translateY(-4px) scale(1.05);
-    box-shadow: $shadow-card-hover;
+    box-shadow: var(--shadow-card-hover);
   }
 }
 
@@ -153,32 +153,32 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: $spacing-sm 0;
+  padding: var(--spacing-sm) 0;
   margin-top: auto;
-  font-size: $font-size-sm;
-  color: $color-neutral-600;
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-600);
 }
 
 // 卡片阴影效果
 @mixin card-shadow {
-  box-shadow: $shadow-card;
+  box-shadow: var(--shadow-card);
 }
 
 // 卡片悬停阴影
 @mixin card-shadow-hover {
-  box-shadow: $shadow-card-hover;
+  box-shadow: var(--shadow-card-hover);
 }
 
 // 标签基础样式
 @mixin tag-base {
   display: inline-flex;
   align-items: center;
-  padding: $spacing-xs $spacing-sm;
-  border-radius: $border-radius-pill;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  color: $color-neutral;
-  transition: all $transition-fast;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral);
+  transition: all var(--transition-fast);
   cursor: pointer;
 
   &:hover {
@@ -203,7 +203,7 @@
 // 无障碍支持
 @mixin focus-visible {
   &:focus-visible {
-    outline: 2px solid $color-primary;
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
 }

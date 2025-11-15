@@ -270,17 +270,17 @@ defineExpose({
 .toast-item {
   display: flex;
   align-items: flex-start;
-  gap: $spacing-sm;
-  padding: $spacing-md;
-  background-color: $color-white;
-  border-radius: $border-radius-lg;
-  box-shadow: $shadow-lg;
-  border: 1px solid $color-border;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background-color: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
   min-width: 300px;
   max-width: 400px;
   position: relative;
   overflow: hidden;
-  transition: all $transition-normal;
+  transition: all var(--transition-normal);
   opacity: 0;
   transform: translateY(-20px) scale(0.9);
   cursor: pointer;
@@ -292,39 +292,39 @@ defineExpose({
 
   &--hovered {
     transform: translateY(-2px) scale(1.02);
-    box-shadow: $shadow-xl;
+    box-shadow: var(--shadow-xl);
   }
 
   // 类型变体
   &--success {
-    border-left: 4px solid $color-success;
+    border-left: 4px solid var(--color-success);
 
     .toast-item__icon-img {
-      color: $color-success;
+      color: var(--color-success);
     }
   }
 
   &--error {
-    border-left: 4px solid $color-error;
+    border-left: 4px solid var(--color-error);
 
     .toast-item__icon-img {
-      color: $color-error;
+      color: var(--color-error);
     }
   }
 
   &--warning {
-    border-left: 4px solid $color-warning;
+    border-left: 4px solid var(--color-warning);
 
     .toast-item__icon-img {
-      color: $color-warning;
+      color: var(--color-warning);
     }
   }
 
   &--info {
-    border-left: 4px solid $color-info;
+    border-left: 4px solid var(--color-info);
 
     .toast-item__icon-img {
-      color: $color-info;
+      color: var(--color-info);
     }
   }
 
@@ -348,7 +348,7 @@ defineExpose({
 }
 
 .toast-item__icon-img {
-  font-size: $font-size-lg;
+  font-size: var(--font-size-lg);
 }
 
 // 内容区域
@@ -358,17 +358,17 @@ defineExpose({
 }
 
 .toast-item__message {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
-  color: $color-neutral-800;
-  line-height: $line-height-tight;
-  margin-bottom: $spacing-xs;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral-800);
+  line-height: var(--line-height-tight);
+  margin-bottom: var(--spacing-xs);
 }
 
 .toast-item__description {
-  font-size: $font-size-sm;
-  color: $color-neutral-600;
-  line-height: $line-height-normal;
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-600);
+  line-height: var(--line-height-normal);
 }
 
 // 关闭按钮
@@ -378,22 +378,22 @@ defineExpose({
   height: 24px;
   border: none;
   background: none;
-  color: $color-neutral-400;
+  color: var(--color-neutral-400);
   cursor: pointer;
-  border-radius: $border-radius-sm;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all $transition-fast;
-  font-size: $font-size-xs;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-xs);
 
   &:hover {
-    background-color: $color-neutral-100;
-    color: $color-neutral-600;
+    background-color: var(--color-neutral-100);
+    color: var(--color-neutral-600);
   }
 
   &:focus {
-    outline: 2px solid $color-primary;
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
 }
@@ -404,70 +404,70 @@ defineExpose({
   bottom: 0;
   left: 0;
   height: 3px;
-  background-color: $color-primary;
+  background-color: var(--color-primary);
   transition: width 16ms linear;
 
   .toast-item--success & {
-    background-color: $color-success;
+    background-color: var(--color-success);
   }
 
   .toast-item--error & {
-    background-color: $color-error;
+    background-color: var(--color-error);
   }
 
   .toast-item--warning & {
-    background-color: $color-warning;
+    background-color: var(--color-warning);
   }
 
   .toast-item--info & {
-    background-color: $color-info;
+    background-color: var(--color-info);
   }
 }
 
 // 操作按钮区域
 .toast-item__actions {
   display: flex;
-  gap: $spacing-xs;
-  margin-top: $spacing-sm;
-  padding-top: $spacing-sm;
-  border-top: 1px solid $color-neutral-100;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--color-neutral-100);
   justify-content: flex-end;
 }
 
 .toast-item__action-btn {
-  padding: $spacing-xs $spacing-sm;
-  border: 1px solid $color-border;
-  border-radius: $border-radius-sm;
-  background-color: $color-white;
-  color: $color-neutral-700;
-  font-size: $font-size-xs;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-white);
+  color: var(--color-neutral-700);
+  font-size: var(--font-size-xs);
   cursor: pointer;
-  transition: all $transition-fast;
+  transition: all var(--transition-fast);
 
   &:hover {
-    background-color: $color-neutral-50;
-    border-color: $color-neutral-300;
+    background-color: var(--color-neutral-50);
+    border-color: var(--color-neutral-300);
   }
 
   &--primary {
-    background-color: $color-primary;
-    border-color: $color-primary;
-    color: $color-white;
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-white);
 
     &:hover {
-      background-color: $color-primary-dark;
-      border-color: $color-primary-dark;
+      background-color: var(--color-primary-dark);
+      border-color: var(--color-primary-dark);
     }
   }
 
   &--danger {
-    background-color: $color-error;
-    border-color: $color-error;
-    color: $color-white;
+    background-color: var(--color-error);
+    border-color: var(--color-error);
+    color: var(--color-white);
 
     &:hover {
-      background-color: rgba(59, 130, 246, 0.1);
-      border-color: rgba(59, 130, 246, 0.1);
+      background-color: rgba(var(--color-primary-rgb), 0.1);
+      border-color: rgba(var(--color-primary-rgb), 0.1);
     }
   }
 }
@@ -476,8 +476,8 @@ defineExpose({
 @include mobile {
   .toast-item {
     min-width: auto;
-    max-width: calc(100vw - #{$spacing-lg * 2});
-    margin: 0 $spacing-md;
+    max-width: calc(100vw - var(--spacing-lg) * 2);
+    margin: 0 var(--spacing-md);
   }
 
   .toast-item__actions {
@@ -515,7 +515,7 @@ defineExpose({
 @media print {
   .toast-item {
     box-shadow: none;
-    border: 1px solid $color-black;
+    border: 1px solid var(--color-black);
     break-inside: avoid;
   }
 

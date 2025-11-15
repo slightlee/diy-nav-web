@@ -213,16 +213,16 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: $z-index-modal;
-  padding: $spacing-lg;
+  z-index: var(--z-index-modal);
+  padding: var(--spacing-lg);
   backdrop-filter: blur(4px);
 }
 
 // 模态框容器
 .modal-container {
   background-color: var(--color-neutral-100);
-  border-radius: $border-radius-lg;
-  box-shadow: $shadow-xl;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -264,14 +264,14 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-lg;
+  padding: var(--spacing-lg);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
 .modal-title {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-neutral-800);
   margin: 0;
   flex: 1;
@@ -283,12 +283,12 @@ onUnmounted(() => {
   border: none;
   background: none;
   color: var(--color-neutral-500);
-  border-radius: $border-radius-sm;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all $transition-fast;
+  transition: all var(--transition-fast);
 
   &:hover {
     background-color: var(--color-neutral-100);
@@ -303,7 +303,7 @@ onUnmounted(() => {
 
 // 模态框内容
 .modal-body {
-  padding: $spacing-lg;
+  padding: var(--spacing-lg);
   flex: 1;
   overflow-y: auto;
 
@@ -320,24 +320,24 @@ onUnmounted(() => {
 
 // 模态框底部
 .modal-footer {
-  padding: $spacing-lg;
+  padding: var(--spacing-lg);
   border-top: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
   flex-shrink: 0;
 }
 
 // 过渡动画
 .modal-enter-active,
 .modal-leave-active {
-  transition: all $transition-normal;
+  transition: all var(--transition-normal);
 }
 
 .modal-enter-active .modal-container,
 .modal-leave-active .modal-container {
-  transition: all $transition-normal;
+  transition: all var(--transition-normal);
 }
 
 .modal-enter-from,
@@ -354,7 +354,7 @@ onUnmounted(() => {
 // 响应式适配
 @include mobile {
   .modal-overlay {
-    padding: $spacing-sm;
+    padding: var(--spacing-sm);
   }
 
   .modal-container {
@@ -373,7 +373,7 @@ onUnmounted(() => {
   .modal-header,
   .modal-body,
   .modal-footer {
-    padding: $spacing-md;
+    padding: var(--spacing-md);
   }
 }
 
@@ -400,7 +400,7 @@ onUnmounted(() => {
   }
 
   .modal-container {
-    border: 2px solid $color-black;
+    border: 2px solid var(--color-black);
   }
 }
 

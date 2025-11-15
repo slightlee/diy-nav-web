@@ -467,41 +467,41 @@ const confirmDeleteTag = () => {
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  gap: $spacing-xl;
+  gap: var(--spacing-xl);
 }
 
 // 区域标题
 .manage-tags-modal__section-title {
   display: flex;
   align-items: center;
-  gap: $spacing-xs;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-neutral-800);
-  margin: 0 0 $spacing-md 0;
+  margin: 0 0 var(--spacing-md) 0;
 }
 
 .manage-tags-modal__count {
-  font-size: $font-size-sm;
+  font-size: var(--font-size-sm);
   color: var(--color-neutral-500);
-  font-weight: $font-weight-normal;
+  font-weight: var(--font-weight-normal);
 }
 
 // 添加区域
 .manage-tags-modal__add-section {
-  padding-bottom: $spacing-lg;
+  padding-bottom: var(--spacing-lg);
   border-bottom: 1px solid var(--color-border);
 }
 
 .manage-tags-modal__add-form {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
 }
 
 .manage-tags-modal__form-row {
   display: flex;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
   align-items: center;
 
   > .base-input {
@@ -515,29 +515,29 @@ const confirmDeleteTag = () => {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
   flex: 1;
 }
 
 .manage-tags-modal__color-label {
-  font-size: $font-size-sm;
-  font-weight: $font-weight-medium;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--color-neutral-700);
 }
 
 .manage-tags-modal__color-list {
   display: flex;
   flex-wrap: wrap;
-  gap: $spacing-xs;
+  gap: var(--spacing-xs);
 }
 
 .manage-tags-modal__color-btn {
   width: 32px;
   height: 32px;
-  border-radius: $border-radius-md;
+  border-radius: var(--radius-md);
   border: 2px solid var(--color-border);
   cursor: pointer;
-  transition: all $transition-fast;
+  transition: all var(--transition-fast);
   position: relative;
 
   &:hover {
@@ -556,22 +556,22 @@ const confirmDeleteTag = () => {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-  padding-bottom: $spacing-lg;
+  padding-bottom: var(--spacing-lg);
 }
 
 .manage-tags-modal__tag-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
 }
 
 // 标签项
 .manage-tags-modal__tag-item {
   background-color: var(--color-neutral-100);
   border: 1px solid var(--color-border);
-  border-radius: $border-radius-md;
+  border-radius: var(--radius-md);
   overflow: hidden;
-  transition: all $transition-fast;
+  transition: all var(--transition-fast);
 
   &--editing {
     border-color: var(--color-primary);
@@ -583,8 +583,8 @@ const confirmDeleteTag = () => {
 .manage-tags-modal__tag-view {
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
-  padding: $spacing-md;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
 }
 
 .manage-tags-modal__tag-drag-handle {
@@ -596,8 +596,8 @@ const confirmDeleteTag = () => {
   justify-content: center;
   color: var(--color-neutral-400);
   cursor: move;
-  border-radius: $border-radius-sm;
-  transition: all $transition-fast;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
 
   &:hover {
     color: var(--color-neutral-600);
@@ -609,17 +609,17 @@ const confirmDeleteTag = () => {
   flex-shrink: 0;
   width: 40px;
   height: 40px;
-  border-radius: $border-radius-md;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: $font-size-lg;
+  font-size: var(--font-size-lg);
 }
 
 .manage-tags-modal__tag-color {
   width: 20px;
   height: 20px;
-  border-radius: $border-radius-pill;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--color-border);
 }
 
@@ -629,17 +629,17 @@ const confirmDeleteTag = () => {
 }
 
 .manage-tags-modal__tag-name {
-  font-size: $font-size-base;
-  font-weight: $font-weight-medium;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
   color: var(--color-neutral-800);
-  margin: 0 0 $spacing-xs 0;
+  margin: 0 0 var(--spacing-xs) 0;
   @include text-truncate(1);
 }
 
 .manage-tags-modal__tag-stats {
   display: flex;
-  gap: $spacing-md;
-  font-size: $font-size-xs;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-xs);
   color: var(--color-neutral-500);
 }
 
@@ -647,7 +647,7 @@ const confirmDeleteTag = () => {
 .manage-tags-modal__created-time {
   display: flex;
   align-items: center;
-  gap: $spacing-xs;
+  gap: var(--spacing-xs);
 }
 
 .manage-tags-modal__delete-btn {
@@ -663,8 +663,8 @@ const confirmDeleteTag = () => {
 .manage-tags-modal__tag-edit {
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
-  padding: $spacing-md;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
   background-color: rgba(var(--color-primary-rgb), 0.06);
 }
 
@@ -672,27 +672,27 @@ const confirmDeleteTag = () => {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
 }
 
 .manage-tags-modal__edit-actions {
   display: flex;
-  gap: $spacing-sm;
+  gap: var(--spacing-sm);
   justify-content: flex-end;
-  margin-top: $spacing-sm;
+  margin-top: var(--spacing-sm);
 }
 
 // 操作按钮
 .manage-tags-modal__tag-actions {
   flex-shrink: 0;
   display: flex;
-  gap: $spacing-xs;
+  gap: var(--spacing-xs);
 }
 
 // 动画
 .tag-item-enter-active,
 .tag-item-leave-active {
-  transition: all $transition-normal;
+  transition: all var(--transition-normal);
 }
 
 .tag-item-enter-from {
@@ -706,7 +706,7 @@ const confirmDeleteTag = () => {
 }
 
 .tag-item-move {
-  transition: transform $transition-normal;
+  transition: transform var(--transition-normal);
 }
 
 // 响应式适配
@@ -723,7 +723,7 @@ const confirmDeleteTag = () => {
   .manage-tags-modal__tag-view {
     flex-direction: column;
     align-items: stretch;
-    gap: $spacing-md;
+    gap: var(--spacing-md);
   }
 
   .manage-tags-modal__tag-drag-handle {
@@ -732,7 +732,7 @@ const confirmDeleteTag = () => {
 
   .manage-tags-modal__tag-stats {
     flex-direction: column;
-    gap: $spacing-xs;
+    gap: var(--spacing-xs);
   }
 
   .manage-tags-modal__edit-actions {
@@ -764,12 +764,12 @@ const confirmDeleteTag = () => {
   }
 }
   .manage-tags-modal__confirm-content {
-    padding: $spacing-md 0;
+    padding: var(--spacing-md) 0;
   }
 
   .manage-tags-modal__confirm-actions {
     display: flex;
     justify-content: flex-end;
-    gap: $spacing-md;
+    gap: var(--spacing-md);
   }
 </style>
