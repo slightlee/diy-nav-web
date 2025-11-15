@@ -86,6 +86,7 @@
           :website="website"
           @edit="emit('edit', $event)"
           @delete="emit('delete', $event)"
+          @visit="onVisit"
         />
       </div>
     </div>
@@ -98,6 +99,7 @@
           :website="website"
           @edit="emit('edit', $event)"
           @delete="emit('delete', $event)"
+          @visit="onVisit"
         />
 
         <div v-if="filteredWebsites.length > 0" class="add-card" @click="onAddSite">
@@ -189,6 +191,11 @@ const clearSelectedTags = () => {
 const onAddSite = () => {
   const contextCategoryId = selectedCategory.value !== 'all' ? selectedCategory.value : ''
   emit('addSite', contextCategoryId)
+}
+
+const onVisit = (website: Website) => {
+  websiteStore.incrementVisitCount(website.id)
+  window.open(website.url, '_blank', 'noopener,noreferrer')
 }
 </script>
 

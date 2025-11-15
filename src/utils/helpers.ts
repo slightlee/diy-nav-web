@@ -118,6 +118,15 @@ export const formatVisitCount = (count: number): string => {
   return `访问${(count / 1000).toFixed(1)}k次`
 }
 
+export const formatVisitCountCompact = (count: number): string => {
+  if (count >= 1000000) {
+    return `${(count / 1000000).toFixed(1)}M`
+  } else if (count >= 1000) {
+    return `${(count / 1000).toFixed(1)}K`
+  }
+  return count.toString()
+}
+
 // 格式化日期
 export const formatDate = (date: Date | string | undefined): string => {
   if (!date) return ''
@@ -138,6 +147,42 @@ export const formatDate = (date: Date | string | undefined): string => {
     return `${Math.floor(diff / hour)}小时前`
   } else {
     return d.toLocaleDateString('zh-CN')
+  }
+}
+
+export const formatDateTimeZh = (date: Date | string): string => {
+  const d = typeof date === 'string' ? new Date(date) : date
+  return d.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+export const formatLastVisitedZh = (date: Date | string): string => {
+  const d = typeof date === 'string' ? new Date(date) : date
+  const now = new Date()
+  const diffMs = now.getTime() - d.getTime()
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffMs < 0) {
+    return formatDateTimeZh(d)
+  }
+
+  if (diffDays === 0) {
+    return '今天'
+  } else if (diffDays === 1) {
+    return '昨天'
+  } else if (diffDays < 7) {
+    return `${diffDays}天前`
+  } else if (diffDays < 30) {
+    return `${Math.floor(diffDays / 7)}周前`
+  } else if (diffDays < 365) {
+    return `${Math.floor(diffDays / 30)}个月前`
+  } else {
+    return `${Math.floor(diffDays / 365)}年前`
   }
 }
 
@@ -206,6 +251,32 @@ export const getDomain = (url: string): string => {
   } catch {
     return url
   }
+}
+
+export const getContrastColor = (bgColor: string): string => {
+  const hexMatch = bgColor.trim().match(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/)
+  let r = 255, g = 255, b = 255
+
+  if (hexMatch) {
+    let hex = hexMatch[1]
+    if (hex.length === 3) {
+      hex = hex.split('').map(ch => ch + ch).join('')
+    }
+    const num = parseInt(hex, 16)
+    r = (num >> 16) & 0xff
+    g = (num >> 8) & 0xff
+    b = num & 0xff
+  } else {
+    const rgbMatch = bgColor.trim().match(/^rgba?\((\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*([\d.]+))?\)$/)
+    if (rgbMatch) {
+      r = Math.min(255, parseInt(rgbMatch[1], 10))
+      g = Math.min(255, parseInt(rgbMatch[2], 10))
+      b = Math.min(255, parseInt(rgbMatch[3], 10))
+    }
+  }
+
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+  return luminance > 0.6 ? '#111111' : '#ffffff'
 }
 
 // 下载文件

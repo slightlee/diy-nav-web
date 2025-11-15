@@ -1,9 +1,14 @@
 <template>
   <article
-    ref="cardRef"
     class="website-card"
     :class="cardClasses"
+    :tabindex="clickable ? 0 : -1"
+    role="link"
+    :aria-label="website.name"
+    :aria-labelledby="titleId"
+    :aria-describedby="website.description ? descId : undefined"
     @click="handleCardClick"
+    @keydown="handleKeydown"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
   >
@@ -12,7 +17,7 @@
       <!-- 网站图标 -->
       <div class="website-card__favicon">
         <img
-          v-if="website.favicon"
+          v-if="website.favicon && !faviconError"
           :src="website.favicon"
           :alt="`${website.name}的图标`"
           class="website-card__favicon-img"
@@ -27,7 +32,7 @@
 
       <!-- 网站名称 -->
       <div class="website-card__title-section">
-        <h3 class="website-card__title" :title="website.name">
+        <h3 :id="titleId" class="website-card__title" :title="website.name">
           <a
             :href="website.url"
             target="_blank"
@@ -38,7 +43,7 @@
             {{ website.name }}
           </a>
         </h3>
-        <p class="website-card__description" :title="website.description || ''">
+        <p :id="descId" class="website-card__description" :title="website.description || ''">
           {{ website.description || '' }}
         </p>
       </div>
@@ -50,7 +55,7 @@
       <div class="website-card__url">
         <i class="fas fa-link website-card__url-icon" />
         <span class="website-card__url-text" :title="website.url">
-          {{ formatUrl(website.url) }}
+          {{ getDomain(website.url) }}
         </span>
       </div>
 
@@ -61,7 +66,7 @@
             v-for="tag in websiteTags.slice(0, maxVisibleTags)"
             :key="tag.id"
             class="website-card__tag"
-            :style="{ backgroundColor: tag.color }"
+            :style="getTagStyle(tag.color)"
             :title="tag.name"
           >
             {{ tag.name }}
@@ -87,34 +92,23 @@
           :title="`访问次数: ${website.visitCount}`"
         >
           <i class="fas fa-eye website-card__stat-icon" />
-          {{ formatVisitCount(website.visitCount) }}
+          {{ formatVisitCountCompact(website.visitCount) }}
         </span>
         <span
           v-if="showLastVisited && website.lastVisited"
           class="website-card__stat"
-          :title="`最后访问: ${formatDateTime(website.lastVisited)}`"
+          :title="`最后访问: ${formatDateTimeZh(website.lastVisited)}`"
         >
           <i class="fas fa-clock website-card__stat-icon" />
-          {{ formatLastVisited(website.lastVisited) }}
+          {{ formatLastVisitedZh(website.lastVisited) }}
         </span>
       </div>
 
       <!-- 操作按钮 -->
-      <div class="website-card__actions">
-        <button
-          class="website-card__action-btn website-card__action-btn--edit"
-          :title="`编辑 ${website.name}`"
-          @click.stop="handleEdit"
-        >
-          <i class="fas fa-edit" />
-        </button>
-        <button
-          class="website-card__action-btn website-card__action-btn--delete"
-          :title="`删除 ${website.name}`"
-          @click.stop="handleDelete"
-        >
-          <i class="fas fa-trash" />
-        </button>
+      <div v-if="showActions" class="website-card__actions">
+        <slot name="actions" :website="website">
+          <WebsiteCardActions :website="website" @edit="handleEdit" @delete="handleDelete" />
+        </slot>
       </div>
     </footer>
 
@@ -131,10 +125,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { useWebsiteStore } from '@/stores/website'
+import { computed, ref } from 'vue'
 import { useTagStore } from '@/stores/tag'
 import type { Website, Tag } from '@/types'
+import { getDomain, formatVisitCountCompact, formatDateTimeZh, formatLastVisitedZh, getContrastColor } from '@/utils/helpers'
+import WebsiteCardActions from '@/components/WebsiteCardActions.vue'
+
+const props = withDefaults(defineProps<Props>(), {
+  showVisitCount: true,
+  showLastVisited: true,
+  maxVisibleTags: 3,
+  loading: false,
+  clickable: true,
+  size: 'md',
+  showActions: true,
+  showActionsOnHover: true
+})
+
+const emit = defineEmits<Emits>()
+
+defineOptions({ name: 'WebsiteCard' })
 
 interface Props {
   /** 网站数据 */
@@ -161,28 +171,12 @@ interface Emits {
   (e: 'edit', website: Website): void
   (e: 'delete', websiteId: string): void
   (e: 'visit', website: Website): void
-  (e: 'click', website: Website): void
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  showVisitCount: true,
-  showLastVisited: true,
-  maxVisibleTags: 3,
-  loading: false,
-  clickable: true,
-  size: 'md',
-  showActions: true,
-  showActionsOnHover: true
-})
-
-const emit = defineEmits<Emits>()
-
 // Store
-const websiteStore = useWebsiteStore()
 const tagStore = useTagStore()
 
 // 组件引用
-const cardRef = ref<HTMLElement>()
 
 // 内部状态
 const isHovered = ref(false)
@@ -204,59 +198,11 @@ const websiteTags = computed(() => {
     .filter((tag): tag is Tag => !!tag)
 })
 
-// 格式化URL显示
-const formatUrl = (url: string): string => {
-  try {
-    const urlObj = new URL(url)
-    return urlObj.hostname
-  } catch {
-    return url
-  }
-}
 
-// 格式化访问次数
-const formatVisitCount = (count: number): string => {
-  if (count >= 1000000) {
-    return `${(count / 1000000).toFixed(1)}M`
-  } else if (count >= 1000) {
-    return `${(count / 1000).toFixed(1)}K`
-  }
-  return count.toString()
-}
 
-// 格式化日期时间
-const formatDateTime = (date: Date | string): string => {
-  const dateObj = typeof date === 'string' ? new Date(date) : date
-  return dateObj.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-// 格式化最后访问时间
-const formatLastVisited = (date: Date | string): string => {
-  const dateObj = typeof date === 'string' ? new Date(date) : date
-  const now = new Date()
-  const diffMs = now.getTime() - dateObj.getTime()
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-  if (diffDays === 0) {
-    return '今天'
-  } else if (diffDays === 1) {
-    return '昨天'
-  } else if (diffDays < 7) {
-    return `${diffDays}天前`
-  } else if (diffDays < 30) {
-    return `${Math.floor(diffDays / 7)}周前`
-  } else if (diffDays < 365) {
-    return `${Math.floor(diffDays / 30)}个月前`
-  } else {
-    return `${Math.floor(diffDays / 365)}年前`
-  }
-}
+const titleId = computed(() => `website-card-title-${props.website.id}`)
+const descId = computed(() => `website-card-desc-${props.website.id}`)
+const getTagStyle = (bg: string) => ({ backgroundColor: bg, color: getContrastColor(bg) })
 
 // 获取更多标签的标题
 const getMoreTagsTitle = (): string => {
@@ -287,8 +233,6 @@ const handleWebsiteVisit = (event: MouseEvent) => {
 
 const visitWebsite = () => {
   emit('visit', props.website)
-  websiteStore.incrementVisitCount(props.website.id)
-  window.open(props.website.url, '_blank', 'noopener,noreferrer')
 }
 
 const handleEdit = () => {
@@ -303,23 +247,9 @@ const handleFaviconError = () => {
   faviconError.value = true
 }
 
-// 检查网站状态（可选功能）
-const checkWebsiteStatus = async () => {
-  if (props.website.url) {
-    try {
-      const url = new URL(props.website.url)
-      // 这里可以实现网站状态检查逻辑
-      // 由于CORS限制，可能需要后端支持
-    } catch (error) {
-      console.warn('Invalid URL:', props.website.url)
-    }
-  }
-}
 
 // 键盘导航支持
 const handleKeydown = (event: KeyboardEvent) => {
-  if (!cardRef.value) return
-
   switch (event.key) {
     case 'Enter':
     case ' ':
@@ -343,18 +273,6 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 }
 
-// 生命周期
-onMounted(() => {
-  if (cardRef.value) {
-    cardRef.value.addEventListener('keydown', handleKeydown)
-  }
-})
-
-onUnmounted(() => {
-  if (cardRef.value) {
-    cardRef.value.removeEventListener('keydown', handleKeydown)
-  }
-})
 </script>
 
 <style scoped lang="scss">
@@ -622,7 +540,7 @@ onUnmounted(() => {
   }
 }
 
-.website-card__action-btn {
+:deep(.website-card__action-btn) {
   width: 32px;
   height: 32px;
   border: none;
@@ -635,37 +553,37 @@ onUnmounted(() => {
   justify-content: center;
   transition: all var(--transition-fast);
   font-size: var(--font-size-sm);
+}
 
-  &:hover {
-    transform: scale(1.05);
-  }
+:deep(.website-card__action-btn:hover) {
+  transform: scale(1.05);
+}
 
-  &:focus {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
+:deep(.website-card__action-btn:focus) {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 
-  &--edit:hover {
-    background-color: var(--color-primary);
-    color: var(--color-white);
-  }
+:deep(.website-card__action-btn--edit:hover) {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
 
-  &--delete:hover {
-    background-color: var(--color-error);
-    color: var(--color-white);
-  }
+:deep(.website-card__action-btn--delete:hover) {
+  background-color: var(--color-error);
+  color: var(--color-white);
+}
 
-  .website-card--sm & {
-    width: 28px;
-    height: 28px;
-    font-size: var(--font-size-xs);
-  }
+.website-card--sm :deep(.website-card__action-btn) {
+  width: 28px;
+  height: 28px;
+  font-size: var(--font-size-xs);
+}
 
-  .website-card--lg & {
-    width: 36px;
-    height: 36px;
-    font-size: var(--font-size-base);
-  }
+.website-card--lg :deep(.website-card__action-btn) {
+  width: 36px;
+  height: 36px;
+  font-size: var(--font-size-base);
 }
 
 // 骨架屏
@@ -749,7 +667,7 @@ onUnmounted(() => {
     border-width: 2px;
   }
 
-  .website-card__action-btn {
+  :deep(.website-card__action-btn) {
     border: 1px solid var(--color-border);
   }
 }
@@ -758,7 +676,7 @@ onUnmounted(() => {
 @media (prefers-reduced-motion: reduce) {
   .website-card,
   .website-card__actions,
-  .website-card__action-btn {
+  :deep(.website-card__action-btn) {
     transition: none;
   }
 
