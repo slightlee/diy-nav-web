@@ -4,9 +4,6 @@ import type { UserSettings } from '@/types'
 
 const DEFAULT_SETTINGS: UserSettings = {
   theme: 'light',
-  gridDensity: 'normal',
-  viewMode: 'card',
-  fontSize: 'medium',
   autoBackup: true,
   shortcuts: {
     'addSite': 'Ctrl+N',
@@ -33,7 +30,6 @@ export const useSettingsStore = defineStore('settings', () => {
       settings.value = { ...DEFAULT_SETTINGS }
     }
     applyTheme()
-    applyFontSize()
   }
 
   const updateSettings = (updates: Partial<UserSettings>) => {
@@ -54,21 +50,7 @@ export const useSettingsStore = defineStore('settings', () => {
     applyTheme()
   }
 
-  const setGridDensity = (density: UserSettings['gridDensity']) => {
-    settings.value.gridDensity = density
-    saveToLocalStorage()
-  }
 
-  const setViewMode = (mode: UserSettings['viewMode']) => {
-    settings.value.viewMode = mode
-    saveToLocalStorage()
-  }
-
-  const setFontSize = (size: UserSettings['fontSize']) => {
-    settings.value.fontSize = size
-    saveToLocalStorage()
-    applyFontSize()
-  }
 
   const setShortcut = (action: string, shortcut: string) => {
     settings.value.shortcuts[action] = shortcut
@@ -87,15 +69,7 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
-  const applyFontSize = () => {
-    const root = document.documentElement
-    const fontSizes = {
-      small: '14px',
-      medium: '16px',
-      large: '18px'
-    }
-    root.style.fontSize = fontSizes[settings.value.fontSize]
-  }
+
 
   const saveToLocalStorage = () => {
     localStorage.setItem('userSettings', JSON.stringify(settings.value))
@@ -111,7 +85,6 @@ export const useSettingsStore = defineStore('settings', () => {
       settings.value = { ...DEFAULT_SETTINGS, ...importedSettings }
       saveToLocalStorage()
       applyTheme()
-      applyFontSize()
       return true
     } catch (e) {
       return false
@@ -145,7 +118,6 @@ export const useSettingsStore = defineStore('settings', () => {
       if (backup.settings) {
         settings.value = { ...DEFAULT_SETTINGS, ...JSON.parse(backup.settings) }
         applyTheme()
-        applyFontSize()
       }
 
       saveToLocalStorage()
@@ -164,9 +136,6 @@ export const useSettingsStore = defineStore('settings', () => {
     updateSettings,
     resetSettings,
     setTheme,
-    setGridDensity,
-    setViewMode,
-    setFontSize,
     setShortcut,
     exportSettings,
     importSettings,

@@ -54,72 +54,7 @@
     </div>
 
 
-    <!-- 显示设置 -->
-    <div class="settings-modal__section">
-      <h3 class="settings-modal__section-title">
-        <i class="fas fa-desktop" />
-        显示设置
-      </h3>
 
-      <div class="settings-modal__setting-group">
-        <div class="settings-modal__setting-item">
-          <label class="settings-modal__setting-label">
-            网格密度
-          </label>
-          <select
-            v-model="settings.gridDensity"
-            class="settings-modal__setting-select"
-          >
-            <option value="compact">
-              紧凑
-            </option>
-            <option value="normal">
-              标准
-            </option>
-            <option value="loose">
-              宽松
-            </option>
-          </select>
-        </div>
-
-        <div class="settings-modal__setting-item">
-          <label class="settings-modal__setting-label">
-            视图模式
-          </label>
-          <select
-            v-model="settings.viewMode"
-            class="settings-modal__setting-select"
-          >
-            <option value="card">
-              卡片视图
-            </option>
-            <option value="list">
-              列表视图
-            </option>
-          </select>
-        </div>
-
-        <div class="settings-modal__setting-item">
-          <label class="settings-modal__setting-label">
-            字体大小
-          </label>
-          <select
-            v-model="settings.fontSize"
-            class="settings-modal__setting-select"
-          >
-            <option value="small">
-              小
-            </option>
-            <option value="medium">
-              中
-            </option>
-            <option value="large">
-              大
-            </option>
-          </select>
-        </div>
-      </div>
-    </div>
 
     <!-- 高级设置 -->
     <div class="settings-modal__section">
@@ -232,9 +167,6 @@ const fileInputRef = ref()
 // 设置数据
 const settings = ref<UserSettings>({
   theme: 'light',
-  gridDensity: 'normal',
-  viewMode: 'card',
-  fontSize: 'medium',
   customBackground: '',
   autoBackup: true,
   shortcuts: {}
@@ -270,21 +202,9 @@ const initializeSettings = () => {
 // 保存设置
 const saveSettings = () => {
   localStorage.setItem('userSettings', JSON.stringify(settings.value))
-  applySettings()
 }
 
-// 应用设置
-const applySettings = () => {
-  const root = document.documentElement
-  const fontSizeMap = {
-    small: '14px',
-    medium: '16px',
-    large: '18px'
-  }
-  root.style.fontSize = fontSizeMap[settings.value.fontSize]
-  root.classList.remove('grid-compact', 'grid-normal', 'grid-loose')
-  root.classList.add(`grid-${settings.value.gridDensity}`)
-}
+
 
 // 处理导出数据
 const handleExport = async () => {
@@ -440,7 +360,6 @@ const handleClose = () => {
 // 生命周期
 onMounted(() => {
   initializeSettings()
-  applySettings()
 })
 </script>
 

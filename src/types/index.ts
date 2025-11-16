@@ -36,9 +36,6 @@ export interface Tag {
 
 export interface UserSettings {
   theme: 'light' | 'dark' | 'auto';
-  gridDensity: 'compact' | 'normal' | 'loose';
-  viewMode: 'card' | 'list';
-  fontSize: 'small' | 'medium' | 'large';
   customBackground?: string;
   autoBackup: boolean;
   shortcuts: Record<string, string>;
