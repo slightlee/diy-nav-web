@@ -71,7 +71,7 @@
             type="button"
             class="tag-selector__item"
             :class="{ 'tag-selector__item--active': formData.tagIds.includes(tag.id) }"
-            :style="formData.tagIds.includes(tag.id) ? { backgroundColor: tag.color, color: '#fff' } : undefined"
+            :style="{ '--tag-color': tag.color }"
             @click="toggleTag(tag.id)"
           >
             {{ tag.name }}
@@ -386,6 +386,7 @@ const onFaviconError = (type: 'default' | 'api') => {
 
 const categories = computed(() => categoryStore.categories)
 const tags = computed(() => tagStore.tags)
+
 </script>
 
 <style scoped lang="scss">
@@ -456,18 +457,20 @@ const tags = computed(() => tagStore.tags)
   border-radius: var(--radius-pill);
   font-size: var(--font-size-sm);
   background-color: var(--color-neutral-100);
-  color: var(--color-neutral-800);
+  color: var(--color-neutral-700);
   border: 1px solid transparent;
   cursor: pointer;
   transition: all var(--transition-fast);
 
   &:hover {
-    background-color: var(--color-neutral-200);
+    transform: scale(1.02);
   }
 }
 
 .tag-selector__item--active {
   color: var(--color-white);
+  border-color: transparent;
+  background-color: var(--tag-color);
 }
 
 .favicon-selector {

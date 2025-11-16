@@ -220,7 +220,7 @@ onUnmounted(() => {
 
 // 模态框容器
 .modal-container {
-  background-color: var(--color-neutral-100);
+  background-color: var(--color-neutral-50);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xl);
   max-height: 90vh;
