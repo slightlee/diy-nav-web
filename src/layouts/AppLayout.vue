@@ -4,7 +4,8 @@
       @add-site="handleAddSite"
       @manage-categories="openManageCategories"
       @manage-tags="openManageTags"
-      @open-settings="openImportExport"
+      @open-settings="openSettingsModal"
+      @open-data-management="openDataManagement"
     />
 
     <!-- 主内容区域 -->
@@ -67,6 +68,17 @@
       />
     </BaseModal>
 
+    <BaseModal
+      v-if="uiStore.modalState.dataManagement"
+      :is-open="uiStore.modalState.dataManagement"
+      title="数据管理"
+      @close="() => uiStore.closeModal('dataManagement')"
+    >
+      <DataManagementModal
+        @close="() => uiStore.closeModal('dataManagement')"
+      />
+    </BaseModal>
+
     <!-- Toast容器 -->
     <BaseModal
       v-if="websiteDeleteConfirmOpen"
@@ -109,6 +121,7 @@ import AddSiteModal from '@/components/modals/AddSiteModal.vue'
 import ManageCategoriesModal from '@/components/modals/ManageCategoriesModal.vue'
 import ManageTagsModal from '@/components/modals/ManageTagsModal.vue'
 import SettingsModal from '@/components/modals/SettingsModal.vue'
+import DataManagementModal from '@/components/modals/DataManagementModal.vue'
 import ToastContainer from '@/components/toast/ToastContainer.vue'
 
 // 确保有这些组件文件存在
@@ -193,8 +206,13 @@ const openManageTags = () => {
   showSettingsDropdown.value = false
 }
 
-const openImportExport = () => {
+const openSettingsModal = () => {
   uiStore.openModal('settings')
+  showSettingsDropdown.value = false
+}
+
+const openDataManagement = () => {
+  uiStore.openModal('dataManagement')
   showSettingsDropdown.value = false
 }
 

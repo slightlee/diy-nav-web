@@ -49,9 +49,13 @@
               管理标签
             </a>
             <div class="dropdown-divider" />
-            <a href="#" class="dropdown-item" @click="onOpenSettings">
+            <a href="#" class="dropdown-item" @click="onOpenDataManagement">
               <i class="fas fa-exchange-alt" />
-              导入/导出数据
+              数据管理
+            </a>
+            <a href="#" class="dropdown-item" @click="onOpenSettings">
+              <i class="fas fa-cog" />
+              设置
             </a>
           </div>
         </div>
@@ -64,7 +68,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useSettingsStore } from '@/stores/settings'
 
-const emit = defineEmits(['addSite', 'manageCategories', 'manageTags', 'openSettings'])
+const emit = defineEmits(['addSite', 'manageCategories', 'manageTags', 'openSettings', 'openDataManagement'])
 
 const settingsStore = useSettingsStore()
 const currentTheme = computed(() => settingsStore.settings.theme)
@@ -110,6 +114,11 @@ const onManageTags = () => {
 
 const onOpenSettings = () => {
   emit('openSettings')
+  showSettingsDropdown.value = false
+}
+
+const onOpenDataManagement = () => {
+  emit('openDataManagement')
   showSettingsDropdown.value = false
 }
 

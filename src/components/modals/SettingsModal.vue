@@ -1,90 +1,15 @@
 <template>
   <div class="settings-modal">
-    <!-- 导入导出区域 -->
-    <div class="settings-modal__section">
-      <h3 class="settings-modal__section-title">
-        <i class="fas fa-exchange-alt" />
-        数据管理
-      </h3>
-
-      <div class="settings-modal__data-actions">
-        <div class="settings-modal__data-action">
-          <h4 class="settings-modal__action-title">
-            导出数据
-          </h4>
-          <p class="settings-modal__action-description">
-            将所有网站、分类和标签数据导出为JSON文件
-          </p>
-          <BaseButton
-            variant="outline"
-            :loading="exporting"
-            class="settings-modal__action-btn"
-            @click="handleExport"
-          >
-            <i class="fas fa-download" />
-            导出数据
-          </BaseButton>
-        </div>
-
-        <div class="settings-modal__data-action">
-          <h4 class="settings-modal__action-title">
-            导入数据
-          </h4>
-          <p class="settings-modal__action-description">
-            从JSON文件导入网站、分类和标签数据
-          </p>
-          <input
-            ref="fileInputRef"
-            type="file"
-            accept=".json"
-            style="display: none"
-            @change="handleFileImport"
-          />
-          <BaseButton
-            variant="outline"
-            :loading="importing"
-            class="settings-modal__action-btn"
-            @click="triggerFileImport"
-          >
-            <i class="fas fa-upload" />
-            导入数据
-          </BaseButton>
-        </div>
-      </div>
-    </div>
-
-
-
-
     <!-- 高级设置 -->
     <div class="settings-modal__section">
       <h3 class="settings-modal__section-title">
-        <i class="fas fa-cog" />
-        高级设置
+        <i class="fas fa-keyboard" />
+        快捷键
       </h3>
 
-      <div class="settings-modal__setting-group">
-        <label class="settings-modal__checkbox-setting">
-          <input
-            v-model="settings.autoBackup"
-            type="checkbox"
-            class="settings-modal__checkbox"
-          />
-          <span class="settings-modal__checkbox-text">
-            自动备份
-          </span>
-          <span class="settings-modal__checkbox-description">
-            定期自动备份数据到本地存储
-          </span>
-        </label>
-      </div>
 
-      <!-- 快捷键设置 -->
+
       <div class="settings-modal__shortcuts-section">
-        <h4 class="settings-modal__shortcuts-title">
-          <i class="fas fa-keyboard" />
-          快捷键
-        </h4>
         <div class="settings-modal__shortcuts-list">
           <div
             v-for="shortcut in shortcuts"
@@ -97,56 +22,12 @@
         </div>
       </div>
     </div>
-
-    <!-- 危险操作 -->
-    <div class="settings-modal__section settings-modal__section--danger">
-      <h3 class="settings-modal__section-title">
-        <i class="fas fa-exclamation-triangle" />
-        危险操作
-      </h3>
-
-      <div class="settings-modal__danger-actions">
-        <p class="settings-modal__danger-description">
-          以下操作不可恢复，请谨慎操作
-        </p>
-        <BaseButton
-          variant="danger"
-          class="settings-modal__danger-btn"
-          @click="handleClearData"
-        >
-          <i class="fas fa-trash-alt" />
-          清除所有数据
-        </BaseButton>
-      </div>
-    </div>
-
-    <!-- 操作区域 -->
-    <div class="settings-modal__actions">
-      <BaseButton
-        variant="ghost"
-        @click="handleClose"
-      >
-        取消
-      </BaseButton>
-      <BaseButton
-        variant="primary"
-        :loading="saving"
-        @click="handleSave"
-      >
-        <i class="fas fa-save" />
-        保存设置
-      </BaseButton>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useWebsiteStore } from '@/stores/website'
-import { useCategoryStore } from '@/stores/category'
-import { useTagStore } from '@/stores/tag'
-import { useUIStore } from '@/stores/ui'
-import BaseButton from '../base/BaseButton.vue'
+
 import type { UserSettings } from '@/types'
 
 interface Emits {
@@ -156,13 +37,9 @@ interface Emits {
 const emit = defineEmits<Emits>()
 
 // Store
-const websiteStore = useWebsiteStore()
-const categoryStore = useCategoryStore()
-const tagStore = useTagStore()
-const uiStore = useUIStore()
 
-// 组件引用
-const fileInputRef = ref()
+
+
 
 // 设置数据
 const settings = ref<UserSettings>({
@@ -172,10 +49,7 @@ const settings = ref<UserSettings>({
   shortcuts: {}
 })
 
-// 加载状态
-const exporting = ref(false)
-const importing = ref(false)
-const saving = ref(false)
+
 
 // 快捷键列表
 const shortcuts = computed(() => [
@@ -199,163 +73,19 @@ const initializeSettings = () => {
   }
 }
 
-// 保存设置
-const saveSettings = () => {
-  localStorage.setItem('userSettings', JSON.stringify(settings.value))
-}
 
 
 
-// 处理导出数据
-const handleExport = async () => {
-  if (exporting.value) return
 
-  exporting.value = true
 
-  try {
-    const data = websiteStore.exportData()
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: 'application/json'
-    })
 
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `diy-nav-backup-${new Date().toISOString().split('T')[0]}.json`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
 
-    uiStore.showToast('数据导出成功', 'success')
-  } catch (error) {
-    console.error('导出数据失败:', error)
-    uiStore.showToast('导出失败，请重试', 'error')
-  } finally {
-    exporting.value = false
-  }
-}
 
-// 触发文件导入
-const triggerFileImport = () => {
-  fileInputRef.value?.click()
-}
 
-// 处理文件导入
-const handleFileImport = async (event: Event) => {
-  const file = (event.target as HTMLInputElement).files?.[0]
-  if (!file) return
 
-  if (importing.value) return
 
-  importing.value = true
 
-  try {
-    const text = await file.text()
-    const data = JSON.parse(text)
 
-    // 验证数据格式
-    if (!data.websites || !Array.isArray(data.websites)) {
-      throw new Error('无效的数据格式')
-    }
-
-    // 确认导入
-    const websiteCount = data.websites?.length || 0
-    const categoryCount = data.categories?.length || 0
-    const tagCount = data.tags?.length || 0
-
-    if (!confirm(
-      `即将导入 ${websiteCount} 个网站、${categoryCount} 个分类、${tagCount} 个标签。\n` +
-      '这将覆盖现有数据，确定继续吗？'
-    )) {
-      return
-    }
-
-    // 执行导入
-    websiteStore.importData(data)
-
-    // 导入分类和标签
-    if (data.categories) {
-      localStorage.setItem('categories', JSON.stringify(data.categories))
-    }
-    if (data.tags) {
-      localStorage.setItem('tags', JSON.stringify(data.tags))
-    }
-
-    uiStore.showToast('数据导入成功', 'success')
-    emit('close')
-  } catch (error) {
-    console.error('导入数据失败:', error)
-    uiStore.showToast('导入失败：' + (error as Error).message, 'error')
-  } finally {
-    importing.value = false
-    // 清空文件输入
-    if (fileInputRef.value) {
-      fileInputRef.value.value = ''
-    }
-  }
-}
-
-// 处理清除数据
-const handleClearData = () => {
-  const confirmMessage =
-    '⚠️ 警告：此操作将删除所有数据，包括：\n' +
-    '• 所有网站\n' +
-    '• 所有分类\n' +
-    '• 所有标签\n' +
-    '• 所有设置\n\n' +
-    '此操作不可恢复，确定继续吗？'
-
-  if (!confirm(confirmMessage)) {
-    return
-  }
-
-  if (!confirm('再次确认：真的要删除所有数据吗？')) {
-    return
-  }
-
-  try {
-    // 清除所有localStorage数据
-    localStorage.removeItem('websites')
-    localStorage.removeItem('categories')
-    localStorage.removeItem('tags')
-    localStorage.removeItem('userSettings')
-
-    // 重新初始化stores
-    websiteStore.initializeData()
-    categoryStore.initializeData()
-    tagStore.initializeData()
-
-    uiStore.showToast('所有数据已清除', 'success')
-    emit('close')
-  } catch (error) {
-    console.error('清除数据失败:', error)
-    uiStore.showToast('清除失败，请重试', 'error')
-  }
-}
-
-// 处理保存设置
-const handleSave = async () => {
-  if (saving.value) return
-
-  saving.value = true
-
-  try {
-    saveSettings()
-    uiStore.showToast('设置保存成功', 'success')
-    emit('close')
-  } catch (error) {
-    console.error('保存设置失败:', error)
-    uiStore.showToast('保存失败，请重试', 'error')
-  } finally {
-    saving.value = false
-  }
-}
-
-// 处理关闭
-const handleClose = () => {
-  emit('close')
-}
 
 // 生命周期
 onMounted(() => {

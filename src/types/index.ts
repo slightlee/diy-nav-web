@@ -53,6 +53,7 @@ export interface ModalState {
   manageCategories: boolean;
   manageTags: boolean;
   settings: boolean;
+  dataManagement: boolean;
 }
 
 export interface SearchFilters {
@@ -77,4 +78,5 @@ export interface ModalPayloads {
   manageCategories?: undefined
   manageTags?: undefined
   settings?: undefined
+  dataManagement?: undefined
 }
