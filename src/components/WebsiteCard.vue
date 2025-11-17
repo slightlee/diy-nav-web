@@ -63,14 +63,6 @@
 
     <!-- 卡片主体 - URL和标签 -->
     <main class="website-card__body">
-      <!-- URL显示 -->
-      <div class="website-card__url">
-        <i class="fas fa-link website-card__url-icon" />
-        <span class="website-card__url-text" :title="website.url">
-          {{ getDomain(website.url) }}
-        </span>
-      </div>
-
       <!-- 标签列表 -->
       <div class="website-card__tags">
         <template v-if="websiteTags.length > 0">
@@ -140,7 +132,7 @@
 import { computed, ref } from 'vue'
 import { useTagStore } from '@/stores/tag'
 import type { Website, Tag } from '@/types'
-import { getDomain, formatVisitCountCompact, formatDateTimeZh, formatLastVisitedZh, getContrastColor } from '@/utils/helpers'
+import { formatVisitCountCompact, formatDateTimeZh, formatLastVisitedZh, getContrastColor } from '@/utils/helpers'
 import WebsiteCardActions from '@/components/WebsiteCardActions.vue'
 
 const props = withDefaults(defineProps<Props>(), {
@@ -340,7 +332,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 
   &--md {
-    min-height: 160px;
+    min-height: 140px;
     padding: var(--spacing-md);
   }
 
@@ -406,7 +398,8 @@ const handleKeydown = (event: KeyboardEvent) => {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
-  margin-bottom: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-neutral-900);
 
   .website-card--sm & {
     font-size: var(--font-size-sm);
@@ -500,24 +493,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   margin-bottom: var(--spacing-sm);
 }
 
-// URL显示
-.website-card__url {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  color: var(--color-neutral-500);
-  font-size: var(--font-size-sm);
-  font-family: var(--font-family-mono);
-}
-
-.website-card__url-icon {
-  flex-shrink: 0;
-  font-size: var(--font-size-xs);
-}
-
-.website-card__url-text {
-  @include text-truncate(1);
-}
+// URL显示已移除，节省空间
 
 // 标签列表
 .website-card__tags {
@@ -525,14 +501,14 @@ const handleKeydown = (event: KeyboardEvent) => {
   flex-wrap: wrap;
   gap: var(--spacing-xs);
   align-items: center;
-  min-height: 24px;
+  min-height: 20px;
 }
 
 .website-card__tag {
   padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-pill);
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-normal);
   color: var(--color-white);
   background-color: var(--color-primary);
   @include text-truncate(1);
@@ -551,7 +527,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   justify-content: space-between;
   gap: var(--spacing-sm);
   margin-top: auto;
-  padding-top: var(--spacing-sm);
+  padding-top: var(--spacing-xs);
   border-top: 1px solid var(--color-neutral-200);
 }
 
