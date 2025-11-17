@@ -17,6 +17,9 @@ body {
   color: var(--color-neutral-800);
   line-height: 1.6;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 html {
   scrollbar-gutter: stable;
@@ -113,6 +116,8 @@ html {
   --opacity-disabled: #{$opacity-disabled};
   --opacity-hover: #{$opacity-hover};
   --opacity-focus: #{$opacity-focus};
+
+  --font-size-title: clamp(1.25rem, 2.5vw, 1.75rem);
 
 }
 
@@ -226,3 +231,13 @@ html {
     font-size: 16px;
   }
 }
+
+.text-xs { font-size: var(--font-size-xs); }
+.text-sm { font-size: var(--font-size-sm); }
+.text-base { font-size: var(--font-size-base); }
+.text-lg { font-size: var(--font-size-lg); }
+.text-xl { font-size: var(--font-size-xl); }
+.heading-1 { font-size: var(--font-size-title); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); }
+.heading-2 { font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold); line-height: var(--line-height-tight); }
+.heading-3 { font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); line-height: var(--line-height-tight); }
+.text-muted { color: var(--color-neutral-600); }

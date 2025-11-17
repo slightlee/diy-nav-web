@@ -169,7 +169,7 @@ onUnmounted(() => {
 .header {
   background-color: var(--color-neutral-100);
   border-bottom: 1px solid var(--color-border);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-xs);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -199,11 +199,11 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.125rem;
+  font-size: var(--font-size-lg);
 }
 
 .app-title {
-  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  font-size: var(--font-size-title);
   font-weight: bold;
   color: var(--color-neutral-800);
   margin: 0;
@@ -224,7 +224,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -270,7 +270,7 @@ onUnmounted(() => {
   box-shadow: var(--shadow-lg);
   padding: 6px 10px;
   z-index: 60;
-  font-size: 0.8125rem;
+  font-size: var(--font-size-sm);
   color: var(--color-neutral-700);
   display: inline-flex;
   align-items: center;
@@ -284,7 +284,7 @@ onUnmounted(() => {
 
 .theme-hover-tooltip .active {
   color: var(--color-primary);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   background-color: rgba(var(--color-primary-rgb), 0.06);
   border-radius: 4px;
   padding: 0 6px;
@@ -331,7 +331,7 @@ onUnmounted(() => {
   padding: 8px 16px;
   color: var(--color-neutral-700);
   text-decoration: none;
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   transition: background-color var(--transition-fast);
 
   &:hover {

@@ -316,7 +316,7 @@ const onDragEnd = () => {
   padding: 0.75rem 2.75rem 0.75rem 1rem;
   border: 1px solid var(--color-border);
   border-radius: 10px;
-  font-size: 1rem;
+  font-size: var(--font-size-base);
   background-color: var(--color-neutral-100);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   transition: all 0.2s ease-in-out;
@@ -340,7 +340,7 @@ const onDragEnd = () => {
   background: none;
   border: none;
   color: var(--color-neutral-400);
-  font-size: 1.125rem;
+  font-size: var(--font-size-lg);
   cursor: pointer;
   transition: color 0.2s;
 
@@ -361,24 +361,27 @@ const onDragEnd = () => {
 }
 
 .filter-label {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--color-neutral-700);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-neutral-800);
 }
 
 .manage-tags-btn,
 .manage-categories-btn,
 .clear-tags-btn {
-  font-size: var(--font-size-xs);
-  color: var(--color-neutral-500);
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-600);
   display: flex;
   align-items: center;
-  background: none;
+  background: transparent;
   border: none;
+  padding: 4px 8px;
+  border-radius: var(--radius-pill);
   cursor: pointer;
-  transition: color 0.2s;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
 
   &:hover {
+    background-color: var(--color-neutral-200);
     color: var(--color-primary);
   }
 
@@ -422,7 +425,7 @@ const onDragEnd = () => {
 
   .tag-remove-icon {
     margin-left: 3px;
-    font-size: 0.75rem;
+    font-size: var(--font-size-xs);
     opacity: 0.7;
     transition: opacity 0.2s;
 
@@ -541,7 +544,7 @@ const onDragEnd = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.125rem;
+  font-size: var(--font-size-lg);
 }
 
 .search-results-section {
@@ -555,7 +558,7 @@ const onDragEnd = () => {
   margin-bottom: 0.75rem;
 
   h3 {
-    font-size: 1.125rem;
+    font-size: var(--font-size-lg);
     font-weight: 600;
     color: var(--color-neutral-800);
     margin: 0;
@@ -563,7 +566,7 @@ const onDragEnd = () => {
 }
 
 .clear-search-btn {
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   color: var(--color-neutral-600);
   background: none;
   border: none;
