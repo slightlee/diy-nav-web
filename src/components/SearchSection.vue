@@ -97,18 +97,18 @@
           v-for="website in filteredWebsites"
           :key="website.id"
           class="website-draggable"
+          :class="[{ 'is-drag-over': draggingId && draggingId !== website.id && dragOverId === website.id }]"
           :data-id="website.id"
-          draggable="true"
-          @dragstart="onDragStart(website.id, $event)"
           @dragover.prevent="onDragOver(website.id, $event)"
           @drop.prevent="onDrop(website.id, $event)"
-          @dragend="onDragEnd"
         >
           <WebsiteCard
             :website="website"
             @edit="emit('edit', $event)"
             @delete="emit('delete', $event)"
             @visit="onVisit"
+            @drag-handle-start="onDragStart(website.id, $event)"
+            @drag-handle-end="onDragEnd"
           />
         </div>
 
@@ -209,25 +209,35 @@ const onVisit = (website: Website) => {
 }
 
 const draggingId = ref<string | null>(null)
+const dragOverId = ref<string | null>(null)
 const onDragStart = (id: string, e: DragEvent) => {
   draggingId.value = id
   e.dataTransfer?.setData('text/plain', id)
   if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+  const target = e.target as HTMLElement | null
+  const card = target?.closest('.website-draggable') as HTMLElement | null
+  if (card && e.dataTransfer) {
+    const rect = card.getBoundingClientRect()
+    e.dataTransfer.setDragImage(card, rect.width / 2, rect.height / 2)
+  }
 }
 const onDragOver = (targetId: string, e: DragEvent) => {
   if (!draggingId.value || draggingId.value === targetId) return
   e.preventDefault()
+  dragOverId.value = targetId
   if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
 }
 const onDrop = (targetId: string, e: DragEvent) => {
   e.preventDefault()
   const sourceId = draggingId.value
   draggingId.value = null
+  dragOverId.value = null
   if (!sourceId || sourceId === targetId) return
   websiteStore.moveWebsiteBefore(sourceId, targetId)
 }
 const onDragEnd = () => {
   draggingId.value = null
+  dragOverId.value = null
 }
 </script>
 
@@ -432,10 +442,11 @@ const onDragEnd = () => {
 
 .website-draggable {
   display: block;
-  cursor: grab;
 }
-.website-draggable:active {
-  cursor: grabbing;
+
+.website-draggable.is-drag-over {
+  outline: 2px dashed var(--color-primary);
+  border-radius: var(--radius-lg);
 }
 
 .add-card {

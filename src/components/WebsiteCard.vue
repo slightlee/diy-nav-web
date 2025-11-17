@@ -47,6 +47,18 @@
           {{ website.description || '' }}
         </p>
       </div>
+      <button
+        class="drag-handle"
+        :aria-label="`拖拽排序：${website.name}`"
+        title="拖拽排序"
+        type="button"
+        draggable="true"
+        @click.stop
+        @dragstart="onDragHandleDragStart"
+        @dragend="onDragHandleDragEnd"
+      >
+        <i class="fas fa-grip-vertical" />
+      </button>
     </header>
 
     <!-- 卡片主体 - URL和标签 -->
@@ -171,6 +183,8 @@ interface Emits {
   (e: 'edit', website: Website): void
   (e: 'delete', websiteId: string): void
   (e: 'visit', website: Website): void
+  (e: 'dragHandleStart', evt: DragEvent): void
+  (e: 'dragHandleEnd'): void
 }
 
 // Store
@@ -245,6 +259,14 @@ const handleDelete = () => {
 
 const handleFaviconError = () => {
   faviconError.value = true
+}
+
+const onDragHandleDragStart = (e: DragEvent) => {
+  emit('dragHandleStart', e)
+}
+
+const onDragHandleDragEnd = () => {
+  emit('dragHandleEnd')
 }
 
 
@@ -422,6 +444,35 @@ const handleKeydown = (event: KeyboardEvent) => {
   .website-card--sm & {
     display: none;
   }
+}
+
+.drag-handle {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-500);
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  opacity: 0;
+}
+
+.website-card--hovered .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle:hover {
+  transform: scale(1.05);
+  background-color: var(--color-neutral-200);
 }
 
 // 状态指示器
