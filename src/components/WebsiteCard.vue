@@ -39,9 +39,8 @@
             rel="noopener noreferrer"
             class="website-card__title-link"
             @click.stop="handleWebsiteVisit"
-          >
-            {{ website.name }}
-          </a>
+            v-html="titleHtml"
+          />
         </h3>
         <p :id="descId" class="website-card__description" :title="website.description || ''">
           {{ website.description || '' }}
@@ -169,6 +168,8 @@ interface Props {
   showActions?: boolean
   /** 是否悬停时显示操作按钮 */
   showActionsOnHover?: boolean
+  /** 搜索高亮关键字 */
+  highlight?: string
 }
 
 interface Emits {
@@ -209,6 +210,16 @@ const websiteTags = computed(() => {
 const titleId = computed(() => `website-card-title-${props.website.id}`)
 const descId = computed(() => `website-card-desc-${props.website.id}`)
 const getTagStyle = (bg: string) => ({ backgroundColor: bg, color: getContrastColor(bg) })
+
+// 搜索高亮（标题）
+const escapeHtml = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[c] as string))
+const makeHighlightHtml = (text: string, keyword?: string) => {
+  if (!keyword?.trim()) return escapeHtml(text)
+  const k = keyword.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const re = new RegExp(k, 'ig')
+  return escapeHtml(text).replace(re, m => `<mark class="highlight">${escapeHtml(m)}</mark>`)
+}
+const titleHtml = computed(() => makeHighlightHtml(props.website.name, props.highlight))
 
 // 获取更多标签的标题
 const getMoreTagsTitle = (): string => {
@@ -428,6 +439,13 @@ const handleKeydown = (event: KeyboardEvent) => {
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
+}
+
+:deep(mark.highlight) {
+  background-color: rgba(var(--color-primary-rgb), 0.15);
+  color: inherit;
+  border-radius: var(--radius-xs);
+  padding: 0 0.06em;
 }
 
 .website-card__description {

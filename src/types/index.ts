@@ -40,6 +40,7 @@ export interface UserSettings {
   customBackground?: string;
   autoBackup: boolean;
   shortcuts: Record<string, string>;
+  density?: 'default' | 'compact' | 'loose';
 }
 
 export interface ToastMessage {

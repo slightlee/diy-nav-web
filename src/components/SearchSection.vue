@@ -2,6 +2,7 @@
   <div class="search-section">
     <div class="search-container">
       <input
+        ref="searchInput"
         v-model="searchKeyword"
         type="text"
         placeholder="根据网站名称、标签、描述搜索"
@@ -84,6 +85,7 @@
           v-for="website in searchResults"
           :key="website.id"
           :website="website"
+          :highlight="searchKeyword"
           @edit="emit('edit', $event)"
           @delete="emit('delete', $event)"
           @visit="onVisit"
@@ -92,6 +94,34 @@
     </div>
 
     <div v-else class="website-list-section">
+      <div class="list-toolbar">
+        <div class="density-segment">
+          <button
+            class="density-btn"
+            :class="{ active: currentDensity === 'compact' }"
+            type="button"
+            @click="setDensity('compact')"
+          >
+            紧凑
+          </button>
+          <button
+            class="density-btn"
+            :class="{ active: currentDensity === 'default' }"
+            type="button"
+            @click="setDensity('default')"
+          >
+            默认
+          </button>
+          <button
+            class="density-btn"
+            :class="{ active: currentDensity === 'loose' }"
+            type="button"
+            @click="setDensity('loose')"
+          >
+            宽松
+          </button>
+        </div>
+      </div>
       <div class="website-grid">
         <div
           v-for="website in filteredWebsites"
@@ -104,6 +134,7 @@
         >
           <WebsiteCard
             :website="website"
+            :highlight="searchKeyword"
             @edit="emit('edit', $event)"
             @delete="emit('delete', $event)"
             @visit="onVisit"
@@ -133,12 +164,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import WebsiteCard from '@/components/WebsiteCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { useWebsiteStore } from '@/stores/website'
 import { useCategoryStore } from '@/stores/category'
 import { useTagStore } from '@/stores/tag'
+import { useSettingsStore } from '@/stores/settings'
 import type { Website } from '@/types'
 
 const emit = defineEmits(['edit', 'delete', 'addSite', 'manageTags', 'manageCategories'])
@@ -146,10 +178,13 @@ const emit = defineEmits(['edit', 'delete', 'addSite', 'manageTags', 'manageCate
 const websiteStore = useWebsiteStore()
 const categoryStore = useCategoryStore()
 const tagStore = useTagStore()
+const settingsStore = useSettingsStore()
 
 const searchKeyword = ref('')
 const selectedTags = ref<string[]>([])
 const selectedCategory = ref('all')
+const currentDensity = computed(() => settingsStore.settings.density || 'default')
+const setDensity = (d: 'default' | 'compact' | 'loose') => settingsStore.setDensity(d)
 
 const filteredWebsites = computed(() => {
   let websites = websiteStore.websites
@@ -207,6 +242,29 @@ const onVisit = (website: Website) => {
   websiteStore.incrementVisitCount(website.id)
   window.open(website.url, '_blank', 'noopener,noreferrer')
 }
+
+const searchInput = ref<HTMLInputElement | null>(null)
+
+const handleGlobalKeydown = (e: KeyboardEvent) => {
+  const isMac = navigator.platform.toLowerCase().includes('mac')
+  const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey
+  if (cmdOrCtrl && e.key.toLowerCase() === 'k') {
+    e.preventDefault()
+    searchInput.value?.focus()
+  } else if (e.key === 'Escape') {
+    if (document.activeElement === searchInput.value) {
+      ;(document.activeElement as HTMLElement)?.blur()
+    }
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleGlobalKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown)
+})
 
 const draggingId = ref<string | null>(null)
 const dragOverId = ref<string | null>(null)
@@ -292,28 +350,27 @@ const onDragEnd = () => {
 }
 
 .tag-filter-section {
-  margin-top: 1.25rem;
+  margin-top: 0.75rem;
 }
 
 .filter-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .filter-label {
-  font-size: 1rem;
+  font-size: var(--font-size-sm);
   font-weight: 600;
-  color: var(--color-neutral-800);
-  letter-spacing: 0.01em;
+  color: var(--color-neutral-700);
 }
 
 .manage-tags-btn,
 .manage-categories-btn,
 .clear-tags-btn {
-  font-size: 0.75rem;
-  color: var(--color-neutral-600);
+  font-size: var(--font-size-xs);
+  color: var(--color-neutral-500);
   display: flex;
   align-items: center;
   background: none;
@@ -345,8 +402,8 @@ const onDragEnd = () => {
 .tag-item {
   padding: 5px 10px;
   border-radius: 9999px;
-  font-size: 0.875rem;
-  border: 1px solid transparent;
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--color-neutral-200);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   display: flex;
@@ -376,7 +433,8 @@ const onDragEnd = () => {
 }
 
 .category-section {
-  margin-bottom: 1.25rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .category-list {
@@ -388,10 +446,10 @@ const onDragEnd = () => {
 .category-tag {
   padding: 5px 10px;
   border-radius: 9999px;
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   background-color: var(--color-neutral-100);
   color: var(--color-neutral-700);
-  border: none;
+  border: 1px solid var(--color-neutral-200);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   display: flex;
@@ -422,7 +480,7 @@ const onDragEnd = () => {
 .website-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--spacing-xl);
+  gap: clamp(var(--spacing-sm), 2vw, var(--spacing-xl));
   margin-bottom: 1.5rem;
 
   @media (min-width: 640px) {
@@ -431,12 +489,12 @@ const onDragEnd = () => {
 
   @media (min-width: 768px) {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: var(--spacing-xl);
+    gap: clamp(var(--spacing-sm), 2vw, var(--spacing-xl));
   }
 
   @media (min-width: 1024px) {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: var(--spacing-xl);
+    gap: clamp(var(--spacing-sm), 2vw, var(--spacing-xl));
   }
 }
 
@@ -538,5 +596,54 @@ const onDragEnd = () => {
   .website-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.list-toolbar {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: 0.5rem;
+}
+
+.density-segment {
+  display: inline-flex;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-neutral-100);
+  overflow: hidden;
+}
+
+.density-btn {
+  padding: 0.35rem 0.7rem;
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-700);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.density-btn:hover {
+  background-color: var(--color-neutral-200);
+}
+
+.density-btn:focus {
+  outline: none;
+}
+
+.density-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.density-btn.active {
+  color: var(--color-primary);
+  background-color: rgba(var(--color-primary-rgb), 0.10);
+}
+
+.density-btn + .density-btn {
+  border-left: 1px solid var(--color-border);
 }
 </style>

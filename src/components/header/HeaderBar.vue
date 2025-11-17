@@ -49,6 +49,7 @@
               管理标签
             </a>
             <div class="dropdown-divider" />
+            <div class="dropdown-divider" />
             <a href="#" class="dropdown-item" @click="onOpenDataManagement">
               <i class="fas fa-exchange-alt" />
               数据管理
@@ -135,6 +136,7 @@ const cycleTheme = () => {
     }
   }, 1200)
 }
+
 
 const onThemeHover = (hover: boolean) => {
   hoveringTheme.value = hover
