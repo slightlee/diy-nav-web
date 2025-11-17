@@ -11,6 +11,7 @@ export interface Website {
   isOnline: boolean;
   createdAt: Date;
   updatedAt: Date;
+  order?: number;
 }
 
 export interface Category {
@@ -63,7 +64,7 @@ export interface SearchFilters {
 }
 
 export type SortOrder = 'asc' | 'desc'
-export type SortField = 'name' | 'createdAt' | 'visitCount' | 'lastVisited'
+export type SortField = 'order' | 'name' | 'createdAt' | 'visitCount' | 'lastVisited'
 
 // 类型定义
 // 类型定义

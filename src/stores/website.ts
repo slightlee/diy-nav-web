@@ -11,20 +11,20 @@ export const useWebsiteStore = defineStore('website', () => {
     categoryIds: [],
     tagIds: []
   })
-  const sortField = ref<SortField>('createdAt')
-  const sortOrder = ref<SortOrder>('desc')
+  const sortField = ref<SortField>('order')
+  const sortOrder = ref<SortOrder>('asc')
 
   // 初始化数据 - 根据需求文档，初始状态应该是空的
   const initializeData = () => {
     try {
       const saved = JSON.parse(localStorage.getItem('websites') || '[]')
       if (Array.isArray(saved)) {
-        websites.value = saved.map(item => ({
+        websites.value = saved.map((item, index) => ({
           ...item,
           createdAt: new Date(item.createdAt),
           updatedAt: new Date(item.updatedAt),
           lastVisited: item.lastVisited ? new Date(item.lastVisited) : undefined
-        }))
+        })).map((w, i) => ({ ...w, order: typeof w.order === 'number' ? w.order : i }))
         console.log('📦 从 localStorage 加载数据:', websites.value.length, '个网站')
       } else {
         websites.value = []
@@ -81,6 +81,8 @@ export const useWebsiteStore = defineStore('website', () => {
   // 辅助函数
   const getSortValue = (website: Website, field: SortField): number => {
     switch (field) {
+      case 'order':
+        return typeof website.order === 'number' ? website.order : 0
       case 'createdAt':
         return website.createdAt.getTime()
       case 'visitCount':
@@ -99,7 +101,8 @@ export const useWebsiteStore = defineStore('website', () => {
       ...website,
       id: generateId(),
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      order: websites.value.length
     }
 
     websites.value.push(newWebsite)
@@ -154,6 +157,18 @@ export const useWebsiteStore = defineStore('website', () => {
     sortOrder.value = order
   }
 
+  const moveWebsiteBefore = (sourceId: string, targetId: string) => {
+    if (sourceId === targetId) return
+    const sourceIndex = websites.value.findIndex(w => w.id === sourceId)
+    const targetIndex = websites.value.findIndex(w => w.id === targetId)
+    if (sourceIndex === -1 || targetIndex === -1) return
+    const [moved] = websites.value.splice(sourceIndex, 1)
+    const newTargetIndex = websites.value.findIndex(w => w.id === targetId)
+    websites.value.splice(newTargetIndex, 0, moved)
+    websites.value.forEach((w, i) => { w.order = i })
+    saveToLocalStorage()
+  }
+
   const saveToLocalStorage = () => {
     try {
       localStorage.setItem('websites', JSON.stringify(websites.value))
@@ -173,7 +188,7 @@ export const useWebsiteStore = defineStore('website', () => {
   const importData = (data: { websites?: Partial<Website>[] }) => {
     if (data.websites) {
       const now = new Date()
-      websites.value = data.websites.map((w: Partial<Website>) => {
+      websites.value = data.websites.map((w: Partial<Website>, i: number) => {
         const createdAt = w.createdAt ? new Date(w.createdAt) : now
         const updatedAt = w.updatedAt ? new Date(w.updatedAt) : createdAt
         const lastVisited = w.lastVisited ? new Date(w.lastVisited) : undefined
@@ -190,7 +205,8 @@ export const useWebsiteStore = defineStore('website', () => {
           isOnline: typeof w.isOnline === 'boolean' ? w.isOnline : true,
           createdAt,
           updatedAt,
-          lastVisited
+          lastVisited,
+          order: typeof (w as any).order === 'number' ? (w as any).order : i
         }
       })
       saveToLocalStorage()
@@ -214,6 +230,7 @@ export const useWebsiteStore = defineStore('website', () => {
     setSearchFilters,
     clearSearch,
     setSorting,
+    moveWebsiteBefore,
     exportData,
     importData
   }

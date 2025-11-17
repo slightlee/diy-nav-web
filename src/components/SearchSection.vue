@@ -93,14 +93,24 @@
 
     <div v-else class="website-list-section">
       <div class="website-grid">
-        <WebsiteCard
+        <div
           v-for="website in filteredWebsites"
           :key="website.id"
-          :website="website"
-          @edit="emit('edit', $event)"
-          @delete="emit('delete', $event)"
-          @visit="onVisit"
-        />
+          class="website-draggable"
+          :data-id="website.id"
+          draggable="true"
+          @dragstart="onDragStart(website.id, $event)"
+          @dragover.prevent="onDragOver(website.id, $event)"
+          @drop.prevent="onDrop(website.id, $event)"
+          @dragend="onDragEnd"
+        >
+          <WebsiteCard
+            :website="website"
+            @edit="emit('edit', $event)"
+            @delete="emit('delete', $event)"
+            @visit="onVisit"
+          />
+        </div>
 
         <div v-if="filteredWebsites.length > 0" class="add-card" @click="onAddSite">
           <div class="add-card-content">
@@ -196,6 +206,28 @@ const onAddSite = () => {
 const onVisit = (website: Website) => {
   websiteStore.incrementVisitCount(website.id)
   window.open(website.url, '_blank', 'noopener,noreferrer')
+}
+
+const draggingId = ref<string | null>(null)
+const onDragStart = (id: string, e: DragEvent) => {
+  draggingId.value = id
+  e.dataTransfer?.setData('text/plain', id)
+  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+}
+const onDragOver = (targetId: string, e: DragEvent) => {
+  if (!draggingId.value || draggingId.value === targetId) return
+  e.preventDefault()
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
+}
+const onDrop = (targetId: string, e: DragEvent) => {
+  e.preventDefault()
+  const sourceId = draggingId.value
+  draggingId.value = null
+  if (!sourceId || sourceId === targetId) return
+  websiteStore.moveWebsiteBefore(sourceId, targetId)
+}
+const onDragEnd = () => {
+  draggingId.value = null
 }
 </script>
 
@@ -396,6 +428,14 @@ const onVisit = (website: Website) => {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: var(--spacing-xl);
   }
+}
+
+.website-draggable {
+  display: block;
+  cursor: grab;
+}
+.website-draggable:active {
+  cursor: grabbing;
 }
 
 .add-card {
