@@ -5,7 +5,9 @@
         <div class="logo-icon">
           <i class="fas fa-compass" />
         </div>
-        <h1 class="app-title">DIY导航</h1>
+        <h1 class="app-title">
+          DIY导航
+        </h1>
       </div>
 
       <div class="header-actions">
@@ -46,7 +48,6 @@
               <i class="fas fa-tags" />
               管理标签
             </a>
-            <div class="dropdown-divider" />
             <div class="dropdown-divider" />
             <a href="#" class="dropdown-item" @click="onOpenDataManagement">
               <i class="fas fa-exchange-alt" />
