@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+.cache/
+.vite/
+coverage/
+public/
+.trae/
+*.min.js
+*.log
+*.map
+*.svg
+**/*.png
+**/*.jpg
+**/*.jpeg

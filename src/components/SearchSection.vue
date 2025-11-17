@@ -127,7 +127,9 @@
           v-for="website in filteredWebsites"
           :key="website.id"
           class="website-draggable"
-          :class="[{ 'is-drag-over': draggingId && draggingId !== website.id && dragOverId === website.id }]"
+          :class="[
+            { 'is-drag-over': draggingId && draggingId !== website.id && dragOverId === website.id }
+          ]"
           :data-id="website.id"
           @dragover.prevent="onDragOver(website.id, $event)"
           @drop.prevent="onDrop(website.id, $event)"
@@ -200,11 +202,12 @@ const filteredWebsites = computed(() => {
 const searchResults = computed(() => {
   if (!searchKeyword.value.trim()) return [] as Website[]
   const keyword = searchKeyword.value.toLowerCase()
-  return websiteStore.websites.filter(website =>
-    website.name.toLowerCase().includes(keyword) ||
-    website.url.toLowerCase().includes(keyword) ||
-    website.description?.toLowerCase().includes(keyword) ||
-    getWebsiteTags(website.tagIds).some(tag => tag.name.toLowerCase().includes(keyword))
+  return websiteStore.websites.filter(
+    website =>
+      website.name.toLowerCase().includes(keyword) ||
+      website.url.toLowerCase().includes(keyword) ||
+      website.description?.toLowerCase().includes(keyword) ||
+      getWebsiteTags(website.tagIds).some(tag => tag.name.toLowerCase().includes(keyword))
   )
 })
 
@@ -324,7 +327,9 @@ const onDragEnd = () => {
   &:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.12), 0 2px 12px rgba(0, 0, 0, 0.08);
+    box-shadow:
+      0 0 0 2px rgba(var(--color-primary-rgb), 0.12),
+      0 2px 12px rgba(0, 0, 0, 0.08);
   }
 
   &::placeholder {
@@ -378,7 +383,9 @@ const onDragEnd = () => {
   padding: 4px 8px;
   border-radius: var(--radius-pill);
   cursor: pointer;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
 
   &:hover {
     background-color: var(--color-neutral-200);
@@ -625,7 +632,9 @@ const onDragEnd = () => {
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .density-btn:hover {
@@ -643,7 +652,7 @@ const onDragEnd = () => {
 
 .density-btn.active {
   color: var(--color-primary);
-  background-color: rgba(var(--color-primary-rgb), 0.10);
+  background-color: rgba(var(--color-primary-rgb), 0.1);
 }
 
 .density-btn + .density-btn {

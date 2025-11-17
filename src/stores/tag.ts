@@ -11,7 +11,7 @@ const TAG_COLORS = [
   '#F59E0B', // yellow
   '#8B5CF6', // purple
   '#EC4899', // pink
-  '#6B7280'  // info/gray
+  '#6B7280' // info/gray
 ]
 
 export const useTagStore = defineStore('tag', () => {

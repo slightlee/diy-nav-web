@@ -41,9 +41,7 @@
       title="管理分类"
       @close="() => uiStore.closeModal('manageCategories')"
     >
-      <ManageCategoriesModal
-        @close="() => uiStore.closeModal('manageCategories')"
-      />
+      <ManageCategoriesModal @close="() => uiStore.closeModal('manageCategories')" />
     </BaseModal>
 
     <BaseModal
@@ -52,9 +50,7 @@
       title="管理标签"
       @close="() => uiStore.closeModal('manageTags')"
     >
-      <ManageTagsModal
-        @close="() => uiStore.closeModal('manageTags')"
-      />
+      <ManageTagsModal @close="() => uiStore.closeModal('manageTags')" />
     </BaseModal>
 
     <BaseModal
@@ -63,9 +59,7 @@
       title="设置"
       @close="() => uiStore.closeModal('settings')"
     >
-      <SettingsModal
-        @close="() => uiStore.closeModal('settings')"
-      />
+      <SettingsModal @close="() => uiStore.closeModal('settings')" />
     </BaseModal>
 
     <BaseModal
@@ -74,9 +68,7 @@
       title="数据管理"
       @close="() => uiStore.closeModal('dataManagement')"
     >
-      <DataManagementModal
-        @close="() => uiStore.closeModal('dataManagement')"
-      />
+      <DataManagementModal @close="() => uiStore.closeModal('dataManagement')" />
     </BaseModal>
 
     <!-- Toast容器 -->
@@ -91,9 +83,7 @@
       </div>
       <template #footer>
         <div class="app-layout__confirm-actions">
-          <BaseButton variant="secondary" @click="closeWebsiteDeleteConfirm">
-            取消
-          </BaseButton>
+          <BaseButton variant="secondary" @click="closeWebsiteDeleteConfirm">取消</BaseButton>
           <BaseButton variant="danger" :loading="deletingWebsite" @click="confirmDeleteWebsite">
             <i class="fas fa-trash" />
             删除
@@ -244,7 +234,6 @@ onUnmounted(() => {
   flex-direction: column;
 }
 
-
 // 主内容区域样式
 .main-content {
   flex: 1;
@@ -256,7 +245,6 @@ onUnmounted(() => {
   margin: 0 auto;
   padding: 0 1rem;
 }
-
 
 // 响应式调整
 @media (max-width: 768px) {

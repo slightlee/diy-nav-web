@@ -59,12 +59,8 @@
           @mousedown.prevent
         />
 
-
         <!-- 加载图标 -->
-        <i
-          v-if="loading"
-          class="fas fa-spinner fa-spin base-input__loading-icon"
-        />
+        <i v-if="loading" class="fas fa-spinner fa-spin base-input__loading-icon" />
 
         <!-- 后置图标 -->
         <i
@@ -249,7 +245,6 @@ const inputStyles = computed(() => {
   return {}
 })
 
-
 // 当前字符计数
 const currentCharCount = computed(() => {
   return String(props.modelValue || '').length
@@ -259,7 +254,6 @@ const currentCharCount = computed(() => {
 const charCountError = computed(() => {
   return props.maxlength && currentCharCount.value > props.maxlength
 })
-
 
 // 处理输入
 const handleInput = (event: Event) => {
@@ -373,13 +367,17 @@ const adjustTextareaHeight = () => {
 }
 
 // 监听autosize变化
-watch(() => props.autosize, () => {
-  if (props.autosize && props.type === 'textarea') {
-    nextTick(() => {
-      adjustTextareaHeight()
-    })
-  }
-}, { immediate: true })
+watch(
+  () => props.autosize,
+  () => {
+    if (props.autosize && props.type === 'textarea') {
+      nextTick(() => {
+        adjustTextareaHeight()
+      })
+    }
+  },
+  { immediate: true }
+)
 
 // 暴露方法
 const focus = () => {

@@ -2,6 +2,7 @@
   "name": "diy-nav-web",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "directories": {
     "doc": "doc"
   },
@@ -11,7 +12,16 @@
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit",
     "lint": "eslint . --fix",
-    "format": "prettier --write src/",
+    "format": "prettier --write \"**/*.{js,ts,vue,scss,css,html,json,md}\"",
+    "format:check": "prettier --check \"**/*.{js,ts,vue,scss,css,html,json,md}\"",
+    "prepare": "husky",
+    "lint:fix": "eslint . --fix",
+    "check": "pnpm run format:check && pnpm run lint:check && pnpm run stylelint && pnpm run type-check",
+    "ci:verify": "pnpm run check && pnpm run test && pnpm run build-only",
+    "test": "echo \"No tests defined\" && exit 0",
+    "test:ci": "pnpm run test",
+    "lint:check": "eslint .",
+    "stylelint:fix": "stylelint \"src/**/*.{vue,scss,css}\" --fix",
     "vue-tsc": "vue-tsc",
     "vue-tsc:watch": "vue-tsc --watch",
     "build-only": "vite build",
@@ -23,6 +33,8 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
     "@eslint/js": "^9.15.0",
     "@stylistic/eslint-plugin": "^2.10.1",
     "@types/node": "^24.10.0",
@@ -32,6 +44,8 @@
     "eslint": "^9.15.0",
     "eslint-plugin-vue": "^9.30.0",
     "globals": "^15.12.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6",
     "postcss-html": "^1.8.0",
     "postcss-scss": "^4.0.9",
     "prettier": "^3.3.3",
@@ -51,5 +65,16 @@
     "vue": "3.5.24",
     "vue-router": "^4.6.3"
   },
-  "packageManager": "pnpm@8"
+  "packageManager": "pnpm@8",
+  "lint-staged": {
+    "src/**/*.{js,ts,vue}": [
+      "eslint --fix"
+    ],
+    "src/**/*.{scss,css,vue}": [
+      "stylelint --fix"
+    ],
+    "**/*.{js,ts,vue,scss,css,html,json,md}": [
+      "prettier --write"
+    ]
+  }
 }

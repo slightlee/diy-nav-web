@@ -42,7 +42,11 @@ export const useUIStore = defineStore('ui', () => {
     return modalData.value[modalName] as ModalPayloads[K] | undefined
   }
 
-  const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info', duration: number = 3000) => {
+  const showToast = (
+    message: string,
+    type: 'success' | 'error' | 'warning' | 'info',
+    duration: number = 3000
+  ) => {
     const id = Date.now().toString(36) + Math.random().toString(36).substr(2)
 
     const toast: ToastMessage = {

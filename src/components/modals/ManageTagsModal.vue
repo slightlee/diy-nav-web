@@ -23,9 +23,11 @@
                 :key="color"
                 type="button"
                 class="manage-tags-modal__color-btn"
-                :class="[{
-                  'manage-tags-modal__color-btn--selected': newTag.color === color
-                }]"
+                :class="[
+                  {
+                    'manage-tags-modal__color-btn--selected': newTag.color === color
+                  }
+                ]"
                 :style="{ backgroundColor: color }"
                 @click="selectColor(color)"
               >
@@ -55,11 +57,7 @@
       </h3>
 
       <!-- 空状态 -->
-      <EmptyState
-        v-if="tags.length === 0"
-        type="no-tags"
-        :show-action-button="false"
-      />
+      <EmptyState v-if="tags.length === 0" type="no-tags" :show-action-button="false" />
 
       <!-- 标签列表 -->
       <div v-else class="manage-tags-modal__tag-list">
@@ -81,10 +79,7 @@
               </div>
 
               <div class="manage-tags-modal__tag-icon">
-                <div
-                  class="manage-tags-modal__tag-color"
-                  :style="{ backgroundColor: tag.color }"
-                />
+                <div class="manage-tags-modal__tag-color" :style="{ backgroundColor: tag.color }" />
               </div>
 
               <div class="manage-tags-modal__tag-info">
@@ -103,12 +98,7 @@
               </div>
 
               <div class="manage-tags-modal__tag-actions">
-                <BaseButton
-                  variant="ghost"
-                  size="sm"
-                  title="编辑标签"
-                  @click="startEdit(tag)"
-                >
+                <BaseButton variant="ghost" size="sm" title="编辑标签" @click="startEdit(tag)">
                   <i class="fas fa-edit" />
                 </BaseButton>
                 <BaseButton
@@ -124,11 +114,7 @@
             </div>
 
             <!-- 编辑模式 -->
-            <form
-              v-else
-              class="manage-tags-modal__tag-edit"
-              @submit.prevent="handleUpdateTag"
-            >
+            <form v-else class="manage-tags-modal__tag-edit" @submit.prevent="handleUpdateTag">
               <div class="manage-tags-modal__edit-color">
                 <label class="manage-tags-modal__color-label">颜色</label>
                 <div class="manage-tags-modal__color-list">
@@ -137,9 +123,11 @@
                     :key="color"
                     type="button"
                     class="manage-tags-modal__color-btn"
-                    :class="[{
-                      'manage-tags-modal__color-btn--selected': editingTag.color === color
-                    }]"
+                    :class="[
+                      {
+                        'manage-tags-modal__color-btn--selected': editingTag.color === color
+                      }
+                    ]"
                     :style="{ backgroundColor: color }"
                     @click="selectEditColor(color)"
                   >
@@ -165,11 +153,7 @@
                   <i class="fas fa-save" />
                   保存
                 </BaseButton>
-                <BaseButton
-                  variant="ghost"
-                  size="sm"
-                  @click="cancelEdit"
-                >
+                <BaseButton variant="ghost" size="sm" @click="cancelEdit">
                   <i class="fas fa-times" />
                   取消
                 </BaseButton>
@@ -190,9 +174,7 @@
       </div>
       <template #footer>
         <div class="manage-tags-modal__confirm-actions">
-          <BaseButton variant="secondary" @click="closeDeleteConfirm">
-            取消
-          </BaseButton>
+          <BaseButton variant="secondary" @click="closeDeleteConfirm">取消</BaseButton>
           <BaseButton variant="danger" :loading="deleting" @click="confirmDeleteTag">
             <i class="fas fa-trash" />
             删除
@@ -353,7 +335,12 @@ const startEdit = (tag: Tag) => {
 
 // 处理更新标签
 const handleUpdateTag = () => {
-  if (!editingId.value || !editingTag.value.name.trim() || !editingTag.value.color || updating.value) {
+  if (
+    !editingId.value ||
+    !editingTag.value.name.trim() ||
+    !editingTag.value.color ||
+    updating.value
+  ) {
     return
   }
 
@@ -386,10 +373,7 @@ const handleDeleteTag = (tag: Tag) => {
   const websiteCount = getWebsiteCount(tag.id)
 
   if (websiteCount > 0) {
-    uiStore.showToast(
-      `该标签下还有 ${websiteCount} 个网站，请先移除或删除这些网站`,
-      'warning'
-    )
+    uiStore.showToast(`该标签下还有 ${websiteCount} 个网站，请先移除或删除这些网站`, 'warning')
     return
   }
 
@@ -763,13 +747,13 @@ const confirmDeleteTag = () => {
     transition: none;
   }
 }
-  .manage-tags-modal__confirm-content {
-    padding: var(--spacing-md) 0;
-  }
+.manage-tags-modal__confirm-content {
+  padding: var(--spacing-md) 0;
+}
 
-  .manage-tags-modal__confirm-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--spacing-md);
-  }
+.manage-tags-modal__confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+}
 </style>

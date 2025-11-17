@@ -1,56 +1,56 @@
 // 类型定义，避免未使用变量错误
 export interface SimpleWebsite {
-  id: string;
-  name: string;
-  url: string;
-  description?: string;
-  favicon?: string;
-  categoryId?: string;
-  tagIds?: string[];
-  visitCount?: number;
-  isOnline?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
+  id: string
+  name: string
+  url: string
+  description?: string
+  favicon?: string
+  categoryId?: string
+  tagIds?: string[]
+  visitCount?: number
+  isOnline?: boolean
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface SimpleCategory {
-  id: string;
-  name: string;
-  description?: string;
-  order?: number;
-  websiteCount?: number;
-  createdAt?: string;
-  updatedAt?: string;
+  id: string
+  name: string
+  description?: string
+  order?: number
+  websiteCount?: number
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface SimpleTag {
-  id: string;
-  name: string;
-  color: string;
-  order?: number;
-  usageCount?: number;
-  createdAt?: string;
-  updatedAt?: string;
+  id: string
+  name: string
+  color: string
+  order?: number
+  usageCount?: number
+  createdAt?: string
+  updatedAt?: string
 }
 
 // 类型定义，避免未使用变量错误
 export interface ApiResponse<T = unknown> {
-  data?: T;
-  success: boolean;
-  message?: string;
-  error?: string;
+  data?: T
+  success: boolean
+  message?: string
+  error?: string
 }
 
 export interface PaginatedResponse<T> {
-  data: T[];
-  success: boolean;
-  message?: string;
+  data: T[]
+  success: boolean
+  message?: string
   pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
 }
 
 // 生成唯一ID
@@ -106,7 +106,7 @@ export const getLetterFavicon = (text: string, size = 64): string => {
   const palette = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#6B7280']
   const idx = letter ? letter.charCodeAt(0) % palette.length : 0
   const bg = palette[idx]
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'><rect width='${size}' height='${size}' rx='12' fill='${bg}'/><text x='50%' y='60%' text-anchor='middle' font-size='${Math.round(size*0.56)}' font-family='-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' fill='#ffffff'>${letter}</text></svg>`
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'><rect width='${size}' height='${size}' rx='12' fill='${bg}'/><text x='50%' y='60%' text-anchor='middle' font-size='${Math.round(size * 0.56)}' font-family='-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' fill='#ffffff'>${letter}</text></svg>`
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg)
 }
 
@@ -255,19 +255,26 @@ export const getDomain = (url: string): string => {
 
 export const getContrastColor = (bgColor: string): string => {
   const hexMatch = bgColor.trim().match(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/)
-  let r = 255, g = 255, b = 255
+  let r = 255,
+    g = 255,
+    b = 255
 
   if (hexMatch) {
     let hex = hexMatch[1]
     if (hex.length === 3) {
-      hex = hex.split('').map(ch => ch + ch).join('')
+      hex = hex
+        .split('')
+        .map(ch => ch + ch)
+        .join('')
     }
     const num = parseInt(hex, 16)
     r = (num >> 16) & 0xff
     g = (num >> 8) & 0xff
     b = num & 0xff
   } else {
-    const rgbMatch = bgColor.trim().match(/^rgba?\((\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*([\d.]+))?\)$/)
+    const rgbMatch = bgColor
+      .trim()
+      .match(/^rgba?\((\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*([\d.]+))?\)$/)
     if (rgbMatch) {
       r = Math.min(255, parseInt(rgbMatch[1], 10))
       g = Math.min(255, parseInt(rgbMatch[2], 10))

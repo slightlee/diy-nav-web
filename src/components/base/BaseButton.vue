@@ -31,7 +31,15 @@ import { computed, ref, type VNode } from 'vue'
 
 interface Props {
   /** 按钮类型 */
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'warning' | 'info'
+  variant?:
+    | 'primary'
+    | 'secondary'
+    | 'outline'
+    | 'ghost'
+    | 'danger'
+    | 'success'
+    | 'warning'
+    | 'info'
   /** 按钮尺寸 */
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   /** 按钮形状 */
@@ -467,15 +475,15 @@ defineExpose({
 }
 
 // 高对比度模式
-  @media (prefers-contrast: high) {
-    .base-button {
-      border-width: 2px;
+@media (prefers-contrast: high) {
+  .base-button {
+    border-width: 2px;
 
-      &--ghost {
-        border-color: currentcolor;
-      }
+    &--ghost {
+      border-color: currentcolor;
     }
   }
+}
 
 // 减少动画偏好
 @media (prefers-reduced-motion: reduce) {

@@ -30,7 +30,13 @@ interface Props {
   /** 最大显示的Toast数量 */
   maxCount?: number
   /** Toast位置 */
-  position?: 'top-right' | 'top-left' | 'top-center' | 'bottom-right' | 'bottom-left' | 'bottom-center'
+  position?:
+    | 'top-right'
+    | 'top-left'
+    | 'top-center'
+    | 'bottom-right'
+    | 'bottom-left'
+    | 'bottom-center'
   /** 是否在新Toast出现时关闭之前的 */
   newestOnTop?: boolean
   /** 自定义类名 */

@@ -62,10 +62,22 @@ html {
   --color-warning: #{$color-warning};
   --color-error: #{$color-error};
   --color-info: #{$color-info};
-  --color-success-rgb: #{color.channel($color-success, 'red', $space: rgb)}, #{color.channel($color-success, 'green', $space: rgb)}, #{color.channel($color-success, 'blue', $space: rgb)};
-  --color-warning-rgb: #{color.channel($color-warning, 'red', $space: rgb)}, #{color.channel($color-warning, 'green', $space: rgb)}, #{color.channel($color-warning, 'blue', $space: rgb)};
-  --color-error-rgb: #{color.channel($color-error, 'red', $space: rgb)}, #{color.channel($color-error, 'green', $space: rgb)}, #{color.channel($color-error, 'blue', $space: rgb)};
-  --color-info-rgb: #{color.channel($color-info, 'red', $space: rgb)}, #{color.channel($color-info, 'green', $space: rgb)}, #{color.channel($color-info, 'blue', $space: rgb)};
+  --color-success-rgb:
+    #{color.channel($color-success, 'red', $space: rgb)},
+    #{color.channel($color-success, 'green', $space: rgb)},
+    #{color.channel($color-success, 'blue', $space: rgb)};
+  --color-warning-rgb:
+    #{color.channel($color-warning, 'red', $space: rgb)},
+    #{color.channel($color-warning, 'green', $space: rgb)},
+    #{color.channel($color-warning, 'blue', $space: rgb)};
+  --color-error-rgb:
+    #{color.channel($color-error, 'red', $space: rgb)},
+    #{color.channel($color-error, 'green', $space: rgb)},
+    #{color.channel($color-error, 'blue', $space: rgb)};
+  --color-info-rgb:
+    #{color.channel($color-info, 'red', $space: rgb)},
+    #{color.channel($color-info, 'green', $space: rgb)},
+    #{color.channel($color-info, 'blue', $space: rgb)};
   --color-border: #{$color-border};
   --border-radius: #{$border-radius-md};
   --font-family: #{$font-family-sans};
@@ -116,12 +128,10 @@ html {
   --opacity-disabled: #{$opacity-disabled};
   --opacity-hover: #{$opacity-hover};
   --opacity-focus: #{$opacity-focus};
-
   --font-size-title: clamp(1.25rem, 2.5vw, 1.75rem);
-
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   --color-neutral-50: #{$color-neutral-900};
   --color-neutral-100: #{$color-neutral-800};
   --color-neutral-200: #{$color-neutral-700};
@@ -138,7 +148,7 @@ html {
 }
 
 // 密度切换
-[data-density="compact"] {
+[data-density='compact'] {
   --spacing-sm: #{($spacing-sm * 0.75)};
   --spacing-md: #{($spacing-md * 0.75)};
   --spacing-lg: #{($spacing-lg * 0.75)};
@@ -146,7 +156,7 @@ html {
   --spacing-2xl: #{($spacing-2xl * 0.75)};
 }
 
-[data-density="loose"] {
+[data-density='loose'] {
   --spacing-sm: #{($spacing-sm * 1.25)};
   --spacing-md: #{($spacing-md * 1.25)};
   --spacing-lg: #{($spacing-lg * 1.25)};
@@ -225,19 +235,47 @@ html {
 
 // 触摸设备优化
 @media (hover: none) and (pointer: coarse) {
-  button, .btn, a, input, select {
+  button,
+  .btn,
+  a,
+  input,
+  select {
     min-height: 44px;
     min-width: 44px;
     font-size: 16px;
   }
 }
 
-.text-xs { font-size: var(--font-size-xs); }
-.text-sm { font-size: var(--font-size-sm); }
-.text-base { font-size: var(--font-size-base); }
-.text-lg { font-size: var(--font-size-lg); }
-.text-xl { font-size: var(--font-size-xl); }
-.heading-1 { font-size: var(--font-size-title); font-weight: var(--font-weight-bold); line-height: var(--line-height-tight); }
-.heading-2 { font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold); line-height: var(--line-height-tight); }
-.heading-3 { font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); line-height: var(--line-height-tight); }
-.text-muted { color: var(--color-neutral-600); }
+.text-xs {
+  font-size: var(--font-size-xs);
+}
+.text-sm {
+  font-size: var(--font-size-sm);
+}
+.text-base {
+  font-size: var(--font-size-base);
+}
+.text-lg {
+  font-size: var(--font-size-lg);
+}
+.text-xl {
+  font-size: var(--font-size-xl);
+}
+.heading-1 {
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+.heading-2 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+.heading-3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+.text-muted {
+  color: var(--color-neutral-600);
+}

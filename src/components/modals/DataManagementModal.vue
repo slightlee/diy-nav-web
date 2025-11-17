@@ -8,9 +8,7 @@
 
       <div class="data-management-modal__data-actions">
         <div class="data-management-modal__data-action">
-          <h4 class="data-management-modal__action-title">
-            导入数据
-          </h4>
+          <h4 class="data-management-modal__action-title">导入数据</h4>
           <p class="data-management-modal__action-description">
             从 JSON 文件导入网站、分类和标签数据
           </p>
@@ -35,9 +33,7 @@
         </div>
 
         <div class="data-management-modal__data-action">
-          <h4 class="data-management-modal__action-title">
-            导出数据
-          </h4>
+          <h4 class="data-management-modal__action-title">导出数据</h4>
           <p class="data-management-modal__action-description">
             将网站、分类和标签数据导出为 JSON 文件
           </p>
@@ -64,13 +60,11 @@
 
       <div class="data-management-modal__setting-group">
         <label class="data-management-modal__checkbox-setting">
-          <input
-            v-model="autoBackup"
-            type="checkbox"
-            class="data-management-modal__checkbox"
-          />
+          <input v-model="autoBackup" type="checkbox" class="data-management-modal__checkbox" />
           <span class="data-management-modal__checkbox-text">自动备份</span>
-          <span class="data-management-modal__checkbox-description">定期自动备份数据到本地存储</span>
+          <span class="data-management-modal__checkbox-description">
+            定期自动备份数据到本地存储
+          </span>
         </label>
       </div>
     </div>
@@ -82,10 +76,12 @@
       </h3>
 
       <div class="data-management-modal__danger-actions">
-        <p class="data-management-modal__danger-description">
-          以下操作不可恢复，请谨慎操作
-        </p>
-        <BaseButton variant="danger" class="data-management-modal__danger-btn" @click="openClearConfirm">
+        <p class="data-management-modal__danger-description">以下操作不可恢复，请谨慎操作</p>
+        <BaseButton
+          variant="danger"
+          class="data-management-modal__danger-btn"
+          @click="openClearConfirm"
+        >
           <i class="fas fa-trash-alt" />
           清除所有数据
         </BaseButton>
@@ -101,9 +97,7 @@
       <div class="danger-confirm__content">
         <div class="danger-confirm__header">
           <i class="fas fa-exclamation-triangle danger-confirm__icon" />
-          <div class="danger-confirm__title">
-            此操作不可恢复，确定要清除所有数据吗？
-          </div>
+          <div class="danger-confirm__title">此操作不可恢复，确定要清除所有数据吗？</div>
         </div>
         <ul class="danger-confirm__list">
           <li>所有网站</li>
@@ -114,9 +108,7 @@
       </div>
       <template #footer>
         <div class="danger-confirm__actions">
-          <BaseButton variant="secondary" @click="closeClearConfirm">
-            取消
-          </BaseButton>
+          <BaseButton variant="secondary" @click="closeClearConfirm">取消</BaseButton>
           <BaseButton
             variant="danger"
             :disabled="countdown > 0 || clearing"
@@ -145,36 +137,26 @@
             <div class="import-confirm__summary-count">
               {{ importPreview.websites }}
             </div>
-            <div class="import-confirm__summary-label">
-              网站
-            </div>
+            <div class="import-confirm__summary-label">网站</div>
           </div>
           <div class="import-confirm__summary-item">
             <div class="import-confirm__summary-count">
               {{ importPreview.categories }}
             </div>
-            <div class="import-confirm__summary-label">
-              分类
-            </div>
+            <div class="import-confirm__summary-label">分类</div>
           </div>
           <div class="import-confirm__summary-item">
             <div class="import-confirm__summary-count">
               {{ importPreview.tags }}
             </div>
-            <div class="import-confirm__summary-label">
-              标签
-            </div>
+            <div class="import-confirm__summary-label">标签</div>
           </div>
         </div>
-        <p class="import-confirm__warning">
-          此操作将覆盖现有数据，确定继续吗？
-        </p>
+        <p class="import-confirm__warning">此操作将覆盖现有数据，确定继续吗？</p>
       </div>
       <template #footer>
         <div class="import-confirm__actions">
-          <BaseButton variant="secondary" @click="closeImportConfirm">
-            取消
-          </BaseButton>
+          <BaseButton variant="secondary" @click="closeImportConfirm">取消</BaseButton>
           <BaseButton variant="primary" :loading="importing" @click="confirmImportData">
             <i class="fas fa-download" />
             导入

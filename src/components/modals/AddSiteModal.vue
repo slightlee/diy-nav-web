@@ -41,19 +41,9 @@
 
       <div v-if="!props.contextCategoryId" class="add-site-modal__form-group">
         <label class="add-site-modal__label add-site-modal__label--required">分类</label>
-        <select
-          v-model="formData.categoryId"
-          class="add-site-modal__select"
-          required
-        >
-          <option disabled value="">
-            请选择分类
-          </option>
-          <option
-            v-for="c in categories"
-            :key="c.id"
-            :value="c.id"
-          >
+        <select v-model="formData.categoryId" class="add-site-modal__select" required>
+          <option disabled value="">请选择分类</option>
+          <option v-for="c in categories" :key="c.id" :value="c.id">
             {{ c.name }}
           </option>
         </select>
@@ -107,19 +97,8 @@
       </div>
 
       <div class="add-site-modal__actions">
-        <BaseButton
-          variant="ghost"
-          type="button"
-          @click="handleClose"
-        >
-          取消
-        </BaseButton>
-        <BaseButton
-          variant="primary"
-          :loading="submitting"
-          :disabled="!isFormValid"
-          type="submit"
-        >
+        <BaseButton variant="ghost" type="button" @click="handleClose">取消</BaseButton>
+        <BaseButton variant="primary" :loading="submitting" :disabled="!isFormValid" type="submit">
           <i class="fas fa-save" />
           {{ isEditMode ? '保存修改' : '添加网站' }}
         </BaseButton>
@@ -178,10 +157,12 @@ const submitting = ref(false)
 const isEditMode = computed(() => !!props.website)
 
 const isFormValid = computed(() => {
-  return formData.value.name.trim() &&
-         formData.value.url.trim() &&
-         formData.value.categoryId &&
-         Object.keys(errors.value).length === 0
+  return (
+    formData.value.name.trim() &&
+    formData.value.url.trim() &&
+    formData.value.categoryId &&
+    Object.keys(errors.value).length === 0
+  )
 })
 
 // 验证单个字段
@@ -245,13 +226,14 @@ const handleUrlInput = () => {
 }
 
 const faviconLoading = ref(false)
-const probeImage = (src: string) => new Promise<boolean>(resolve => {
-  if (!src) return resolve(false)
-  const img = new Image()
-  img.onload = () => resolve(true)
-  img.onerror = () => resolve(false)
-  img.src = src
-})
+const probeImage = (src: string) =>
+  new Promise<boolean>(resolve => {
+    if (!src) return resolve(false)
+    const img = new Image()
+    img.onload = () => resolve(true)
+    img.onerror = () => resolve(false)
+    img.src = src
+  })
 
 // 处理URL失焦自动补全
 const handleUrlBlur = async () => {
@@ -305,10 +287,7 @@ const handleSubmit = async () => {
       savedWebsite = websiteStore.addWebsite(websiteData)
     }
 
-    uiStore.showToast(
-      isEditMode.value ? '网站修改成功' : '网站添加成功',
-      'success'
-    )
+    uiStore.showToast(isEditMode.value ? '网站修改成功' : '网站添加成功', 'success')
 
     emit('success', savedWebsite)
     handleClose()
@@ -326,7 +305,9 @@ const handleClose = () => {
 }
 
 const faviconSource = ref<'default' | 'api'>('default')
-const serviceFavicon = computed(() => formData.value.url ? getServiceFaviconUrl(formData.value.url, 64) : '')
+const serviceFavicon = computed(() =>
+  formData.value.url ? getServiceFaviconUrl(formData.value.url, 64) : ''
+)
 const letterFavicon = computed(() => {
   const n = formData.value.name?.trim()
   if (n && n.length > 0) return getLetterFavicon(n, 64)
@@ -353,7 +334,8 @@ const initializeForm = () => {
       categoryId: props.website.categoryId,
       tagIds: [...props.website.tagIds]
     }
-    faviconSource.value = props.website.favicon && props.website.favicon.includes('google.com/s2') ? 'api' : 'default'
+    faviconSource.value =
+      props.website.favicon && props.website.favicon.includes('google.com/s2') ? 'api' : 'default'
   } else {
     formData.value = {
       name: '',
@@ -386,7 +368,6 @@ const onFaviconError = (type: 'default' | 'api') => {
 
 const categories = computed(() => categoryStore.categories)
 const tags = computed(() => tagStore.tags)
-
 </script>
 
 <style scoped lang="scss">

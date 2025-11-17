@@ -48,7 +48,15 @@ interface TypeConfig {
 }
 
 interface Props {
-  type: 'no-websites' | 'no-search-results' | 'no-categories' | 'no-tags' | 'no-data' | 'error' | 'loading' | 'network-error'
+  type:
+    | 'no-websites'
+    | 'no-search-results'
+    | 'no-categories'
+    | 'no-tags'
+    | 'no-data'
+    | 'error'
+    | 'loading'
+    | 'network-error'
   title?: string
   description?: string
   icon?: string
@@ -218,11 +226,17 @@ const handleAction = () => {
   min-height: 200px;
 }
 
-.empty-state--with-icon { padding-top: var(--spacing-xl); }
+.empty-state--with-icon {
+  padding-top: var(--spacing-xl);
+}
 
-.empty-state--with-description { padding: 0 var(--spacing-lg); }
+.empty-state--with-description {
+  padding: 0 var(--spacing-lg);
+}
 
-.empty-state--with-action { padding-top: var(--spacing-lg); }
+.empty-state--with-action {
+  padding-top: var(--spacing-lg);
+}
 
 .empty-state__icon {
   margin-bottom: var(--spacing-lg);

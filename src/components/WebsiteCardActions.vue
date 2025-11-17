@@ -33,6 +33,3 @@ interface Emits {
 
 defineOptions({ name: 'WebsiteCardActions' })
 </script>
-
-<style scoped>
-</style>

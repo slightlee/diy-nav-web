@@ -5,9 +5,7 @@
         <div class="logo-icon">
           <i class="fas fa-compass" />
         </div>
-        <h1 class="app-title">
-          DIY导航
-        </h1>
+        <h1 class="app-title">DIY导航</h1>
       </div>
 
       <div class="header-actions">
@@ -69,7 +67,13 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useSettingsStore } from '@/stores/settings'
 
-const emit = defineEmits(['addSite', 'manageCategories', 'manageTags', 'openSettings', 'openDataManagement'])
+const emit = defineEmits([
+  'addSite',
+  'manageCategories',
+  'manageTags',
+  'openSettings',
+  'openDataManagement'
+])
 
 const settingsStore = useSettingsStore()
 const currentTheme = computed(() => settingsStore.settings.theme)
@@ -136,7 +140,6 @@ const cycleTheme = () => {
     }
   }, 1200)
 }
-
 
 const onThemeHover = (hover: boolean) => {
   hoveringTheme.value = hover

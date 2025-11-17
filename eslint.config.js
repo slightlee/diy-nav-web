@@ -52,31 +52,43 @@ export default [
       'vue/component-definition-name-casing': ['error', 'PascalCase'],
       'vue/component-name-in-template-casing': ['error', 'PascalCase'],
       'vue/custom-event-name-casing': ['error', 'camelCase'],
-      'vue/define-macros-order': ['error', {
-        'order': ['defineProps', 'defineEmits']
-      }],
-      'vue/html-self-closing': ['error', {
-        'html': {
-          'void': 'always',
-          'normal': 'always',
-          'component': 'always'
-        },
-        'svg': 'always',
-        'math': 'always'
-      }],
-      'vue/max-attributes-per-line': ['error', {
-        'singleline': 3,
-        'multiline': 1
-      }],
-      'vue/multiline-html-element-content-newline': 'error',
+      'vue/define-macros-order': [
+        'error',
+        {
+          order: ['defineProps', 'defineEmits']
+        }
+      ],
+      'vue/html-self-closing': [
+        'error',
+        {
+          html: {
+            void: 'always',
+            normal: 'always',
+            component: 'always'
+          },
+          svg: 'always',
+          math: 'always'
+        }
+      ],
+      'vue/max-attributes-per-line': [
+        'warn',
+        {
+          singleline: 3,
+          multiline: 1
+        }
+      ],
+      'vue/multiline-html-element-content-newline': 'warn',
       'vue/no-multi-spaces': 'error',
       'vue/no-useless-v-bind': 'error',
       'vue/padding-line-between-blocks': ['error', 'always'],
       'vue/prefer-separate-static-class': 'error',
-      'vue/html-closing-bracket-newline': ['error', {
-        'singleline': 'never',
-        'multiline': 'always'
-      }],
+      'vue/html-closing-bracket-newline': [
+        'warn',
+        {
+          singleline: 'never',
+          multiline: 'always'
+        }
+      ],
 
       // 代码风格规则
       '@stylistic/quotes': ['error', 'single'],
@@ -85,11 +97,14 @@ export default [
       '@stylistic/indent': ['error', 2],
       '@stylistic/object-curly-spacing': ['error', 'always'],
       '@stylistic/array-bracket-spacing': ['error', 'never'],
-      '@stylistic/space-before-function-paren': ['error', {
-        'anonymous': 'always',
-        'named': 'never',
-        'asyncArrow': 'always'
-      }],
+      '@stylistic/space-before-function-paren': [
+        'error',
+        {
+          anonymous: 'always',
+          named: 'never',
+          asyncArrow: 'always'
+        }
+      ],
       '@stylistic/arrow-parens': ['error', 'as-needed'],
       '@stylistic/eol-last': ['error', 'always'],
       '@stylistic/no-trailing-spaces': 'error'
@@ -102,7 +117,8 @@ export default [
       'dist/**',
       'build/**',
       '*.min.js',
-      'public/**'
+      'public/**',
+      'commitlint.config.cjs'
     ]
   }
 ]

@@ -85,7 +85,9 @@
             v-for="category in sortedCategories"
             :key="category.id"
             class="manage-categories-modal__category-item"
-            :class="{ 'manage-categories-modal__category-item--editing': editingId === category.id }"
+            :class="{
+              'manage-categories-modal__category-item--editing': editingId === category.id
+            }"
             :draggable="editingId !== category.id"
             @dragstart="onDragStart(category.id)"
             @dragover.prevent
@@ -105,7 +107,10 @@
                 <h4 class="manage-categories-modal__category-name">
                   {{ category.name }}
                 </h4>
-                <p v-if="category.description" class="manage-categories-modal__category-description">
+                <p
+                  v-if="category.description"
+                  class="manage-categories-modal__category-description"
+                >
                   {{ category.description }}
                 </p>
                 <div class="manage-categories-modal__category-stats">
@@ -120,12 +125,7 @@
               </div>
 
               <div class="manage-categories-modal__category-actions">
-                <BaseButton
-                  variant="ghost"
-                  size="sm"
-                  title="编辑分类"
-                  @click="startEdit(category)"
-                >
+                <BaseButton variant="ghost" size="sm" title="编辑分类" @click="startEdit(category)">
                   <i class="fas fa-edit" />
                 </BaseButton>
                 <BaseButton
@@ -196,11 +196,7 @@
                   <i class="fas fa-save" />
                   保存
                 </BaseButton>
-                <BaseButton
-                  variant="ghost"
-                  size="sm"
-                  @click="cancelEdit"
-                >
+                <BaseButton variant="ghost" size="sm" @click="cancelEdit">
                   <i class="fas fa-times" />
                   取消
                 </BaseButton>
@@ -222,9 +218,7 @@
       </div>
       <template #footer>
         <div class="manage-categories-modal__confirm-actions">
-          <BaseButton variant="secondary" @click="closeDeleteConfirm">
-            取消
-          </BaseButton>
+          <BaseButton variant="secondary" @click="closeDeleteConfirm">取消</BaseButton>
           <BaseButton variant="danger" :loading="deleting" @click="confirmDeleteCategory">
             <i class="fas fa-trash" />
             删除
@@ -442,10 +436,7 @@ const handleDeleteCategory = async (category: Category) => {
   const websiteCount = getWebsiteCount(category.id)
 
   if (websiteCount > 0) {
-    uiStore.showToast(
-      `该分类下还有 ${websiteCount} 个网站，请先移动或删除这些网站`,
-      'warning'
-    )
+    uiStore.showToast(`该分类下还有 ${websiteCount} 个网站，请先移动或删除这些网站`, 'warning')
     return
   }
 
@@ -549,7 +540,6 @@ const confirmDeleteCategory = async () => {
   padding-bottom: var(--spacing-lg);
   border-bottom: 1px solid var(--color-border);
 }
-
 
 .manage-categories-modal__add-form {
   display: flex;
@@ -761,8 +751,6 @@ const confirmDeleteCategory = async () => {
   margin-top: var(--spacing-sm);
 }
 
-
-
 // 动画
 .category-item-enter-active,
 .category-item-leave-active {
@@ -843,13 +831,13 @@ const confirmDeleteCategory = async () => {
     transition: none;
   }
 }
-  .manage-categories-modal__confirm-content {
-    padding: var(--spacing-md) 0;
-  }
+.manage-categories-modal__confirm-content {
+  padding: var(--spacing-md) 0;
+}
 
-  .manage-categories-modal__confirm-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--spacing-md);
-  }
+.manage-categories-modal__confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+}
 </style>

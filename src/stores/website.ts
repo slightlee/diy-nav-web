@@ -19,12 +19,14 @@ export const useWebsiteStore = defineStore('website', () => {
     try {
       const saved = JSON.parse(localStorage.getItem('websites') || '[]')
       if (Array.isArray(saved)) {
-        websites.value = saved.map((item, index) => ({
-          ...item,
-          createdAt: new Date(item.createdAt),
-          updatedAt: new Date(item.updatedAt),
-          lastVisited: item.lastVisited ? new Date(item.lastVisited) : undefined
-        })).map((w, i) => ({ ...w, order: typeof w.order === 'number' ? w.order : i }))
+        websites.value = saved
+          .map((item, index) => ({
+            ...item,
+            createdAt: new Date(item.createdAt),
+            updatedAt: new Date(item.updatedAt),
+            lastVisited: item.lastVisited ? new Date(item.lastVisited) : undefined
+          }))
+          .map((w, i) => ({ ...w, order: typeof w.order === 'number' ? w.order : i }))
         console.log('📦 从 localStorage 加载数据:', websites.value.length, '个网站')
       } else {
         websites.value = []
@@ -43,10 +45,11 @@ export const useWebsiteStore = defineStore('website', () => {
     // 搜索过滤
     if (searchFilters.value.keyword) {
       const keyword = searchFilters.value.keyword.toLowerCase()
-      result = result.filter(website =>
-        website.name.toLowerCase().includes(keyword) ||
-        website.url.toLowerCase().includes(keyword) ||
-        (website.description && website.description.toLowerCase().includes(keyword))
+      result = result.filter(
+        website =>
+          website.name.toLowerCase().includes(keyword) ||
+          website.url.toLowerCase().includes(keyword) ||
+          (website.description && website.description.toLowerCase().includes(keyword))
       )
     }
 
@@ -165,7 +168,9 @@ export const useWebsiteStore = defineStore('website', () => {
     const [moved] = websites.value.splice(sourceIndex, 1)
     const newTargetIndex = websites.value.findIndex(w => w.id === targetId)
     websites.value.splice(newTargetIndex, 0, moved)
-    websites.value.forEach((w, i) => { w.order = i })
+    websites.value.forEach((w, i) => {
+      w.order = i
+    })
     saveToLocalStorage()
   }
 

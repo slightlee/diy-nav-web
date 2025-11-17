@@ -39,11 +39,7 @@
     </button>
 
     <!-- 进度条 -->
-    <div
-      v-if="showProgressBar && autoClose"
-      class="toast-item__progress"
-      :style="progressStyles"
-    />
+    <div v-if="showProgressBar && autoClose" class="toast-item__progress" :style="progressStyles" />
 
     <!-- 操作按钮区域 -->
     <div v-if="toast?.actions && toast.actions.length > 0" class="toast-item__actions">
@@ -84,7 +80,13 @@ interface Props {
   /** Toast消息对象 */
   toast: ExtendedToastMessage
   /** Toast位置 */
-  position?: 'top-right' | 'top-left' | 'top-center' | 'bottom-right' | 'bottom-left' | 'bottom-center'
+  position?:
+    | 'top-right'
+    | 'top-left'
+    | 'top-center'
+    | 'bottom-right'
+    | 'bottom-left'
+    | 'bottom-center'
   /** 是否显示关闭按钮 */
   showCloseButton?: boolean
   /** 是否显示进度条 */
@@ -150,9 +152,7 @@ const iconClasses = computed(() => {
 // 进度条样式
 const progressStyles = computed(() => {
   const duration = props.duration || props.toast?.duration || 3000
-  const progress = isHovered.value
-    ? remainingTime.value
-    : Math.max(0, remainingTime.value - 16) // 假设60fps，每帧约16ms
+  const progress = isHovered.value ? remainingTime.value : Math.max(0, remainingTime.value - 16) // 假设60fps，每帧约16ms
 
   return {
     width: `${(progress / duration) * 100}%`,

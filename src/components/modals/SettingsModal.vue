@@ -7,8 +7,6 @@
         快捷键
       </h3>
 
-
-
       <div class="settings-modal__shortcuts-section">
         <div class="settings-modal__shortcuts-list">
           <div
@@ -38,9 +36,6 @@ const emit = defineEmits<Emits>()
 
 // Store
 
-
-
-
 // 设置数据
 const settings = ref<UserSettings>({
   theme: 'light',
@@ -48,8 +43,6 @@ const settings = ref<UserSettings>({
   autoBackup: true,
   shortcuts: {}
 })
-
-
 
 // 快捷键列表
 const shortcuts = computed(() => [
@@ -72,20 +65,6 @@ const initializeSettings = () => {
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // 生命周期
 onMounted(() => {
@@ -228,7 +207,7 @@ onMounted(() => {
   &--auto {
     background: linear-gradient(135deg, var(--color-white) 50%, var(--color-neutral-800) 50%);
     color: var(--color-primary);
-}
+  }
 }
 
 .settings-modal__theme-name {
@@ -359,7 +338,7 @@ onMounted(() => {
 
   &:hover {
     background-color: rgba(var(--color-error-rgb), 0.9);
-}
+  }
 }
 
 // 操作按钮

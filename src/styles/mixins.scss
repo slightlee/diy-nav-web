@@ -31,7 +31,7 @@
   @media (min-width: $breakpoint-lg) {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: var(--spacing-lg);
-}
+  }
 }
 
 // 按钮基础样式

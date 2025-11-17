@@ -24,10 +24,7 @@
           loading="lazy"
           @error="handleFaviconError"
         />
-        <i
-          v-else
-          class="fas fa-globe website-card__favicon-placeholder"
-        />
+        <i v-else class="fas fa-globe website-card__favicon-placeholder" />
       </div>
 
       <!-- 网站名称 -->
@@ -131,7 +128,12 @@
 import { computed, ref } from 'vue'
 import { useTagStore } from '@/stores/tag'
 import type { Website, Tag } from '@/types'
-import { formatVisitCountCompact, formatDateTimeZh, formatLastVisitedZh, getContrastColor } from '@/utils/helpers'
+import {
+  formatVisitCountCompact,
+  formatDateTimeZh,
+  formatLastVisitedZh,
+  getContrastColor
+} from '@/utils/helpers'
 import WebsiteCardActions from '@/components/WebsiteCardActions.vue'
 
 const props = withDefaults(defineProps<Props>(), {
@@ -205,14 +207,15 @@ const websiteTags = computed(() => {
     .filter((tag): tag is Tag => !!tag)
 })
 
-
-
 const titleId = computed(() => `website-card-title-${props.website.id}`)
 const descId = computed(() => `website-card-desc-${props.website.id}`)
 const getTagStyle = (bg: string) => ({ backgroundColor: bg, color: getContrastColor(bg) })
 
 // 搜索高亮（标题）
-const escapeHtml = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' }[c] as string))
+const escapeHtml = (s: string) =>
+  s.replace(/[&<>"']/g, c =>
+    c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : c === '"' ? '&quot;' : '&#39;'
+  )
 const makeHighlightHtml = (text: string, keyword?: string) => {
   if (!keyword?.trim()) return escapeHtml(text)
   const k = keyword.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -272,7 +275,6 @@ const onDragHandleDragEnd = () => {
   emit('dragHandleEnd')
 }
 
-
 // 键盘导航支持
 const handleKeydown = (event: KeyboardEvent) => {
   switch (event.key) {
@@ -297,7 +299,6 @@ const handleKeydown = (event: KeyboardEvent) => {
       break
   }
 }
-
 </script>
 
 <style scoped lang="scss">

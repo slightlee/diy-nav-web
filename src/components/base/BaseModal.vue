@@ -1,11 +1,6 @@
 <template>
   <Teleport to="body">
-    <Transition
-      name="modal"
-      appear
-      @before-enter="onBeforeEnter"
-      @after-leave="onAfterLeave"
-    >
+    <Transition name="modal" appear @before-enter="onBeforeEnter" @after-leave="onAfterLeave">
       <div
         v-if="isOpen"
         class="modal-overlay"
@@ -106,19 +101,22 @@ const titleId = computed(() => {
 })
 
 // 处理打开事件
-watch(() => props.isOpen, async newVal => {
-  if (newVal) {
-    emit('open')
-    await nextTick()
-    if (props.preventBodyScroll) {
-      document.body.style.overflow = 'hidden'
-    }
-    // 聚焦到模态框
-    if (modalRef.value) {
-      modalRef.value.focus()
+watch(
+  () => props.isOpen,
+  async newVal => {
+    if (newVal) {
+      emit('open')
+      await nextTick()
+      if (props.preventBodyScroll) {
+        document.body.style.overflow = 'hidden'
+      }
+      // 聚焦到模态框
+      if (modalRef.value) {
+        modalRef.value.focus()
+      }
     }
   }
-})
+)
 
 // 处理关闭事件
 const handleClose = () => {

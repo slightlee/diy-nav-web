@@ -6,9 +6,9 @@ const DEFAULT_SETTINGS: UserSettings = {
   theme: 'light',
   autoBackup: true,
   shortcuts: {
-    'addSite': 'Ctrl+N',
-    'search': 'Ctrl+K',
-    'settings': 'Ctrl+,'
+    addSite: 'Ctrl+N',
+    search: 'Ctrl+K',
+    settings: 'Ctrl+,'
   },
   density: 'default'
 }
@@ -57,8 +57,6 @@ export const useSettingsStore = defineStore('settings', () => {
     applyTheme()
   }
 
-
-
   const setShortcut = (action: string, shortcut: string) => {
     settings.value.shortcuts[action] = shortcut
     saveToLocalStorage()
@@ -78,8 +76,6 @@ export const useSettingsStore = defineStore('settings', () => {
     const density = settings.value.density || 'default'
     root.setAttribute('data-density', density)
   }
-
-
 
   const saveToLocalStorage = () => {
     localStorage.setItem('userSettings', JSON.stringify(settings.value))
