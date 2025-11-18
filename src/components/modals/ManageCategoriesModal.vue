@@ -125,7 +125,12 @@
               </div>
 
               <div class="manage-categories-modal__category-actions">
-                <BaseButton variant="ghost" size="sm" title="编辑分类" @click="startEdit(category)">
+                <BaseButton
+                  variant="ghost"
+                  size="sm"
+                  title="编辑分类"
+                  @click="startEdit(category)"
+                >
                   <i class="fas fa-edit" />
                 </BaseButton>
                 <BaseButton
@@ -218,7 +223,9 @@
       </div>
       <template #footer>
         <div class="manage-categories-modal__confirm-actions">
-          <BaseButton variant="secondary" @click="closeDeleteConfirm">取消</BaseButton>
+          <BaseButton variant="secondary" @click="closeDeleteConfirm">
+            取消
+          </BaseButton>
           <BaseButton variant="danger" :loading="deleting" @click="confirmDeleteCategory">
             <i class="fas fa-trash" />
             删除
@@ -590,7 +597,7 @@ const confirmDeleteCategory = async () => {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: var(--spacing-sm);
-  z-index: 10;
+  z-index: 100;
 }
 
 .manage-categories-modal__icon-item {
@@ -644,6 +651,8 @@ const confirmDeleteCategory = async () => {
   &--editing {
     border-color: var(--color-primary);
     box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.12);
+    overflow: visible;
+    position: relative;
   }
 }
 
