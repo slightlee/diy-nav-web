@@ -1,12 +1,12 @@
 <template>
   <div class="compact-list">
-    <div v-if="list.length === 0" class="empty">
+    <div v-if="allList.length === 0" class="empty">
       <i class="fas fa-inbox" />
       <span>{{ emptyText }}</span>
     </div>
     <div v-else class="tiles">
       <div
-        v-for="w in list"
+        v-for="w in pagedList"
         :key="w.id"
         class="tile"
         :class="[{ 'is-drag-over': draggingId && draggingId !== w.id && dragOverId === w.id }]"
@@ -32,11 +32,34 @@
         </button>
       </div>
     </div>
+    <div v-if="totalPages > 1 && isFavoriteView" class="pager" aria-label="分页控制">
+      <button
+        class="pager-btn"
+        type="button"
+        :disabled="currentPage <= 1"
+        aria-label="上一页"
+        title="上一页"
+        @click="goPrev"
+      >
+        <i class="fas fa-chevron-left" />
+      </button>
+      <span class="pager-info">{{ currentPage }} / {{ totalPages }}</span>
+      <button
+        class="pager-btn"
+        type="button"
+        :disabled="currentPage >= totalPages"
+        aria-label="下一页"
+        title="下一页"
+        @click="goNext"
+      >
+        <i class="fas fa-chevron-right" />
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useWebsiteStore } from '@/stores/website'
 import type { Website } from '@/types'
 
@@ -53,12 +76,11 @@ const websiteStore = useWebsiteStore()
 
 const isFavoriteView = computed(() => props.fixedView === 'favorite')
 
-const list = computed<Website[]>(() => {
+const allList = computed<Website[]>(() => {
   if (props.fixedView === 'recent') {
     return websiteStore.websites
       .filter(w => !!w.lastVisited)
       .sort((a, b) => (b.lastVisited?.getTime() ?? 0) - (a.lastVisited?.getTime() ?? 0))
-      .slice(0, props.limit)
   }
   if (props.fixedView === 'favorite') {
     return websiteStore.websites
@@ -68,9 +90,21 @@ const list = computed<Website[]>(() => {
           (a.favoriteOrder ?? a.order ?? 0) - (b.favoriteOrder ?? b.order ?? 0) ||
           (b.visitCount ?? 0) - (a.visitCount ?? 0)
       )
-      .slice(0, props.limit)
   }
   return []
+})
+
+const page = ref(1)
+const pageSize = computed(() => props.limit)
+const totalPages = computed(() => Math.max(1, Math.ceil(allList.value.length / pageSize.value)))
+const currentPage = computed(() => Math.min(Math.max(page.value, 1), totalPages.value))
+const pagedList = computed<Website[]>(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return allList.value.slice(start, start + pageSize.value)
+})
+
+watch(allList, () => {
+  if (currentPage.value > totalPages.value) page.value = 1
 })
 
 const emptyText = computed(() => (props.fixedView === 'recent' ? '暂无最近使用' : '暂无常用网站'))
@@ -118,12 +152,25 @@ const onDragEnd = () => {
   draggingId.value = null
   dragOverId.value = null
 }
+
+const goPrev = () => {
+  if (currentPage.value <= 1) return
+  page.value = currentPage.value - 1
+}
+
+const goNext = () => {
+  if (currentPage.value >= totalPages.value) return
+  page.value = currentPage.value + 1
+}
 </script>
 
 <style scoped lang="scss">
 .compact-list {
   width: 100%;
+  position: relative;
+  height: 100%;
 
+  --pager-h: 32px;
   --tile-h: clamp(88px, 9vh, 104px);
 }
 
@@ -137,8 +184,10 @@ const onDragEnd = () => {
 
 .tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(124px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
   gap: 10px;
+  place-content: start start;
+  padding-bottom: calc(var(--pager-h) + 8px);
 }
 
 .tile {
@@ -224,6 +273,46 @@ const onDragEnd = () => {
 
 .tile-star:hover {
   transform: scale(1.06);
+}
+
+.pager {
+  position: absolute;
+  right: 0;
+  bottom: -2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--color-neutral-200);
+  background: var(--color-neutral-100);
+  color: var(--color-neutral-700);
+  border-radius: 14px;
+  padding: 4px 8px;
+  height: var(--pager-h);
+  box-sizing: border-box;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.pager-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-neutral-100);
+  color: var(--color-neutral-700);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pager-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pager-info {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-700);
 }
 @media (max-width: 640px) {
   .compact-list {
