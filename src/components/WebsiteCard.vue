@@ -107,7 +107,12 @@
       <!-- 操作按钮 -->
       <div v-if="showActions" class="website-card__actions">
         <slot name="actions" :website="website">
-          <WebsiteCardActions :website="website" @edit="handleEdit" @delete="handleDelete" />
+          <WebsiteCardActions
+            :website="website"
+            @favorite-toggle="handleFavoriteToggle"
+            @edit="handleEdit"
+            @delete="handleDelete"
+          />
         </slot>
       </div>
     </footer>
@@ -175,6 +180,7 @@ interface Props {
 }
 
 interface Emits {
+  (e: 'favoriteToggle', websiteId: string): void
   (e: 'edit', website: Website): void
   (e: 'delete', websiteId: string): void
   (e: 'visit', website: Website): void
@@ -261,6 +267,10 @@ const handleEdit = () => {
 
 const handleDelete = () => {
   emit('delete', props.website.id)
+}
+
+const handleFavoriteToggle = () => {
+  emit('favoriteToggle', props.website.id)
 }
 
 const handleFaviconError = () => {
@@ -621,6 +631,11 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 :deep(.website-card__action-btn--delete:hover) {
   background-color: var(--color-error);
+  color: var(--color-white);
+}
+
+:deep(.website-card__action-btn--favorite.is-active) {
+  background-color: var(--color-warning);
   color: var(--color-white);
 }
 

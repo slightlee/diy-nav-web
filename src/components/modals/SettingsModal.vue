@@ -20,11 +20,30 @@
         </div>
       </div>
     </div>
+    <div class="settings-modal__section">
+      <h3 class="settings-modal__section-title">
+        <i class="fas fa-home" />
+        默认首页
+      </h3>
+      <div class="settings-modal__setting-item">
+        <label class="settings-modal__setting-label">打开应用时进入</label>
+        <select
+          class="settings-modal__setting-select"
+          :value="settings.defaultHome || 'favorite'"
+          @change="settingsStore.setDefaultHome(($event.target as HTMLSelectElement).value as any)"
+        >
+          <option value="recent">最近使用</option>
+          <option value="favorite">常用</option>
+          <option value="all">全部</option>
+        </select>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useSettingsStore } from '@/stores/settings'
 
 import type { UserSettings } from '@/types'
 
@@ -35,6 +54,7 @@ interface Emits {
 const emit = defineEmits<Emits>()
 
 // Store
+const settingsStore = useSettingsStore()
 
 // 设置数据
 const settings = ref<UserSettings>({

@@ -1,6 +1,6 @@
 <template>
   <div class="search-section">
-    <div class="search-container">
+    <div v-if="!hideSearch" class="search-container">
       <input
         ref="searchInput"
         v-model="searchKeyword"
@@ -13,7 +13,55 @@
       </button>
     </div>
 
-    <div class="tag-filter-section">
+    <div v-if="!hideViewSwitch" class="view-switch">
+      <button
+        class="view-switch__btn"
+        :class="[{ active: selectedView === 'recent' }]"
+        type="button"
+        @click="selectView('recent')"
+      >
+        最近使用
+      </button>
+      <button
+        class="view-switch__btn"
+        :class="[{ active: selectedView === 'favorite' }]"
+        type="button"
+        @click="selectView('favorite')"
+      >
+        常用
+      </button>
+      <button
+        class="view-switch__btn"
+        :class="[{ active: selectedView === 'all' }]"
+        type="button"
+        @click="selectView('all')"
+      >
+        全部
+      </button>
+    </div>
+
+    <div
+      v-if="!searchKeyword && !fixedView && selectedView !== 'all' && quickStripList.length"
+      class="quick-recent-strip"
+    >
+      <div class="quick-recent-strip__list">
+        <button
+          v-for="w in quickStripList"
+          :key="w.id"
+          class="quick-recent-strip__item"
+          @click="onVisit(w)"
+        >
+          <i
+            v-if="w.favicon"
+            :style="{ backgroundImage: `url(${w.favicon})` }"
+            class="quick-recent-strip__favicon"
+          />
+          <span class="quick-recent-strip__name">{{ w.name }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div v-if="showFilters" class="tag-filter-section">
       <div class="filter-header">
         <label class="filter-label">标签</label>
         <div class="filter-actions">
@@ -42,7 +90,7 @@
       </div>
     </div>
 
-    <div class="category-section">
+    <div v-if="showFilters" class="category-section">
       <div class="filter-header">
         <label class="filter-label">分类</label>
         <button class="manage-categories-btn" @click="emit('manageCategories')">
@@ -56,7 +104,7 @@
           :class="[{ active: selectedCategory === 'all' }]"
           @click="selectCategory('all')"
         >
-          所有分类
+          全部
           <span class="dot" />
         </button>
         <button
@@ -72,7 +120,7 @@
       </div>
     </div>
 
-    <div v-if="searchKeyword" class="search-results-section">
+    <div v-if="searchKeyword && !hideSearch" class="search-results-section">
       <div class="results-header">
         <h3>搜索结果</h3>
         <button class="clear-search-btn" @click="clearSearch">
@@ -80,12 +128,14 @@
           清除搜索
         </button>
       </div>
+
       <div class="website-grid">
         <WebsiteCard
           v-for="website in searchResults"
           :key="website.id"
           :website="website"
           :highlight="searchKeyword"
+          @favorite-toggle="onFavoriteToggle"
           @edit="emit('edit', $event)"
           @delete="emit('delete', $event)"
           @visit="onVisit"
@@ -95,7 +145,7 @@
 
     <div v-else class="website-list-section">
       <div class="list-toolbar">
-        <div class="density-segment">
+        <div v-if="!hideDensity" class="density-segment">
           <button
             class="density-btn"
             :class="{ active: currentDensity === 'compact' }"
@@ -137,6 +187,7 @@
           <WebsiteCard
             :website="website"
             :highlight="searchKeyword"
+            @favorite-toggle="onFavoriteToggle"
             @edit="emit('edit', $event)"
             @delete="emit('delete', $event)"
             @visit="onVisit"
@@ -167,6 +218,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import WebsiteCard from '@/components/WebsiteCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { useWebsiteStore } from '@/stores/website'
@@ -175,25 +227,78 @@ import { useTagStore } from '@/stores/tag'
 import { useSettingsStore } from '@/stores/settings'
 import type { Website } from '@/types'
 
+interface Props {
+  fixedView?: 'recent' | 'favorite' | 'all'
+  hideViewSwitch?: boolean
+  hideSearch?: boolean
+  hideDensity?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  hideViewSwitch: false,
+  hideSearch: false,
+  hideDensity: false
+})
+
 const emit = defineEmits(['edit', 'delete', 'addSite', 'manageTags', 'manageCategories'])
 
 const websiteStore = useWebsiteStore()
 const categoryStore = useCategoryStore()
 const tagStore = useTagStore()
 const settingsStore = useSettingsStore()
+const route = useRoute()
 
 const searchKeyword = ref('')
+const showFilters = computed(() => !props.fixedView || props.fixedView === 'all')
 const selectedTags = ref<string[]>([])
 const selectedCategory = ref('all')
+const selectedView = ref<'recent' | 'favorite' | 'all'>('all')
 const currentDensity = computed(() => settingsStore.settings.density || 'default')
 const setDensity = (d: 'default' | 'compact' | 'loose') => settingsStore.setDensity(d)
 
+const quickRecentList = computed(() => {
+  return websiteStore.websites
+    .filter(w => !!w.lastVisited)
+    .sort((a, b) => (b.lastVisited?.getTime() ?? 0) - (a.lastVisited?.getTime() ?? 0))
+    .slice(0, 10)
+})
+
+const quickFavoriteList = computed(() => {
+  return websiteStore.websites
+    .filter(w => !!w.isFavorite)
+    .sort((a, b) => (b.visitCount ?? 0) - (a.visitCount ?? 0))
+    .slice(0, 10)
+})
+
+const quickStripList = computed(() =>
+  selectedView.value === 'recent' ? quickRecentList.value : quickFavoriteList.value
+)
+
+const recentLimit = 12
+const favoriteLimit = 12
+
+const baseViewWebsites = computed(() => {
+  if (props.fixedView === 'recent' || selectedView.value === 'recent') {
+    return websiteStore.websites
+      .filter(w => !!w.lastVisited)
+      .sort((a, b) => (b.lastVisited?.getTime() ?? 0) - (a.lastVisited?.getTime() ?? 0))
+      .slice(0, recentLimit)
+  }
+  if (props.fixedView === 'favorite' || selectedView.value === 'favorite') {
+    return websiteStore.websites
+      .filter(w => !!w.isFavorite)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || (b.visitCount ?? 0) - (a.visitCount ?? 0))
+      .slice(0, favoriteLimit)
+  }
+  return websiteStore.websites
+})
+
 const filteredWebsites = computed(() => {
-  let websites = websiteStore.websites
-  if (selectedCategory.value !== 'all') {
+  let websites = baseViewWebsites.value
+  if (showFilters.value && selectedCategory.value !== 'all') {
     websites = websites.filter(w => w.categoryId === selectedCategory.value)
   }
-  if (selectedTags.value.length > 0) {
+  if (showFilters.value && selectedTags.value.length > 0) {
     websites = websites.filter(w => selectedTags.value.some(tagId => w.tagIds.includes(tagId)))
   }
   return websites
@@ -202,7 +307,8 @@ const filteredWebsites = computed(() => {
 const searchResults = computed(() => {
   if (!searchKeyword.value.trim()) return [] as Website[]
   const keyword = searchKeyword.value.toLowerCase()
-  return websiteStore.websites.filter(
+  const scope = props.fixedView ? baseViewWebsites.value : websiteStore.websites
+  return scope.filter(
     website =>
       website.name.toLowerCase().includes(keyword) ||
       website.url.toLowerCase().includes(keyword) ||
@@ -228,6 +334,10 @@ const selectCategory = (categoryId: string) => {
   selectedCategory.value = categoryId
 }
 
+const selectView = (v: 'recent' | 'favorite' | 'all') => {
+  selectedView.value = v
+}
+
 const clearSearch = () => {
   searchKeyword.value = ''
 }
@@ -246,6 +356,14 @@ const onVisit = (website: Website) => {
   window.open(website.url, '_blank', 'noopener,noreferrer')
 }
 
+const onFavoriteToggle = (id: string) => {
+  const w = websiteStore.websites.find(x => x.id === id)
+  if (!w) return
+  websiteStore.updateWebsite(id, { isFavorite: !w.isFavorite })
+}
+
+// quickRecentList 已上移并结合 favorite 列表形成 quickStripList
+
 const searchInput = ref<HTMLInputElement | null>(null)
 
 const handleGlobalKeydown = (e: KeyboardEvent) => {
@@ -263,6 +381,15 @@ const handleGlobalKeydown = (e: KeyboardEvent) => {
 
 onMounted(() => {
   window.addEventListener('keydown', handleGlobalKeydown)
+  const q = route.query
+  const tagQ = q.tag
+  const catQ = q.category
+  if (typeof tagQ === 'string' && tagQ) selectedTags.value = [tagQ]
+  else if (Array.isArray(tagQ))
+    selectedTags.value = (tagQ as (string | null)[]).filter(
+      (x): x is string => typeof x === 'string' && !!x
+    )
+  if (typeof catQ === 'string' && catQ) selectedCategory.value = catQ
 })
 
 onUnmounted(() => {
@@ -307,6 +434,84 @@ const onDragEnd = () => {
 
 .search-section {
   margin-bottom: 1.25rem;
+}
+
+.view-switch {
+  display: inline-flex;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-neutral-100);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.view-switch__btn {
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: transparent;
+  color: var(--color-neutral-700);
+  transition: all 0.2s ease-in-out;
+}
+
+.view-switch__btn.active {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.quick-recent-strip {
+  margin-top: 10px;
+  position: relative;
+  padding: 8px 32px 6px;
+  border: 1px solid var(--color-neutral-200);
+  background: var(--color-neutral-100);
+  border-radius: 12px;
+}
+
+.quick-recent-strip__list {
+  display: flex;
+  flex-wrap: wrap;
+  overflow: visible;
+  gap: 8px;
+  padding-bottom: 4px;
+}
+
+.quick-recent-strip__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-pill);
+  background: var(--color-neutral-50);
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.2s ease-in-out;
+}
+
+.quick-recent-strip__favicon {
+  width: 18px;
+  height: 18px;
+  background-size: cover;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.quick-recent-strip__name {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-800);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quick-recent-strip__item:hover {
+  background: var(--color-neutral-100);
 }
 
 .search-container {
@@ -659,3 +864,6 @@ const onDragEnd = () => {
   border-left: 1px solid var(--color-border);
 }
 </style>
+interface Props { fixedView?: 'recent' | 'favorite' | 'all' hideViewSwitch?: boolean } const
+showFilters = computed(() => !props.fixedView || props.fixedView === 'all') if (props.fixedView) {
+selectedView.value = props.fixedView }

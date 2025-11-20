@@ -8,6 +8,7 @@ export interface Website {
   favicon?: string
   visitCount: number
   lastVisited?: Date
+  isFavorite?: boolean
   isOnline: boolean
   createdAt: Date
   updatedAt: Date
@@ -41,6 +42,7 @@ export interface UserSettings {
   autoBackup: boolean
   shortcuts: Record<string, string>
   density?: 'default' | 'compact' | 'loose'
+  defaultHome?: 'recent' | 'favorite' | 'all'
 }
 
 export interface ToastMessage {

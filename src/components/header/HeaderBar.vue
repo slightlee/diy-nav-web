@@ -9,6 +9,10 @@
       </div>
 
       <div class="header-actions">
+        <nav class="view-nav">
+          <router-link class="view-nav__link" to="/my" active-class="active">我的</router-link>
+          <router-link class="view-nav__link" to="/all" active-class="active">全部</router-link>
+        </nav>
         <button class="add-site-btn" @click="emit('addSite')">
           <i class="fas fa-plus" />
           <span>添加网站</span>
@@ -217,6 +221,28 @@ onUnmounted(() => {
   gap: 0.75rem;
 }
 
+.view-nav {
+  display: inline-flex;
+  gap: 6px;
+  margin-right: 0.5rem;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-neutral-100);
+}
+
+.view-nav__link {
+  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+  color: var(--color-neutral-700);
+  text-decoration: none;
+}
+
+.view-nav__link.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
 .add-site-btn {
   background-color: var(--color-primary);
   color: var(--color-white);
@@ -361,6 +387,10 @@ onUnmounted(() => {
 
   .header-actions {
     gap: 0.5rem;
+  }
+
+  .view-nav {
+    display: none;
   }
 
   .add-site-btn span {

@@ -10,7 +10,8 @@ const DEFAULT_SETTINGS: UserSettings = {
     search: 'Ctrl+K',
     settings: 'Ctrl+,'
   },
-  density: 'default'
+  density: 'default',
+  defaultHome: 'favorite'
 }
 
 export const useSettingsStore = defineStore('settings', () => {
@@ -55,6 +56,11 @@ export const useSettingsStore = defineStore('settings', () => {
     settings.value.density = density
     saveToLocalStorage()
     applyTheme()
+  }
+
+  const setDefaultHome = (home: NonNullable<UserSettings['defaultHome']>) => {
+    settings.value.defaultHome = home
+    saveToLocalStorage()
   }
 
   const setShortcut = (action: string, shortcut: string) => {
@@ -143,6 +149,7 @@ export const useSettingsStore = defineStore('settings', () => {
     resetSettings,
     setTheme,
     setDensity,
+    setDefaultHome,
     setShortcut,
     exportSettings,
     importSettings,
