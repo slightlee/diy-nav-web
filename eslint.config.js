@@ -1,13 +1,14 @@
 import js from '@eslint/js'
 import typescript from 'typescript-eslint'
 import vue from 'eslint-plugin-vue'
-import stylistic from '@stylistic/eslint-plugin'
+import prettierConfig from 'eslint-config-prettier'
 import globals from 'globals'
 
 export default [
   js.configs.recommended,
   ...typescript.configs.recommended,
   ...vue.configs['flat/recommended'],
+  prettierConfig,
 
   {
     files: ['**/*.{js,mjs,cjs,ts,vue}'],
@@ -27,16 +28,11 @@ export default [
   },
 
   {
-    plugins: {
-      '@stylistic': stylistic
-    },
     rules: {
-      // 基础规则
       'no-console': 'warn',
       'no-debugger': 'warn',
       'no-unused-vars': 'off',
 
-      // TypeScript规则
       '@typescript-eslint/no-unused-vars': 'warn',
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-function-return-type': 'off',
@@ -44,7 +40,6 @@ export default [
       '@typescript-eslint/no-empty-function': 'off',
       '@typescript-eslint/no-non-null-assertion': 'warn',
 
-      // Vue规则
       'vue/multi-word-component-names': 'off',
       'vue/no-v-html': 'off',
       'vue/require-default-prop': 'off',
@@ -82,26 +77,7 @@ export default [
           singleline: 'never',
           multiline: 'always'
         }
-      ],
-
-      // 代码风格规则
-      '@stylistic/quotes': ['error', 'single'],
-      '@stylistic/semi': ['error', 'never'],
-      '@stylistic/comma-dangle': ['error', 'never'],
-      '@stylistic/indent': ['error', 2],
-      '@stylistic/object-curly-spacing': ['error', 'always'],
-      '@stylistic/array-bracket-spacing': ['error', 'never'],
-      '@stylistic/space-before-function-paren': [
-        'error',
-        {
-          anonymous: 'always',
-          named: 'never',
-          asyncArrow: 'always'
-        }
-      ],
-      '@stylistic/arrow-parens': ['error', 'as-needed'],
-      '@stylistic/eol-last': ['error', 'always'],
-      '@stylistic/no-trailing-spaces': 'error'
+      ]
     }
   },
 
