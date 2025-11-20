@@ -27,6 +27,15 @@ export const useWebsiteStore = defineStore('website', () => {
             lastVisited: item.lastVisited ? new Date(item.lastVisited) : undefined
           }))
           .map((w, i) => ({ ...w, order: typeof w.order === 'number' ? w.order : i }))
+        const favs = websites.value.filter(w => !!w.isFavorite)
+        if (favs.length > 0) {
+          const sortedFavs = [...favs].sort(
+            (a, b) => (a.favoriteOrder ?? a.order ?? 0) - (b.favoriteOrder ?? b.order ?? 0)
+          )
+          sortedFavs.forEach((w, idx) => {
+            w.favoriteOrder = typeof w.favoriteOrder === 'number' ? w.favoriteOrder : idx
+          })
+        }
         console.log('📦 从 localStorage 加载数据:', websites.value.length, '个网站')
       } else {
         websites.value = []
@@ -174,6 +183,24 @@ export const useWebsiteStore = defineStore('website', () => {
     saveToLocalStorage()
   }
 
+  const moveFavoriteBefore = (sourceId: string, targetId: string) => {
+    if (sourceId === targetId) return
+    const favIds = websites.value
+      .filter(w => !!w.isFavorite)
+      .sort((a, b) => (a.favoriteOrder ?? a.order ?? 0) - (b.favoriteOrder ?? b.order ?? 0))
+      .map(w => w.id)
+    const from = favIds.indexOf(sourceId)
+    const to = favIds.indexOf(targetId)
+    if (from === -1 || to === -1) return
+    favIds.splice(from, 1)
+    favIds.splice(to, 0, sourceId)
+    favIds.forEach((id, idx) => {
+      const w = websites.value.find(x => x.id === id)
+      if (w) w.favoriteOrder = idx
+    })
+    saveToLocalStorage()
+  }
+
   const saveToLocalStorage = () => {
     try {
       localStorage.setItem('websites', JSON.stringify(websites.value))
@@ -211,7 +238,10 @@ export const useWebsiteStore = defineStore('website', () => {
           createdAt,
           updatedAt,
           lastVisited,
-          order: typeof (w as any).order === 'number' ? (w as any).order : i
+          order: typeof (w as any).order === 'number' ? (w as any).order : i,
+          favoriteOrder:
+            typeof (w as any).favoriteOrder === 'number' ? (w as any).favoriteOrder : undefined,
+          isFavorite: typeof w.isFavorite === 'boolean' ? w.isFavorite : false
         }
       })
       saveToLocalStorage()
@@ -236,6 +266,7 @@ export const useWebsiteStore = defineStore('website', () => {
     clearSearch,
     setSorting,
     moveWebsiteBefore,
+    moveFavoriteBefore,
     exportData,
     importData
   }

@@ -13,6 +13,7 @@ export interface Website {
   createdAt: Date
   updatedAt: Date
   order?: number
+  favoriteOrder?: number
 }
 
 export interface Category {

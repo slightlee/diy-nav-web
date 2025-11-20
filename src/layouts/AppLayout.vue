@@ -210,9 +210,11 @@
             :aria-label="`筛选分类：${c.name}`"
             :title="c.name"
             @click="
-              goToAllWithCategory(c.id)
-              categorySelectOpen = false
-              categorySearch = ''
+              () => {
+                goToAllWithCategory(c.id)
+                categorySelectOpen = false
+                categorySearch = ''
+              }
             "
           >
             <span class="chip-name">{{ c.name }}</span>
@@ -244,9 +246,11 @@
             :aria-label="`筛选标签：${t.name}`"
             :title="t.name"
             @click="
-              goToAllWithTag(t.id)
-              tagSelectOpen = false
-              tagSearch = ''
+              () => {
+                goToAllWithTag(t.id)
+                tagSelectOpen = false
+                tagSearch = ''
+              }
             "
           >
             <span class="chip-dot" :style="{ backgroundColor: t.color }" />

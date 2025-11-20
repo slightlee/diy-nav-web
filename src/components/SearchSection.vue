@@ -287,7 +287,11 @@ const baseViewWebsites = computed(() => {
   if (props.fixedView === 'favorite' || selectedView.value === 'favorite') {
     return websiteStore.websites
       .filter(w => !!w.isFavorite)
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || (b.visitCount ?? 0) - (a.visitCount ?? 0))
+      .sort(
+        (a, b) =>
+          (a.favoriteOrder ?? a.order ?? 0) - (b.favoriteOrder ?? b.order ?? 0) ||
+          (b.visitCount ?? 0) - (a.visitCount ?? 0)
+      )
       .slice(0, favoriteLimit)
   }
   return websiteStore.websites
@@ -421,7 +425,9 @@ const onDrop = (targetId: string, e: DragEvent) => {
   draggingId.value = null
   dragOverId.value = null
   if (!sourceId || sourceId === targetId) return
-  websiteStore.moveWebsiteBefore(sourceId, targetId)
+  const inFavoriteView = props.fixedView === 'favorite' || selectedView.value === 'favorite'
+  if (inFavoriteView) websiteStore.moveFavoriteBefore(sourceId, targetId)
+  else websiteStore.moveWebsiteBefore(sourceId, targetId)
 }
 const onDragEnd = () => {
   draggingId.value = null
