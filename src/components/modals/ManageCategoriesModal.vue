@@ -218,9 +218,7 @@
       </div>
       <template #footer>
         <div class="manage-categories-modal__confirm-actions">
-          <BaseButton variant="secondary" @click="closeDeleteConfirm">
-            取消
-          </BaseButton>
+          <BaseButton variant="secondary" @click="closeDeleteConfirm">取消</BaseButton>
           <BaseButton variant="danger" :loading="deleting" @click="confirmDeleteCategory">
             <i class="fas fa-trash" />
             删除

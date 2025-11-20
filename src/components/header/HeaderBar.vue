@@ -5,9 +5,7 @@
         <div class="logo-icon">
           <i class="fas fa-compass" />
         </div>
-        <h1 class="app-title">
-          DIY导航
-        </h1>
+        <h1 class="app-title">DIY导航</h1>
       </div>
 
       <div class="header-actions">
