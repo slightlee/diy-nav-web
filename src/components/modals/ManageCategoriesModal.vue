@@ -125,12 +125,7 @@
               </div>
 
               <div class="manage-categories-modal__category-actions">
-                <BaseButton
-                  variant="ghost"
-                  size="sm"
-                  title="编辑分类"
-                  @click="startEdit(category)"
-                >
+                <BaseButton variant="ghost" size="sm" title="编辑分类" @click="startEdit(category)">
                   <i class="fas fa-edit" />
                 </BaseButton>
                 <BaseButton

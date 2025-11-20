@@ -70,13 +70,7 @@ export default [
           math: 'always'
         }
       ],
-      'vue/max-attributes-per-line': [
-        'warn',
-        {
-          singleline: 3,
-          multiline: 1
-        }
-      ],
+      'vue/max-attributes-per-line': 'off',
       'vue/multiline-html-element-content-newline': 'warn',
       'vue/no-multi-spaces': 'error',
       'vue/no-useless-v-bind': 'error',
