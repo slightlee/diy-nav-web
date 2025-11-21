@@ -147,23 +147,6 @@ html {
   --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
-// 密度切换
-[data-density='compact'] {
-  --spacing-sm: #{($spacing-sm * 0.75)};
-  --spacing-md: #{($spacing-md * 0.75)};
-  --spacing-lg: #{($spacing-lg * 0.75)};
-  --spacing-xl: #{($spacing-xl * 0.75)};
-  --spacing-2xl: #{($spacing-2xl * 0.75)};
-}
-
-[data-density='loose'] {
-  --spacing-sm: #{($spacing-sm * 1.25)};
-  --spacing-md: #{($spacing-md * 1.25)};
-  --spacing-lg: #{($spacing-lg * 1.25)};
-  --spacing-xl: #{($spacing-xl * 1.25)};
-  --spacing-2xl: #{($spacing-2xl * 1.25)};
-}
-
 // 暗色主题类
 /* 暗色主题主色沿用默认，无需重复声明 */
 

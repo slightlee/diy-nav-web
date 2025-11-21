@@ -42,7 +42,6 @@ export interface UserSettings {
   customBackground?: string
   autoBackup: boolean
   shortcuts: Record<string, string>
-  density?: 'default' | 'compact' | 'loose'
   defaultHome?: 'recent' | 'favorite' | 'all'
 }
 

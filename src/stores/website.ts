@@ -20,7 +20,7 @@ export const useWebsiteStore = defineStore('website', () => {
       const saved = JSON.parse(localStorage.getItem('websites') || '[]')
       if (Array.isArray(saved)) {
         websites.value = saved
-          .map((item, index) => ({
+          .map(item => ({
             ...item,
             createdAt: new Date(item.createdAt),
             updatedAt: new Date(item.updatedAt),
@@ -238,9 +238,8 @@ export const useWebsiteStore = defineStore('website', () => {
           createdAt,
           updatedAt,
           lastVisited,
-          order: typeof (w as any).order === 'number' ? (w as any).order : i,
-          favoriteOrder:
-            typeof (w as any).favoriteOrder === 'number' ? (w as any).favoriteOrder : undefined,
+          order: typeof w.order === 'number' ? w.order : i,
+          favoriteOrder: typeof w.favoriteOrder === 'number' ? w.favoriteOrder : undefined,
           isFavorite: typeof w.isFavorite === 'boolean' ? w.isFavorite : false
         }
       })

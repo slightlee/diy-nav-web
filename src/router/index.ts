@@ -10,7 +10,7 @@ const getDefaultHomePath = (): string => {
       if (home === 'favorite') return '/my'
       if (home === 'all') return '/all'
       return '/favorite'
-    } catch (e) {
+    } catch {
       return '/favorite'
     }
   }

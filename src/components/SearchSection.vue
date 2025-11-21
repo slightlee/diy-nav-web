@@ -13,54 +13,6 @@
       </button>
     </div>
 
-    <div v-if="!hideViewSwitch" class="view-switch">
-      <button
-        class="view-switch__btn"
-        :class="[{ active: selectedView === 'recent' }]"
-        type="button"
-        @click="selectView('recent')"
-      >
-        最近使用
-      </button>
-      <button
-        class="view-switch__btn"
-        :class="[{ active: selectedView === 'favorite' }]"
-        type="button"
-        @click="selectView('favorite')"
-      >
-        常用
-      </button>
-      <button
-        class="view-switch__btn"
-        :class="[{ active: selectedView === 'all' }]"
-        type="button"
-        @click="selectView('all')"
-      >
-        全部
-      </button>
-    </div>
-
-    <div
-      v-if="!searchKeyword && !fixedView && selectedView !== 'all' && quickStripList.length"
-      class="quick-recent-strip"
-    >
-      <div class="quick-recent-strip__list">
-        <button
-          v-for="w in quickStripList"
-          :key="w.id"
-          class="quick-recent-strip__item"
-          @click="onVisit(w)"
-        >
-          <i
-            v-if="w.favicon"
-            :style="{ backgroundImage: `url(${w.favicon})` }"
-            class="quick-recent-strip__favicon"
-          />
-          <span class="quick-recent-strip__name">{{ w.name }}</span>
-        </button>
-      </div>
-    </div>
-
     <div v-if="showFilters" class="tag-filter-section">
       <div class="filter-header">
         <label class="filter-label">标签</label>
@@ -144,34 +96,6 @@
     </div>
 
     <div v-else class="website-list-section">
-      <div class="list-toolbar">
-        <div v-if="!hideDensity" class="density-segment">
-          <button
-            class="density-btn"
-            :class="{ active: currentDensity === 'compact' }"
-            type="button"
-            @click="setDensity('compact')"
-          >
-            紧凑
-          </button>
-          <button
-            class="density-btn"
-            :class="{ active: currentDensity === 'default' }"
-            type="button"
-            @click="setDensity('default')"
-          >
-            默认
-          </button>
-          <button
-            class="density-btn"
-            :class="{ active: currentDensity === 'loose' }"
-            type="button"
-            @click="setDensity('loose')"
-          >
-            宽松
-          </button>
-        </div>
-      </div>
       <div class="website-grid">
         <div
           v-for="website in filteredWebsites"
@@ -224,20 +148,16 @@ import EmptyState from '@/components/EmptyState.vue'
 import { useWebsiteStore } from '@/stores/website'
 import { useCategoryStore } from '@/stores/category'
 import { useTagStore } from '@/stores/tag'
-import { useSettingsStore } from '@/stores/settings'
-import type { Website } from '@/types'
+
+import type { Website, Tag } from '@/types'
 
 interface Props {
   fixedView?: 'recent' | 'favorite' | 'all'
-  hideViewSwitch?: boolean
   hideSearch?: boolean
-  hideDensity?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  hideViewSwitch: false,
-  hideSearch: false,
-  hideDensity: false
+  hideSearch: false
 })
 
 const emit = defineEmits(['edit', 'delete', 'addSite', 'manageTags', 'manageCategories'])
@@ -245,46 +165,24 @@ const emit = defineEmits(['edit', 'delete', 'addSite', 'manageTags', 'manageCate
 const websiteStore = useWebsiteStore()
 const categoryStore = useCategoryStore()
 const tagStore = useTagStore()
-const settingsStore = useSettingsStore()
 const route = useRoute()
 
 const searchKeyword = ref('')
 const showFilters = computed(() => !props.fixedView || props.fixedView === 'all')
 const selectedTags = ref<string[]>([])
 const selectedCategory = ref('all')
-const selectedView = ref<'recent' | 'favorite' | 'all'>('all')
-const currentDensity = computed(() => settingsStore.settings.density || 'default')
-const setDensity = (d: 'default' | 'compact' | 'loose') => settingsStore.setDensity(d)
-
-const quickRecentList = computed(() => {
-  return websiteStore.websites
-    .filter(w => !!w.lastVisited)
-    .sort((a, b) => (b.lastVisited?.getTime() ?? 0) - (a.lastVisited?.getTime() ?? 0))
-    .slice(0, 10)
-})
-
-const quickFavoriteList = computed(() => {
-  return websiteStore.websites
-    .filter(w => !!w.isFavorite)
-    .sort((a, b) => (b.visitCount ?? 0) - (a.visitCount ?? 0))
-    .slice(0, 10)
-})
-
-const quickStripList = computed(() =>
-  selectedView.value === 'recent' ? quickRecentList.value : quickFavoriteList.value
-)
 
 const recentLimit = 12
 const favoriteLimit = 12
 
 const baseViewWebsites = computed(() => {
-  if (props.fixedView === 'recent' || selectedView.value === 'recent') {
+  if (props.fixedView === 'recent') {
     return websiteStore.websites
       .filter(w => !!w.lastVisited)
       .sort((a, b) => (b.lastVisited?.getTime() ?? 0) - (a.lastVisited?.getTime() ?? 0))
       .slice(0, recentLimit)
   }
-  if (props.fixedView === 'favorite' || selectedView.value === 'favorite') {
+  if (props.fixedView === 'favorite') {
     return websiteStore.websites
       .filter(w => !!w.isFavorite)
       .sort(
@@ -325,7 +223,7 @@ const tags = computed(() => tagStore.tags)
 const categories = computed(() => [...categoryStore.categories].sort((a, b) => a.order - b.order))
 
 const getWebsiteTags = (tagIds: string[]) => {
-  return tagIds.map(id => tagStore.getTagById(id)).filter((tag): tag is any => !!tag)
+  return tagIds.map(id => tagStore.getTagById(id)).filter((tag): tag is Tag => !!tag)
 }
 
 const toggleTag = (tagId: string) => {
@@ -336,10 +234,6 @@ const toggleTag = (tagId: string) => {
 
 const selectCategory = (categoryId: string) => {
   selectedCategory.value = categoryId
-}
-
-const selectView = (v: 'recent' | 'favorite' | 'all') => {
-  selectedView.value = v
 }
 
 const clearSearch = () => {
@@ -425,7 +319,7 @@ const onDrop = (targetId: string, e: DragEvent) => {
   draggingId.value = null
   dragOverId.value = null
   if (!sourceId || sourceId === targetId) return
-  const inFavoriteView = props.fixedView === 'favorite' || selectedView.value === 'favorite'
+  const inFavoriteView = props.fixedView === 'favorite'
   if (inFavoriteView) websiteStore.moveFavoriteBefore(sourceId, targetId)
   else websiteStore.moveWebsiteBefore(sourceId, targetId)
 }
@@ -440,84 +334,6 @@ const onDragEnd = () => {
 
 .search-section {
   margin-bottom: 1.25rem;
-}
-
-.view-switch {
-  display: inline-flex;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 4px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  background: var(--color-neutral-100);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.view-switch__btn {
-  padding: 6px 12px;
-  border-radius: var(--radius-pill);
-  border: none;
-  background: transparent;
-  color: var(--color-neutral-700);
-  transition: all 0.2s ease-in-out;
-}
-
-.view-switch__btn.active {
-  background: var(--color-primary);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(var(--color-primary-rgb), 0.2);
-}
-
-.quick-recent-strip {
-  margin-top: 10px;
-  position: relative;
-  padding: 8px 32px 6px;
-  border: 1px solid var(--color-neutral-200);
-  background: var(--color-neutral-100);
-  border-radius: 12px;
-}
-
-.quick-recent-strip__list {
-  display: flex;
-  flex-wrap: wrap;
-  overflow: visible;
-  gap: 8px;
-  padding-bottom: 4px;
-}
-
-.quick-recent-strip__item {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border: 1px solid var(--color-neutral-200);
-  border-radius: var(--radius-pill);
-  background: var(--color-neutral-50);
-  cursor: pointer;
-  white-space: nowrap;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: all 0.2s ease-in-out;
-}
-
-.quick-recent-strip__favicon {
-  width: 18px;
-  height: 18px;
-  background-size: cover;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-
-.quick-recent-strip__name {
-  font-size: var(--font-size-sm);
-  color: var(--color-neutral-800);
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.quick-recent-strip__item:hover {
-  background: var(--color-neutral-100);
 }
 
 .search-container {
@@ -818,58 +634,4 @@ const onDragEnd = () => {
     grid-template-columns: 1fr;
   }
 }
-
-.list-toolbar {
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: var(--spacing-sm);
-  margin-bottom: 0.5rem;
-}
-
-.density-segment {
-  display: inline-flex;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  background-color: var(--color-neutral-100);
-  overflow: hidden;
-}
-
-.density-btn {
-  padding: 0.35rem 0.7rem;
-  font-size: var(--font-size-sm);
-  color: var(--color-neutral-700);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition:
-    background-color var(--transition-fast),
-    color var(--transition-fast);
-}
-
-.density-btn:hover {
-  background-color: var(--color-neutral-200);
-}
-
-.density-btn:focus {
-  outline: none;
-}
-
-.density-btn:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-.density-btn.active {
-  color: var(--color-primary);
-  background-color: rgba(var(--color-primary-rgb), 0.1);
-}
-
-.density-btn + .density-btn {
-  border-left: 1px solid var(--color-border);
-}
 </style>
-interface Props { fixedView?: 'recent' | 'favorite' | 'all' hideViewSwitch?: boolean } const
-showFilters = computed(() => !props.fixedView || props.fixedView === 'all') if (props.fixedView) {
-selectedView.value = props.fixedView }

@@ -40,7 +40,6 @@
         <template v-else>
           <SearchSection
             :fixed-view="fixedViewMeta"
-            :hide-view-switch="true"
             @edit="handleEditWebsite"
             @delete="handleDeleteWebsite"
             @add-site="handleAddSite"
@@ -326,7 +325,6 @@ const route = useRoute()
 const router = useRouter()
 
 // 响应式状态
-const showSettingsDropdown = ref(false)
 const addSiteContextCategoryId = ref('')
 
 const recentTotal = computed(() => websiteStore.websites.filter(w => !!w.lastVisited).length)
@@ -439,7 +437,7 @@ const confirmDeleteWebsite = () => {
     websiteStore.deleteWebsite(websiteDeleteTargetId.value)
     uiStore.showToast('网站删除成功', 'success')
     closeWebsiteDeleteConfirm()
-  } catch (error) {
+  } catch {
     uiStore.showToast('删除失败，请重试', 'error')
   } finally {
     deletingWebsite.value = false
@@ -451,28 +449,20 @@ const handleDeleteWebsite = (websiteId: string) => {
   websiteDeleteConfirmOpen.value = true
 }
 
-const toggleSettingsDropdown = () => {
-  showSettingsDropdown.value = !showSettingsDropdown.value
-}
-
 const openManageCategories = () => {
   uiStore.openModal('manageCategories')
-  showSettingsDropdown.value = false
 }
 
 const openManageTags = () => {
   uiStore.openModal('manageTags')
-  showSettingsDropdown.value = false
 }
 
 const openSettingsModal = () => {
   uiStore.openModal('settings')
-  showSettingsDropdown.value = false
 }
 
 const openDataManagement = () => {
   uiStore.openModal('dataManagement')
-  showSettingsDropdown.value = false
 }
 
 // 主题切换已迁移至 HeaderBar

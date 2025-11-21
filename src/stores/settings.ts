@@ -10,7 +10,6 @@ const DEFAULT_SETTINGS: UserSettings = {
     search: 'Ctrl+K',
     settings: 'Ctrl+,'
   },
-  density: 'default',
   defaultHome: 'favorite'
 }
 
@@ -25,7 +24,7 @@ export const useSettingsStore = defineStore('settings', () => {
       try {
         const parsedSettings = JSON.parse(stored)
         settings.value = { ...DEFAULT_SETTINGS, ...parsedSettings }
-      } catch (e) {
+      } catch {
         settings.value = { ...DEFAULT_SETTINGS }
       }
     } else {
@@ -52,12 +51,6 @@ export const useSettingsStore = defineStore('settings', () => {
     applyTheme()
   }
 
-  const setDensity = (density: NonNullable<UserSettings['density']>) => {
-    settings.value.density = density
-    saveToLocalStorage()
-    applyTheme()
-  }
-
   const setDefaultHome = (home: NonNullable<UserSettings['defaultHome']>) => {
     settings.value.defaultHome = home
     saveToLocalStorage()
@@ -78,9 +71,6 @@ export const useSettingsStore = defineStore('settings', () => {
     } else {
       root.setAttribute('data-theme', theme)
     }
-
-    const density = settings.value.density || 'default'
-    root.setAttribute('data-density', density)
   }
 
   const saveToLocalStorage = () => {
@@ -98,7 +88,7 @@ export const useSettingsStore = defineStore('settings', () => {
       saveToLocalStorage()
       applyTheme()
       return true
-    } catch (e) {
+    } catch {
       return false
     }
   }
@@ -134,7 +124,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
       saveToLocalStorage()
       return true
-    } catch (e) {
+    } catch {
       return false
     }
   }
@@ -148,7 +138,6 @@ export const useSettingsStore = defineStore('settings', () => {
     updateSettings,
     resetSettings,
     setTheme,
-    setDensity,
     setDefaultHome,
     setShortcut,
     exportSettings,
