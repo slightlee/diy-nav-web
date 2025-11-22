@@ -10,8 +10,26 @@
 
       <div class="header-actions">
         <nav class="view-nav">
-          <router-link class="view-nav__link" to="/my" active-class="active">我的</router-link>
-          <router-link class="view-nav__link" to="/all" active-class="active">全部</router-link>
+          <router-link
+            class="view-nav__link"
+            to="/my"
+            active-class="active"
+            aria-label="我的"
+            title="我的"
+          >
+            <i class="fas fa-user" />
+            <span>我的</span>
+          </router-link>
+          <router-link
+            class="view-nav__link"
+            to="/all"
+            active-class="active"
+            aria-label="全部"
+            title="全部"
+          >
+            <i class="fas fa-th-large" />
+            <span>全部</span>
+          </router-link>
         </nav>
         <button class="add-site-btn" @click="emit('addSite')">
           <i class="fas fa-plus" />
@@ -223,24 +241,72 @@ onUnmounted(() => {
 
 .view-nav {
   display: inline-flex;
-  gap: 6px;
+  align-items: center;
+  gap: 14px;
   margin-right: 0.5rem;
-  padding: 4px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  background: var(--color-neutral-100);
 }
 
 .view-nav__link {
-  padding: 6px 10px;
-  border-radius: var(--radius-pill);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 2px;
   color: var(--color-neutral-700);
   text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+  letter-spacing: 0.1px;
+  transition: color var(--transition-fast);
+}
+
+.view-nav__link:hover {
+  color: var(--color-neutral-800);
 }
 
 .view-nav__link.active {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.view-nav__link::after {
+  content: '';
+  position: absolute;
+  left: 10%;
+  bottom: 0;
+  width: 80%;
+  height: 2px;
+  border-radius: 2px;
+  background: transparent;
+  transition: background-color var(--transition-fast);
+}
+
+.view-nav__link.active::after {
   background: var(--color-primary);
-  color: #fff;
+}
+
+.view-nav__link i {
+  width: 14px;
+  color: var(--color-neutral-600);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.view-nav__link.active i {
+  color: var(--color-primary);
+}
+
+.view-nav__link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.add-site-btn i,
+.theme-toggle-btn i,
+.settings-btn i {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .add-site-btn {
@@ -253,7 +319,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   font-size: var(--font-size-sm);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
   box-shadow: var(--shadow-sm);
@@ -387,10 +453,6 @@ onUnmounted(() => {
 
   .header-actions {
     gap: 0.5rem;
-  }
-
-  .view-nav {
-    display: none;
   }
 
   .add-site-btn span {
