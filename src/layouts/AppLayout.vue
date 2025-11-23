@@ -17,11 +17,11 @@
               <div class="section-title-row">
                 <h2 class="section-title">
                   最近使用
-                  <span class="count">({{ recentTotal }})</span>
+                  <span class="count">({{ recentPageCount }})</span>
                 </h2>
               </div>
               <div class="section-content">
-                <CompactList fixed-view="recent" />
+                <CompactList fixed-view="recent" @page-count="recentPageCount = $event" />
               </div>
             </section>
             <section class="section-block">
@@ -327,8 +327,8 @@ const router = useRouter()
 // 响应式状态
 const addSiteContextCategoryId = ref('')
 
-const recentTotal = computed(() => websiteStore.websites.filter(w => !!w.lastVisited).length)
 const favoriteTotal = computed(() => websiteStore.websites.filter(w => !!w.isFavorite).length)
+const recentPageCount = ref(0)
 
 const fixedViewMeta = computed(
   () => route.meta.fixedView as 'recent' | 'favorite' | 'all' | undefined
@@ -706,7 +706,7 @@ onUnmounted(() => {
   gap: 8px;
   border: 1px solid var(--color-neutral-200);
   border-radius: 9999px;
-  background: var(--color-neutral-100);
+  background: transparent;
   padding: 8px 12px;
   min-height: 32px;
   color: var(--color-neutral-700);
@@ -716,7 +716,8 @@ onUnmounted(() => {
 }
 
 .chip:hover {
-  background: var(--color-neutral-200);
+  background: var(--color-neutral-100);
+  border-color: var(--color-neutral-300);
 }
 
 .chip:active {
@@ -781,7 +782,8 @@ onUnmounted(() => {
   margin-left: auto;
   font-size: var(--font-size-xs);
   color: var(--color-neutral-700);
-  background: var(--color-neutral-200);
+  background: var(--color-neutral-100);
+  border: 1px solid var(--color-neutral-200);
   border-radius: 10px;
   padding: 0 8px;
 }

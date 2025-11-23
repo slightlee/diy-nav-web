@@ -12,13 +12,12 @@
         <nav class="view-nav">
           <router-link
             class="view-nav__link"
-            to="/my"
+            to="/home"
             active-class="active"
-            aria-label="我的"
-            title="我的"
+            aria-label="主页"
+            title="主页"
           >
-            <i class="fas fa-user" />
-            <span>我的</span>
+            <span>主页</span>
           </router-link>
           <router-link
             class="view-nav__link"
@@ -27,7 +26,6 @@
             aria-label="全部"
             title="全部"
           >
-            <i class="fas fa-th-large" />
             <span>全部</span>
           </router-link>
         </nav>
@@ -236,7 +234,7 @@ onUnmounted(() => {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
 }
 
 .view-nav {
@@ -250,7 +248,7 @@ onUnmounted(() => {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 0;
   height: 36px;
   padding: 0 2px;
   color: var(--color-neutral-700);
@@ -273,28 +271,21 @@ onUnmounted(() => {
 .view-nav__link::after {
   content: '';
   position: absolute;
-  left: 10%;
+  left: 25%;
   bottom: 0;
-  width: 80%;
-  height: 2px;
+  width: 50%;
+  height: 1.5px;
   border-radius: 2px;
   background: transparent;
   transition: background-color var(--transition-fast);
 }
 
+.view-nav__link:hover::after {
+  background: var(--color-neutral-300);
+}
+
 .view-nav__link.active::after {
   background: var(--color-primary);
-}
-
-.view-nav__link i {
-  width: 14px;
-  color: var(--color-neutral-600);
-  font-size: 14px;
-  line-height: 1;
-}
-
-.view-nav__link.active i {
-  color: var(--color-primary);
 }
 
 .view-nav__link:focus-visible {

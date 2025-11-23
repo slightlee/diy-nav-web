@@ -418,7 +418,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 .website-card__title {
   margin: 0;
   font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-medium);
   line-height: var(--line-height-tight);
   margin-bottom: var(--spacing-sm);
   color: var(--color-neutral-900);
@@ -561,7 +561,11 @@ const handleKeydown = (event: KeyboardEvent) => {
   gap: var(--spacing-sm);
   margin-top: auto;
   padding-top: var(--spacing-xs);
-  border-top: 1px solid var(--color-neutral-200);
+  border-top: 1px solid transparent;
+}
+
+.website-card--hovered .website-card__footer {
+  border-top-color: var(--color-neutral-200);
 }
 
 // 统计信息

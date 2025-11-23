@@ -29,11 +29,10 @@
         <label class="settings-modal__setting-label">打开应用时进入</label>
         <select
           class="settings-modal__setting-select"
-          :value="settings.defaultHome || 'favorite'"
+          :value="settings.defaultHome || 'home'"
           @change="settingsStore.setDefaultHome(($event.target as HTMLSelectElement).value as any)"
         >
-          <option value="recent">最近使用</option>
-          <option value="favorite">常用</option>
+          <option value="home">主页</option>
           <option value="all">全部</option>
         </select>
       </div>

@@ -10,7 +10,7 @@ const DEFAULT_SETTINGS: UserSettings = {
     search: 'Ctrl+K',
     settings: 'Ctrl+,'
   },
-  defaultHome: 'favorite'
+  defaultHome: 'home'
 }
 
 export const useSettingsStore = defineStore('settings', () => {

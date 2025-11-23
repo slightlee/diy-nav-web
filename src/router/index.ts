@@ -5,16 +5,15 @@ const getDefaultHomePath = (): string => {
   if (stored) {
     try {
       const parsed = JSON.parse(stored)
-      const home = parsed?.defaultHome as 'recent' | 'favorite' | 'all' | undefined
-      if (home === 'recent') return '/my'
-      if (home === 'favorite') return '/my'
+      const home = parsed?.defaultHome as 'home' | 'all' | 'recent' | 'favorite' | undefined
+      if (home === 'home' || home === 'recent' || home === 'favorite') return '/home'
       if (home === 'all') return '/all'
-      return '/favorite'
+      return '/home'
     } catch {
-      return '/favorite'
+      return '/home'
     }
   }
-  return '/favorite'
+  return '/home'
 }
 
 const router = createRouter({
@@ -25,8 +24,8 @@ const router = createRouter({
       redirect: () => getDefaultHomePath()
     },
     {
-      path: '/my',
-      name: 'my',
+      path: '/home',
+      name: 'home',
       component: () => import('@/views/Home.vue'),
       meta: { multiView: ['recent', 'favorite'] }
     },

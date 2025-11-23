@@ -42,7 +42,7 @@ export interface UserSettings {
   customBackground?: string
   autoBackup: boolean
   shortcuts: Record<string, string>
-  defaultHome?: 'recent' | 'favorite' | 'all'
+  defaultHome?: 'home' | 'all'
 }
 
 export interface ToastMessage {

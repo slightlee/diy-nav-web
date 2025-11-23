@@ -27,7 +27,12 @@
           </div>
           <span class="tile-name">{{ w.name }}</span>
         </button>
-        <button class="tile-star" type="button" @click.stop="onFavoriteToggle(w.id)">
+        <button
+          class="tile-star"
+          :class="[{ 'is-active': w.isFavorite }]"
+          type="button"
+          @click.stop="onFavoriteToggle(w.id)"
+        >
           <i :class="w.isFavorite ? 'fas fa-star' : 'far fa-star'" />
         </button>
       </div>
@@ -72,8 +77,8 @@ const props = withDefaults(defineProps<Props>(), {
   limit: 12
 })
 
+const emit = defineEmits<{ (e: 'pageCount', count: number): void }>()
 const websiteStore = useWebsiteStore()
-
 const isFavoriteView = computed(() => props.fixedView === 'favorite')
 
 const allList = computed<Website[]>(() => {
@@ -106,6 +111,14 @@ const pagedList = computed<Website[]>(() => {
 watch(allList, () => {
   if (currentPage.value > totalPages.value) page.value = 1
 })
+
+watch(
+  pagedList,
+  list => {
+    emit('pageCount', list.length)
+  },
+  { immediate: true }
+)
 
 const emptyText = computed(() => (props.fixedView === 'recent' ? '暂无最近使用' : '暂无常用网站'))
 
@@ -260,9 +273,21 @@ const goNext = () => {
   right: 6px;
   background: none;
   border: none;
-  color: var(--color-primary);
+  color: var(--color-neutral-500);
   cursor: pointer;
-  opacity: 0.8;
+  opacity: 0;
+  transition:
+    opacity var(--transition-fast),
+    transform var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.tile:hover .tile-star {
+  opacity: 1;
+}
+
+.tile-star.is-active {
+  color: var(--color-primary);
 }
 
 .tile-main:focus-visible {
@@ -278,18 +303,22 @@ const goNext = () => {
 .pager {
   position: absolute;
   right: 0;
-  bottom: -2px;
+  bottom: 0;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   border: 1px solid var(--color-neutral-200);
-  background: var(--color-neutral-100);
+  background: transparent;
   color: var(--color-neutral-700);
-  border-radius: 14px;
-  padding: 4px 8px;
+  border-radius: 9999px;
+  padding: 4px 10px;
   height: var(--pager-h);
   box-sizing: border-box;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.pager:hover {
+  background: var(--color-neutral-100);
+  border-color: var(--color-neutral-300);
 }
 
 .pager-btn {
@@ -297,12 +326,16 @@ const goNext = () => {
   height: 24px;
   border: none;
   border-radius: 8px;
-  background: var(--color-neutral-100);
+  background: transparent;
   color: var(--color-neutral-700);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.pager-btn:hover {
+  background: var(--color-neutral-100);
 }
 
 .pager-btn:disabled {
