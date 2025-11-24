@@ -141,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import WebsiteCard from '@/components/WebsiteCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -196,14 +196,9 @@ const baseViewWebsites = computed(() => {
 })
 
 const filteredWebsites = computed(() => {
-  let websites = baseViewWebsites.value
-  if (showFilters.value && selectedCategory.value !== 'all') {
-    websites = websites.filter(w => w.categoryId === selectedCategory.value)
-  }
-  if (showFilters.value && selectedTags.value.length > 0) {
-    websites = websites.filter(w => selectedTags.value.some(tagId => w.tagIds.includes(tagId)))
-  }
-  return websites
+  const scope = baseViewWebsites.value
+  const ids = new Set(scope.map(w => w.id))
+  return websiteStore.filteredWebsites.filter(w => ids.has(w.id))
 })
 
 const searchResults = computed(() => {
@@ -264,21 +259,9 @@ const onFavoriteToggle = (id: string) => {
 
 const searchInput = ref<HTMLInputElement | null>(null)
 
-const handleGlobalKeydown = (e: KeyboardEvent) => {
-  const isMac = navigator.platform.toLowerCase().includes('mac')
-  const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey
-  if (cmdOrCtrl && e.key.toLowerCase() === 'k') {
-    e.preventDefault()
-    searchInput.value?.focus()
-  } else if (e.key === 'Escape') {
-    if (document.activeElement === searchInput.value) {
-      ;(document.activeElement as HTMLElement)?.blur()
-    }
-  }
-}
+// 已移除全局快捷键
 
 onMounted(() => {
-  window.addEventListener('keydown', handleGlobalKeydown)
   const q = route.query
   const tagQ = q.tag
   const catQ = q.category
@@ -290,9 +273,31 @@ onMounted(() => {
   if (typeof catQ === 'string' && catQ) selectedCategory.value = catQ
 })
 
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleGlobalKeydown)
-})
+onUnmounted(() => {})
+
+watch(
+  searchKeyword,
+  kw => {
+    websiteStore.setSearchFilters({ keyword: kw.trim() })
+  },
+  { immediate: true }
+)
+
+watch(
+  selectedCategory,
+  id => {
+    websiteStore.setSearchFilters({ categoryIds: id === 'all' ? [] : [id] })
+  },
+  { immediate: true }
+)
+
+watch(
+  selectedTags,
+  list => {
+    websiteStore.setSearchFilters({ tagIds: list })
+  },
+  { immediate: true }
+)
 
 const draggingId = ref<string | null>(null)
 const dragOverId = ref<string | null>(null)

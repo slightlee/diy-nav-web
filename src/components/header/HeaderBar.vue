@@ -54,27 +54,33 @@
         </div>
 
         <div class="settings-dropdown">
-          <button class="settings-btn" @click="toggleSettingsDropdown">
+          <button
+            class="settings-btn"
+            :aria-expanded="showSettingsDropdown ? 'true' : 'false'"
+            aria-haspopup="menu"
+            aria-controls="settings-menu"
+            @click="toggleSettingsDropdown"
+          >
             <i class="fas fa-cog" />
           </button>
-          <div v-if="showSettingsDropdown" class="dropdown-menu">
-            <a href="#" class="dropdown-item" @click="onManageCategories">
+          <div v-if="showSettingsDropdown" id="settings-menu" class="dropdown-menu" role="menu">
+            <button type="button" class="dropdown-item" @click="onManageCategories">
               <i class="fas fa-folder-plus" />
               管理分类
-            </a>
-            <a href="#" class="dropdown-item" @click="onManageTags">
+            </button>
+            <button type="button" class="dropdown-item" @click="onManageTags">
               <i class="fas fa-tags" />
               管理标签
-            </a>
+            </button>
             <div class="dropdown-divider" />
-            <a href="#" class="dropdown-item" @click="onOpenDataManagement">
+            <button type="button" class="dropdown-item" @click="onOpenDataManagement">
               <i class="fas fa-exchange-alt" />
               数据管理
-            </a>
-            <a href="#" class="dropdown-item" @click="onOpenSettings">
+            </button>
+            <button type="button" class="dropdown-item" @click="onOpenSettings">
               <i class="fas fa-cog" />
               设置
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -402,39 +408,59 @@ onUnmounted(() => {
   position: absolute;
   right: 0;
   top: calc(100% + 8px);
-  width: 192px;
+  width: 220px;
   background-color: var(--color-neutral-100);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
-  padding: 8px 0;
+  padding: 8px;
   z-index: 50;
 }
 
 .dropdown-item {
   display: flex;
   align-items: center;
-  padding: 8px 16px;
-  color: var(--color-neutral-700);
+  width: 100%;
+  padding: 10px 12px;
+  margin: 2px 0;
+  color: var(--color-neutral-800);
   text-decoration: none;
   font-size: var(--font-size-sm);
-  transition: background-color var(--transition-fast);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
 
   &:hover {
-    background-color: var(--color-neutral-200);
-    color: var(--color-primary);
+    background-color: rgba(var(--color-primary-rgb), 0.08);
+    color: var(--color-neutral-900);
+  }
+
+  &:active {
+    transform: scale(0.98);
+    background-color: rgba(var(--color-primary-rgb), 0.12);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 
   i {
-    margin-right: 8px;
+    margin-right: 10px;
     color: var(--color-neutral-600);
-    width: 12px;
+    width: 14px;
+    text-align: center;
   }
 }
 
 .dropdown-divider {
   height: 1px;
-  background-color: var(--color-neutral-300);
-  margin: 4px 0;
+  background-color: var(--color-border);
+  margin: 6px 8px;
 }
 
 @media (max-width: 768px) {

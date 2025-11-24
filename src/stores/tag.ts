@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, readonly } from 'vue'
 import type { Tag } from '@/types'
 import { generateId } from '@/utils/helpers'
 
@@ -28,13 +28,10 @@ export const useTagStore = defineStore('tag', () => {
           createdAt: new Date(item.createdAt),
           updatedAt: new Date(item.updatedAt)
         }))
-        console.log('📦 从 localStorage 加载标签数据:', tags.value.length, '个标签')
       } else {
         tags.value = []
-        console.warn('⚠️ 标签数据格式错误，重置为空数组')
       }
-    } catch (error) {
-      console.error('Failed to load tags from localStorage:', error)
+    } catch {
       tags.value = []
     }
   }
@@ -43,7 +40,11 @@ export const useTagStore = defineStore('tag', () => {
   const tagColors = computed(() => TAG_COLORS)
 
   // 操作方法
-  const addTag = (tagData: Omit<Tag, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const addTag = (tagData: Pick<Tag, 'name' | 'color'>) => {
+    const nameLower = tagData.name.trim().toLowerCase()
+    if (tags.value.some(t => t.name.trim().toLowerCase() === nameLower)) {
+      throw new Error('DUPLICATE_NAME')
+    }
     const now = new Date()
     const newTag: Tag = {
       ...tagData,
@@ -62,6 +63,11 @@ export const useTagStore = defineStore('tag', () => {
   const updateTag = (id: string, updates: Partial<Tag>) => {
     const index = tags.value.findIndex(tag => tag.id === id)
     if (index !== -1) {
+      if (updates.name) {
+        const nameLower = updates.name.trim().toLowerCase()
+        const dup = tags.value.some(t => t.id !== id && t.name.trim().toLowerCase() === nameLower)
+        if (dup) throw new Error('DUPLICATE_NAME')
+      }
       tags.value[index] = { ...tags.value[index], ...updates, updatedAt: new Date() }
       saveToLocalStorage()
     }
@@ -75,8 +81,11 @@ export const useTagStore = defineStore('tag', () => {
     }
   }
 
-  const reorderTags = (newOrder: Tag[]) => {
-    tags.value = newOrder.map((tag, index) => ({ ...tag, order: index }))
+  const reorderTags = (newOrder: string[]) => {
+    newOrder.forEach((tagId, newIndex) => {
+      const tag = tags.value.find(t => t.id === tagId)
+      if (tag) tag.order = newIndex
+    })
     saveToLocalStorage()
   }
 
@@ -87,8 +96,8 @@ export const useTagStore = defineStore('tag', () => {
   const saveToLocalStorage = () => {
     try {
       localStorage.setItem('tags', JSON.stringify(tags.value))
-    } catch (error) {
-      console.error('Failed to save tags to localStorage:', error)
+    } catch {
+      void 0
     }
   }
 
@@ -99,7 +108,7 @@ export const useTagStore = defineStore('tag', () => {
 
   return {
     // 状态
-    tags,
+    tags: readonly(tags),
     tagColors,
 
     // 操作方法

@@ -1,21 +1,18 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, readonly } from 'vue'
 import type { UserSettings } from '@/types'
 
 const DEFAULT_SETTINGS: UserSettings = {
   theme: 'light',
   autoBackup: true,
-  shortcuts: {
-    addSite: 'Ctrl+N',
-    search: 'Ctrl+K',
-    settings: 'Ctrl+,'
-  },
   defaultHome: 'home'
 }
 
 export const useSettingsStore = defineStore('settings', () => {
   // 状态
   const settings = ref<UserSettings>({ ...DEFAULT_SETTINGS })
+  let mql: MediaQueryList | null = null
+  let mqlHandler: ((e: MediaQueryListEvent) => void) | null = null
 
   // 动作
   const loadSettings = () => {
@@ -56,20 +53,28 @@ export const useSettingsStore = defineStore('settings', () => {
     saveToLocalStorage()
   }
 
-  const setShortcut = (action: string, shortcut: string) => {
-    settings.value.shortcuts[action] = shortcut
-    saveToLocalStorage()
-  }
-
   const applyTheme = () => {
     const theme = settings.value.theme
     const root = document.documentElement
 
     if (theme === 'auto') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      if (!mql) {
+        mql = window.matchMedia('(prefers-color-scheme: dark)')
+      }
+      const prefersDark = mql.matches
       root.setAttribute('data-theme', prefersDark ? 'dark' : 'light')
+      if (!mqlHandler) {
+        mqlHandler = e => {
+          root.setAttribute('data-theme', e.matches ? 'dark' : 'light')
+        }
+        mql.addEventListener('change', mqlHandler)
+      }
     } else {
       root.setAttribute('data-theme', theme)
+      if (mql && mqlHandler) {
+        mql.removeEventListener('change', mqlHandler)
+        mqlHandler = null
+      }
     }
   }
 
@@ -131,7 +136,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   return {
     // 状态
-    settings,
+    settings: readonly(settings),
 
     // 动作
     loadSettings,
@@ -139,7 +144,6 @@ export const useSettingsStore = defineStore('settings', () => {
     resetSettings,
     setTheme,
     setDefaultHome,
-    setShortcut,
     exportSettings,
     importSettings,
     backupData,

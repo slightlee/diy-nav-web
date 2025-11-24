@@ -409,14 +409,6 @@ const closeAddSite = () => {
 
 // 上下文由触发者传入
 
-// 添加键盘快捷键支持
-const handleKeydown = (event: KeyboardEvent) => {
-  if (event.ctrlKey && event.key === 'n') {
-    event.preventDefault()
-    handleAddSite()
-  }
-}
-
 const handleEditWebsite = (website: Website) => {
   uiStore.openModal('addSite', website)
 }
@@ -475,12 +467,9 @@ onMounted(() => {
   websiteStore.initializeData()
   categoryStore.initializeData()
   tagStore.initializeData()
-  document.addEventListener('keydown', handleKeydown)
 })
 
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
-})
+onUnmounted(() => {})
 </script>
 
 <style scoped lang="scss">

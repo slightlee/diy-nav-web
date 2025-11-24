@@ -47,24 +47,11 @@ export const useUIStore = defineStore('ui', () => {
     type: 'success' | 'error' | 'warning' | 'info',
     duration: number = 3000
   ) => {
+    const exists = toasts.value.some(t => t.message === message && t.type === type)
+    if (exists) return
     const id = Date.now().toString(36) + Math.random().toString(36).substr(2)
-
-    const toast: ToastMessage = {
-      id,
-      message,
-      type,
-      duration
-    }
-
+    const toast: ToastMessage = { id, message, type, duration }
     toasts.value.push(toast)
-
-    // 自动移除
-    setTimeout(() => {
-      const index = toasts.value.findIndex(t => t.id === id)
-      if (index !== -1) {
-        toasts.value.splice(index, 1)
-      }
-    }, duration)
   }
 
   const removeToast = (id: string) => {

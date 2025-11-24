@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, readonly } from 'vue'
 import type { Category } from '@/types'
 import { generateId } from '@/utils/helpers'
 
@@ -21,24 +21,25 @@ export const useCategoryStore = defineStore('category', () => {
           createdAt: new Date(item.createdAt),
           updatedAt: new Date(item.updatedAt)
         }))
-        console.log('📦 从 localStorage 加载分类数据:', categories.value.length, '个分类')
       } else {
         categories.value = []
-        console.warn('⚠️ 分类数据格式错误，重置为空数组')
       }
-    } catch (error) {
-      console.error('Failed to load categories from localStorage:', error)
+    } catch {
       categories.value = []
     }
   }
 
   // 操作方法
-  const addCategory = (categoryData: Omit<Category, 'id'>) => {
+  const addCategory = (categoryData: Pick<Category, 'name' | 'description' | 'icon'>) => {
+    const nameLower = categoryData.name.trim().toLowerCase()
+    if (categories.value.some(c => c.name.trim().toLowerCase() === nameLower)) {
+      throw new Error('DUPLICATE_NAME')
+    }
     const now = new Date()
     const newCategory: Category = {
       ...categoryData,
       id: generateId(),
-      order: categories.value.length + 1,
+      order: categories.value.length,
       websiteCount: 0,
       createdAt: now,
       updatedAt: now
@@ -52,6 +53,13 @@ export const useCategoryStore = defineStore('category', () => {
   const updateCategory = (id: string, updates: Partial<Category>) => {
     const index = categories.value.findIndex(c => c.id === id)
     if (index !== -1) {
+      if (updates.name) {
+        const nameLower = updates.name.trim().toLowerCase()
+        const dup = categories.value.some(
+          c => c.id !== id && c.name.trim().toLowerCase() === nameLower
+        )
+        if (dup) throw new Error('DUPLICATE_NAME')
+      }
       categories.value[index] = {
         ...categories.value[index],
         ...updates,
@@ -73,7 +81,7 @@ export const useCategoryStore = defineStore('category', () => {
     newOrder.forEach((categoryId, newIndex) => {
       const category = categories.value.find(c => c.id === categoryId)
       if (category) {
-        category.order = newIndex + 1
+        category.order = newIndex
       }
     })
     saveToLocalStorage()
@@ -82,8 +90,8 @@ export const useCategoryStore = defineStore('category', () => {
   const saveToLocalStorage = () => {
     try {
       localStorage.setItem('categories', JSON.stringify(categories.value))
-    } catch (error) {
-      console.error('Failed to save categories to localStorage:', error)
+    } catch {
+      void 0
     }
   }
 
@@ -106,7 +114,7 @@ export const useCategoryStore = defineStore('category', () => {
 
   return {
     // 状态
-    categories,
+    categories: readonly(categories),
     searchFilters,
 
     // 方法

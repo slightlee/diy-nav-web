@@ -132,7 +132,9 @@ const toastClasses = computed(() => ({
 }))
 
 const toastStyles = computed(() => {
-  const index = Array.from(toastRef.value?.parentElement?.children || []).indexOf(toastRef.value!)
+  const el = toastRef.value
+  const parentChildren = el?.parentElement?.children
+  const index = el && parentChildren ? Array.from(parentChildren).indexOf(el) : 0
   return {
     '--toast-index': index
   }

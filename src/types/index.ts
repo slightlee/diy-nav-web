@@ -41,7 +41,6 @@ export interface UserSettings {
   theme: 'light' | 'dark' | 'auto'
   customBackground?: string
   autoBackup: boolean
-  shortcuts: Record<string, string>
   defaultHome?: 'home' | 'all'
 }
 
@@ -69,13 +68,7 @@ export interface SearchFilters {
 export type SortOrder = 'asc' | 'desc'
 export type SortField = 'order' | 'name' | 'createdAt' | 'visitCount' | 'lastVisited'
 
-// 类型定义
-// 类型定义
-declare global {
-  interface Window {
-    generateId: () => string
-  }
-}
+// 移除不必要的全局声明
 
 export interface ModalPayloads {
   addSite?: Website
@@ -84,3 +77,5 @@ export interface ModalPayloads {
   settings?: undefined
   dataManagement?: undefined
 }
+
+export const ERROR_DUPLICATE_NAME = 'DUPLICATE_NAME'

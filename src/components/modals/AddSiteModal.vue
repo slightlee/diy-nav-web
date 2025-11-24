@@ -97,8 +97,13 @@
       </div>
 
       <div class="add-site-modal__actions">
-        <BaseButton variant="ghost" type="button" @click="handleClose">取消</BaseButton>
-        <BaseButton variant="primary" :loading="submitting" :disabled="!isFormValid" type="submit">
+        <BaseButton variant="ghost" html-type="button" @click="handleClose">取消</BaseButton>
+        <BaseButton
+          variant="primary"
+          :loading="submitting"
+          :disabled="!isFormValid"
+          html-type="submit"
+        >
           <i class="fas fa-save" />
           {{ isEditMode ? '保存修改' : '添加网站' }}
         </BaseButton>
@@ -108,12 +113,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useWebsiteStore } from '@/stores/website'
 import { useCategoryStore } from '@/stores/category'
 import { useTagStore } from '@/stores/tag'
 import { useUIStore } from '@/stores/ui'
-import { formatUrl, getServiceFaviconUrl, getLetterFavicon } from '@/utils/helpers'
+import { formatUrl, getServiceFaviconUrl, getLetterFavicon, isValidUrl } from '@/utils/helpers'
 import BaseInput from '../base/BaseInput.vue'
 import BaseButton from '../base/BaseButton.vue'
 import type { Website } from '@/types'
@@ -210,15 +215,7 @@ const validateForm = () => {
   return Object.keys(errors.value).length === 0
 }
 
-// URL验证辅助函数
-const isValidUrl = (url: string): boolean => {
-  try {
-    const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`)
-    return urlObj.protocol === 'http:' || urlObj.protocol === 'https:'
-  } catch {
-    return false
-  }
-}
+// URL校验统一使用工具函数
 
 // 处理URL输入
 const handleUrlInput = () => {
@@ -264,6 +261,7 @@ const handleSubmit = async () => {
   submitting.value = true
 
   try {
+    const existing = props.website
     const websiteData = {
       name: formData.value.name.trim(),
       url: formData.value.url.trim(),
@@ -271,18 +269,18 @@ const handleSubmit = async () => {
       categoryId: formData.value.categoryId,
       tagIds: [...formData.value.tagIds],
       favicon: selectedFavicon.value || undefined,
-      visitCount: isEditMode.value ? props.website!.visitCount : 0,
+      visitCount: existing?.visitCount ?? 0,
       isOnline: true,
-      createdAt: isEditMode.value ? props.website!.createdAt : new Date(),
+      createdAt: existing?.createdAt ?? new Date(),
       updatedAt: new Date(),
-      lastVisited: isEditMode.value ? props.website!.lastVisited : undefined
+      lastVisited: existing?.lastVisited
     }
 
     let savedWebsite: Website
 
-    if (isEditMode.value) {
-      websiteStore.updateWebsite(props.website!.id, websiteData)
-      savedWebsite = { ...props.website!, ...websiteData }
+    if (props.website) {
+      websiteStore.updateWebsite(props.website.id, websiteData)
+      savedWebsite = { ...props.website, ...websiteData }
     } else {
       savedWebsite = websiteStore.addWebsite(websiteData)
     }
@@ -291,8 +289,7 @@ const handleSubmit = async () => {
 
     emit('success', savedWebsite)
     handleClose()
-  } catch (error) {
-    console.error('保存网站失败:', error)
+  } catch {
     uiStore.showToast('保存失败，请重试', 'error')
   } finally {
     submitting.value = false

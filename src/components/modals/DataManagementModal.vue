@@ -169,6 +169,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from 'vue'
+import type { Website } from '@/types'
 import { useWebsiteStore } from '@/stores/website'
 import { useUIStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
@@ -200,7 +201,11 @@ let countdownTimer: number | null = null
 const importConfirmOpen = ref(false)
 const importFileName = ref('')
 const importPreview = ref({ websites: 0, categories: 0, tags: 0 })
-let pendingImportData: any = null
+let pendingImportData: {
+  websites?: Partial<Website>[]
+  categories?: unknown[]
+  tags?: unknown[]
+} | null = null
 
 const triggerFileImport = () => {
   fileInputRef.value?.click()
@@ -221,7 +226,7 @@ const handleFileImport = async (event: Event) => {
     }
     pendingImportData = data
     importConfirmOpen.value = true
-  } catch (error) {
+  } catch {
     uiStore.showToast('导入失败，请重试', 'error')
   } finally {
     if (fileInputRef.value) {
@@ -245,7 +250,7 @@ const handleExport = async () => {
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
     uiStore.showToast('数据导出成功', 'success')
-  } catch (error) {
+  } catch {
     uiStore.showToast('导出失败，请重试', 'error')
   } finally {
     exporting.value = false
@@ -272,10 +277,12 @@ const confirmImportData = async () => {
     if (data.tags) {
       localStorage.setItem('tags', JSON.stringify(data.tags))
     }
+    categoryStore.initializeData()
+    tagStore.initializeData()
     uiStore.showToast('数据导入成功', 'success')
     closeImportConfirm()
     emit('close')
-  } catch (error) {
+  } catch {
     uiStore.showToast('导入失败，请重试', 'error')
   } finally {
     importing.value = false
@@ -324,7 +331,7 @@ const confirmClearData = async () => {
     uiStore.showToast('所有数据已清除', 'success')
     closeClearConfirm()
     emit('close')
-  } catch (e) {
+  } catch {
     uiStore.showToast('清除失败，请重试', 'error')
   } finally {
     clearing.value = false

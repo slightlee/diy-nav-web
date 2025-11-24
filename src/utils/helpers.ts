@@ -1,57 +1,5 @@
 // 类型定义，避免未使用变量错误
-export interface SimpleWebsite {
-  id: string
-  name: string
-  url: string
-  description?: string
-  favicon?: string
-  categoryId?: string
-  tagIds?: string[]
-  visitCount?: number
-  isOnline?: boolean
-  createdAt?: string
-  updatedAt?: string
-}
-
-export interface SimpleCategory {
-  id: string
-  name: string
-  description?: string
-  order?: number
-  websiteCount?: number
-  createdAt?: string
-  updatedAt?: string
-}
-
-export interface SimpleTag {
-  id: string
-  name: string
-  color: string
-  order?: number
-  usageCount?: number
-  createdAt?: string
-  updatedAt?: string
-}
-
-// 类型定义，避免未使用变量错误
-export interface ApiResponse<T = unknown> {
-  data?: T
-  success: boolean
-  message?: string
-  error?: string
-}
-
-export interface PaginatedResponse<T> {
-  data: T[]
-  success: boolean
-  message?: string
-  pagination: {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
-  }
-}
+// 移除未使用的简单类型与接口定义，保留纯工具函数
 
 // 生成唯一ID
 export const generateId = (): string => {
@@ -158,6 +106,15 @@ export const formatDateTimeZh = (date: Date | string): string => {
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit'
+  })
+}
+
+export const formatDateZh = (date: Date | string): string => {
+  const d = typeof date === 'string' ? new Date(date) : date
+  return d.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
   })
 }
 
@@ -297,4 +254,19 @@ export const downloadFile = (content: string, filename: string): void => {
   link.click()
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
+}
+
+export const computeReorderedIds = (
+  orderIds: string[],
+  draggingId: string,
+  targetId: string
+): string[] => {
+  if (!draggingId || draggingId === targetId) return orderIds
+  const from = orderIds.indexOf(draggingId)
+  const to = orderIds.indexOf(targetId)
+  if (from === -1 || to === -1) return orderIds
+  const next = orderIds.slice()
+  next.splice(from, 1)
+  next.splice(to, 0, draggingId)
+  return next
 }

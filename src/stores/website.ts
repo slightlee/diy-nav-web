@@ -36,13 +36,10 @@ export const useWebsiteStore = defineStore('website', () => {
             w.favoriteOrder = typeof w.favoriteOrder === 'number' ? w.favoriteOrder : idx
           })
         }
-        console.log('📦 从 localStorage 加载数据:', websites.value.length, '个网站')
       } else {
         websites.value = []
-        console.warn('⚠️ 数据格式错误，重置为空数组')
       }
-    } catch (error) {
-      console.error('Failed to load websites from localStorage:', error)
+    } catch {
       websites.value = []
     }
   }
@@ -117,37 +114,37 @@ export const useWebsiteStore = defineStore('website', () => {
       order: websites.value.length
     }
 
-    websites.value.push(newWebsite)
+    websites.value = [...websites.value, newWebsite]
     saveToLocalStorage()
     return newWebsite
   }
 
   const updateWebsite = (id: string, updates: Partial<Website>) => {
-    const index = websites.value.findIndex(w => w.id === id)
-    if (index !== -1) {
-      websites.value[index] = {
-        ...websites.value[index],
-        ...updates,
-        updatedAt: new Date()
-      }
+    const now = new Date()
+    const next = websites.value.map(w => (w.id === id ? { ...w, ...updates, updatedAt: now } : w))
+    if (next !== websites.value) {
+      websites.value = next
       saveToLocalStorage()
     }
   }
 
   const deleteWebsite = (id: string) => {
-    const index = websites.value.findIndex(w => w.id === id)
-    if (index !== -1) {
-      websites.value.splice(index, 1)
+    const next = websites.value.filter(w => w.id !== id)
+    if (next.length !== websites.value.length) {
+      websites.value = next.map((w, i) => ({ ...w, order: i }))
       saveToLocalStorage()
     }
   }
 
   const incrementVisitCount = (id: string) => {
-    const website = websites.value.find(w => w.id === id)
-    if (website) {
-      website.visitCount++
-      website.lastVisited = new Date()
-      website.updatedAt = new Date()
+    const now = new Date()
+    const next = websites.value.map(w =>
+      w.id === id
+        ? { ...w, visitCount: (w.visitCount ?? 0) + 1, lastVisited: now, updatedAt: now }
+        : w
+    )
+    if (next !== websites.value) {
+      websites.value = next
       saveToLocalStorage()
     }
   }
@@ -171,41 +168,43 @@ export const useWebsiteStore = defineStore('website', () => {
 
   const moveWebsiteBefore = (sourceId: string, targetId: string) => {
     if (sourceId === targetId) return
-    const sourceIndex = websites.value.findIndex(w => w.id === sourceId)
-    const targetIndex = websites.value.findIndex(w => w.id === targetId)
+    const list = websites.value
+    const sourceIndex = list.findIndex(w => w.id === sourceId)
+    const targetIndex = list.findIndex(w => w.id === targetId)
     if (sourceIndex === -1 || targetIndex === -1) return
-    const [moved] = websites.value.splice(sourceIndex, 1)
-    const newTargetIndex = websites.value.findIndex(w => w.id === targetId)
-    websites.value.splice(newTargetIndex, 0, moved)
-    websites.value.forEach((w, i) => {
-      w.order = i
-    })
+    const arr = [...list]
+    const [moved] = arr.splice(sourceIndex, 1)
+    const newTargetIndex = arr.findIndex(w => w.id === targetId)
+    arr.splice(newTargetIndex, 0, moved)
+    const next = arr.map((w, i) => ({ ...w, order: i }))
+    websites.value = next
     saveToLocalStorage()
   }
 
   const moveFavoriteBefore = (sourceId: string, targetId: string) => {
     if (sourceId === targetId) return
-    const favIds = websites.value
+    const favs = websites.value
       .filter(w => !!w.isFavorite)
       .sort((a, b) => (a.favoriteOrder ?? a.order ?? 0) - (b.favoriteOrder ?? b.order ?? 0))
-      .map(w => w.id)
+    const favIds = favs.map(w => w.id)
     const from = favIds.indexOf(sourceId)
     const to = favIds.indexOf(targetId)
     if (from === -1 || to === -1) return
-    favIds.splice(from, 1)
-    favIds.splice(to, 0, sourceId)
-    favIds.forEach((id, idx) => {
-      const w = websites.value.find(x => x.id === id)
-      if (w) w.favoriteOrder = idx
-    })
+    const ids = [...favIds]
+    ids.splice(from, 1)
+    ids.splice(to, 0, sourceId)
+    const orderMap = new Map<string, number>(ids.map((id, idx) => [id, idx]))
+    websites.value = websites.value.map(w =>
+      w.isFavorite ? { ...w, favoriteOrder: orderMap.get(w.id) ?? w.favoriteOrder } : w
+    )
     saveToLocalStorage()
   }
 
   const saveToLocalStorage = () => {
     try {
       localStorage.setItem('websites', JSON.stringify(websites.value))
-    } catch (error) {
-      console.error('Failed to save websites to localStorage:', error)
+    } catch {
+      void 0
     }
   }
 

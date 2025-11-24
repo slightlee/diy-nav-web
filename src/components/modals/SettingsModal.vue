@@ -1,25 +1,5 @@
 <template>
   <div class="settings-modal">
-    <!-- 高级设置 -->
-    <div class="settings-modal__section">
-      <h3 class="settings-modal__section-title">
-        <i class="fas fa-keyboard" />
-        快捷键
-      </h3>
-
-      <div class="settings-modal__shortcuts-section">
-        <div class="settings-modal__shortcuts-list">
-          <div
-            v-for="shortcut in shortcuts"
-            :key="shortcut.id"
-            class="settings-modal__shortcut-item"
-          >
-            <span class="settings-modal__shortcut-name">{{ shortcut.name }}</span>
-            <kbd class="settings-modal__shortcut-key">{{ shortcut.keybind }}</kbd>
-          </div>
-        </div>
-      </div>
-    </div>
     <div class="settings-modal__section">
       <h3 class="settings-modal__section-title">
         <i class="fas fa-home" />
@@ -30,7 +10,11 @@
         <select
           class="settings-modal__setting-select"
           :value="settings.defaultHome || 'home'"
-          @change="settingsStore.setDefaultHome(($event.target as HTMLSelectElement).value as any)"
+          @change="
+            settingsStore.setDefaultHome(
+              ($event.target as HTMLSelectElement).value as 'home' | 'all'
+            )
+          "
         >
           <option value="home">主页</option>
           <option value="all">全部</option>
@@ -41,54 +25,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed } from 'vue'
 import { useSettingsStore } from '@/stores/settings'
 
-import type { UserSettings } from '@/types'
-
-interface Emits {
-  (e: 'close'): void
-}
-
-const emit = defineEmits<Emits>()
-
-// Store
 const settingsStore = useSettingsStore()
 
-// 设置数据
-const settings = ref<UserSettings>({
-  theme: 'light',
-  customBackground: '',
-  autoBackup: true,
-  shortcuts: {}
-})
+const settings = computed(() => settingsStore.settings)
 
-// 快捷键列表
-const shortcuts = computed(() => [
-  { id: 'add-website', name: '添加网站', keybind: 'Ctrl+N' },
-  { id: 'quick-search', name: '快速搜索', keybind: 'Ctrl+K' },
-  { id: 'manage-categories', name: '管理分类', keybind: 'Ctrl+Shift+C' },
-  { id: 'manage-tags', name: '管理标签', keybind: 'Ctrl+Shift+T' },
-  { id: 'settings', name: '设置', keybind: 'Ctrl+,' }
-])
-
-// 初始化设置
-const initializeSettings = () => {
-  const saved = localStorage.getItem('userSettings')
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved)
-      settings.value = { ...settings.value, ...parsed }
-    } catch (error) {
-      console.error('解析设置失败:', error)
-    }
-  }
-}
-
-// 生命周期
-onMounted(() => {
-  initializeSettings()
-})
+// 已移除快捷键展示
 </script>
 
 <style scoped lang="scss">
@@ -297,53 +241,6 @@ onMounted(() => {
   margin-top: var(--spacing-xs);
 }
 
-// 快捷键
-.settings-modal__shortcuts-section {
-  margin-top: var(--spacing-lg);
-  padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--color-neutral-200);
-}
-
-.settings-modal__shortcuts-title {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-neutral-800);
-  margin: 0 0 var(--spacing-md) 0;
-}
-
-.settings-modal__shortcuts-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-sm);
-}
-
-.settings-modal__shortcut-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background-color: var(--color-neutral-50);
-  border-radius: var(--radius-sm);
-}
-
-.settings-modal__shortcut-name {
-  font-size: var(--font-size-sm);
-  color: var(--color-neutral-700);
-}
-
-.settings-modal__shortcut-key {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background-color: var(--color-neutral-200);
-  border: 1px solid var(--color-neutral-300);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
-  font-family: var(--font-family-mono);
-  color: var(--color-neutral-700);
-}
-
 // 危险操作
 .settings-modal__danger-description {
   color: var(--color-error);
@@ -386,10 +283,6 @@ onMounted(() => {
   .settings-modal__setting-item {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .settings-modal__shortcuts-list {
-    grid-template-columns: 1fr;
   }
 
   .settings-modal__actions {

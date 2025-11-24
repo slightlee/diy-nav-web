@@ -79,33 +79,22 @@ const handleClose = (toastId: string) => {
 }
 
 // 处理鼠标进入（暂停自动关闭）
-const handleMouseEnter = (toastId: string) => {
+const handleMouseEnter = () => {
   // 可以在这里实现暂停自动关闭的逻辑
   // 需要在ToastItem中配合实现
 }
 
-const handleMouseLeave = (toastId: string) => {
+const handleMouseLeave = () => {
   // 可以在这里实现恢复自动关闭的逻辑
 }
 
 // 键盘事件处理（ESC关闭所有Toast）
-const handleKeydown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape' && event.ctrlKey) {
-    // Ctrl+ESC 关闭所有Toast
-    uiStore.toasts.forEach(toast => {
-      uiStore.removeToast(toast.id)
-    })
-  }
-}
+// 已移除快捷键清理
 
 // 生命周期
-onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
-})
+onMounted(() => {})
 
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
-})
+onUnmounted(() => {})
 </script>
 
 <style scoped lang="scss">

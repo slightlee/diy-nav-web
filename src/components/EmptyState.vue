@@ -35,17 +35,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import BaseButton from './base/BaseButton.vue'
-import { useRouter } from 'vue-router'
-
-interface TypeConfig {
-  title: string
-  description: string
-  icon?: string
-  showActionButton: boolean
-  actionButtonText?: string
-  actionButtonIcon?: string
-  eventName?: string
-}
 
 interface Props {
   type:
@@ -186,8 +175,6 @@ const iconComponent = computed(() => {
       return { template: '<i class="fas fa-exclamation-circle"></i>' }
   }
 })
-
-const config = computed(() => typeConfig.value)
 
 // 计算样式类
 const emptyStateClasses = computed(() => ({
