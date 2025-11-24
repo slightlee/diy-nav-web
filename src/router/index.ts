@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
 
 const getDefaultHomePath = (): string => {
   const stored = localStorage.getItem('userSettings')
@@ -16,8 +16,11 @@ const getDefaultHomePath = (): string => {
   return '/home'
 }
 
+const useHash = import.meta.env.VITE_USE_HASH_ROUTER === 'true'
 const router = createRouter({
-  history: createWebHistory(),
+  history: useHash
+    ? createWebHashHistory(import.meta.env.BASE_URL)
+    : createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
