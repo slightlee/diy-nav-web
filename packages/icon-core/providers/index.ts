@@ -9,14 +9,23 @@ import type { Config } from '@nav/config'
 import { fetchFromDuckDuckGo } from './duckduckgo.js'
 import { fetchFromClearbit } from './clearbit.js'
 import { fetchFromGoogleS2 } from './google.js'
+import { fetchFromIconHorse } from './iconhorse.js'
+import { fetchFromBitwarden } from './bitwarden.js'
 
 export type IconProvider = (domain: string) => Promise<IconFetchResult | null>
 
 /**
- * 默认提供者顺序：Google S2 → Clearbit → DuckDuckGo
+ * 默认提供者顺序：
+ * 1. Google S2 (质量最佳，国内可能超时)
+ * 2. Icon Horse (质量好，国内可用)
+ * 3. Bitwarden (稳定，速度快)
+ * 4. Clearbit (兜底)
+ * 5. DuckDuckGo (兜底)
  */
 export const defaultProviders: IconProvider[] = [
   domain => fetchFromGoogleS2(domain),
+  fetchFromIconHorse,
+  fetchFromBitwarden,
   fetchFromClearbit,
   fetchFromDuckDuckGo
 ]
@@ -24,6 +33,8 @@ export const defaultProviders: IconProvider[] = [
 export function getProviders(config: Config): IconProvider[] {
   return [
     domain => fetchFromGoogleS2(domain, config.ICON_SIZE),
+    fetchFromIconHorse,
+    fetchFromBitwarden,
     fetchFromClearbit,
     fetchFromDuckDuckGo
   ]
@@ -38,10 +49,15 @@ export async function fetchIconByProviders(
   domain: string,
   providers: IconProvider[] = defaultProviders
 ): Promise<IconFetchResult | null> {
+  const debug = process.env.LOG_LEVEL === 'debug'
+  if (debug) console.debug('[icon] try providers', { domain })
   for (const p of providers) {
     try {
       const result = await p(domain)
-      if (result) return result
+      if (result) {
+        if (debug) console.debug('[icon] provider hit', { domain, source: result.source })
+        return result
+      }
     } catch {
       // ignore provider errors
     }

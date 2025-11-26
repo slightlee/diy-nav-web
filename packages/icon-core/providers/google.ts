@@ -14,10 +14,24 @@ export async function fetchFromGoogleS2(
 ): Promise<IconFetchResult | null> {
   const sz = Number.isFinite(size) && size > 0 ? size : 64
   const url = `https://www.google.com/s2/favicons?domain=${domain}&sz=${sz}`
-  const res = await fetch(url, { method: 'GET' })
-  if (!res.ok) return null
-  const ct = res.headers.get('content-type') || ''
-  if (!ct.includes('image')) return null
-  const data = await res.arrayBuffer()
-  return { data, contentType: ct, extension: 'png' }
+
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 3000)
+
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      signal: controller.signal
+    })
+    clearTimeout(timeoutId)
+
+    if (!res.ok) return null
+    const ct = res.headers.get('content-type') || ''
+    if (!ct.includes('image')) return null
+    const data = await res.arrayBuffer()
+    return { data, contentType: ct, extension: 'png', source: 'google' }
+  } catch {
+    clearTimeout(timeoutId)
+    return null
+  }
 }

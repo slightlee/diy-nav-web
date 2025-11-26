@@ -16,5 +16,5 @@ export async function fetchFromClearbit(domain: string): Promise<IconFetchResult
   if (!ct.includes('image')) return null
   const data = await res.arrayBuffer()
   const ext = ct.includes('png') ? 'png' : ct.includes('svg') ? 'svg' : 'png'
-  return { data, contentType: ct, extension: ext }
+  return { data, contentType: ct, extension: ext, source: 'clearbit' }
 }

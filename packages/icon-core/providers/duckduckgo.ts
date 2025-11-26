@@ -15,5 +15,10 @@ export async function fetchFromDuckDuckGo(domain: string): Promise<IconFetchResu
   const ct = res.headers.get('content-type') || ''
   if (!ct.includes('image')) return null
   const data = await res.arrayBuffer()
-  return { data, contentType: ct, extension: ct.includes('png') ? 'png' : 'ico' }
+  return {
+    data,
+    contentType: ct,
+    extension: ct.includes('png') ? 'png' : 'ico',
+    source: 'duckduckgo'
+  }
 }

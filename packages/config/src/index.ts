@@ -1,5 +1,7 @@
 import { z } from 'zod'
 import dotenv from 'dotenv'
+import { existsSync } from 'fs'
+import { resolve } from 'path'
 
 export const configSchema = z
   .object({
@@ -67,6 +69,17 @@ export function loadConfig(): Config {
 
   // Try loading .env if not already loaded
   dotenv.config()
+
+  // Try loading from root if in a monorepo structure
+  // We check a few common locations up the tree
+  const pathsToCheck = ['../../.env', '../../../.env']
+  for (const p of pathsToCheck) {
+    const fullPath = resolve(process.cwd(), p)
+    if (existsSync(fullPath)) {
+      dotenv.config({ path: fullPath })
+      break
+    }
+  }
 
   // Backward compatibility
   if (process.env.ICON_API_PORT && !process.env.PORT) {

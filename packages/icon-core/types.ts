@@ -15,18 +15,26 @@ export interface StorageConfig {
   folderPath?: string
 }
 
+export type IconSource =
+  | 'google'
+  | 'duckduckgo'
+  | 'clearbit'
+  | 'iconhorse'
+  | 'bitwarden'
+  | 'default'
+  | 'storage'
+
 export type IconFetchResult = {
   data: ArrayBuffer
   contentType: string
   extension: string
+  source: IconSource
 }
 
 // From @nav/contracts
 export interface GetIconRequest {
   domain: string
 }
-
-export type IconSource = 'google' | 'duckduckgo' | 'clearbit' | 'default'
 
 export interface GetIconResponse {
   url: string

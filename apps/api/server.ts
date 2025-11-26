@@ -117,7 +117,7 @@ app.get(
 
       return {
         url: result.url,
-        source: result.hit ? 'storage' : 'default',
+        source: result.source,
         metrics: result.metrics
       }
     } catch (err) {

@@ -5,7 +5,7 @@
  * 返回：公共 URL、是否命中、性能指标（抓取/写入耗时）
  */
 import { LocalStorageAdapter } from './storage/local.js'
-import type { StorageAdapter } from './types.js'
+import type { StorageAdapter, IconSource } from './types.js'
 import { fetchIconByProviders, type IconProvider, defaultProviders } from './providers/index.js'
 
 export class IconService {
@@ -17,7 +17,12 @@ export class IconService {
 
   async getIconUrl(
     domain: string
-  ): Promise<{ url: string; hit: boolean; metrics?: { fetchMs?: number; storeMs?: number } }> {
+  ): Promise<{
+    url: string
+    hit: boolean
+    source: IconSource
+    metrics?: { fetchMs?: number; storeMs?: number }
+  }> {
     const normalized = this.normalizeDomain(domain)
 
     // 1) 先按常见后缀检查是否已存在（命中即返回）
@@ -25,7 +30,7 @@ export class IconService {
     for (const ext of candidateExts) {
       const key = `${normalized}.${ext}`
       const url = await this.storage.exists(key)
-      if (url) return { url, hit: true }
+      if (url) return { url, hit: true, source: 'storage' }
     }
 
     // 2) 未命中：聚合第三方提供者抓取，并记录抓取耗时
@@ -39,11 +44,11 @@ export class IconService {
       const tStoreStart = performance.now()
       const url = await this.storage.store(key, fetched.data, fetched.contentType)
       const storeMs = Math.round(performance.now() - tStoreStart)
-      return { url, hit: false, metrics: { fetchMs, storeMs } }
+      return { url, hit: false, source: fetched.source, metrics: { fetchMs, storeMs } }
     }
 
     // 4) 获取失败：返回兜底默认图标，并附带抓取耗时
-    return { url: this.defaultIconUrl, hit: false, metrics: { fetchMs } }
+    return { url: this.defaultIconUrl, hit: false, source: 'default', metrics: { fetchMs } }
   }
 
   /**
