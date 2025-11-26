@@ -1,0 +1,60 @@
+/**
+ * 图标获取核心服务
+ *
+ * 目标：优先命中存储，未命中则聚合第三方提供者抓取并写入存储
+ * 返回：公共 URL、是否命中、性能指标（抓取/写入耗时）
+ */
+import { LocalStorageAdapter } from './storage/local.js'
+import type { StorageAdapter } from './types.js'
+import { fetchIconByProviders, type IconProvider, defaultProviders } from './providers/index.js'
+
+export class IconService {
+  constructor(
+    private storage: StorageAdapter = new LocalStorageAdapter(),
+    private providers: IconProvider[] = defaultProviders,
+    private defaultIconUrl: string = '/icons/default.svg'
+  ) {}
+
+  async getIconUrl(
+    domain: string
+  ): Promise<{ url: string; hit: boolean; metrics?: { fetchMs?: number; storeMs?: number } }> {
+    const normalized = this.normalizeDomain(domain)
+
+    // 1) 先按常见后缀检查是否已存在（命中即返回）
+    const candidateExts = ['ico', 'png', 'jpg', 'jpeg', 'svg']
+    for (const ext of candidateExts) {
+      const key = `${normalized}.${ext}`
+      const url = await this.storage.exists(key)
+      if (url) return { url, hit: true }
+    }
+
+    // 2) 未命中：聚合第三方提供者抓取，并记录抓取耗时
+    const tFetchStart = performance.now()
+    const fetched = await fetchIconByProviders(normalized, this.providers)
+    const fetchMs = Math.round(performance.now() - tFetchStart)
+
+    if (fetched) {
+      // 3) 成功获取后：以实际类型生成 key，写入存储并记录写入耗时
+      const key = `${normalized}.${fetched.extension}`
+      const tStoreStart = performance.now()
+      const url = await this.storage.store(key, fetched.data, fetched.contentType)
+      const storeMs = Math.round(performance.now() - tStoreStart)
+      return { url, hit: false, metrics: { fetchMs, storeMs } }
+    }
+
+    // 4) 获取失败：返回兜底默认图标，并附带抓取耗时
+    return { url: this.defaultIconUrl, hit: false, metrics: { fetchMs } }
+  }
+
+  /**
+   * 归一化域名/URL 为主机名
+   */
+  private normalizeDomain(input: string): string {
+    try {
+      const u = new URL(input.includes('://') ? input : `https://${input}`)
+      return u.hostname.toLowerCase()
+    } catch {
+      return input.toLowerCase()
+    }
+  }
+}

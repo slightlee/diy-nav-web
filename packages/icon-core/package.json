@@ -1,0 +1,25 @@
+{
+  "name": "@nav/icon-core",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./iconService": "./dist/iconService.js",
+    "./storage/factory": "./dist/storage/factory.js",
+    "./storage/local": "./dist/storage/local.js",
+    "./storage/s3": "./dist/storage/s3.js",
+    "./providers": "./dist/providers/index.js",
+    "./providers/google": "./dist/providers/google.js",
+    "./providers/clearbit": "./dist/providers/clearbit.js",
+    "./providers/duckduckgo": "./dist/providers/duckduckgo.js"
+  },
+  "scripts": {
+    "build": "tsc -p ./tsconfig.json"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.669.0",
+    "@nav/config": "workspace:^"
+  }
+}

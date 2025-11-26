@@ -7,26 +7,26 @@
     "doc": "doc"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "type-check": "vue-tsc --noEmit",
+    "dev": "pnpm -C apps/web dev",
+    "build": "pnpm -C apps/web build",
+    "preview": "pnpm -C apps/web preview",
+    "type-check": "pnpm -C apps/web type-check",
     "lint": "eslint . --fix",
     "format": "prettier --write \"**/*.{js,ts,vue,scss,css,html,json,md}\"",
     "format:check": "prettier --check \"**/*.{js,ts,vue,scss,css,html,json,md}\"",
     "prepare": "husky",
     "lint:fix": "eslint . --fix",
     "check": "pnpm run format:check && pnpm run lint:check && pnpm run stylelint && pnpm run type-check",
-    "ci:verify": "pnpm run check && pnpm run test && pnpm run build-only",
-    "test": "echo \"No tests defined\" && exit 0",
-    "test:ci": "pnpm run test",
+    "ci:verify": "pnpm run check && pnpm run api:build && pnpm run build-only",
     "lint:check": "eslint .",
-    "stylelint:fix": "stylelint \"src/**/*.{vue,scss,css}\" --fix",
-    "vue-tsc": "vue-tsc",
-    "vue-tsc:watch": "vue-tsc --watch",
-    "build-only": "vite build",
-    "preview-only": "vite preview",
-    "stylelint": "stylelint \"src/**/*.{vue,scss,css}\""
+    "stylelint:fix": "stylelint \"apps/web/src/**/*.{vue,scss,css}\" --fix",
+    "vue-tsc": "pnpm -C apps/web type-check",
+    "vue-tsc:watch": "pnpm -C apps/web type-check",
+    "build-only": "pnpm -C apps/web build",
+    "api:build": "pnpm -C packages/config build && pnpm -C packages/icon-core build && pnpm -C apps/api build",
+    "api:start": "pnpm -C apps/api start",
+    "preview-only": "pnpm -C apps/web preview",
+    "stylelint": "stylelint \"apps/web/src/**/*.{vue,scss,css}\""
   },
   "keywords": [],
   "author": "",
@@ -63,18 +63,24 @@
     "vue-eslint-parser": "^9.4.3",
     "vue-tsc": "^3.0.0"
   },
-  "dependencies": {
-    "pinia": "^3.0.4",
-    "sass": "^1.94.0",
-    "vue": "3.5.24",
-    "vue-router": "^4.6.3"
-  },
+  "dependencies": {},
   "packageManager": "pnpm@8.8.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "lint-staged": {
-    "src/**/*.{js,ts,vue}": [
+    "apps/web/src/**/*.{js,ts,vue}": [
       "eslint --fix"
     ],
-    "src/**/*.{scss,css,vue}": [
+    "apps/api/**/*.{js,ts}": [
+      "eslint --fix"
+    ],
+    "packages/*/src/**/*.{js,ts}": [
+      "eslint --fix"
+    ],
+    "apps/web/src/**/*.{scss,css,vue}": [
       "stylelint --fix"
     ],
     "**/*.{js,ts,vue,scss,css,html,json,md}": [

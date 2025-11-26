@@ -1,0 +1,161 @@
+// 基础变量（对齐旧项目）
+$spacing-unit: 1rem;
+$spacing-0: 0;
+$spacing-1: calc(#{$spacing-unit} * 1);
+$spacing-2: calc(#{$spacing-unit} * 2);
+$spacing-3: calc(#{$spacing-unit} * 3);
+
+// 字体系统
+$font-family-sans:
+  system-ui,
+  -apple-system,
+  BlinkMacSystemFont,
+  'Segoe UI',
+  Roboto,
+  'PingFang SC',
+  'Hiragino Sans GB',
+  'Microsoft YaHei',
+  'Noto Sans CJK SC',
+  'Source Han Sans SC',
+  'Helvetica Neue',
+  Arial,
+  'Noto Sans',
+  sans-serif;
+$font-family-serif: 'Georgia', 'Times New Roman', Times, serif;
+$font-family-mono: 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
+// 颜色系统
+$color-white: #fff;
+$color-black: #000;
+
+// 主色调
+$color-primary: #3b82f6;
+$color-primary-light: #60a5fa;
+$color-primary-dark: #2563eb;
+$color-primary-rgb: 59, 130, 246;
+$color-secondary: #10b981;
+$color-accent: #ef4444;
+$color-info: #3b82f6;
+
+// 中性色系
+$color-neutral: #6b7280;
+$color-neutral-dark: #4b5563;
+$color-neutral-50: #f9fafb;
+$color-neutral-100: #f3f4f6;
+$color-neutral-200: #e5e7eb;
+$color-neutral-300: #d1d5db;
+$color-neutral-400: #9ca3af;
+$color-neutral-500: #6b7280;
+$color-neutral-600: #4b5563;
+$color-neutral-700: #374151;
+$color-neutral-800: #1f2937;
+$color-neutral-900: #111827;
+
+// 功能色
+$color-success: #10b981;
+$color-warning: #f59e0b;
+$color-error: #ef4444;
+$color-info: #3b82f6;
+
+// 文本/图标色
+$color-text-primary: #212529;
+$color-text-secondary: #6c757d;
+$color-text-muted: #6c757d;
+$color-text-light: #f8f9fa;
+$color-text-inverse: #fff;
+$color-border: #e5e7eb;
+$color-icon-primary: #007bff;
+$color-icon-secondary: #6c757d;
+$color-icon-muted: #6c757d;
+$color-success-light: #28a745;
+$color-warning-light: #ffc107;
+$color-info-light: #17a2b8;
+$color-danger-light: #dc3545;
+
+// 标签色
+$color-blue: #3b82f6;
+$color-red: #ef4444;
+$color-green: #10b981;
+$color-yellow: #f59e0b;
+$color-purple: #8b5cf6;
+$color-pink: #ec4899;
+
+// 状态色
+$color-online: #10b981;
+$color-offline: #ef4444;
+
+// 边框色
+$color-border-light: #d1d5db;
+
+// 圆角
+$border-radius-xs: 2px;
+$border-radius-sm: 4px;
+$border-radius-md: 8px;
+$border-radius-lg: 12px;
+$border-radius-xl: 16px;
+$border-radius-2xl: 24px;
+$border-radius-full: 50%;
+$border-radius-pill: 9999px;
+
+// 阴影
+$shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.07);
+$shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.15);
+$shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.2);
+$shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+$shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+// 间距
+$spacing-xs: 2px;
+$spacing-sm: 4px;
+$spacing-md: 8px;
+$spacing-lg: 12px;
+$spacing-xl: 16px;
+$spacing-2xl: 24px;
+
+// 断点
+$breakpoint-xs: 480px;
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+$breakpoint-xl: 1280px;
+$breakpoint-2xl: 1440px;
+
+// 字体大小
+$font-size-xs: 0.75rem;
+$font-size-sm: 0.875rem;
+$font-size-base: 1rem;
+$font-size-lg: 1.125rem;
+$font-size-xl: 1.5rem;
+
+// 字体粗细
+$font-weight-light: 300;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// 行高
+$line-height-tight: 1.25;
+$line-height-normal: 1.5;
+$line-height-relaxed: 1.75;
+
+// 动画
+$transition-fast: 0.15s;
+$transition-normal: 0.25s;
+$transition-slow: 0.3s;
+
+// 透明度
+$opacity-disabled: 0.6;
+$opacity-hover: 0.8;
+$opacity-focus: 0.95;
+
+// Z-index层级
+$z-index-dropdown: 10;
+$z-index-modal: 100;
+$z-index-toast: 1000;
+
+// 容器
+$container-max-width: 1200px;
+$container-padding: 16px;

@@ -68,42 +68,37 @@ jobs:
       - name: Type check
         run: pnpm run type-check
 
-  test:
-    name: Test
+
+  security:
+    name: Security Scan
     runs-on: ubuntu-latest
     needs: quality
     permissions:
       contents: read
-    timeout-minutes: 15
-    strategy:
-      matrix:
-        node: [20, 22]
-      fail-fast: false
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 20
           cache: pnpm
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Run tests
-        run: pnpm run test:ci
+      - name: pnpm audit (prod)
+        run: pnpm audit --prod || true
+      - name: Dependency review (PR only)
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@v4
 
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [commitlint, quality, test]
+    needs: [commitlint, quality]
     permissions:
       contents: read
     timeout-minutes: 15
@@ -125,24 +120,24 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm run build-only
+      - name: Build Web (hash router)
+        run: pnpm -C apps/web build
         env:
           VITE_BASE: ./
           VITE_USE_HASH_ROUTER: 'true'
 
       - name: Add SPA fallback
-        run: cp dist/index.html dist/404.html
+        run: cp apps/web/dist/index.html apps/web/dist/404.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: apps/web/dist
 
   build-prod:
     name: Build (Prod Artifact)
     runs-on: ubuntu-latest
-    needs: [commitlint, quality, test]
+    needs: [commitlint, quality]
     permissions:
       contents: read
     timeout-minutes: 15
@@ -164,8 +159,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build (history router)
-        run: pnpm run build-only
+      - name: Build Web (history router)
+        run: pnpm -C apps/web build
         env:
           VITE_BASE: '/'
           VITE_USE_HASH_ROUTER: 'false'
@@ -174,7 +169,58 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dist-prod
-          path: dist
+          path: apps/web/dist
+          if-no-files-found: error
+          retention-days: 7
+
+  icon-api-ci:
+    name: Icon API Build & Smoke Test
+    runs-on: ubuntu-latest
+    needs: [commitlint, quality]
+    permissions:
+      contents: read
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build icon-core & icon-api
+        run: pnpm run icon-api:build
+
+      - name: Smoke test (health)
+        run: |
+          node apps/icon-api/dist/server.js &
+          sleep 2
+          curl -sS http://localhost:8787/health | tee /tmp/health.json
+          pkill -f "apps/icon-api/dist/server.js" || true
+          grep -q '"ok": true' /tmp/health.json
+      - name: Smoke test (default fallback)
+        run: |
+          node apps/icon-api/dist/server.js &
+          sleep 2
+          curl -sS "http://localhost:8787/api/icon?url=https://unknown-tld.invalid" | tee /tmp/icon.json
+          pkill -f "apps/icon-api/dist/server.js" || true
+          grep -q '"url":"http://localhost:8787/icons/default.svg"' /tmp/icon.json
+      
+      - name: Upload icon-api dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: icon-api-dist
+          path: apps/icon-api/dist
           if-no-files-found: error
           retention-days: 7
 

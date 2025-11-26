@@ -1,0 +1,19 @@
+{
+  "name": "api",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p ./tsconfig.json",
+    "start": "node ./dist/server.js"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.1.0",
+    "@fastify/static": "^8.3.0",
+    "@nav/config": "workspace:^",
+    "@nav/icon-core": "workspace:*",
+    "fastify": "^5.6.2",
+    "fastify-type-provider-zod": "^4.0.2",
+    "zod": "^3.25.76"
+  }
+}

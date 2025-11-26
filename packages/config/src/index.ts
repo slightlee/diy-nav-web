@@ -1,0 +1,88 @@
+import { z } from 'zod'
+import dotenv from 'dotenv'
+
+export const configSchema = z
+  .object({
+    PORT: z.coerce.number().default(8787),
+    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+
+    // Storage
+    STORAGE_PROVIDER: z.enum(['local', 'aws', 'cloudflare']).default('local'),
+    STORAGE_BUCKET: z.string().optional(),
+    STORAGE_PUBLIC_BASE_URL: z.string().optional(),
+    STORAGE_KEY_PREFIX: z.string().default(''),
+
+    // AWS S3
+    AWS_REGION: z.string().optional(),
+    AWS_ENDPOINT: z.string().optional(),
+    AWS_ACCESS_KEY_ID: z.string().optional(),
+    AWS_SECRET_ACCESS_KEY: z.string().optional(),
+
+    // Cloudflare R2
+    CF_R2_ENDPOINT: z.string().optional(),
+    CF_R2_ACCESS_KEY_ID: z.string().optional(),
+    CF_R2_SECRET_ACCESS_KEY: z.string().optional(),
+
+    // Icon
+    DEFAULT_ICON_URL: z.string().default('/icons/default.svg'),
+    ICON_SIZE: z.coerce.number().default(64)
+  })
+  .superRefine((data, ctx) => {
+    if (data.STORAGE_PROVIDER === 'aws') {
+      if (!data.STORAGE_BUCKET)
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'STORAGE_BUCKET required for aws provider',
+          path: ['STORAGE_BUCKET']
+        })
+      if (!data.STORAGE_PUBLIC_BASE_URL)
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'STORAGE_PUBLIC_BASE_URL required for aws provider',
+          path: ['STORAGE_PUBLIC_BASE_URL']
+        })
+    }
+    if (data.STORAGE_PROVIDER === 'cloudflare') {
+      if (!data.STORAGE_BUCKET)
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'STORAGE_BUCKET required for cloudflare provider',
+          path: ['STORAGE_BUCKET']
+        })
+      if (!data.STORAGE_PUBLIC_BASE_URL)
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'STORAGE_PUBLIC_BASE_URL required for cloudflare provider',
+          path: ['STORAGE_PUBLIC_BASE_URL']
+        })
+    }
+  })
+
+export type Config = z.infer<typeof configSchema>
+
+let configCache: Config | null = null
+
+export function loadConfig(): Config {
+  if (configCache) return configCache
+
+  // Try loading .env if not already loaded
+  dotenv.config()
+
+  // Backward compatibility
+  if (process.env.ICON_API_PORT && !process.env.PORT) {
+    process.env.PORT = process.env.ICON_API_PORT
+  }
+
+  const result = configSchema.safeParse(process.env)
+
+  if (!result.success) {
+    console.error(
+      '❌ Invalid environment variables:',
+      JSON.stringify(result.error.format(), null, 2)
+    )
+    throw new Error('Invalid environment variables')
+  }
+
+  configCache = result.data
+  return result.data
+}

@@ -1,0 +1,40 @@
+{
+  "name": "@nav/ui",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "dist/nav-ui.umd.js",
+  "module": "dist/nav-ui.es.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src/styles"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/nav-ui.es.js",
+      "require": "./dist/nav-ui.umd.js"
+    },
+    "./style.css": "./dist/style.css",
+    "./styles/*": "./src/styles/*"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && vue-tsc --emitDeclarationOnly --declaration --declarationDir dist"
+  },
+  "peerDependencies": {
+    "vue": "^3.0.0"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.25",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "sass": "^1.94.0",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21",
+    "vue": "^3.5.24",
+    "vue-tsc": "^2.2.12"
+  }
+}

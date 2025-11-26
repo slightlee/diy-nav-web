@@ -1,6 +1,8 @@
 .catpaw/
 node_modules
 dist/
+**/dist/**
+build/
 .cache/
 .tmp/
 temp/
