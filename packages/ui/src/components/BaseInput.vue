@@ -396,6 +396,8 @@ defineExpose({ focus, blur, select, inputRef })
 .base-input__suffix {
   position: absolute;
   right: var(--spacing-sm);
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
