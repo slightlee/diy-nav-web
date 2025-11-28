@@ -203,7 +203,9 @@ const cardClasses = computed(() => ({
   'website-card--loading': props.loading,
   'website-card--clickable': props.clickable,
   [`website-card--${props.size}`]: props.size,
-  'website-card--actions-visible': !props.showActionsOnHover || isHovered.value
+  'website-card--actions-visible': !props.showActionsOnHover || isHovered.value,
+  'card-shadow': true,
+  'hover-scale': true
 }))
 
 // 获取网站标签
@@ -321,13 +323,14 @@ const handleKeydown = (event: KeyboardEvent) => {
   position: relative;
   cursor: default;
   transition: all var(--transition-normal);
-  border: 1px solid var(--color-border);
-  background-color: var(--color-neutral-100);
+  border: 1px solid var(--border-tile);
+  background-color: var(--bg-panel);
   border-radius: var(--radius-lg);
   overflow: hidden;
   min-height: 160px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 
   &--clickable {
     cursor: pointer;
@@ -382,7 +385,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   height: 32px;
   border-radius: var(--radius-sm);
   overflow: hidden;
-  background-color: var(--color-neutral-100);
+  background-color: var(--bg-tile);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -405,7 +408,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 .website-card__favicon-placeholder {
-  color: var(--color-neutral-400);
+  color: var(--text-muted);
   font-size: var(--font-size-sm);
 }
 
@@ -421,7 +424,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-tight);
   margin-bottom: var(--spacing-sm);
-  color: var(--color-neutral-900);
+  color: var(--text-main);
 
   .website-card--sm & {
     font-size: var(--font-size-sm);
@@ -435,7 +438,10 @@ const handleKeydown = (event: KeyboardEvent) => {
 .website-card__title-link {
   color: inherit;
   text-decoration: none;
-  @include text-truncate(1);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 
   &:hover {
     color: var(--color-primary);
@@ -461,7 +467,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 .website-card__description {
   margin: 0;
-  color: var(--color-neutral-600);
+  color: var(--text-secondary);
   font-size: var(--font-size-sm);
   line-height: var(--line-height-normal);
   @include text-truncate(2);
@@ -478,8 +484,8 @@ const handleKeydown = (event: KeyboardEvent) => {
   height: 28px;
   border: none;
   border-radius: var(--radius-sm);
-  background-color: var(--color-neutral-100);
-  color: var(--color-neutral-500);
+  background-color: var(--bg-tile);
+  color: var(--text-muted);
   cursor: grab;
   display: flex;
   align-items: center;
@@ -498,7 +504,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 .drag-handle:hover {
   transform: scale(1.05);
-  background-color: var(--color-neutral-200);
+  background-color: var(--bg-tile-hover);
 }
 
 // 状态指示器
@@ -548,8 +554,8 @@ const handleKeydown = (event: KeyboardEvent) => {
   max-width: 80px;
 
   &--more {
-    background-color: var(--color-neutral-300);
-    color: var(--color-neutral-600);
+    background-color: var(--bg-tile-hover);
+    color: var(--text-muted);
   }
 }
 
@@ -565,7 +571,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 .website-card--hovered .website-card__footer {
-  border-top-color: var(--color-neutral-200);
+  border-top-color: var(--border-tile-hover);
 }
 
 // 统计信息
@@ -581,7 +587,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  color: var(--color-neutral-500);
+  color: var(--text-muted);
   font-size: var(--font-size-xs);
   @include text-truncate(1);
 }
@@ -609,8 +615,8 @@ const handleKeydown = (event: KeyboardEvent) => {
   height: 32px;
   border: none;
   border-radius: var(--radius-sm);
-  background-color: var(--color-neutral-100);
-  color: var(--color-neutral-500);
+  background-color: var(--bg-tile);
+  color: var(--text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -662,7 +668,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: var(--color-neutral-100);
+  background-color: var(--bg-tile);
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;

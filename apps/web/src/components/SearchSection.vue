@@ -105,56 +105,54 @@
           @click="clearSearch"
         >
           <i class="fas fa-times" />
-          清除搜索
+          清空搜索
         </BaseButton>
       </div>
-
-      <div class="website-grid">
+      <div v-if="searchResults.length > 0" class="website-grid">
         <WebsiteCard
-          v-for="website in searchResults"
-          :key="website.id"
-          :website="website"
-          :highlight="searchKeyword"
-          @favorite-toggle="onFavoriteToggle"
-          @edit="emit('edit', $event)"
-          @delete="emit('delete', $event)"
+          v-for="site in searchResults"
+          :key="site.id"
+          :website="site"
           @visit="onVisit"
+          @edit="emit('edit', site)"
+          @delete="emit('delete', site.id)"
+          @toggle-favorite="onFavoriteToggle"
         />
       </div>
+      <EmptyState
+        v-else
+        type="no-results"
+        :message="`未找到与“${searchKeyword}”相关的结果`"
+        :show-action-button="false"
+      />
     </div>
 
-    <div v-else class="website-list-section">
-      <div class="website-grid">
-        <div
-          v-for="website in filteredWebsites"
-          :key="website.id"
-          class="website-draggable"
-          :class="[
-            { 'is-drag-over': draggingId && draggingId !== website.id && dragOverId === website.id }
-          ]"
-          :data-id="website.id"
-          @dragover.prevent="onDragOver(website.id, $event)"
-          @drop.prevent="onDrop(website.id, $event)"
-        >
-          <WebsiteCard
-            :website="website"
-            :highlight="searchKeyword"
-            @favorite-toggle="onFavoriteToggle"
-            @edit="emit('edit', $event)"
-            @delete="emit('delete', $event)"
-            @visit="onVisit"
-            @drag-handle-start="onDragStart(website.id, $event)"
-            @drag-handle-end="onDragEnd"
-          />
-        </div>
+    <div v-else class="website-grid">
+      <div
+        v-for="site in filteredWebsites"
+        :key="site.id"
+        class="website-draggable"
+        draggable="true"
+        @dragstart="onDragStart(site.id, $event)"
+        @dragover="onDragOver(site.id, $event)"
+        @drop="onDrop(site.id, $event)"
+        @dragend="onDragEnd"
+      >
+        <WebsiteCard
+          :website="site"
+          @visit="onVisit"
+          @edit="emit('edit', site)"
+          @delete="emit('delete', site.id)"
+          @toggle-favorite="onFavoriteToggle"
+        />
+      </div>
 
-        <div v-if="filteredWebsites.length > 0" class="add-card" @click="onAddSite">
-          <div class="add-card-content">
-            <div class="add-icon">
-              <i class="fas fa-plus" />
-            </div>
-            <span>添加网站</span>
+      <div v-if="filteredWebsites.length > 0" class="add-card" @click="onAddSite">
+        <div class="add-card-content">
+          <div class="add-icon">
+            <i class="fas fa-plus" />
           </div>
+          <span>添加网站</span>
         </div>
       </div>
     </div>
@@ -169,15 +167,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+/**
+ * @component SearchSection
+ * @description 网站搜索与过滤主组件
+ * 包含搜索框、标签筛选、分类筛选以及网站列表展示
+ * 集成了搜索逻辑、拖拽排序等功能
+ *
+ * @props fixedView - 固定视图模式 ('recent' | 'favorite' | 'all')
+ * @props hideSearch - 是否隐藏搜索框
+ *
+ * @emits edit - 编辑网站
+ * @emits delete - 删除网站
+ * @emits addSite - 添加新网站
+ * @emits manageTags - 打开标签管理
+ * @emits manageCategories - 打开分类管理
+ */
+import { ref } from 'vue'
 import WebsiteCard from '@/components/WebsiteCard.vue'
 import { EmptyState, BaseInput, BaseButton } from '@nav/ui'
 import { useWebsiteStore } from '@/stores/website'
-import { useCategoryStore } from '@/stores/category'
-import { useTagStore } from '@/stores/tag'
-
-import type { Website, Tag } from '@/types'
+import { useWebsiteSearch } from '@/composables/useWebsiteSearch'
+import { useWebsiteDrag } from '@/composables/useWebsiteDrag'
+import type { Website } from '@/types'
 
 interface Props {
   fixedView?: 'recent' | 'favorite' | 'all'
@@ -191,81 +202,26 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits(['edit', 'delete', 'addSite', 'manageTags', 'manageCategories'])
 
 const websiteStore = useWebsiteStore()
-const categoryStore = useCategoryStore()
-const tagStore = useTagStore()
-const route = useRoute()
 
-const searchKeyword = ref('')
-const showFilters = computed(() => !props.fixedView || props.fixedView === 'all')
-const selectedTags = ref<string[]>([])
-const selectedCategory = ref('all')
+// 使用组合式函数
+const {
+  searchKeyword,
+  selectedTags,
+  selectedCategory,
+  showFilters,
+  tags,
+  categories,
+  filteredWebsites,
+  searchResults,
+  toggleTag,
+  selectCategory,
+  clearSearch,
+  clearSelectedTags
+} = useWebsiteSearch(() => props.fixedView)
 
-const recentLimit = 12
-const favoriteLimit = 12
+const { onDragStart, onDragOver, onDrop, onDragEnd } = useWebsiteDrag(() => props.fixedView)
 
-const baseViewWebsites = computed(() => {
-  if (props.fixedView === 'recent') {
-    return websiteStore.websites
-      .filter(w => !!w.lastVisited)
-      .sort((a, b) => (b.lastVisited?.getTime() ?? 0) - (a.lastVisited?.getTime() ?? 0))
-      .slice(0, recentLimit)
-  }
-  if (props.fixedView === 'favorite') {
-    return websiteStore.websites
-      .filter(w => !!w.isFavorite)
-      .sort(
-        (a, b) =>
-          (a.favoriteOrder ?? a.order ?? 0) - (b.favoriteOrder ?? b.order ?? 0) ||
-          (b.visitCount ?? 0) - (a.visitCount ?? 0)
-      )
-      .slice(0, favoriteLimit)
-  }
-  return websiteStore.websites
-})
-
-const filteredWebsites = computed(() => {
-  const scope = baseViewWebsites.value
-  const ids = new Set(scope.map(w => w.id))
-  return websiteStore.filteredWebsites.filter(w => ids.has(w.id))
-})
-
-const searchResults = computed(() => {
-  if (!searchKeyword.value.trim()) return [] as Website[]
-  const keyword = searchKeyword.value.toLowerCase()
-  const scope = props.fixedView ? baseViewWebsites.value : websiteStore.websites
-  return scope.filter(
-    website =>
-      website.name.toLowerCase().includes(keyword) ||
-      website.url.toLowerCase().includes(keyword) ||
-      website.description?.toLowerCase().includes(keyword) ||
-      getWebsiteTags(website.tagIds).some(tag => tag.name.toLowerCase().includes(keyword))
-  )
-})
-
-const tags = computed(() => tagStore.tags)
-const categories = computed(() => [...categoryStore.categories].sort((a, b) => a.order - b.order))
-
-const getWebsiteTags = (tagIds: string[]) => {
-  return tagIds.map(id => tagStore.getTagById(id)).filter((tag): tag is Tag => !!tag)
-}
-
-const toggleTag = (tagId: string) => {
-  const index = selectedTags.value.indexOf(tagId)
-  if (index > -1) selectedTags.value.splice(index, 1)
-  else selectedTags.value.push(tagId)
-}
-
-const selectCategory = (categoryId: string) => {
-  selectedCategory.value = categoryId
-}
-
-const clearSearch = () => {
-  searchKeyword.value = ''
-}
-
-const clearSelectedTags = () => {
-  selectedTags.value = []
-}
+const searchInput = ref<HTMLInputElement | null>(null)
 
 const onAddSite = () => {
   const contextCategoryId = selectedCategory.value !== 'all' ? selectedCategory.value : ''
@@ -281,84 +237,6 @@ const onFavoriteToggle = (id: string) => {
   const w = websiteStore.websites.find(x => x.id === id)
   if (!w) return
   websiteStore.updateWebsite(id, { isFavorite: !w.isFavorite })
-}
-
-// quickRecentList 已上移并结合 favorite 列表形成 quickStripList
-
-const searchInput = ref<HTMLInputElement | null>(null)
-
-// 已移除全局快捷键
-
-onMounted(() => {
-  const q = route.query
-  const tagQ = q.tag
-  const catQ = q.category
-  if (typeof tagQ === 'string' && tagQ) selectedTags.value = [tagQ]
-  else if (Array.isArray(tagQ))
-    selectedTags.value = (tagQ as (string | null)[]).filter(
-      (x): x is string => typeof x === 'string' && !!x
-    )
-  if (typeof catQ === 'string' && catQ) selectedCategory.value = catQ
-})
-
-onUnmounted(() => {})
-
-watch(
-  searchKeyword,
-  kw => {
-    websiteStore.setSearchFilters({ keyword: kw.trim() })
-  },
-  { immediate: true }
-)
-
-watch(
-  selectedCategory,
-  id => {
-    websiteStore.setSearchFilters({ categoryIds: id === 'all' ? [] : [id] })
-  },
-  { immediate: true }
-)
-
-watch(
-  selectedTags,
-  list => {
-    websiteStore.setSearchFilters({ tagIds: list })
-  },
-  { immediate: true }
-)
-
-const draggingId = ref<string | null>(null)
-const dragOverId = ref<string | null>(null)
-const onDragStart = (id: string, e: DragEvent) => {
-  draggingId.value = id
-  e.dataTransfer?.setData('text/plain', id)
-  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
-  const target = e.target as HTMLElement | null
-  const card = target?.closest('.website-draggable') as HTMLElement | null
-  if (card && e.dataTransfer) {
-    const rect = card.getBoundingClientRect()
-    e.dataTransfer.setDragImage(card, rect.width / 2, rect.height / 2)
-  }
-}
-const onDragOver = (targetId: string, e: DragEvent) => {
-  if (!draggingId.value || draggingId.value === targetId) return
-  e.preventDefault()
-  dragOverId.value = targetId
-  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
-}
-const onDrop = (targetId: string, e: DragEvent) => {
-  e.preventDefault()
-  const sourceId = draggingId.value
-  draggingId.value = null
-  dragOverId.value = null
-  if (!sourceId || sourceId === targetId) return
-  const inFavoriteView = props.fixedView === 'favorite'
-  if (inFavoriteView) websiteStore.moveFavoriteBefore(sourceId, targetId)
-  else websiteStore.moveWebsiteBefore(sourceId, targetId)
-}
-const onDragEnd = () => {
-  draggingId.value = null
-  dragOverId.value = null
 }
 </script>
 
@@ -377,7 +255,7 @@ const onDragEnd = () => {
 .search-button {
   background: none;
   border: none;
-  color: var(--color-neutral-400);
+  color: var(--text-muted);
   font-size: var(--font-size-lg);
   cursor: pointer;
   transition: color 0.2s;
@@ -404,7 +282,7 @@ const onDragEnd = () => {
 .filter-label {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-neutral-800);
+  color: var(--text-main);
 }
 
 .filter-actions {
@@ -423,16 +301,17 @@ const onDragEnd = () => {
   padding: 5px 10px;
   border-radius: 9999px;
   font-size: var(--font-size-sm);
-  border: 1px solid var(--color-neutral-200);
+  border: 1px solid var(--border-tile);
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   display: flex;
   align-items: center;
-  background-color: var(--color-neutral-100);
-  color: var(--color-neutral-700);
+  background-color: var(--bg-tile);
+  color: var(--text-secondary);
 
   &:hover {
     transform: scale(1.02);
+    background-color: var(--bg-tile-hover);
   }
 
   &.active {
@@ -453,149 +332,136 @@ const onDragEnd = () => {
 }
 
 .category-section {
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-top: 1rem;
 }
 
 .category-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .category-tag {
-  padding: 5px 10px;
-  border-radius: 9999px;
+  position: relative;
+  padding: 6px 12px;
   font-size: var(--font-size-sm);
-  background-color: var(--color-neutral-100);
-  color: var(--color-neutral-700);
-  border: 1px solid var(--color-neutral-200);
+  color: var(--text-secondary);
+  background-color: transparent;
+  border: none;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  display: flex;
-  align-items: center;
+  transition: all 0.2s;
+  font-weight: var(--font-weight-medium);
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background-color: var(--color-primary);
+    transition: all 0.2s ease-in-out;
+    transform: translateX(-50%);
+  }
 
   &:hover {
-    background-color: var(--color-neutral-200);
+    color: var(--color-primary);
   }
 
   &.active {
-    background-color: var(--color-primary);
-    color: var(--color-white);
+    color: var(--color-primary);
+    font-weight: var(--font-weight-bold);
+
+    &::after {
+      width: 80%;
+    }
   }
 
   .dot {
-    margin-left: 3px;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background-color: var(--color-neutral-300);
-
-    .active & {
-      background-color: white;
-    }
+    display: none; // hidden for now, can be enabled if needed
   }
-}
-
-.website-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: clamp(var(--spacing-sm), 2vw, var(--spacing-xl));
-  margin-bottom: 1.5rem;
-
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  }
-
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: clamp(var(--spacing-sm), 2vw, var(--spacing-xl));
-  }
-
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: clamp(var(--spacing-sm), 2vw, var(--spacing-xl));
-  }
-}
-
-.website-draggable {
-  display: block;
-}
-
-.website-draggable.is-drag-over {
-  outline: 2px dashed var(--color-primary);
-  border-radius: var(--radius-lg);
-}
-
-.add-card {
-  background-color: var(--color-neutral-100);
-  border: 2px dashed var(--color-border);
-  border-radius: 8px;
-  padding: 1.25rem;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 140px;
-
-  &:hover {
-    border-color: var(--color-primary);
-    background-color: rgba(var(--color-primary-rgb), 0.06);
-  }
-}
-
-.add-card-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--color-neutral-600);
-}
-
-.add-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: var(--color-neutral-100);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--font-size-lg);
 }
 
 .search-results-section {
-  margin-bottom: 1.25rem;
+  margin-top: 1.5rem;
 }
 
 .results-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
 
   h3 {
     font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--color-neutral-800);
-    margin: 0;
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-main);
   }
 }
 
-@media (max-width: 768px) {
-  .search-section {
-    margin-bottom: 1.5rem;
-  }
+.website-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
 
-  .website-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: var(--spacing-lg);
+.website-draggable {
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
   }
 }
 
-@media (max-width: 480px) {
-  .website-grid {
-    grid-template-columns: 1fr;
+.add-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  background-color: var(--bg-tile);
+  border: 1px dashed var(--border-tile);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: var(--color-primary);
+    background-color: var(--bg-tile-hover);
+
+    .add-icon {
+      background-color: var(--color-primary);
+      color: var(--color-white);
+    }
+
+    span {
+      color: var(--color-primary);
+    }
+  }
+
+  .add-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .add-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--bg-body);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: all 0.2s;
+  }
+
+  span {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-medium);
   }
 }
 </style>

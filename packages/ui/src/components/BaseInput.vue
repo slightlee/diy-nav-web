@@ -148,7 +148,7 @@ const isFocused = ref(false)
 const passwordVisible = ref(false)
 
 const inputId = computed(
-  () => props.id || `input-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  () => props.id || `input-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
 )
 const inputComponent = computed(() => (props.type === 'textarea' ? 'textarea' : 'input'))
 const inputType = computed(() =>
@@ -360,10 +360,10 @@ defineExpose({ focus, blur, select, inputRef })
   cursor: default;
 }
 .base-input__inner--with-prefix {
-  padding-left: var(--spacing-xl);
+  padding-left: 2.25rem;
 }
 .base-input__inner--with-suffix {
-  padding-right: var(--spacing-xl);
+  padding-right: 2.25rem;
 }
 .base-input__textarea {
   line-height: var(--line-height-normal);
@@ -372,7 +372,7 @@ defineExpose({ focus, blur, select, inputRef })
 }
 .base-input__icon {
   position: absolute;
-  color: var(--color-neutral-400);
+  color: var(--text-muted);
   transition: color var(--transition-fast);
   pointer-events: none;
 }
@@ -402,20 +402,20 @@ defineExpose({ focus, blur, select, inputRef })
   z-index: 1;
 }
 .base-input__clear-btn {
-  color: var(--color-neutral-400);
+  color: var(--text-muted);
   cursor: pointer;
   transition: color var(--transition-fast);
 }
 .base-input__clear-btn:hover {
-  color: var(--color-neutral-600);
+  color: var(--text-secondary);
 }
 .base-input__password-toggle {
-  color: var(--color-neutral-400);
+  color: var(--text-muted);
   cursor: pointer;
   transition: color var(--transition-fast);
 }
 .base-input__password-toggle:hover {
-  color: var(--color-neutral-600);
+  color: var(--text-secondary);
 }
 .base-input__loading-icon {
   color: var(--color-primary);
@@ -423,7 +423,7 @@ defineExpose({ focus, blur, select, inputRef })
 .base-input__char-count {
   text-align: right;
   font-size: var(--font-size-xs);
-  color: var(--color-neutral-500);
+  color: var(--text-secondary);
   margin-top: var(--spacing-xs);
   transition: color var(--transition-fast);
 }
@@ -432,7 +432,7 @@ defineExpose({ focus, blur, select, inputRef })
 }
 .base-input__help-text {
   font-size: var(--font-size-sm);
-  color: var(--color-neutral-500);
+  color: var(--text-secondary);
   margin-top: var(--spacing-xs);
   transition: color var(--transition-fast);
 }

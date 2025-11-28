@@ -1,7 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import './styles/main.scss'
-import '@nav/ui/style.css'
 import { useSettingsStore } from '@/stores/settings'
 
 import App from './App.vue'

@@ -1,11 +1,11 @@
 <template>
   <header class="header">
     <div class="header-content">
-      <div class="logo-section">
-        <div class="logo-icon"><i class="fas fa-compass" /></div>
-        <h1 class="app-title">DIY导航</h1>
-      </div>
-      <div class="header-actions">
+      <div class="header-left">
+        <div class="logo-section">
+          <div class="logo-icon"><i class="fas fa-compass" /></div>
+          <h1 class="app-title">DIY导航</h1>
+        </div>
         <nav class="view-nav">
           <router-link
             class="view-nav__link"
@@ -26,6 +26,8 @@
             <span>全部</span>
           </router-link>
         </nav>
+      </div>
+      <div class="header-actions">
         <BaseButton
           variant="primary"
           size="sm"
@@ -162,20 +164,29 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 <style scoped lang="scss">
 @use '@/styles/variables' as *;
 .header {
-  background-color: var(--color-neutral-100);
-  border-bottom: 1px solid var(--color-border);
-  box-shadow: var(--shadow-xs);
+  height: 64px;
+  background-color: var(--bg-panel);
+  border-bottom: 1px solid var(--border-tile);
   position: sticky;
   top: 0;
   z-index: 100;
+  transition:
+    background 0.2s ease-out,
+    border-color 0.2s ease-out;
 }
 .header-content {
   max-width: var(--container-max-width);
   margin: 0 auto;
-  padding: 0.75rem 1rem;
+  padding: 0 1rem;
+  height: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
 }
 .logo-section {
   display: flex;
@@ -187,16 +198,16 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   height: 32px;
   border-radius: var(--radius-md);
   background-color: var(--color-primary);
-  color: var(--color-white);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: var(--font-size-lg);
 }
 .app-title {
-  font-size: var(--font-size-title);
-  font-weight: bold;
-  color: var(--color-neutral-800);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-main);
   margin: 0;
 }
 .header-actions {
@@ -207,8 +218,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 .view-nav {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
-  margin-right: 0.5rem;
+  gap: 1.5rem;
 }
 .view-nav__link {
   position: relative;
@@ -216,42 +226,64 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   align-items: center;
   gap: 0;
   height: 36px;
-  padding: 0 2px;
-  color: var(--color-neutral-700);
+  padding: 6px 2px;
+  color: var(--text-secondary);
   text-decoration: none;
-  font-weight: var(--font-weight-medium);
-  font-size: var(--font-size-sm);
+  font-weight: normal;
+  font-size: 14px;
   letter-spacing: 0.1px;
+  cursor: pointer;
   transition: color var(--transition-fast);
 }
 .view-nav__link:hover {
-  color: var(--color-neutral-800);
+  color: var(--text-main);
 }
 .view-nav__link.active {
-  color: var(--color-primary);
-  font-weight: var(--font-weight-medium);
+  color: var(--text-main);
+  font-weight: 500;
 }
 .view-nav__link::after {
   content: '';
   position: absolute;
-  left: 25%;
-  bottom: 0;
-  width: 50%;
-  height: 1.5px;
-  border-radius: 2px;
-  background: transparent;
-  transition: background-color var(--transition-fast);
-}
-.view-nav__link:hover::after {
-  background: var(--color-neutral-300);
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 2px;
+  background-color: var(--color-primary);
+  border-radius: 999px;
+  transform: scaleX(0);
+  transition: transform 0.2s ease-out;
 }
 .view-nav__link.active::after {
-  background: var(--color-primary);
+  transform: scaleX(1);
 }
-.view-nav__link:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+
+:deep(.add-site-btn) {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.38);
+  gap: 6px;
 }
+
+:deep(.header-actions button:not(.add-site-btn)) {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--border-tile);
+  background: var(--bg-tile);
+  color: var(--text-secondary);
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:deep(.header-actions button:not(.add-site-btn):hover) {
+  background: var(--bg-tile-hover);
+}
+
 .theme-toggle {
   position: relative;
 }
@@ -259,21 +291,21 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   position: absolute;
   right: 0;
   top: calc(100% + 8px);
-  background-color: var(--color-neutral-100);
-  border: 1px solid var(--color-border);
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-tile);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-lg);
   padding: 6px 10px;
   z-index: 60;
   font-size: var(--font-size-sm);
-  color: var(--color-neutral-700);
+  color: var(--text-secondary);
   display: inline-flex;
   align-items: center;
   gap: 8px;
   white-space: nowrap;
 }
 .theme-hover-tooltip .sep {
-  color: var(--color-neutral-500);
+  color: var(--text-muted);
 }
 .theme-hover-tooltip .active {
   color: var(--color-primary);
@@ -290,7 +322,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   right: 0;
   top: calc(100% + 8px);
   width: 220px;
-  background-color: var(--color-neutral-100);
+  background-color: var(--bg-panel);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   padding: 8px;
@@ -299,18 +331,18 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 .dropdown-item {
   justify-content: flex-start;
   margin: 2px 0;
-  color: var(--color-neutral-800);
+  color: var(--text-main);
   font-weight: normal;
 }
 .dropdown-item i {
   margin-right: 10px;
-  color: var(--color-neutral-600);
+  color: var(--text-muted);
   width: 14px;
   text-align: center;
 }
 .dropdown-divider {
   height: 1px;
-  background-color: var(--color-border);
+  background-color: var(--border-tile);
   margin: 6px 8px;
 }
 @media (max-width: 768px) {

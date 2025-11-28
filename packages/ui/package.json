@@ -11,6 +11,7 @@
   ],
   "exports": {
     ".": {
+      "development": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/nav-ui.es.js",
       "require": "./dist/nav-ui.umd.js"

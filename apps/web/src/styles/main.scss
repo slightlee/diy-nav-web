@@ -22,12 +22,27 @@ body {
   text-rendering: optimizeLegibility;
 }
 html {
-  scrollbar-gutter: stable;
+  // Firefox 滚动条样式
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-neutral-300) transparent;
 }
 
-@supports not (scrollbar-gutter: stable) {
-  html {
-    overflow-y: scroll;
+// Webkit 滚动条样式 (Chrome, Safari, Edge)
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-neutral-300);
+  border-radius: 3px;
+
+  &:hover {
+    background-color: var(--color-neutral-400);
   }
 }
 
@@ -87,8 +102,26 @@ html {
   --z-index-modal: #{$z-index-modal};
   --z-index-dropdown: #{$z-index-dropdown};
   --z-index-toast: #{$z-index-toast};
-  --shadow-card: #{$shadow-card};
-  --shadow-card-hover: #{$shadow-card-hover};
+  --shadow-card: 0 18px 45px rgba(15, 23, 42, 0.08);
+  --shadow-card-hover: 0 10px 25px rgba(148, 163, 184, 0.35);
+  --radius-card: 18px;
+  --radius-pill: 999px;
+
+  // Design Specific Overrides
+  --bg-page: #f5f5f7;
+  --bg-card: #fff;
+  --bg-panel: #fff;
+  --bg-tile: #f9fafb;
+  --bg-tile-hover: #fff;
+  --border-tile: #f3f4f6;
+  --border-tile-hover: #e0e7ff;
+  --text-main: #1f2933;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --primary-soft: #e6f0ff;
+
+  // Override existing neutrals to match design exactly if needed,
+  // but for now we introduce specific design tokens.
   --container-max-width: #{$container-max-width};
   --font-size-xs: #{$font-size-xs};
   --font-size-sm: #{$font-size-sm};
@@ -110,7 +143,6 @@ html {
   --radius-xl: #{$border-radius-xl};
   --radius-2xl: #{$border-radius-2xl};
   --radius-full: #{$border-radius-full};
-  --radius-pill: #{$border-radius-pill};
   --shadow-xs: #{$shadow-xs};
   --shadow-sm: #{$shadow-sm};
   --shadow-md: #{$shadow-md};
@@ -143,36 +175,25 @@ html {
   --color-neutral-800: #{$color-neutral-100};
   --color-neutral-900: #{$color-neutral-50};
   --color-border: #{$color-neutral-700};
-  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 18px 45px rgba(15, 23, 42, 0.9);
+  --shadow-card-hover: 0 10px 25px rgba(15, 23, 42, 0.9);
+  --bg-page: #020617;
+  --bg-card: #020617;
+  --text-main: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+  --primary-soft: #0b1120;
+  --bg-panel: #060a12;
+  --bg-tile: #0f172a;
+  --bg-tile-hover: #1e293b;
+  --border-tile: #1e293b;
+  --border-tile-hover: #334155;
 }
 
 // 暗色主题类
 /* 暗色主题主色沿用默认，无需重复声明 */
 
 // 移除系统暗色的默认覆盖，统一通过 data-theme 控制
-
-// 滚动条样式
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-  background-color: var(--color-neutral-300);
-  border-radius: var(--radius-sm);
-}
-
-::-webkit-scrollbar-track {
-  background-color: var(--color-neutral-50);
-  border-radius: var(--radius-sm);
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: var(--color-neutral-500);
-  border-radius: var(--radius-sm);
-
-  &:hover {
-    background-color: var(--color-neutral-600);
-  }
-}
 
 // 焦点样式
 
@@ -261,4 +282,32 @@ html {
 }
 .text-muted {
   color: var(--color-neutral-600);
+}
+
+// Design System Utilities
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}
+
+.card-shadow {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: box-shadow var(--transition-normal);
+}
+
+[data-theme='dark'] .card-shadow {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.hover-scale {
+  transition: transform 0.2s ease-in-out;
+  will-change: transform;
+
+  &:hover {
+    transform: scale(1.03);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
 }
