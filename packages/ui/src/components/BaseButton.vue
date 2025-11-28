@@ -37,7 +37,7 @@ export interface Props {
     | 'warning'
     | 'info'
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
-  shape?: 'rounded' | 'square' | 'pill'
+  shape?: 'rounded' | 'square' | 'pill' | 'circle'
   disabled?: boolean
   loading?: boolean
   block?: boolean
@@ -207,6 +207,14 @@ defineExpose({
   }
   &--pill {
     border-radius: var(--radius-pill);
+  }
+  &--circle {
+    border-radius: 50%;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
   }
 
   &--xs {

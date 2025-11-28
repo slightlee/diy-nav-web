@@ -101,7 +101,10 @@ const onBeforeEnter = () => {
   if (props.preventBodyScroll) document.body.style.overflow = 'hidden'
 }
 const onAfterLeave = () => {
-  if (props.preventBodyScroll) document.body.style.overflow = ''
+  const otherModals = document.querySelectorAll('.modal-overlay')
+  if (props.preventBodyScroll && otherModals.length === 0) {
+    document.body.style.overflow = ''
+  }
   emit('afterClose')
 }
 
@@ -130,7 +133,13 @@ const handleFocusTrap = (event: KeyboardEvent) => {
 }
 
 onMounted(() => document.addEventListener('keydown', handleFocusTrap))
-onUnmounted(() => document.removeEventListener('keydown', handleFocusTrap))
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleFocusTrap)
+  const otherModals = document.querySelectorAll('.modal-overlay')
+  if (props.preventBodyScroll && otherModals.length === 0) {
+    document.body.style.overflow = ''
+  }
+})
 </script>
 
 <style scoped lang="scss">

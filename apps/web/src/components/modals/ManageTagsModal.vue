@@ -1,48 +1,14 @@
 <template>
   <div class="manage-tags-modal">
-    <!-- 添加新标签表单 -->
-    <div class="manage-tags-modal__add-section">
-      <h3 class="manage-tags-modal__section-title">
-        <i class="fas fa-tag" />
-        添加新标签
-      </h3>
-      <form class="manage-tags-modal__add-form" @submit.prevent="handleAddTag">
-        <div class="manage-tags-modal__form-row">
-          <BaseInput
-            ref="tagNameInputRef"
-            v-model="newTag.name"
-            placeholder="标签名称"
-            required
-            :maxlength="15"
-          />
-          <ColorPicker v-model="newTag.color" />
-        </div>
-        <BaseButton
-          html-type="submit"
-          variant="primary"
-          :loading="adding"
-          :disabled="!newTag.name.trim() || !newTag.color"
-        >
-          <i class="fas fa-plus" />
-          添加
-        </BaseButton>
-      </form>
-    </div>
-
-    <!-- 标签列表 -->
-    <div class="manage-tags-modal__list-section">
-      <h3 class="manage-tags-modal__section-title">
-        <i class="fas fa-list" />
-        现有标签
-        <span class="manage-tags-modal__count">({{ tags.length }})</span>
-      </h3>
-
-      <!-- 空状态 -->
-      <EmptyState v-if="tags.length === 0" type="no-tags" :show-action-button="false" />
-
+    <div class="modal-content-wrapper">
       <!-- 标签列表 -->
-      <div v-else class="manage-tags-modal__tag-list">
-        <TransitionGroup name="tag-item" tag="div">
+      <div class="tag-list-container">
+        <!-- 空状态 -->
+        <EmptyState v-if="tags.length === 0" type="no-tags" :show-action-button="false" />
+
+        <!-- 标签列表 -->
+        <!-- 标签列表 -->
+        <TransitionGroup v-else name="list" tag="div" class="tag-list">
           <TagListItem
             v-for="tag in sortedTags"
             :key="tag.id"
@@ -59,21 +25,54 @@
           />
         </TransitionGroup>
       </div>
-    </div>
-    <BaseModal
-      v-if="deleteConfirmOpen"
-      :is-open="deleteConfirmOpen"
-      title="删除标签"
-      @close="closeDeleteConfirm"
-    >
-      <div class="manage-tags-modal__confirm-content">
-        <p>确定要删除该标签吗？此操作不可恢复。</p>
+
+      <!-- 添加新标签 (Bottom) -->
+      <div class="add-tag-section">
+        <button v-if="!adding" class="add-tag-btn" @click="adding = true">
+          <i class="fas fa-plus" />
+          <span>添加标签</span>
+        </button>
+
+        <div v-else class="add-tag-form">
+          <div class="form-row">
+            <BaseInput
+              ref="tagNameInputRef"
+              v-model="newTag.name"
+              placeholder="标签名称"
+              class="tag-input"
+              required
+              :maxlength="15"
+              @keyup.enter="handleAddTag"
+            />
+            <ColorPicker v-model="newTag.color" />
+            <div class="form-actions">
+              <BaseButton
+                variant="primary"
+                size="sm"
+                :loading="submitting"
+                :disabled="!newTag.name.trim() || !newTag.color"
+                @click="handleAddTag"
+              >
+                确定
+              </BaseButton>
+              <BaseButton variant="ghost" size="sm" @click="cancelAdd">取消</BaseButton>
+            </div>
+          </div>
+        </div>
       </div>
+    </div>
+
+    <!-- Delete Confirmation -->
+    <BaseModal :is-open="deleteConfirmOpen" title="删除标签" size="sm" @close="closeDeleteConfirm">
+      <p class="delete-confirm-text">
+        确定要删除标签“{{ tags.find(t => t.id === deleteTargetId)?.name }}”吗？
+        <br />
+        <span class="text-danger">此操作不可恢复。</span>
+      </p>
       <template #footer>
-        <div class="manage-tags-modal__confirm-actions">
-          <BaseButton variant="secondary" @click="closeDeleteConfirm">取消</BaseButton>
+        <div class="modal-footer-actions">
+          <BaseButton variant="ghost" @click="closeDeleteConfirm">取消</BaseButton>
           <BaseButton variant="danger" :loading="deleting" @click="confirmDeleteTag">
-            <i class="fas fa-trash" />
             删除
           </BaseButton>
         </div>
@@ -83,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, nextTick, watch } from 'vue'
 import { useTagStore } from '@/stores/tag'
 import { useWebsiteStore } from '@/stores/website'
 import { useUIStore } from '@/stores/ui'
@@ -102,12 +101,13 @@ const tagNameInputRef = ref()
 
 const newTag = ref({
   name: '',
-  color: ''
+  color: '#3B82F6'
 })
 
 const editingId = ref<string | null>(null)
 
 const adding = ref(false)
+const submitting = ref(false)
 const updating = ref(false)
 
 // 计算属性
@@ -134,15 +134,13 @@ const getWebsiteCount = (tagId: string): number => {
   return websiteStore.websites.filter(w => w.tagIds.includes(tagId)).length
 }
 
-// 统一使用工具函数格式化日期
-
 // 处理添加标签
-const handleAddTag = () => {
-  if (!newTag.value.name.trim() || !newTag.value.color || adding.value) {
+const handleAddTag = async () => {
+  if (!newTag.value.name.trim() || !newTag.value.color || submitting.value) {
     return
   }
 
-  adding.value = true
+  submitting.value = true
 
   try {
     const exists = tags.value.some(
@@ -160,11 +158,8 @@ const handleAddTag = () => {
     uiStore.showToast('标签添加成功', 'success')
 
     // 重置表单
-    newTag.value = { name: '', color: '' }
-
-    // 聚焦到输入框
-    nextTick()
-    tagNameInputRef.value?.focus()
+    newTag.value = { name: '', color: '#3B82F6' }
+    adding.value = false
   } catch (error) {
     if (error instanceof Error && error.message === ERROR_DUPLICATE_NAME) {
       uiStore.showToast('标签名称已存在', 'warning')
@@ -172,9 +167,23 @@ const handleAddTag = () => {
       uiStore.showToast('添加失败，请重试', 'error')
     }
   } finally {
-    adding.value = false
+    submitting.value = false
   }
 }
+
+const cancelAdd = () => {
+  adding.value = false
+  newTag.value = { name: '', color: '#3B82F6' }
+}
+
+// Watch adding state to focus input
+watch(adding, val => {
+  if (val) {
+    nextTick(() => {
+      tagNameInputRef.value?.focus()
+    })
+  }
+})
 
 // 开始编辑
 const startEdit = (tag: Tag) => {
@@ -229,13 +238,6 @@ const handleDeleteTag = (tag: Tag) => {
   deleteConfirmOpen.value = true
 }
 
-// 已移除快捷键
-
-// 生命周期
-onMounted(() => {
-  tagNameInputRef.value?.focus()
-})
-
 const deleteConfirmOpen = ref(false)
 const deleteTargetId = ref<string>('')
 const deleting = ref(false)
@@ -265,89 +267,107 @@ const confirmDeleteTag = () => {
 @use '@/styles/mixins' as *;
 
 .manage-tags-modal {
-  width: 100%;
-  max-width: 700px;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xl);
+  padding: 0;
 }
 
-// 区域标题
-.manage-tags-modal__section-title {
+.modal-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tag-list-container {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.tag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-tag-section {
+  margin-top: 8px;
+}
+
+.add-tag-btn {
+  width: 100%;
+  padding: 12px;
+  border: 1px dashed var(--border-tile);
+  border-radius: 12px;
+  background-color: transparent;
+  color: var(--color-primary);
+  font-weight: 500;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-neutral-800);
-  margin: 0 0 var(--spacing-md) 0;
-}
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  border-color: var(--color-primary);
 
-.manage-tags-modal__count {
-  font-size: var(--font-size-sm);
-  color: var(--color-neutral-500);
-  font-weight: var(--font-weight-normal);
-}
-
-// 添加区域
-.manage-tags-modal__add-section {
-  padding-bottom: var(--spacing-lg);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.manage-tags-modal__add-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.manage-tags-modal__form-row {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  align-items: stretch;
-
-  > .base-input {
-    width: 100%;
-    min-width: 0;
+  &:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background-color: rgba(37, 99, 235, 0.02);
   }
 }
 
-// 标签列表区域
-.manage-tags-modal__list-section {
+.add-tag-form {
+  background-color: var(--bg-tile);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tag-input {
   flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-  padding-bottom: var(--spacing-lg);
 }
 
-.manage-tags-modal__tag-list {
+.form-actions {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: 8px;
 }
 
-// 响应式适配
-@include mobile {
-  .manage-tags-modal {
-    max-width: 100%;
-  }
-
-  .manage-tags-modal__form-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
+.delete-confirm-text {
+  color: var(--text-main);
+  font-size: 15px;
+  line-height: 1.6;
 }
 
-// 高对比度与动画偏好相关样式由子组件处理
-.manage-tags-modal__confirm-content {
-  padding: var(--spacing-md) 0;
+.text-danger {
+  color: var(--color-error);
+  font-size: 13px;
 }
 
-.manage-tags-modal__confirm-actions {
+.modal-footer-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--spacing-md);
+  gap: 12px;
+  width: 100%;
+}
+
+/* List Transitions */
+.list-move,
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.3s ease;
+}
+
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.list-leave-active {
+  position: absolute;
 }
 </style>

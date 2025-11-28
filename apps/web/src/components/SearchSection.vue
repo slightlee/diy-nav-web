@@ -1,168 +1,180 @@
 <template>
   <div class="search-section">
-    <div v-if="!hideSearch" class="search-container">
-      <BaseInput
-        ref="searchInput"
-        v-model="searchKeyword"
-        placeholder="根据网站名称、标签、描述搜索"
-        size="lg"
-        shape="rounded"
-      >
-        <template #suffix>
-          <button class="search-button" aria-label="搜索">
-            <i class="fas fa-search" />
-          </button>
-        </template>
-      </BaseInput>
-    </div>
-
-    <div v-if="showFilters" class="tag-filter-section">
-      <div class="filter-header">
-        <label class="filter-label">标签</label>
-        <div class="filter-actions">
-          <BaseButton
-            v-if="selectedTags.length"
-            variant="neutral-outline"
-            size="sm"
-            shape="pill"
-            class="action-btn"
-            @click="clearSelectedTags"
-          >
-            <i class="fas fa-times" />
-            清空标签
-          </BaseButton>
-          <BaseButton
-            variant="neutral-outline"
-            size="sm"
-            shape="pill"
-            class="action-btn"
-            @click="emit('manageTags')"
-          >
-            <i class="fas fa-edit" />
-            管理标签
-          </BaseButton>
-        </div>
-      </div>
-      <div class="tag-list">
-        <button
-          v-for="tag in tags"
-          :key="tag.id"
-          class="tag-item"
-          :class="[{ active: selectedTags.includes(tag.id) }]"
-          :style="selectedTags.includes(tag.id) ? { backgroundColor: tag.color } : undefined"
-          @click="toggleTag(tag.id)"
+    <!-- Search Header -->
+    <div v-if="!hideSearch" class="search-header">
+      <div class="search-container">
+        <BaseInput
+          ref="searchInput"
+          v-model="searchKeyword"
+          placeholder="根据网站名称、标签、描述搜索"
+          size="lg"
+          shape="rounded"
+          class="main-search-input"
         >
-          {{ tag.name }}
-          <i v-if="selectedTags.includes(tag.id)" class="fas fa-times-circle tag-remove-icon" />
-        </button>
+          <template #suffix>
+            <button class="search-button" aria-label="搜索">
+              <i class="fas fa-search" />
+            </button>
+          </template>
+        </BaseInput>
       </div>
     </div>
 
-    <div v-if="showFilters" class="category-section">
-      <div class="filter-header">
-        <label class="filter-label">分类</label>
-        <BaseButton
-          variant="neutral-outline"
-          size="sm"
-          shape="pill"
-          class="action-btn"
-          @click="emit('manageCategories')"
-        >
-          <i class="fas fa-edit" />
-          管理分类
-        </BaseButton>
-      </div>
-      <div class="category-list">
-        <button
-          class="category-tag"
-          :class="[{ active: selectedCategory === 'all' }]"
-          @click="selectCategory('all')"
-        >
-          全部
-          <span class="dot" />
-        </button>
-        <button
-          v-for="category in categories"
-          :key="category.id"
-          class="category-tag"
-          :class="[{ active: selectedCategory === category.id }]"
-          @click="selectCategory(category.id)"
-        >
-          {{ category.name }}
-          <span class="dot" />
-        </button>
-      </div>
-    </div>
-
-    <div v-if="searchKeyword && !hideSearch" class="search-results-section">
-      <div class="results-header">
-        <h3>搜索结果</h3>
-        <BaseButton
-          variant="neutral-outline"
-          size="sm"
-          shape="pill"
-          class="action-btn"
-          @click="clearSearch"
-        >
-          <i class="fas fa-times" />
-          清空搜索
-        </BaseButton>
-      </div>
-      <div v-if="searchResults.length > 0" class="website-grid">
-        <WebsiteCard
-          v-for="site in searchResults"
-          :key="site.id"
-          :website="site"
-          @visit="onVisit"
-          @edit="emit('edit', site)"
-          @delete="emit('delete', site.id)"
-          @toggle-favorite="onFavoriteToggle"
-        />
-      </div>
-      <EmptyState
-        v-else
-        type="no-results"
-        :message="`未找到与“${searchKeyword}”相关的结果`"
-        :show-action-button="false"
-      />
-    </div>
-
-    <div v-else class="website-grid">
-      <div
-        v-for="site in filteredWebsites"
-        :key="site.id"
-        class="website-draggable"
-        draggable="true"
-        @dragstart="onDragStart(site.id, $event)"
-        @dragover="onDragOver(site.id, $event)"
-        @drop="onDrop(site.id, $event)"
-        @dragend="onDragEnd"
-      >
-        <WebsiteCard
-          :website="site"
-          @visit="onVisit"
-          @edit="emit('edit', site)"
-          @delete="emit('delete', site.id)"
-          @toggle-favorite="onFavoriteToggle"
-        />
-      </div>
-
-      <div v-if="filteredWebsites.length > 0" class="add-card" @click="onAddSite">
-        <div class="add-card-content">
-          <div class="add-icon">
-            <i class="fas fa-plus" />
+    <div class="content-layout">
+      <!-- Sidebar Filters -->
+      <aside v-if="showFilters" class="sidebar-filters">
+        <!-- Tags Section -->
+        <div class="filter-group">
+          <div class="filter-header">
+            <label class="filter-label">标签</label>
+            <button class="manage-btn" @click="emit('manageTags')">
+              <i class="fas fa-pencil-alt" />
+            </button>
           </div>
-          <span>添加网站</span>
+          <div class="tag-list">
+            <button
+              v-for="tag in tags"
+              :key="tag.id"
+              class="tag-pill"
+              :class="{ active: selectedTags.includes(tag.id) }"
+              @click="toggleTag(tag.id)"
+            >
+              {{ tag.name }}
+            </button>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <EmptyState
-      v-if="filteredWebsites.length === 0 && !searchKeyword"
-      type="no-websites"
-      :show-action-button="true"
-      @action="onAddSite"
-    />
+        <!-- Categories Section -->
+        <div class="filter-group">
+          <div class="filter-header">
+            <label class="filter-label">分类</label>
+            <button class="manage-btn" @click="emit('manageCategories')">
+              <i class="fas fa-pencil-alt" />
+            </button>
+          </div>
+          <div class="category-list">
+            <button
+              class="category-item"
+              :class="{ active: selectedCategory === 'all' }"
+              @click="selectCategory('all')"
+            >
+              <span class="category-name">全部</span>
+            </button>
+            <button
+              v-for="category in categories"
+              :key="category.id"
+              class="category-item"
+              :class="{ active: selectedCategory === category.id }"
+              @click="selectCategory(category.id)"
+            >
+              <span class="category-name">{{ category.name }}</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Selected Conditions Bar -->
+        <div v-if="hasActiveFilters" class="selected-conditions-bar">
+          <span class="conditions-label">已选条件:</span>
+          <div class="selected-tags">
+            <template v-if="selectedCategory !== 'all'">
+              <div class="selected-pill category-pill">
+                <span>分类: {{ getCategoryName(selectedCategory) }}</span>
+                <button class="remove-btn" @click="selectCategory('all')">
+                  <i class="fas fa-times" />
+                </button>
+              </div>
+            </template>
+            <template v-for="tagId in selectedTags" :key="tagId">
+              <div class="selected-pill tag-pill">
+                <span>标签: {{ getTagName(tagId) }}</span>
+                <button class="remove-btn" @click="toggleTag(tagId)">
+                  <i class="fas fa-times" />
+                </button>
+              </div>
+            </template>
+            <button v-if="hasActiveFilters" class="clear-all-btn" @click="clearAllFilters">
+              清空
+            </button>
+          </div>
+          <span v-if="!hasActiveFilters" class="no-filters-text">未选择筛选条件，显示全部网站</span>
+        </div>
+
+        <!-- Search Results -->
+        <div v-if="searchKeyword && !hideSearch" class="search-results-section">
+          <div class="results-header">
+            <h3>搜索结果</h3>
+            <BaseButton
+              variant="neutral-outline"
+              size="sm"
+              shape="pill"
+              class="action-btn"
+              @click="clearSearch"
+            >
+              <i class="fas fa-times" />
+              清空搜索
+            </BaseButton>
+          </div>
+          <div v-if="searchResults.length > 0" class="website-grid">
+            <WebsiteCard
+              v-for="site in searchResults"
+              :key="site.id"
+              :website="site"
+              @visit="onVisit"
+              @edit="emit('edit', site)"
+              @delete="emit('delete', site.id)"
+              @toggle-favorite="onFavoriteToggle"
+            />
+          </div>
+          <EmptyState
+            v-else
+            type="no-results"
+            :message="`未找到与“${searchKeyword}”相关的结果`"
+            :show-action-button="false"
+          />
+        </div>
+
+        <!-- Filtered Grid -->
+        <div v-else class="website-grid">
+          <div
+            v-for="site in filteredWebsites"
+            :key="site.id"
+            class="website-draggable"
+            draggable="true"
+            @dragstart="onDragStart(site.id, $event)"
+            @dragover="onDragOver(site.id, $event)"
+            @drop="onDrop(site.id, $event)"
+            @dragend="onDragEnd"
+          >
+            <WebsiteCard
+              :website="site"
+              @visit="onVisit"
+              @edit="emit('edit', site)"
+              @delete="emit('delete', site.id)"
+              @toggle-favorite="onFavoriteToggle"
+            />
+          </div>
+
+          <div v-if="filteredWebsites.length > 0" class="add-card" @click="onAddSite">
+            <div class="add-card-content">
+              <div class="add-icon">
+                <i class="fas fa-plus" />
+              </div>
+              <span>添加网站</span>
+            </div>
+          </div>
+        </div>
+
+        <EmptyState
+          v-if="filteredWebsites.length === 0 && !searchKeyword"
+          type="no-websites"
+          :show-action-button="true"
+          @action="onAddSite"
+        />
+      </main>
+    </div>
   </div>
 </template>
 
@@ -182,7 +194,7 @@
  * @emits manageTags - 打开标签管理
  * @emits manageCategories - 打开分类管理
  */
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import WebsiteCard from '@/components/WebsiteCard.vue'
 import { EmptyState, BaseInput, BaseButton } from '@nav/ui'
 import { useWebsiteStore } from '@/stores/website'
@@ -223,6 +235,25 @@ const { onDragStart, onDragOver, onDrop, onDragEnd } = useWebsiteDrag(() => prop
 
 const searchInput = ref<HTMLInputElement | null>(null)
 
+const hasActiveFilters = computed(() => {
+  return selectedTags.value.length > 0 || selectedCategory.value !== 'all'
+})
+
+const getCategoryName = (id: string) => {
+  const cat = categories.value.find(c => c.id === id)
+  return cat ? cat.name : id
+}
+
+const getTagName = (id: string) => {
+  const tag = tags.value.find(t => t.id === id)
+  return tag ? tag.name : id
+}
+
+const clearAllFilters = () => {
+  selectCategory('all')
+  clearSelectedTags()
+}
+
 const onAddSite = () => {
   const contextCategoryId = selectedCategory.value !== 'all' ? selectedCategory.value : ''
   emit('addSite', contextCategoryId)
@@ -242,24 +273,49 @@ const onFavoriteToggle = (id: string) => {
 
 <style scoped lang="scss">
 @use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
 
 .search-section {
-  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.search-header {
+  margin-bottom: 0.5rem;
 }
 
 .search-container {
-  position: relative;
-  margin-bottom: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+:deep(.main-search-input .base-input__wrapper) {
+  background-color: var(--color-white);
+  border: 1px solid transparent;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 999px;
+  padding-left: 1rem;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  &.base-input__wrapper--focused {
+    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.1);
+    border-color: rgba(37, 99, 235, 0.2);
+  }
 }
 
 .search-button {
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: var(--font-size-lg);
+  font-size: 18px;
   cursor: pointer;
   transition: color 0.2s;
-  padding: 0;
+  padding: 0 8px;
   display: flex;
   align-items: center;
 
@@ -268,118 +324,202 @@ const onFavoriteToggle = (id: string) => {
   }
 }
 
-.tag-filter-section {
-  margin-top: 0.75rem;
+.content-layout {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+/* Sidebar Styles */
+.sidebar-filters {
+  width: 260px;
+  flex-shrink: 0;
+  background-color: var(--color-white);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .filter-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
 }
 
 .filter-label {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-main);
 }
 
-.filter-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.manage-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+
+  &:hover {
+    color: var(--color-primary);
+    background-color: var(--bg-tile-hover);
+  }
 }
 
 .tag-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
-.tag-item {
-  padding: 5px 10px;
-  border-radius: 9999px;
-  font-size: var(--font-size-sm);
+.tag-pill {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
   border: 1px solid var(--border-tile);
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  display: flex;
-  align-items: center;
   background-color: var(--bg-tile);
   color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
 
   &:hover {
-    transform: scale(1.02);
-    background-color: var(--bg-tile-hover);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
   }
 
   &.active {
-    color: var(--color-white);
-    border-color: transparent;
+    background-color: rgba(37, 99, 235, 0.1);
+    color: var(--color-primary);
+    border-color: var(--color-primary);
   }
-
-  .tag-remove-icon {
-    margin-left: 3px;
-    font-size: var(--font-size-xs);
-    opacity: 0.7;
-    transition: opacity 0.2s;
-
-    &:hover {
-      opacity: 1;
-    }
-  }
-}
-
-.category-section {
-  margin-top: 1rem;
 }
 
 .category-list {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.category-tag {
-  position: relative;
-  padding: 6px 12px;
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  background-color: transparent;
+.category-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
   border: none;
+  background: transparent;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s;
-  font-weight: var(--font-weight-medium);
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    width: 0;
-    height: 2px;
-    background-color: var(--color-primary);
-    transition: all 0.2s ease-in-out;
-    transform: translateX(-50%);
-  }
+  text-align: left;
+  font-size: 14px;
+  font-weight: 500;
 
   &:hover {
-    color: var(--color-primary);
+    background-color: var(--bg-tile);
+    color: var(--text-main);
   }
 
   &.active {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+  }
+}
+
+/* Main Content Styles */
+.main-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.selected-conditions-bar {
+  background-color: var(--color-white);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+  min-height: 52px;
+}
+
+.conditions-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.selected-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+
+  &.category-pill {
+    background-color: rgba(37, 99, 235, 0.1);
     color: var(--color-primary);
-    font-weight: var(--font-weight-bold);
-
-    &::after {
-      width: 80%;
-    }
   }
 
-  .dot {
-    display: none; // hidden for now, can be enabled if needed
+  &.tag-pill {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--color-success);
   }
+}
+
+.remove-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.clear-all-btn {
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.no-filters-text {
+  color: var(--text-muted);
+  font-size: 13px;
 }
 
 .search-results-section {
@@ -402,8 +542,7 @@ const onFavoriteToggle = (id: string) => {
 .website-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 1.25rem;
 }
 
 .website-draggable {
@@ -418,20 +557,22 @@ const onFavoriteToggle = (id: string) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100px;
-  background-color: var(--bg-tile);
+  height: 100%;
+  min-height: 160px;
+  background-color: var(--color-white);
   border: 1px dashed var(--border-tile);
-  border-radius: var(--radius-lg);
+  border-radius: 16px;
   cursor: pointer;
   transition: all 0.2s;
 
   &:hover {
     border-color: var(--color-primary);
-    background-color: var(--bg-tile-hover);
+    background-color: rgba(37, 99, 235, 0.02);
 
     .add-icon {
       background-color: var(--color-primary);
       color: var(--color-white);
+      transform: scale(1.1);
     }
 
     span {
@@ -443,25 +584,42 @@ const onFavoriteToggle = (id: string) => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
   }
 
   .add-icon {
-    width: 32px;
-    height: 32px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
-    background-color: var(--bg-body);
+    background-color: var(--bg-tile);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--text-muted);
     transition: all 0.2s;
+    font-size: 20px;
   }
 
   span {
-    font-size: var(--font-size-sm);
+    font-size: 15px;
     color: var(--text-secondary);
-    font-weight: var(--font-weight-medium);
+    font-weight: 500;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .content-layout {
+    flex-direction: column;
+  }
+
+  .sidebar-filters {
+    width: 100%;
+    position: static;
+  }
+
+  .website-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

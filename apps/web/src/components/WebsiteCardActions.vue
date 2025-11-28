@@ -42,3 +42,43 @@ interface Emits {
 
 defineOptions({ name: 'WebsiteCardActions' })
 </script>
+
+<style scoped lang="scss">
+@use '@/styles/variables' as *;
+
+.website-card__action-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+  font-size: 12px;
+
+  &:hover {
+    background-color: var(--bg-tile);
+    color: var(--text-main);
+    border-color: var(--border-tile);
+  }
+
+  &--favorite {
+    &.is-active {
+      color: var(--color-warning);
+    }
+  }
+
+  &--delete {
+    &:hover {
+      color: var(--color-danger);
+      background-color: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.2);
+    }
+  }
+}
+</style>

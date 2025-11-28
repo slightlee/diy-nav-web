@@ -1,98 +1,120 @@
 <template>
   <div class="manage-categories-modal">
-    <!-- 添加新分类表单 -->
-    <div class="manage-categories-modal__add-section">
-      <h3 class="manage-categories-modal__section-title">
-        <i class="fas fa-folder-plus" />
-        添加新分类
-      </h3>
-      <form class="manage-categories-modal__add-form" @submit.prevent="handleAddCategory">
-        <div class="manage-categories-modal__form-row">
-          <IconPicker v-model="newCategory.icon" mode="popover" />
-          <BaseInput
-            ref="categoryNameInputRef"
-            v-model="newCategory.name"
-            placeholder="分类名称"
-            required
-            :maxlength="20"
-            size="lg"
-            shape="rounded"
-            :show-char-count="false"
-          />
-          <BaseButton
-            html-type="submit"
-            variant="primary"
-            size="md"
-            shape="pill"
-            :loading="adding"
-            :disabled="!newCategory.name.trim()"
-          >
-            <i class="fas fa-plus" />
-            添加
-          </BaseButton>
-        </div>
-      </form>
-    </div>
-
-    <!-- 分类列表 -->
-    <div class="manage-categories-modal__list-section">
-      <h3 class="manage-categories-modal__section-title">
-        <i class="fas fa-list" />
-        现有分类
-        <span class="manage-categories-modal__count">({{ categories.length }})</span>
-      </h3>
-
-      <!-- 分类列表容器 -->
-      <div class="manage-categories-modal__category-list">
-        <!-- 分类列表 -->
-        <TransitionGroup name="category-item" tag="div">
-          <EmptyState
-            v-if="categories.length === 0"
-            type="no-categories"
-            :show-action-button="false"
-            description="还没有创建任何分类，请在上方添加第一个分类"
-          />
-          <CategoryListItem
-            v-for="category in sortedCategories"
+    <div class="modal-content-wrapper">
+      <!-- Category List -->
+      <div class="category-list-container">
+        <TransitionGroup name="list" tag="div" class="category-list">
+          <div
+            v-for="category in categories"
             :key="category.id"
-            :category="category"
-            :editing="editingId === category.id"
-            :website-count="getWebsiteCount(category.id)"
-            :updating="updating"
-            @edit="startEdit(category)"
-            @delete="handleDeleteCategory(category)"
-            @save="handleSave"
-            @cancel="cancelEdit"
-            @dragstart="onDragStart"
-            @drop="onDrop"
-          />
+            class="category-item"
+            :class="{ 'is-editing': editingId === category.id }"
+            draggable="true"
+            @dragstart="onDragStart($event, category)"
+            @dragover="onDragOver"
+            @drop="onDrop($event, category)"
+            @dragend="onDragEnd"
+          >
+            <!-- Inline Edit Mode -->
+            <div v-if="editingId === category.id" class="category-item__edit">
+              <div class="edit-row">
+                <IconPicker
+                  :model-value="editingForm.icon"
+                  mode="popover"
+                  @update:model-value="editingForm.icon = $event"
+                />
+                <BaseInput
+                  v-model="editingForm.name"
+                  placeholder="分类名称"
+                  class="category-input"
+                  auto-focus
+                  @keyup.enter="handleUpdateCategory"
+                />
+                <div class="action-buttons">
+                  <button class="action-btn save-btn" title="保存" @click="handleUpdateCategory">
+                    <i class="fas fa-check" />
+                  </button>
+                  <button class="action-btn cancel-btn" title="取消" @click="cancelEdit">
+                    <i class="fas fa-times" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- View Mode -->
+            <div v-else class="category-item__content">
+              <div class="category-item__drag-handle">
+                <i class="fas fa-grip-vertical" />
+              </div>
+              <div class="category-item__icon">
+                <i :class="category.icon || 'fas fa-folder'" />
+              </div>
+              <div class="category-item__info">
+                <span class="category-item__name">{{ category.name }}</span>
+                <span class="category-item__count">{{ getCategoryCount(category.id) }}</span>
+              </div>
+              <div class="category-item__actions">
+                <button class="action-btn edit-btn" title="编辑" @click="startEdit(category)">
+                  <i class="fas fa-pencil-alt" />
+                </button>
+                <button class="action-btn delete-btn" title="删除" @click="confirmDelete(category)">
+                  <i class="fas fa-trash-alt" />
+                </button>
+              </div>
+            </div>
+          </div>
         </TransitionGroup>
       </div>
+
+      <!-- Add Category Button (Bottom) -->
+      <div class="add-category-section">
+        <button v-if="!isAdding" class="add-category-btn" @click="isAdding = true">
+          <i class="fas fa-plus" />
+          <span>添加分类</span>
+        </button>
+
+        <div v-else class="add-category-form">
+          <div class="form-row">
+            <IconPicker v-model="newCategoryIcon" mode="popover" />
+            <BaseInput
+              v-model="newCategoryName"
+              placeholder="分类名称"
+              class="category-input"
+              auto-focus
+              @keyup.enter="handleAddCategory"
+            />
+            <div class="form-actions">
+              <BaseButton
+                variant="primary"
+                size="sm"
+                :disabled="!newCategoryName.trim()"
+                @click="handleAddCategory"
+              >
+                确定
+              </BaseButton>
+              <BaseButton variant="ghost" size="sm" @click="cancelAdd">取消</BaseButton>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
+    <!-- Delete Confirmation -->
     <BaseModal
-      v-if="deleteConfirmOpen"
-      :is-open="deleteConfirmOpen"
+      :is-open="showDeleteModal"
       title="删除分类"
-      @close="closeDeleteConfirm"
+      size="sm"
+      @close="showDeleteModal = false"
     >
-      <div class="manage-categories-modal__confirm-content">
-        <p>确定要删除该分类吗？此操作不可恢复。</p>
-      </div>
+      <p class="delete-confirm-text">
+        确定要删除分类“{{ categoryToDelete?.name }}”吗？
+        <br />
+        <span class="text-danger">该分类下的网站将被移至“未分类”。</span>
+      </p>
       <template #footer>
-        <div class="manage-categories-modal__confirm-actions">
-          <BaseButton variant="neutral-outline" shape="pill" @click="closeDeleteConfirm">
-            取消
-          </BaseButton>
-          <BaseButton
-            variant="danger-outline"
-            shape="pill"
-            :loading="deleting"
-            @click="confirmDeleteCategory"
-          >
-            <i class="fas fa-trash" />
-            删除
-          </BaseButton>
+        <div class="modal-footer-actions">
+          <BaseButton variant="ghost" @click="showDeleteModal = false">取消</BaseButton>
+          <BaseButton variant="danger" @click="handleDeleteCategory">删除</BaseButton>
         </div>
       </template>
     </BaseModal>
@@ -100,279 +122,366 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed } from 'vue'
 import { useCategoryStore } from '@/stores/category'
 import { useWebsiteStore } from '@/stores/website'
-import { useUIStore } from '@/stores/ui'
-import { BaseInput, BaseButton, BaseModal, EmptyState, IconPicker } from '@nav/ui'
-import CategoryListItem from './parts/CategoryListItem.vue'
+import { BaseInput, BaseButton, BaseModal, IconPicker } from '@nav/ui'
 import type { Category } from '@/types'
-import { ERROR_DUPLICATE_NAME } from '@/types'
 import { computeReorderedIds } from '@/utils/helpers'
 
-// Store
 const categoryStore = useCategoryStore()
 const websiteStore = useWebsiteStore()
-const uiStore = useUIStore()
 
-// 组件引用
-const categoryNameInputRef = ref()
-
-// 表单数据
-const newCategory = ref({
-  name: '',
-  description: '',
-  icon: 'fas fa-folder'
-})
-
-// 编辑状态
-const editingId = ref<string | null>(null)
-
-// 加载状态
-const adding = ref(false)
-const updating = ref(false)
-
-// 计算属性
 const categories = computed(() => categoryStore.categories)
+const isAdding = ref(false)
+const newCategoryName = ref('')
+const newCategoryIcon = ref('fas fa-folder')
 
-const sortedCategories = computed(() => {
-  return [...categories.value].sort((a, b) => a.order - b.order)
+const showDeleteModal = ref(false)
+const categoryToDelete = ref<Category | null>(null)
+
+const editingId = ref<string | null>(null)
+const editingForm = ref({
+  name: '',
+  icon: ''
 })
 
-const draggingId = ref<string | null>(null)
-const onDragStart = (id: string) => {
-  draggingId.value = id
-}
-const onDrop = (targetId: string) => {
-  if (!draggingId.value) return
-  const orderIds = sortedCategories.value.map(c => c.id)
-  const next = computeReorderedIds(orderIds, draggingId.value, targetId)
-  categoryStore.reorderCategories(next)
-  draggingId.value = null
+const getCategoryCount = (id: string) => {
+  return websiteStore.websites.filter(w => w.categoryId === id).length
 }
 
-// 获取分类下的网站数量
-const getWebsiteCount = (categoryId: string): number => {
-  return websiteStore.websites.filter(w => w.categoryId === categoryId).length
+const handleAddCategory = () => {
+  if (!newCategoryName.value.trim()) return
+  categoryStore.addCategory({
+    name: newCategoryName.value.trim(),
+    icon: newCategoryIcon.value
+  })
+  newCategoryName.value = ''
+  newCategoryIcon.value = 'fas fa-folder'
+  isAdding.value = false
 }
 
-// 统一使用工具函数格式化日期
-
-// 处理添加分类
-const handleAddCategory = async () => {
-  if (!newCategory.value.name.trim() || adding.value) {
-    return
-  }
-
-  adding.value = true
-
-  try {
-    const exists = categories.value.some(
-      c => c.name.toLowerCase() === newCategory.value.name.trim().toLowerCase()
-    )
-    if (exists) {
-      uiStore.showToast('分类名称已存在', 'warning')
-      return
-    }
-    categoryStore.addCategory({
-      name: newCategory.value.name.trim(),
-      description: newCategory.value.description.trim(),
-      icon: newCategory.value.icon
-    })
-
-    uiStore.showToast('分类添加成功', 'success')
-
-    // 重置表单
-    newCategory.value = { name: '', description: '', icon: 'fas fa-folder' }
-
-    // 聚焦到输入框
-    await nextTick()
-    categoryNameInputRef.value?.focus()
-  } catch (error) {
-    if (error instanceof Error && error.message === ERROR_DUPLICATE_NAME) {
-      uiStore.showToast('分类名称已存在', 'warning')
-    } else {
-      uiStore.showToast('添加失败，请重试', 'error')
-    }
-  } finally {
-    adding.value = false
-  }
+const cancelAdd = () => {
+  isAdding.value = false
+  newCategoryName.value = ''
+  newCategoryIcon.value = 'fas fa-folder'
 }
 
-// 开始编辑
 const startEdit = (category: Category) => {
   editingId.value = category.id
-}
-
-// 处理更新分类
-const handleSave = async (payload: { name: string; description: string; icon: string }) => {
-  if (!editingId.value || updating.value) return
-  const name = payload.name.trim()
-  const description = payload.description.trim()
-  const icon = payload.icon
-  if (!name) return
-  const exists = categories.value.some(
-    c => c.id !== editingId.value && c.name.toLowerCase() === name.toLowerCase()
-  )
-  if (exists) {
-    uiStore.showToast('分类名称已存在', 'warning')
-    return
-  }
-
-  updating.value = true
-  try {
-    await categoryStore.updateCategory(editingId.value, { name, description, icon })
-    uiStore.showToast('分类更新成功', 'success')
-    cancelEdit()
-  } catch (error) {
-    if (error instanceof Error && error.message === ERROR_DUPLICATE_NAME) {
-      uiStore.showToast('分类名称已存在', 'warning')
-    } else {
-      uiStore.showToast('更新失败，请重试', 'error')
-    }
-  } finally {
-    updating.value = false
+  editingForm.value = {
+    name: category.name,
+    icon: category.icon || 'fas fa-folder'
   }
 }
 
-// 取消编辑
 const cancelEdit = () => {
+  editingId.value = null
+  editingForm.value = { name: '', icon: '' }
+}
+
+const handleUpdateCategory = () => {
+  if (!editingId.value || !editingForm.value.name.trim()) return
+  categoryStore.updateCategory(editingId.value, {
+    name: editingForm.value.name,
+    icon: editingForm.value.icon
+  })
   editingId.value = null
 }
 
-// 处理删除分类
-const handleDeleteCategory = async (category: Category) => {
-  const websiteCount = getWebsiteCount(category.id)
-
-  if (websiteCount > 0) {
-    uiStore.showToast(`该分类下还有 ${websiteCount} 个网站，请先移动或删除这些网站`, 'warning')
-    return
-  }
-
-  deleteTargetId.value = category.id
-  deleteConfirmOpen.value = true
+const confirmDelete = (category: Category) => {
+  categoryToDelete.value = category
+  showDeleteModal.value = true
 }
 
-// 生命周期
-onMounted(() => {
-  categoryNameInputRef.value?.focus()
-})
-
-// 清理
-
-const deleteConfirmOpen = ref(false)
-const deleteTargetId = ref<string>('')
-const deleting = ref(false)
-
-const closeDeleteConfirm = () => {
-  deleteConfirmOpen.value = false
-  deleteTargetId.value = ''
+const handleDeleteCategory = () => {
+  if (categoryToDelete.value) {
+    categoryStore.deleteCategory(categoryToDelete.value.id)
+    const websites = websiteStore.websites.filter(w => w.categoryId === categoryToDelete.value?.id)
+    websites.forEach(w => {
+      websiteStore.updateWebsite(w.id, { categoryId: '' })
+    })
+    showDeleteModal.value = false
+    categoryToDelete.value = null
+  }
 }
 
-const confirmDeleteCategory = async () => {
-  if (!deleteTargetId.value || deleting.value) return
-  deleting.value = true
-  try {
-    await categoryStore.deleteCategory(deleteTargetId.value)
-    uiStore.showToast('分类删除成功', 'success')
-    closeDeleteConfirm()
-  } catch {
-    uiStore.showToast('删除失败，请重试', 'error')
-  } finally {
-    deleting.value = false
+// Drag and Drop Logic
+const draggedItem = ref<Category | null>(null)
+
+const onDragStart = (e: DragEvent, category: Category) => {
+  draggedItem.value = category
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.dropEffect = 'move'
   }
+  if (e.target) {
+    ;(e.target as HTMLElement).classList.add('is-dragging')
+  }
+}
+
+const onDragEnd = (e: DragEvent) => {
+  draggedItem.value = null
+  if (e.target) {
+    ;(e.target as HTMLElement).classList.remove('is-dragging')
+  }
+}
+
+const onDragOver = (e: DragEvent) => {
+  e.preventDefault()
+}
+
+const onDrop = (e: DragEvent, targetCategory: Category) => {
+  e.preventDefault()
+  if (!draggedItem.value || draggedItem.value.id === targetCategory.id) return
+
+  const orderIds = categories.value.map(c => c.id)
+  const nextIds = computeReorderedIds(orderIds, draggedItem.value.id, targetCategory.id)
+  categoryStore.reorderCategories(nextIds)
 }
 </script>
 
 <style scoped lang="scss">
 @use '@/styles/variables' as *;
-@use '@/styles/mixins' as *;
 
 .manage-categories-modal {
-  width: 100%;
-  max-width: 700px;
-  max-height: 80vh;
+  padding: 0;
+}
+
+.modal-content-wrapper {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xl);
+  gap: 1rem;
 }
 
-// 区域标题
-.manage-categories-modal__section-title {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-neutral-800);
-  margin: 0 0 var(--spacing-md) 0;
-}
-
-.manage-categories-modal__count {
-  font-size: var(--font-size-sm);
-  color: var(--color-neutral-500);
-  font-weight: var(--font-weight-normal);
-}
-
-// 添加区域
-.manage-categories-modal__add-section {
-  padding-bottom: var(--spacing-lg);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.manage-categories-modal__add-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.manage-categories-modal__form-row {
-  display: flex;
-  gap: var(--spacing-sm);
-  align-items: center;
-
-  > .base-input {
-    flex: 1;
-    min-width: 0;
-  }
-}
-
-.manage-categories-modal__form-row .base-button {
-  flex-shrink: 0;
-}
-
-// 列表区域
-.manage-categories-modal__list-section {
-  flex: 1;
+.category-list-container {
+  max-height: 400px;
   overflow-y: auto;
-  min-height: 0;
-  padding-bottom: var(--spacing-lg);
+  padding: 4px;
 }
 
-.manage-categories-modal__category-list {
+.category-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: 8px;
 }
 
-// 响应式适配
-@include mobile {
-  .manage-categories-modal {
-    max-width: 100%;
+.category-item {
+  background-color: var(--color-white);
+  border: 1px solid var(--border-tile);
+  border-radius: 12px;
+  padding: 12px 16px;
+  transition: all 0.2s;
+  cursor: grab;
+
+  &:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+
+    .category-item__drag-handle {
+      color: var(--text-secondary);
+    }
   }
 
-  .manage-categories-modal__form-row {
-    flex-direction: column;
-    align-items: stretch;
+  &.is-dragging {
+    opacity: 0.5;
+    background-color: var(--bg-tile);
+  }
+
+  &.is-editing {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    cursor: default;
   }
 }
-.manage-categories-modal__confirm-content {
-  padding: var(--spacing-md) 0;
+
+.category-item__content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.manage-categories-modal__confirm-actions {
+.category-item__drag-handle {
+  color: var(--border-tile);
+  cursor: grab;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.category-item__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-color: var(--bg-tile);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.category-item__info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-item__name {
+  font-weight: 600;
+  color: var(--text-main);
+  font-size: 15px;
+  flex: 1;
+}
+
+.category-item__count {
+  background-color: var(--bg-tile);
+  color: var(--text-secondary);
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.category-item__actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+
+  .category-item:hover & {
+    opacity: 1;
+  }
+}
+
+.action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background-color: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: var(--bg-tile);
+    color: var(--text-main);
+  }
+
+  &.delete-btn:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--color-error);
+  }
+
+  &.save-btn {
+    color: var(--color-success);
+    &:hover {
+      background-color: rgba(16, 185, 129, 0.1);
+    }
+  }
+
+  &.cancel-btn:hover {
+    color: var(--text-main);
+  }
+}
+
+.add-category-section {
+  margin-top: 8px;
+}
+
+.add-category-btn {
+  width: 100%;
+  padding: 12px;
+  border: 1px dashed var(--border-tile);
+  border-radius: 12px;
+  background-color: transparent;
+  color: var(--color-primary);
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  border-color: var(--color-primary);
+
+  &:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background-color: rgba(37, 99, 235, 0.02);
+  }
+}
+
+.add-category-form {
+  background-color: var(--bg-tile);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.category-input {
+  flex: 1;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.delete-confirm-text {
+  color: var(--text-main);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.text-danger {
+  color: var(--color-error);
+  font-size: 13px;
+}
+
+.modal-footer-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--spacing-md);
+  gap: 12px;
+  width: 100%;
+}
+
+.edit-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+/* List Transitions */
+.list-move,
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.3s ease;
+}
+
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.list-leave-active {
+  position: absolute;
 }
 </style>

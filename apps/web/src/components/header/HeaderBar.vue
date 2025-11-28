@@ -3,18 +3,18 @@
     <div class="header-content">
       <div class="header-left">
         <div class="logo-section">
-          <div class="logo-icon"><i class="fas fa-compass" /></div>
-          <h1 class="app-title">DIY导航</h1>
+          <div class="logo-icon">D</div>
+          <h1 class="app-title">DIY 导航</h1>
         </div>
         <nav class="view-nav">
           <router-link
             class="view-nav__link"
             to="/home"
             active-class="active"
-            aria-label="主页"
-            title="主页"
+            aria-label="首页"
+            title="首页"
           >
-            <span>主页</span>
+            <span>首页</span>
           </router-link>
           <router-link
             class="view-nav__link"
@@ -41,6 +41,7 @@
           <BaseButton
             variant="ghost"
             size="sm"
+            shape="circle"
             :title="themeToggleTitle"
             @mouseenter="onThemeHover(true)"
             @mouseleave="onThemeHover(false)"
@@ -60,6 +61,7 @@
           <BaseButton
             variant="ghost"
             size="sm"
+            shape="circle"
             :aria-expanded="showSettingsDropdown ? 'true' : 'false'"
             aria-haspopup="menu"
             aria-controls="settings-menu"
@@ -163,10 +165,10 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 
 <style scoped lang="scss">
 @use '@/styles/variables' as *;
+
 .header {
   height: 64px;
-  background-color: var(--bg-panel);
-  border-bottom: 1px solid var(--border-tile);
+  background-color: var(--bg-body);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -186,102 +188,114 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 .header-left {
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 3rem;
 }
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 .logo-icon {
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-md);
-  background-color: var(--color-primary);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-lg);
+  font-size: 18px;
+  font-weight: bold;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
 }
 .app-title {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
   color: var(--text-main);
   margin: 0;
+  letter-spacing: -0.02em;
 }
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 1rem;
 }
 .view-nav {
   display: inline-flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 .view-nav__link {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0;
   height: 36px;
-  padding: 6px 2px;
   color: var(--text-secondary);
   text-decoration: none;
-  font-weight: normal;
-  font-size: 14px;
-  letter-spacing: 0.1px;
-  cursor: pointer;
-  transition: color var(--transition-fast);
-}
-.view-nav__link:hover {
-  color: var(--text-main);
-}
-.view-nav__link.active {
-  color: var(--text-main);
   font-weight: 500;
-}
-.view-nav__link::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -6px;
-  height: 2px;
-  background-color: var(--color-primary);
-  border-radius: 999px;
-  transform: scaleX(0);
-  transition: transform 0.2s ease-out;
-}
-.view-nav__link.active::after {
-  transform: scaleX(1);
+  font-size: 15px;
+  cursor: pointer;
+  transition: color 0.2s;
+
+  &:hover {
+    color: var(--text-main);
+  }
+
+  &.active {
+    color: var(--text-main);
+    font-weight: 600;
+
+    &::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -4px;
+      height: 2px;
+      background-color: var(--color-primary);
+      border-radius: 2px;
+    }
+  }
 }
 
 :deep(.add-site-btn) {
   height: 36px;
-  padding: 0 16px;
+  padding: 0 20px;
   border-radius: 999px;
   font-size: 14px;
-  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.38);
-  gap: 6px;
+  font-weight: 500;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  transition: all 0.2s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  .btn-text {
+    margin-left: 6px;
+  }
 }
 
 :deep(.header-actions button:not(.add-site-btn)) {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  border: 1px solid var(--border-tile);
-  background: var(--bg-tile);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
   color: var(--text-secondary);
-  padding: 0 !important;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
+  transition: all 0.2s;
 
-:deep(.header-actions button:not(.add-site-btn):hover) {
-  background: var(--bg-tile-hover);
+  &:hover {
+    background: var(--bg-tile-hover);
+    color: var(--text-main);
+  }
 }
 
 .theme-toggle {
@@ -290,14 +304,14 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 .theme-hover-tooltip {
   position: absolute;
   right: 0;
-  top: calc(100% + 8px);
+  top: calc(100% + 12px);
   background-color: var(--bg-panel);
   border: 1px solid var(--border-tile);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-lg);
-  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 8px 12px;
   z-index: 60;
-  font-size: var(--font-size-sm);
+  font-size: 13px;
   color: var(--text-secondary);
   display: inline-flex;
   align-items: center;
@@ -306,13 +320,11 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 }
 .theme-hover-tooltip .sep {
   color: var(--text-muted);
+  font-size: 10px;
 }
 .theme-hover-tooltip .active {
   color: var(--color-primary);
-  font-weight: var(--font-weight-semibold);
-  background-color: rgba(var(--color-primary-rgb), 0.06);
-  border-radius: 4px;
-  padding: 0 6px;
+  font-weight: 600;
 }
 .settings-dropdown {
   position: relative;
@@ -320,34 +332,45 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 .dropdown-menu {
   position: absolute;
   right: 0;
-  top: calc(100% + 8px);
-  width: 220px;
+  top: calc(100% + 12px);
+  width: 200px;
   background-color: var(--bg-panel);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  padding: 8px;
+  border: 1px solid var(--border-tile);
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 6px;
   z-index: 50;
 }
 .dropdown-item {
   justify-content: flex-start;
   margin: 2px 0;
   color: var(--text-main);
-  font-weight: normal;
+  font-weight: 500;
+  font-size: 14px;
+  border-radius: 8px;
+  padding: 8px 12px;
+
+  &:hover {
+    background-color: var(--bg-tile-hover);
+  }
 }
 .dropdown-item i {
   margin-right: 10px;
   color: var(--text-muted);
-  width: 14px;
+  width: 16px;
   text-align: center;
 }
 .dropdown-divider {
   height: 1px;
   background-color: var(--border-tile);
-  margin: 6px 8px;
+  margin: 4px 6px;
 }
 @media (max-width: 768px) {
   .header-content {
     padding: 0.75rem;
+  }
+  .header-left {
+    gap: 1.5rem;
   }
   .header-actions {
     gap: 0.5rem;
