@@ -69,7 +69,7 @@ export type SortOrder = 'asc' | 'desc'
 export type SortField = 'order' | 'name' | 'createdAt' | 'visitCount' | 'lastVisited'
 
 export interface ModalPayloads {
-  addSite?: Website
+  addSite?: { website?: Website; categoryId?: string }
   manageCategories?: undefined
   manageTags?: undefined
   settings?: undefined

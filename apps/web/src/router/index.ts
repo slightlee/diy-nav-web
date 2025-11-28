@@ -29,25 +29,24 @@ const router = createRouter({
     {
       path: '/home',
       name: 'home',
-      component: () => import('@/views/Home.vue'),
-      meta: { multiView: ['recent', 'favorite'] }
+      component: () => import('@/views/DashboardView.vue')
     },
     {
       path: '/recent',
       name: 'recent',
-      component: () => import('@/views/Home.vue'),
+      component: () => import('@/views/WebsiteListView.vue'),
       meta: { fixedView: 'recent' }
     },
     {
       path: '/favorite',
       name: 'favorite',
-      component: () => import('@/views/Home.vue'),
+      component: () => import('@/views/WebsiteListView.vue'),
       meta: { fixedView: 'favorite' }
     },
     {
       path: '/all',
       name: 'all',
-      component: () => import('@/views/Home.vue'),
+      component: () => import('@/views/WebsiteListView.vue'),
       meta: { fixedView: 'all' }
     }
   ]

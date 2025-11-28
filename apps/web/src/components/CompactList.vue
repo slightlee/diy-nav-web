@@ -34,7 +34,7 @@
         </button>
       </div>
     </div>
-    <Teleport v-if="pagerTarget && totalPages > 1" :to="pagerTarget">
+    <Teleport v-if="isMounted && pagerTarget && allList.length > 0" :to="pagerTarget">
       <div class="pager-portal-content">
         <button
           class="pager-btn"
@@ -73,7 +73,7 @@
  *
  * @emits pageCount - 当前页显示的网站数量变化时触发
  */
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { EmptyState } from '@nav/ui'
 import { useWebsiteStore } from '@/stores/website'
 import { useWebsiteDrag } from '@/composables/useWebsiteDrag'
@@ -91,6 +91,11 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{ (e: 'pageCount', count: number): void }>()
 const websiteStore = useWebsiteStore()
 const isFavoriteView = computed(() => props.fixedView === 'favorite')
+const isMounted = ref(false)
+
+onMounted(() => {
+  isMounted.value = true
+})
 
 const { draggingId, dragOverId, onDragStart, onDragOver, onDrop, onDragEnd } = useWebsiteDrag(
   () => props.fixedView
@@ -129,14 +134,11 @@ const pagedList = computed<Website[]>(() => {
   return allList.value.slice(start, start + pageSize.value)
 })
 
-watch(allList, () => {
-  if (currentPage.value > totalPages.value) page.value = 1
-})
-
 watch(
-  pagedList,
-  list => {
-    emit('pageCount', list.length)
+  allList,
+  () => {
+    if (currentPage.value > totalPages.value) page.value = 1
+    emit('pageCount', allList.value.length)
   },
   { immediate: true }
 )
