@@ -351,7 +351,28 @@ const onFavoriteToggle = (id: string) => {
   flex-direction: column;
   gap: 1.5rem;
   position: sticky;
-  top: 1rem;
+  top: 80px; // Header (64px) + gap (16px)
+  max-height: calc(100vh - 80px - 1rem);
+  overflow-y: auto;
+  z-index: 90;
+
+  // Hide scrollbar for cleaner look but keep functionality
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--border-tile);
+    border-radius: 4px;
+
+    &:hover {
+      background-color: var(--text-muted);
+    }
+  }
 }
 
 .filter-group {
