@@ -290,15 +290,18 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 .website-card {
   position: relative;
-  background-color: var(--color-white);
+  background-color: var(--bg-card);
   border-radius: 12px; // Reduced radius
-  border: 1px solid transparent;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: 1px solid var(--border-tile);
+  transition:
+    background-color 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+    box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+    transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 
   &--clickable {
     cursor: pointer;
@@ -306,7 +309,8 @@ const handleKeydown = (event: KeyboardEvent) => {
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-card-hover);
+    border-color: var(--border-tile-hover);
     z-index: 1;
 
     .website-card__actions {
@@ -322,6 +326,19 @@ const handleKeydown = (event: KeyboardEvent) => {
   &--loading {
     pointer-events: none;
     opacity: 0.8;
+  }
+}
+
+:global([data-theme='dark']) .website-card {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.3),
+    0 2px 4px -1px rgba(0, 0, 0, 0.15);
+
+  &:hover {
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.4),
+      0 4px 6px -2px rgba(0, 0, 0, 0.2);
+    border-color: var(--color-primary);
   }
 }
 
@@ -517,7 +534,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: var(--color-white);
+  background-color: var(--bg-card);
   padding: 1rem; // Matched padding
   z-index: 20;
   display: flex;

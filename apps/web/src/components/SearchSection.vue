@@ -291,20 +291,30 @@ const onFavoriteToggle = (id: string) => {
 }
 
 :deep(.main-search-input .base-input__wrapper) {
-  background-color: var(--color-white);
-  border: 1px solid transparent;
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-tile);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   border-radius: 999px;
   padding-left: 1rem;
-  transition: all 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
 
   &:hover {
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
   }
 
   &.base-input__wrapper--focused {
-    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.1);
-    border-color: rgba(37, 99, 235, 0.2);
+    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.15);
+    border-color: var(--color-primary);
+  }
+}
+
+:global([data-theme='dark']) :deep(.main-search-input .base-input__wrapper) {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+
+  &.base-input__wrapper--focused {
+    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.25);
   }
 }
 
@@ -334,7 +344,7 @@ const onFavoriteToggle = (id: string) => {
 .sidebar-filters {
   width: 260px;
   flex-shrink: 0;
-  background-color: var(--color-white);
+  background-color: var(--bg-panel);
   border-radius: 16px;
   padding: 1.25rem;
   display: flex;
@@ -445,7 +455,7 @@ const onFavoriteToggle = (id: string) => {
 }
 
 .selected-conditions-bar {
-  background-color: var(--color-white);
+  background-color: var(--bg-panel);
   border-radius: 12px;
   padding: 12px 16px;
   display: flex;
@@ -559,7 +569,7 @@ const onFavoriteToggle = (id: string) => {
   justify-content: center;
   height: 100%;
   min-height: 160px;
-  background-color: var(--color-white);
+  background-color: var(--bg-panel);
   border: 1px dashed var(--border-tile);
   border-radius: 16px;
   cursor: pointer;

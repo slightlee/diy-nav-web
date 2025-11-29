@@ -95,16 +95,19 @@ const onDrop = () => {
 @use '@/styles/variables' as *;
 
 .tag-item {
-  background-color: var(--color-white);
+  background-color: var(--bg-panel);
   border: 1px solid var(--border-tile);
   border-radius: 12px;
   padding: 12px 16px;
-  transition: all 0.2s;
+  transition:
+    background-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.2s;
   cursor: grab;
 
   &:hover {
-    border-color: var(--color-primary);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-color: var(--border-tile-hover);
+    box-shadow: var(--shadow-sm);
     transform: translateY(-1px);
 
     .drag-handle {

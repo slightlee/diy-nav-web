@@ -81,6 +81,9 @@ const tagSelectOpen = ref(false)
   border-radius: 18px;
   padding: 24px;
   box-shadow: var(--shadow-card);
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .section-title-row {

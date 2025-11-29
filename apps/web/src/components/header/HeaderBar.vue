@@ -172,9 +172,8 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   position: sticky;
   top: 0;
   z-index: 100;
-  transition:
-    background 0.2s ease-out,
-    border-color 0.2s ease-out;
+  border-bottom: 1px solid var(--border-tile);
+  transition: background 0.2s ease-out;
 }
 .header-content {
   max-width: var(--container-max-width);
