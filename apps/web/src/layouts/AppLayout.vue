@@ -17,7 +17,7 @@
     <BaseModal
       v-if="uiStore.modalState.addSite"
       :is-open="uiStore.modalState.addSite"
-      title="添加新网站"
+      :title="addSiteTitle"
       @close="closeAddSite"
     >
       <AddSiteModal
@@ -68,6 +68,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { BaseModal } from '@nav/ui'
 import HeaderBar from '@/components/header/HeaderBar.vue'
@@ -79,6 +80,10 @@ import DataManagementModal from '@/components/modals/DataManagementModal.vue'
 import ToastContainer from '@/components/toast/ToastContainer.vue'
 
 const uiStore = useUIStore()
+
+const addSiteTitle = computed(() => {
+  return uiStore.getModalData('addSite')?.website ? '编辑网站' : '添加网站'
+})
 
 const handleAddSite = () => {
   uiStore.openModal('addSite', {})

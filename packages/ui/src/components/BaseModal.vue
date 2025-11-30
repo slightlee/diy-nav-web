@@ -151,17 +151,17 @@ onUnmounted(() => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: var(--z-index-modal);
   padding: var(--spacing-lg);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
 }
 .modal-container {
-  background-color: var(--color-neutral-50);
-  border-radius: var(--radius-lg);
+  background-color: #fff;
+  border-radius: 16px;
   box-shadow: var(--shadow-xl);
   max-height: 90vh;
   display: flex;

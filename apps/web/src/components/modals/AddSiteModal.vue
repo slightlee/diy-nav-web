@@ -32,9 +32,9 @@
           label="网站描述"
           type="textarea"
           placeholder="简单描述这个网站的用途..."
-          :maxlength="200"
+          :maxlength="100"
           show-char-count
-          :rows="3"
+          :rows="2"
           autosize
         />
       </div>
@@ -61,7 +61,6 @@
             type="button"
             class="tag-selector__item"
             :class="{ 'tag-selector__item--active': formData.tagIds.includes(tag.id) }"
-            :style="{ '--tag-color': tag.color }"
             @click="toggleTag(tag.id)"
           >
             {{ tag.name }}
@@ -71,41 +70,74 @@
 
       <div class="add-site-modal__form-group">
         <label class="add-site-modal__label">网站图标</label>
-        <div class="favicon-selector">
-          <label class="favicon-option">
-            <input v-model="faviconSource" type="radio" value="api" />
-            <div class="favicon-card">
+        <div class="favicon-section">
+          <div class="favicon-main">
+            <!-- Left: Preview -->
+            <div class="favicon-preview-box">
               <img
-                v-if="serviceFavicon"
-                :src="serviceFavicon"
-                alt="接口图标"
-                class="favicon-img"
-                @error="onFaviconError('api')"
+                v-if="finalFaviconUrl"
+                :src="finalFaviconUrl"
+                class="favicon-preview-img"
+                alt="Favicon"
               />
-              <i v-else class="fas fa-icons favicon-placeholder" />
-              <span class="favicon-text">接口获取图标</span>
+              <div v-else class="favicon-preview-letter" :style="{ backgroundColor: '#111827' }">
+                {{ letterFaviconChar }}
+              </div>
             </div>
-          </label>
-          <label class="favicon-option">
-            <input v-model="faviconSource" type="radio" value="default" />
-            <div class="favicon-card">
-              <img :src="letterFavicon" alt="默认图标" class="favicon-img" />
-              <span class="favicon-text">默认图标</span>
+
+            <!-- Right: Controls -->
+            <div class="favicon-buttons">
+              <button
+                type="button"
+                class="favicon-btn favicon-btn--api"
+                :class="{ 'favicon-btn--active': faviconSource === 'api' }"
+                @click="handleFaviconSourceChange('api')"
+              >
+                <i class="fas fa-search" />
+                <span>自动获取图标</span>
+              </button>
+
+              <button
+                type="button"
+                class="favicon-btn favicon-btn--default"
+                :class="{ 'favicon-btn--active': faviconSource === 'default' }"
+                @click="handleFaviconSourceChange('default')"
+              >
+                <i class="fas fa-rotate-right" />
+                <span>使用默认图标</span>
+              </button>
             </div>
-          </label>
+          </div>
+
+          <div class="favicon-info">
+            <div class="favicon-source-text">
+              当前图标来源：{{ faviconSource === 'api' ? '自动获取' : '默认图标' }}
+            </div>
+            <div class="favicon-help-text">
+              根据网站地址自动尝试获取 favicon，如失败，可使用默认首字母图标。
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="add-site-modal__actions">
-        <BaseButton variant="ghost" html-type="button" @click="handleClose">取消</BaseButton>
+        <BaseButton
+          variant="ghost"
+          html-type="button"
+          class="cancel-btn modal-action-btn"
+          @click="handleClose"
+        >
+          取消
+        </BaseButton>
         <BaseButton
           variant="primary"
           :loading="submitting"
           :disabled="!isFormValid"
           html-type="submit"
+          class="modal-action-btn"
         >
           <i class="fas fa-save" />
-          {{ isEditMode ? '保存修改' : '添加网站' }}
+          {{ '保存修改' }}
         </BaseButton>
       </div>
     </form>
@@ -118,7 +150,7 @@ import { useWebsiteStore } from '@/stores/website'
 import { useCategoryStore } from '@/stores/category'
 import { useTagStore } from '@/stores/tag'
 import { useUIStore } from '@/stores/ui'
-import { formatUrl, getLetterFavicon, isValidUrl, fetchIconFromApi } from '@/utils/helpers'
+import { formatUrl, isValidUrl, fetchIconFromApi } from '@/utils/helpers'
 import { BaseInput, BaseButton } from '@nav/ui'
 import type { Website } from '@/types'
 
@@ -191,8 +223,8 @@ const validateField = (field: string) => {
       }
       break
     case 'description':
-      if (formData.value.description && formData.value.description.length > 200) {
-        errors.value.description = '描述不能超过200个字符'
+      if (formData.value.description && formData.value.description.length > 100) {
+        errors.value.description = '描述不能超过100个字符'
       } else {
         delete errors.value.description
       }
@@ -269,7 +301,7 @@ const handleSubmit = async () => {
       description: formData.value.description.trim(),
       categoryId: formData.value.categoryId,
       tagIds: [...formData.value.tagIds],
-      favicon: iconUrl || selectedFavicon.value || undefined,
+      favicon: iconUrl || undefined,
       visitCount: existing?.visitCount ?? 0,
       isOnline: true,
       createdAt: existing?.createdAt ?? new Date(),
@@ -303,21 +335,23 @@ const handleClose = () => {
 }
 
 const faviconSource = ref<'default' | 'api'>('default')
-const serviceFavicon = computed(() => apiFaviconUrl.value)
-const letterFavicon = computed(() => {
+
+const letterFaviconChar = computed(() => {
   const n = formData.value.name?.trim()
-  if (n && n.length > 0) return getLetterFavicon(n, 64)
+  if (n && n.length > 0) return n[0].toUpperCase()
   try {
     const u = new URL(formatUrl(formData.value.url))
-    return getLetterFavicon(u.hostname, 64)
+    return u.hostname[0].toUpperCase()
   } catch {
-    return getLetterFavicon('W', 64)
+    return 'W'
   }
 })
-const selectedFavicon = computed(() => {
-  return faviconSource.value === 'api' && apiFaviconUrl.value
-    ? apiFaviconUrl.value
-    : letterFavicon.value
+
+const finalFaviconUrl = computed(() => {
+  if (faviconSource.value === 'api' && apiFaviconUrl.value) {
+    return apiFaviconUrl.value
+  }
+  return null
 })
 
 // 初始化表单数据
@@ -367,15 +401,12 @@ const toggleTag = (tagId: string) => {
   else formData.value.tagIds.push(tagId)
 }
 
-// favicon错误处理
-const onFaviconError = (type: 'default' | 'api') => {
-  if (type === 'api') {
-    faviconSource.value = 'default'
-  }
-}
-
 const categories = computed(() => categoryStore.categories)
 const tags = computed(() => tagStore.tags)
+
+const handleFaviconSourceChange = (source: 'api' | 'default') => {
+  faviconSource.value = source
+}
 </script>
 
 <style scoped lang="scss">
@@ -384,25 +415,25 @@ const tags = computed(() => tagStore.tags)
 
 .add-site-modal {
   width: 100%;
-  max-width: 600px;
+  max-width: 640px;
 }
 
 .add-site-modal__form {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: 12px;
 }
 
 .add-site-modal__form-group {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: 4px;
 }
 
 .add-site-modal__label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-neutral-800);
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
 }
 
 .add-site-modal__label--required::after {
@@ -411,13 +442,13 @@ const tags = computed(() => tagStore.tags)
 }
 
 .add-site-modal__select {
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 10px 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background-color: var(--color-neutral-100);
+  border-radius: 8px;
+  background-color: #fff;
   color: var(--color-neutral-800);
-  font-size: var(--font-size-base);
-  min-height: 40px;
+  font-size: 14px;
+  min-height: 42px;
   transition: all var(--transition-fast);
 
   &:hover {
@@ -434,103 +465,201 @@ const tags = computed(() => tagStore.tags)
 .add-site-modal__error {
   color: var(--color-error);
   font-size: var(--font-size-xs);
+  margin-top: 4px;
 }
 
 .tag-selector {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-xs);
+  gap: 8px;
 }
 
 .tag-selector__item {
-  padding: 6px 12px;
-  border-radius: var(--radius-pill);
-  font-size: var(--font-size-sm);
-  background-color: var(--color-neutral-100);
-  color: var(--color-neutral-700);
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 13px;
+  background-color: #f3f4f6;
+  color: #4b5563;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s;
+  font-weight: 500;
 
   &:hover {
-    transform: scale(1.02);
+    background-color: #e5e7eb;
   }
 }
 
 .tag-selector__item--active {
-  color: var(--color-white);
-  border-color: transparent;
-  background-color: var(--tag-color);
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+  border-color: rgba(59, 130, 246, 0.2);
+  font-weight: 600;
 }
 
-.favicon-selector {
+.favicon-section {
   display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: var(--spacing-sm);
+  flex-direction: column;
+  gap: 12px;
 }
 
-.favicon-option {
+.favicon-main {
   display: flex;
+  gap: 12px;
   align-items: flex-start;
-  gap: var(--spacing-sm);
-  cursor: pointer;
 }
 
-.favicon-option input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
+.favicon-preview-box {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.favicon-card {
+.favicon-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background-color: #fff;
+}
+
+.favicon-preview-letter {
+  width: 100%;
+  height: 100%;
   display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
-}
-
-.favicon-option input:checked + .favicon-card {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.12);
-  background-color: rgba(var(--color-primary-rgb), 0.06);
-}
-
-.favicon-card:hover {
-  border-color: var(--color-neutral-300);
-}
-
-.favicon-img {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-}
-
-.favicon-placeholder {
-  width: 24px;
-  height: 24px;
-  display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-neutral-600);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
 }
 
-.favicon-text {
-  font-size: var(--font-size-sm);
-  color: var(--color-neutral-700);
+.favicon-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.favicon-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.favicon-source-text {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.favicon-help-text {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.favicon-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #e5e7eb;
+  background-color: #fff;
+  color: #4b5563;
+  font-weight: 500;
+  min-height: 36px;
+
+  i {
+    font-size: 14px;
+  }
+
+  &:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+  }
+}
+
+.default-icon-symbol {
+  font-family: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.favicon-btn--active {
+  &.favicon-btn--api {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+    color: #fff;
+
+    &:hover {
+      background-color: #2563eb;
+      border-color: #2563eb;
+    }
+  }
+
+  &.favicon-btn--default {
+    background-color: #fff;
+    border-color: #3b82f6;
+    color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+
+    &:hover {
+      background-color: #eff6ff;
+    }
+  }
 }
 
 .add-site-modal__actions {
   display: flex;
-  gap: var(--spacing-md);
+  gap: 12px;
   justify-content: flex-end;
+  margin-top: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
 }
+
+.cancel-btn {
+  color: #6b7280 !important;
+
+  &:hover {
+    background-color: #f3f4f6 !important;
+    color: #374151 !important;
+  }
+}
+
+.modal-action-btn {
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 16px !important;
+  font-size: 14px !important;
+}
+
 @include mobile {
   .add-site-modal__select {
     min-height: 44px;
+  }
+
+  .favicon-selector {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .favicon-btn {
+    justify-content: center;
   }
 }
 </style>
