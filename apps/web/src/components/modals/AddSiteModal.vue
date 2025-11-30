@@ -433,7 +433,7 @@ const handleFaviconSourceChange = (source: 'api' | 'default') => {
 .add-site-modal__label {
   font-size: 14px;
   font-weight: 500;
-  color: #374151;
+  color: var(--text-main);
 }
 
 .add-site-modal__label--required::after {
@@ -445,8 +445,8 @@ const handleFaviconSourceChange = (source: 'api' | 'default') => {
   padding: 10px 12px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  background-color: #fff;
-  color: var(--color-neutral-800);
+  background-color: var(--bg-panel);
+  color: var(--text-main);
   font-size: 14px;
   min-height: 42px;
   transition: all var(--transition-fast);
@@ -478,15 +478,15 @@ const handleFaviconSourceChange = (source: 'api' | 'default') => {
   padding: 4px 12px;
   border-radius: 9999px;
   font-size: 13px;
-  background-color: #f3f4f6;
-  color: #4b5563;
+  background-color: var(--bg-tile);
+  color: var(--text-secondary);
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.2s;
   font-weight: 500;
 
   &:hover {
-    background-color: #e5e7eb;
+    background-color: var(--bg-tile-hover);
   }
 }
 
@@ -522,7 +522,7 @@ const handleFaviconSourceChange = (source: 'api' | 'default') => {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  background-color: #fff;
+  background-color: var(--bg-tile);
 }
 
 .favicon-preview-letter {
@@ -559,12 +559,12 @@ const handleFaviconSourceChange = (source: 'api' | 'default') => {
 
 .favicon-source-text {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
 .favicon-help-text {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .favicon-btn {
@@ -576,9 +576,9 @@ const handleFaviconSourceChange = (source: 'api' | 'default') => {
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
-  border: 1px solid #e5e7eb;
-  background-color: #fff;
-  color: #4b5563;
+  border: 1px solid var(--border-tile);
+  background-color: var(--bg-panel);
+  color: var(--text-secondary);
   font-weight: 500;
   min-height: 36px;
 
@@ -587,8 +587,8 @@ const handleFaviconSourceChange = (source: 'api' | 'default') => {
   }
 
   &:hover {
-    background-color: #f9fafb;
-    border-color: #d1d5db;
+    background-color: var(--bg-tile-hover);
+    border-color: var(--border-tile-hover);
   }
 }
 
@@ -612,13 +612,13 @@ const handleFaviconSourceChange = (source: 'api' | 'default') => {
   }
 
   &.favicon-btn--default {
-    background-color: #fff;
+    background-color: var(--bg-panel);
     border-color: #3b82f6;
     color: #3b82f6;
     box-shadow: 0 0 0 1px #3b82f6;
 
     &:hover {
-      background-color: #eff6ff;
+      background-color: rgba(59, 130, 246, 0.05);
     }
   }
 }
@@ -633,11 +633,11 @@ const handleFaviconSourceChange = (source: 'api' | 'default') => {
 }
 
 .cancel-btn {
-  color: #6b7280 !important;
+  color: var(--text-secondary) !important;
 
   &:hover {
-    background-color: #f3f4f6 !important;
-    color: #374151 !important;
+    background-color: var(--bg-tile-hover) !important;
+    color: var(--text-main) !important;
   }
 }
 

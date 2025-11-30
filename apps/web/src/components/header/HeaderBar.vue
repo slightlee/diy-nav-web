@@ -174,6 +174,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   z-index: 100;
   border-bottom: 1px solid var(--border-tile);
   transition: background 0.2s ease-out;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 .header-content {
   max-width: var(--container-max-width);

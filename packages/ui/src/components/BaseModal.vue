@@ -151,16 +151,19 @@ onUnmounted(() => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(15, 23, 42, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: var(--z-index-modal);
   padding: var(--spacing-lg);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(1px);
+}
+:global([data-theme='dark']) .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
 }
 .modal-container {
-  background-color: #fff;
+  background-color: var(--bg-panel);
   border-radius: 16px;
   box-shadow: var(--shadow-xl);
   max-height: 90vh;
