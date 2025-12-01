@@ -168,7 +168,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 
 .header {
   height: 64px;
-  background-color: var(--bg-body);
+  background-color: var(--bg-panel);
   position: sticky;
   top: 0;
   z-index: 100;
