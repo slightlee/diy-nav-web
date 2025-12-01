@@ -353,12 +353,20 @@ const onFavoriteToggle = (id: string) => {
   position: sticky;
   top: 80px; // Header (64px) + gap (16px)
   max-height: calc(100vh - 80px - 1rem);
-  overflow-y: auto;
+  overflow: hidden auto;
   z-index: 90;
 
-  // Hide scrollbar for cleaner look but keep functionality
+  // 优化的滚动条样式 - 只在需要时显示
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+
+  // 悬停时显示滚动条
+  &:hover {
+    scrollbar-color: rgba(0, 0, 0, 0.08) transparent;
+  }
+
   &::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
   }
 
   &::-webkit-scrollbar-track {
@@ -366,11 +374,46 @@ const onFavoriteToggle = (id: string) => {
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: var(--border-tile);
-    border-radius: 4px;
+    background-color: transparent;
+    border-radius: 10px;
+    transition: background-color 0.2s ease;
+  }
+
+  // 悬停时显示滚动条
+  &:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.08);
 
     &:hover {
-      background-color: var(--text-muted);
+      background-color: rgba(0, 0, 0, 0.15);
+    }
+
+    &:active {
+      background-color: rgba(0, 0, 0, 0.2);
+    }
+  }
+}
+
+// 暗色主题侧边栏滚动条
+:global([data-theme='dark']) .sidebar-filters {
+  scrollbar-color: transparent transparent;
+
+  &:hover {
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: transparent;
+  }
+
+  &:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.18);
+    }
+
+    &:active {
+      background-color: rgba(255, 255, 255, 0.25);
     }
   }
 }
