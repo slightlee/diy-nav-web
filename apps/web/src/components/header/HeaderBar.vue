@@ -360,6 +360,9 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   width: 16px;
   text-align: center;
 }
+.dropdown-item :deep(.button-text) {
+  overflow: visible;
+}
 .dropdown-divider {
   height: 1px;
   background-color: var(--border-tile);
