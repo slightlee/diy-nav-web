@@ -16,7 +16,8 @@ export class IconService {
   ) {}
 
   async getIconUrl(
-    domain: string
+    domain: string,
+    forceRefresh: boolean = false
   ): Promise<{
     url: string
     hit: boolean
@@ -25,15 +26,17 @@ export class IconService {
   }> {
     const normalized = this.normalizeDomain(domain)
 
-    // 1) 先按常见后缀检查是否已存在（命中即返回）
-    const candidateExts = ['ico', 'png', 'jpg', 'jpeg', 'svg']
-    for (const ext of candidateExts) {
-      const key = `${normalized}.${ext}`
-      const url = await this.storage.exists(key)
-      if (url) return { url, hit: true, source: 'storage' }
+    // 1) 如果不是强制刷新,先检查缓存
+    if (!forceRefresh) {
+      const candidateExts = ['ico', 'png', 'jpg', 'jpeg', 'svg']
+      for (const ext of candidateExts) {
+        const key = `${normalized}.${ext}`
+        const url = await this.storage.exists(key)
+        if (url) return { url, hit: true, source: 'storage' }
+      }
     }
 
-    // 2) 未命中：聚合第三方提供者抓取，并记录抓取耗时
+    // 2) 未命中或强制刷新：聚合第三方提供者抓取，并记录抓取耗时
     const tFetchStart = performance.now()
     const fetched = await fetchIconByProviders(normalized, this.providers)
     const fetchMs = Math.round(performance.now() - tFetchStart)

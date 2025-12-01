@@ -13,11 +13,16 @@ export class ApiClient {
     return ApiClient.instance
   }
 
-  async getIcon(params: { domain?: string; url?: string }): Promise<GetIconResponse | null> {
+  async getIcon(params: {
+    domain?: string
+    url?: string
+    refresh?: boolean
+  }): Promise<GetIconResponse | null> {
     try {
       const url = new URL(`${API_BASE_URL}/icon`)
       if (params.domain) url.searchParams.append('domain', params.domain)
       if (params.url) url.searchParams.append('url', params.url)
+      if (params.refresh) url.searchParams.append('refresh', 'true')
 
       const res = await fetch(url.toString(), {
         method: 'GET',

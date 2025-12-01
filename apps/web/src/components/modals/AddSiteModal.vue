@@ -74,8 +74,11 @@
           <div class="favicon-main">
             <!-- Left: Preview -->
             <div class="favicon-preview-box">
+              <div v-if="faviconLoading" class="favicon-preview-loading">
+                <i class="fas fa-spinner fa-spin" />
+              </div>
               <img
-                v-if="finalFaviconUrl"
+                v-else-if="finalFaviconUrl"
                 :src="finalFaviconUrl"
                 class="favicon-preview-img"
                 alt="Favicon"
@@ -91,6 +94,7 @@
                 type="button"
                 class="favicon-btn favicon-btn--api"
                 :class="{ 'favicon-btn--active': faviconSource === 'api' }"
+                :disabled="faviconLoading || !formData.url.trim()"
                 @click="handleFaviconSourceChange('api')"
               >
                 <i class="fas fa-search" />
@@ -101,6 +105,7 @@
                 type="button"
                 class="favicon-btn favicon-btn--default"
                 :class="{ 'favicon-btn--active': faviconSource === 'default' }"
+                :disabled="faviconLoading"
                 @click="handleFaviconSourceChange('default')"
               >
                 <i class="fas fa-rotate-right" />
@@ -110,11 +115,8 @@
           </div>
 
           <div class="favicon-info">
-            <div class="favicon-source-text">
-              当前图标来源：{{ faviconSource === 'api' ? '自动获取' : '默认图标' }}
-            </div>
             <div class="favicon-help-text">
-              根据网站地址自动尝试获取 favicon，如失败，可使用默认首字母图标。
+              输入网址后自动获取图标(优先使用缓存),点击"自动获取图标"按钮可强制刷新最新图标。
             </div>
           </div>
         </div>
@@ -270,7 +272,8 @@ const handleUrlBlur = async () => {
   formData.value.url = formatUrl(normalized)
   validateField('url')
   faviconLoading.value = true
-  const fetched = await fetchIconFromApi(formData.value.url)
+  // 失焦自动获取,不带refresh,优先使用缓存
+  const fetched = await fetchIconFromApi(formData.value.url, false)
   apiFaviconUrl.value = fetched || ''
   faviconSource.value = fetched ? 'api' : 'default'
   faviconLoading.value = false
@@ -288,11 +291,17 @@ const handleSubmit = async () => {
     const existing = props.website
     let iconUrl: string | undefined
     if (faviconSource.value === 'api') {
-      faviconLoading.value = true
-      const fetched = await fetchIconFromApi(formData.value.url)
-      apiFaviconUrl.value = fetched || ''
-      iconUrl = fetched || undefined
-      faviconLoading.value = false
+      // 优先使用已获取的图标URL,避免重复调用API
+      if (apiFaviconUrl.value) {
+        iconUrl = apiFaviconUrl.value
+      } else {
+        // 只在没有缓存时才重新获取,不带refresh
+        faviconLoading.value = true
+        const fetched = await fetchIconFromApi(formData.value.url, false)
+        apiFaviconUrl.value = fetched || ''
+        iconUrl = fetched || undefined
+        faviconLoading.value = false
+      }
     }
 
     const websiteData = {
@@ -364,8 +373,14 @@ const initializeForm = () => {
       categoryId: props.website.categoryId,
       tagIds: [...props.website.tagIds]
     }
-    faviconSource.value =
-      props.website.favicon && props.website.favicon.includes('google.com/s2') ? 'api' : 'default'
+    // 如果网站有favicon,说明是通过API获取的
+    if (props.website.favicon) {
+      faviconSource.value = 'api'
+      apiFaviconUrl.value = props.website.favicon
+    } else {
+      faviconSource.value = 'default'
+      apiFaviconUrl.value = ''
+    }
   } else {
     formData.value = {
       name: '',
@@ -374,7 +389,8 @@ const initializeForm = () => {
       categoryId: props.contextCategoryId || '',
       tagIds: []
     }
-    faviconSource.value = 'default'
+    faviconSource.value = 'api' // 默认选中自动获取图标
+    apiFaviconUrl.value = ''
   }
 
   errors.value = {}
@@ -386,8 +402,9 @@ watch(
   () => faviconSource.value,
   async v => {
     if (v === 'api' && formData.value.url.trim()) {
+      // watch触发时不带refresh,使用缓存
       faviconLoading.value = true
-      const fetched = await fetchIconFromApi(formData.value.url)
+      const fetched = await fetchIconFromApi(formData.value.url, false)
       apiFaviconUrl.value = fetched || ''
       faviconSource.value = fetched ? 'api' : 'default'
       faviconLoading.value = false
@@ -404,8 +421,17 @@ const toggleTag = (tagId: string) => {
 const categories = computed(() => categoryStore.categories)
 const tags = computed(() => tagStore.tags)
 
-const handleFaviconSourceChange = (source: 'api' | 'default') => {
+const handleFaviconSourceChange = async (source: 'api' | 'default') => {
   faviconSource.value = source
+
+  // 点击按钮时,带refresh=true强制刷新最新图标
+  if (source === 'api' && formData.value.url.trim()) {
+    faviconLoading.value = true
+    const fetched = await fetchIconFromApi(formData.value.url, true)
+    apiFaviconUrl.value = fetched || ''
+    faviconSource.value = fetched ? 'api' : 'default'
+    faviconLoading.value = false
+  }
 }
 </script>
 
@@ -546,6 +572,17 @@ const handleFaviconSourceChange = (source: 'api' | 'default') => {
     sans-serif;
 }
 
+.favicon-preview-loading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-tile);
+  color: var(--color-primary);
+  font-size: 18px;
+}
+
 .favicon-buttons {
   display: flex;
   gap: 12px;
@@ -554,12 +591,38 @@ const handleFaviconSourceChange = (source: 'api' | 'default') => {
 .favicon-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
 }
 
 .favicon-source-text {
   font-size: 13px;
   color: var(--text-secondary);
+}
+
+.favicon-options {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.favicon-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+
+  input[type='checkbox'] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    color: var(--text-main);
+  }
 }
 
 .favicon-help-text {
@@ -586,9 +649,14 @@ const handleFaviconSourceChange = (source: 'api' | 'default') => {
     font-size: 14px;
   }
 
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: var(--bg-tile-hover);
     border-color: var(--border-tile-hover);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 

@@ -27,10 +27,17 @@ export const formatUrl = (url: string): string => {
   return url
 }
 
-export const fetchIconFromApi = async (url: string): Promise<string | null> => {
+export const fetchIconFromApi = async (
+  url: string,
+  refresh: boolean = false
+): Promise<string | null> => {
   try {
     const u = new URL(formatUrl(url))
-    const res = await apiClient.getIcon({ url: u.href })
+    const params = new URLSearchParams({ url: u.href })
+    if (refresh) {
+      params.append('refresh', 'true')
+    }
+    const res = await apiClient.getIcon({ url: u.href, refresh })
     return res?.url || null
   } catch {
     return null

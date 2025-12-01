@@ -67,7 +67,11 @@ app.get('/readyz', async () => ({ status: 'ready' }))
 // API Routes
 const iconQuerySchema = z.object({
   domain: z.string().optional(),
-  url: z.string().optional()
+  url: z.string().optional(),
+  refresh: z
+    .string()
+    .optional()
+    .transform(val => val === 'true' || val === '1')
 })
 
 const iconResponseSchema = {
@@ -105,7 +109,7 @@ app.get(
   async (req, reply) => {
     // Explicitly cast if inference fails, though it should work with ZodTypeProvider
     const query = req.query as z.infer<typeof iconQuerySchema>
-    const { domain, url } = query
+    const { domain, url, refresh } = query
     const target = domain || url
 
     if (!target) {
@@ -113,7 +117,7 @@ app.get(
     }
 
     try {
-      const result = await iconService.getIconUrl(target)
+      const result = await iconService.getIconUrl(target, refresh || false)
 
       return {
         url: result.url,
