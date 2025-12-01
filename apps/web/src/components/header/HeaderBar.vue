@@ -70,15 +70,6 @@
             <i class="fas fa-cog" />
           </BaseButton>
           <div v-if="showSettingsDropdown" id="settings-menu" class="dropdown-menu" role="menu">
-            <BaseButton variant="ghost" block class="dropdown-item" @click="onManageCategories">
-              <i class="fas fa-folder-plus" />
-              管理分类
-            </BaseButton>
-            <BaseButton variant="ghost" block class="dropdown-item" @click="onManageTags">
-              <i class="fas fa-tags" />
-              管理标签
-            </BaseButton>
-            <div class="dropdown-divider" />
             <BaseButton variant="ghost" block class="dropdown-item" @click="onOpenDataManagement">
               <i class="fas fa-exchange-alt" />
               数据管理
@@ -99,13 +90,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useSettingsStore } from '@/stores/settings'
 import { BaseButton } from '@nav/ui'
 
-const emit = defineEmits([
-  'addSite',
-  'manageCategories',
-  'manageTags',
-  'openSettings',
-  'openDataManagement'
-])
+const emit = defineEmits(['addSite', 'openSettings', 'openDataManagement'])
 const settingsStore = useSettingsStore()
 const currentTheme = computed(() => settingsStore.settings.theme)
 const themeToggleIcon = computed(() =>
@@ -124,14 +109,6 @@ const hoveringTheme = ref(false)
 let clickTooltipTimer: number | undefined
 const toggleSettingsDropdown = () => {
   showSettingsDropdown.value = !showSettingsDropdown.value
-}
-const onManageCategories = () => {
-  emit('manageCategories')
-  showSettingsDropdown.value = false
-}
-const onManageTags = () => {
-  emit('manageTags')
-  showSettingsDropdown.value = false
 }
 const onOpenSettings = () => {
   emit('openSettings')

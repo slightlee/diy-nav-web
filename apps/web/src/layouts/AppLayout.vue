@@ -2,8 +2,6 @@
   <div class="app-container">
     <HeaderBar
       @add-site="handleAddSite"
-      @manage-categories="openManageCategories"
-      @manage-tags="openManageTags"
       @open-settings="openSettingsModal"
       @open-data-management="openDataManagement"
     />
@@ -93,8 +91,6 @@ const closeAddSite = () => {
   uiStore.closeModal('addSite')
 }
 
-const openManageCategories = () => uiStore.openModal('manageCategories')
-const openManageTags = () => uiStore.openModal('manageTags')
 const openSettingsModal = () => uiStore.openModal('settings')
 const openDataManagement = () => uiStore.openModal('dataManagement')
 </script>
