@@ -321,6 +321,52 @@
         </div>
       </template>
     </BaseModal>
+
+    <!-- Restore Backup Confirm Modal -->
+    <BaseModal
+      v-if="restoreConfirmOpen"
+      :is-open="restoreConfirmOpen"
+      title="恢复备份"
+      @close="closeRestoreConfirm"
+    >
+      <div class="danger-confirm__content">
+        <div class="danger-confirm__header">
+          <div class="danger-confirm__icon" style="color: var(--color-primary)">
+            <i class="fas fa-history" />
+          </div>
+          <div class="danger-confirm__title">确定要恢复此备份吗？</div>
+        </div>
+        <p v-if="backupToRestore" class="danger-confirm__list">
+          备份时间：{{ backupToRestore.time }}
+          <br />
+          恢复后，当前的所有数据将被此备份覆盖。
+        </p>
+      </div>
+      <template #footer>
+        <div class="danger-confirm__actions">
+          <BaseButton
+            variant="secondary"
+            size="sm"
+            shape="pill"
+            class="confirm-btn"
+            @click="closeRestoreConfirm"
+          >
+            取消
+          </BaseButton>
+          <BaseButton
+            variant="primary"
+            size="sm"
+            shape="pill"
+            class="confirm-btn"
+            :loading="restoring"
+            @click="confirmRestore"
+          >
+            <i class="fas fa-undo" />
+            恢复
+          </BaseButton>
+        </div>
+      </template>
+    </BaseModal>
   </div>
 </template>
 
@@ -367,6 +413,10 @@ let pendingImportData: {
 const deleteConfirmOpen = ref(false)
 const backupToDelete = ref<any>(null)
 const deleting = ref(false)
+
+const restoreConfirmOpen = ref(false)
+const backupToRestore = ref<any>(null)
+const restoring = ref(false)
 
 // Real History Data
 const backupHistory = ref<any[]>([])
@@ -432,10 +482,23 @@ const handleManualBackup = async () => {
   }
 }
 
-const handleRestore = async (item: any) => {
-  if (!confirm(`确定要恢复到 ${item.time} 的备份吗？当前数据将被覆盖！`)) return
+const handleRestore = (item: any) => {
+  backupToRestore.value = item
+  restoreConfirmOpen.value = true
+}
 
+const closeRestoreConfirm = () => {
+  restoreConfirmOpen.value = false
+  backupToRestore.value = null
+}
+
+const confirmRestore = async () => {
+  if (!backupToRestore.value || restoring.value) return
+
+  restoring.value = true
+  const item = backupToRestore.value
   const loading = uiStore.showLoading('正在恢复数据...')
+
   try {
     const res = await fetch(`${import.meta.env.VITE_ICON_API_URL}/api/backup/restore`, {
       method: 'POST',
@@ -452,6 +515,7 @@ const handleRestore = async (item: any) => {
       if (data.tags) tagStore.overwriteTags(data.tags)
 
       uiStore.showToast('恢复成功', 'success')
+      closeRestoreConfirm()
     } else {
       throw new Error(json.message)
     }
@@ -460,6 +524,7 @@ const handleRestore = async (item: any) => {
     uiStore.showToast('恢复失败，请重试', 'error')
   } finally {
     loading.close()
+    restoring.value = false
   }
 }
 
