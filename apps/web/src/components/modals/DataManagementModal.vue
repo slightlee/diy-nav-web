@@ -646,6 +646,65 @@ const confirmClearData = async () => {
   }
 }
 
+const handleExport = async () => {
+  if (exporting.value) return
+  exporting.value = true
+  try {
+    const data = websiteStore.exportData()
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `nav-backup-${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    uiStore.showToast('导出成功', 'success')
+  } catch (e) {
+    console.error(e)
+    uiStore.showToast('导出失败', 'error')
+  } finally {
+    exporting.value = false
+  }
+}
+
+const triggerFileImport = () => {
+  fileInputRef.value?.click()
+}
+
+const handleFileImport = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  if (!input.files?.length) return
+
+  const file = input.files[0]
+  importFileName.value = file.name
+
+  const reader = new FileReader()
+  reader.onload = e => {
+    try {
+      const json = JSON.parse(e.target?.result as string)
+      pendingImportData = json
+
+      // Calculate preview stats
+      importPreview.value = {
+        websites: json.websites?.length || 0,
+        categories: json.categories?.length || 0,
+        tags: json.tags?.length || 0
+      }
+
+      importConfirmOpen.value = true
+    } catch (e) {
+      console.error(e)
+      uiStore.showToast('文件格式错误', 'error')
+    }
+  }
+  reader.readAsText(file)
+
+  // Reset input
+  input.value = ''
+}
+
 onUnmounted(() => {
   if (countdownTimer) {
     clearInterval(countdownTimer)
