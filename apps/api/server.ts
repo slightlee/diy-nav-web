@@ -20,7 +20,7 @@ app.setSerializerCompiler(serializerCompiler)
 // Plugins
 await app.register(cors, {
   origin: '*',
-  methods: ['GET', 'HEAD', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
   allowedHeaders: ['content-type']
 })
 

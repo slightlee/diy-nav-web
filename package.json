@@ -25,6 +25,7 @@
     "build-only": "pnpm -C apps/web build",
     "api:build": "pnpm -C packages/config build && pnpm -C packages/icon-core build && pnpm -C apps/api build",
     "api:start": "pnpm -C apps/api start",
+    "api:dev": "pnpm -C apps/api dev",
     "preview-only": "pnpm -C apps/web preview",
     "stylelint": "stylelint \"apps/web/src/**/*.{vue,scss,css}\""
   },

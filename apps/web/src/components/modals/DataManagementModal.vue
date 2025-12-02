@@ -66,16 +66,16 @@
               <thead>
                 <tr>
                   <th>备份时间</th>
-                  <th>类型</th>
-                  <th>存储位置</th>
-                  <th>大小</th>
-                  <th class="text-right">操作</th>
+                  <th class="text-center">类型</th>
+                  <th class="text-center">存储位置</th>
+                  <th class="text-center">大小</th>
+                  <th class="text-center">操作</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="item in backupHistory" :key="item.id">
                   <td>{{ item.time }}</td>
-                  <td>
+                  <td class="text-center">
                     <span
                       class="badge"
                       :class="item.type === 'auto' ? 'badge-green' : 'badge-blue'"
@@ -83,10 +83,13 @@
                       {{ item.type === 'auto' ? '自动备份' : '手动备份' }}
                     </span>
                   </td>
-                  <td>{{ item.location }}</td>
-                  <td>{{ item.size }}</td>
-                  <td class="text-right">
-                    <button class="restore-link" @click="handleRestore(item)">恢复</button>
+                  <td class="text-center">{{ item.location }}</td>
+                  <td class="text-center">{{ item.size }}</td>
+                  <td class="text-center">
+                    <div class="action-buttons">
+                      <button class="restore-link" @click="handleRestore(item)">恢复</button>
+                      <button class="delete-link" @click="handleDelete(item)">删除</button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
@@ -272,6 +275,52 @@
         </div>
       </template>
     </BaseModal>
+
+    <!-- Delete Backup Confirm Modal -->
+    <BaseModal
+      v-if="deleteConfirmOpen"
+      :is-open="deleteConfirmOpen"
+      title="删除备份"
+      @close="closeDeleteConfirm"
+    >
+      <div class="danger-confirm__content">
+        <div class="danger-confirm__header">
+          <div class="danger-confirm__icon">
+            <i class="fas fa-exclamation-triangle" />
+          </div>
+          <div class="danger-confirm__title">确定要删除此备份吗？</div>
+        </div>
+        <p v-if="backupToDelete" class="danger-confirm__list">
+          备份时间：{{ backupToDelete.time }}
+          <br />
+          此操作无法撤销，删除后将无法恢复该备份数据。
+        </p>
+      </div>
+      <template #footer>
+        <div class="danger-confirm__actions">
+          <BaseButton
+            variant="secondary"
+            size="sm"
+            shape="pill"
+            class="confirm-btn"
+            @click="closeDeleteConfirm"
+          >
+            取消
+          </BaseButton>
+          <BaseButton
+            variant="danger"
+            size="sm"
+            shape="pill"
+            class="confirm-btn"
+            :loading="deleting"
+            @click="confirmDelete"
+          >
+            <i class="fas fa-trash" />
+            删除
+          </BaseButton>
+        </div>
+      </template>
+    </BaseModal>
   </div>
 </template>
 
@@ -314,6 +363,10 @@ let pendingImportData: {
   categories?: unknown[]
   tags?: unknown[]
 } | null = null
+
+const deleteConfirmOpen = ref(false)
+const backupToDelete = ref<any>(null)
+const deleting = ref(false)
 
 // Real History Data
 const backupHistory = ref<any[]>([])
@@ -407,6 +460,43 @@ const handleRestore = async (item: any) => {
     uiStore.showToast('恢复失败，请重试', 'error')
   } finally {
     loading.close()
+  }
+}
+
+const handleDelete = (item: any) => {
+  backupToDelete.value = item
+  deleteConfirmOpen.value = true
+}
+
+const closeDeleteConfirm = () => {
+  deleteConfirmOpen.value = false
+  backupToDelete.value = null
+}
+
+const confirmDelete = async () => {
+  if (!backupToDelete.value || deleting.value) return
+
+  deleting.value = true
+  const item = backupToDelete.value
+
+  try {
+    const res = await fetch(`${import.meta.env.VITE_ICON_API_URL}/api/backup/${item.id}`, {
+      method: 'DELETE'
+    })
+    const json = await res.json()
+
+    if (json.success) {
+      uiStore.showToast('删除成功', 'success')
+      await fetchBackups() // Refresh list
+      closeDeleteConfirm()
+    } else {
+      throw new Error(json.message)
+    }
+  } catch (e) {
+    console.error(e)
+    uiStore.showToast('删除失败，请重试', 'error')
+  } finally {
+    deleting.value = false
   }
 }
 
@@ -786,6 +876,10 @@ input:checked + .slider::before {
   .text-right {
     text-align: right;
   }
+
+  .text-center {
+    text-align: center;
+  }
 }
 
 .badge {
@@ -818,10 +912,31 @@ input:checked + .slider::before {
   cursor: pointer;
   font-size: var(--font-size-sm);
   padding: 0;
+  transition: opacity 0.2s;
 
   &:hover {
-    text-decoration: underline;
+    opacity: 0.8;
   }
+}
+
+.delete-link {
+  color: var(--color-neutral-400);
+  font-size: var(--font-size-sm);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+
+  &:hover {
+    color: var(--color-danger);
+  }
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
 }
 
 /* Danger Zone */

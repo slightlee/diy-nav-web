@@ -133,6 +133,31 @@ export class BackupService {
   }
 
   /**
+   * Delete a backup
+   */
+  async deleteBackup(userId: number, backupId: number): Promise<void> {
+    const backup = await this.d1.first<BackupRecord>(
+      `SELECT * FROM data_backups WHERE id = ? AND user_id = ?`,
+      [backupId, userId]
+    )
+
+    if (!backup) {
+      throw new Error('Backup not found')
+    }
+
+    // Delete from R2
+    try {
+      await this.r2.delete(backup.storage_key)
+    } catch (e) {
+      console.error(`[Backup] Failed to delete R2 file ${backup.storage_key}:`, e)
+      // Continue to delete from DB even if R2 fails (to keep DB clean)
+    }
+
+    // Delete from D1
+    await this.d1.query(`DELETE FROM data_backups WHERE id = ?`, [backupId])
+  }
+
+  /**
    * Cleanup old auto backups
    */
   private async cleanupOldBackups(userId: number): Promise<void> {

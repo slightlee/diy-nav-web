@@ -65,6 +65,31 @@ const backupRoutes: FastifyPluginAsyncZod = async app => {
       }
     }
   )
+
+  const deleteParamsSchema = z.object({
+    id: z.string().transform(Number)
+  })
+
+  app.delete(
+    '/backup/:id',
+    {
+      schema: {
+        params: deleteParamsSchema
+      }
+    },
+    async (req, reply) => {
+      const { id } = req.params
+      const userId = 1
+
+      try {
+        await backupService.deleteBackup(userId, id)
+        return { success: true }
+      } catch (err) {
+        req.log.error(err)
+        return reply.code(500).send({ code: 'DELETE_FAILED', message: 'Failed to delete backup' })
+      }
+    }
+  )
 }
 
 export default backupRoutes
