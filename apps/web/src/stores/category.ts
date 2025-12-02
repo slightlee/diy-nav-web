@@ -91,6 +91,23 @@ export const useCategoryStore = defineStore('category', () => {
 
   const getCategoryById = (id: string) => categories.value.find(c => c.id === id)
 
+  const overwriteCategories = (data: unknown[]) => {
+    if (Array.isArray(data)) {
+      const now = new Date()
+      categories.value = data.map((c: any) => ({
+        id: c.id || generateId(),
+        name: c.name || '',
+        description: c.description,
+        icon: c.icon,
+        order: typeof c.order === 'number' ? c.order : 0,
+        websiteCount: typeof c.websiteCount === 'number' ? c.websiteCount : 0,
+        createdAt: c.createdAt ? new Date(c.createdAt) : now,
+        updatedAt: c.updatedAt ? new Date(c.updatedAt) : now
+      }))
+      saveToLocalStorage()
+    }
+  }
+
   return {
     categories: readonly(categories),
     searchFilters,
@@ -101,6 +118,7 @@ export const useCategoryStore = defineStore('category', () => {
     reorderCategories,
     setSearchFilters,
     clearSearchFilters,
-    getCategoryById
+    getCategoryById,
+    overwriteCategories
   }
 })

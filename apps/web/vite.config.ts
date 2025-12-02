@@ -4,9 +4,11 @@ import type { Plugin } from 'vite'
 import { resolve } from 'path'
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '')
+  const envDir = resolve(__dirname, '../../')
+  const env = loadEnv(mode, envDir, '')
   Object.assign(process.env, env)
   return {
+    envDir,
     base: process.env.VITE_BASE ?? '/',
     plugins: [vue() as Plugin],
     resolve: {

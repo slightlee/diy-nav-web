@@ -1,0 +1,21 @@
+{
+  "name": "@nav/core",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w"
+  },
+  "dependencies": {
+    "@nav/database": "workspace:^",
+    "@nav/storage": "workspace:^",
+    "crypto-js": "^4.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/node": "^20.11.19",
+    "@types/crypto-js": "^4.2.2"
+  }
+}

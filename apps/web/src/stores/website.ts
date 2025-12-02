@@ -222,6 +222,10 @@ export const useWebsiteStore = defineStore('website', () => {
     }
   }
 
+  const overwriteWebsites = (data: Partial<Website>[]) => {
+    importData({ websites: data })
+  }
+
   return {
     websites,
     searchFilters: readonly(searchFilters),
@@ -239,6 +243,7 @@ export const useWebsiteStore = defineStore('website', () => {
     moveWebsiteBefore,
     moveFavoriteBefore,
     exportData,
-    importData
+    importData,
+    overwriteWebsites
   }
 })

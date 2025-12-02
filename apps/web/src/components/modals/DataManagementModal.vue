@@ -315,89 +315,99 @@ let pendingImportData: {
   tags?: unknown[]
 } | null = null
 
-// Mock History Data
-const backupHistory = ref([
-  { id: 1, time: '2024-03-21 20:34', type: 'auto', location: '本地', size: '1.2 MB' },
-  { id: 2, time: '2024-03-15 10:12', type: 'manual', location: '本地', size: '980 KB' },
-  { id: 3, time: '2024-03-01 09:05', type: 'auto', location: '本地', size: '1.0 MB' }
-])
+// Real History Data
+const backupHistory = ref<any[]>([])
+const loadingHistory = ref(false)
 
-const triggerFileImport = () => {
-  fileInputRef.value?.click()
-}
-
-const handleFileImport = async (event: Event) => {
-  const file = (event.target as HTMLInputElement).files?.[0]
-  if (!file) return
-  pendingImportData = null
+const fetchBackups = async () => {
+  loadingHistory.value = true
   try {
-    const text = await file.text()
-    const data = JSON.parse(text)
-    importFileName.value = file.name
-    importPreview.value = {
-      websites: Array.isArray(data.websites) ? data.websites.length : 0,
-      categories: Array.isArray(data.categories) ? data.categories.length : 0,
-      tags: Array.isArray(data.tags) ? data.tags.length : 0
+    const res = await fetch(`${import.meta.env.VITE_ICON_API_URL}/api/backups`)
+    const json = await res.json()
+    if (json.success) {
+      backupHistory.value = json.data.map((item: any) => ({
+        id: item.id,
+        time: new Date(item.created_at).toLocaleString(),
+        type: item.type === 'AUTO' ? 'auto' : 'manual',
+        location: '云端 (R2)',
+        size: formatSize(item.size)
+      }))
     }
-    pendingImportData = data
-    importConfirmOpen.value = true
-  } catch {
-    uiStore.showToast('导入失败，请重试', 'error')
+  } catch (e) {
+    console.error('Failed to fetch backups:', e)
+    uiStore.showToast('获取备份列表失败', 'error')
   } finally {
-    if (fileInputRef.value) {
-      fileInputRef.value.value = ''
-    }
+    loadingHistory.value = false
   }
 }
 
-const handleExport = async () => {
-  if (exporting.value) return
-  exporting.value = true
-  try {
-    const data = websiteStore.exportData()
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `diy-nav-backup-${new Date().toISOString().split('T')[0]}.json`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-    uiStore.showToast('数据导出成功', 'success')
-  } catch {
-    uiStore.showToast('导出失败，请重试', 'error')
-  } finally {
-    exporting.value = false
-  }
+const formatSize = (bytes: number) => {
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
 }
+
+// Load history on mount
+import { onMounted } from 'vue'
+onMounted(() => {
+  fetchBackups()
+})
 
 const handleManualBackup = async () => {
   if (backingUp.value) return
   backingUp.value = true
-  // Mock backup process
-  setTimeout(() => {
-    backingUp.value = false
-    uiStore.showToast('备份成功', 'success')
-    // Add to history
-    const now = new Date()
-    const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-    backupHistory.value.unshift({
-      id: Date.now(),
-      time: timeStr,
-      type: 'manual',
-      location: '本地',
-      size: '1.2 MB' // Mock size
+  try {
+    const data = websiteStore.exportData()
+    const res = await fetch(`${import.meta.env.VITE_ICON_API_URL}/api/backup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data, type: 'MANUAL' })
     })
-    if (backupHistory.value.length > 3) {
-      backupHistory.value.pop()
+    const json = await res.json()
+
+    if (json.success) {
+      uiStore.showToast('备份成功', 'success')
+      await fetchBackups() // Refresh list
+    } else {
+      throw new Error(json.message)
     }
-  }, 1000)
+  } catch (e) {
+    console.error(e)
+    uiStore.showToast('备份失败，请重试', 'error')
+  } finally {
+    backingUp.value = false
+  }
 }
 
-const handleRestore = (item: { time: string }) => {
-  uiStore.showToast(`正在恢复 ${item.time} 的备份...`, 'info')
-  // Mock restore
+const handleRestore = async (item: any) => {
+  if (!confirm(`确定要恢复到 ${item.time} 的备份吗？当前数据将被覆盖！`)) return
+
+  const loading = uiStore.showLoading('正在恢复数据...')
+  try {
+    const res = await fetch(`${import.meta.env.VITE_ICON_API_URL}/api/backup/restore`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ backupId: item.id })
+    })
+    const json = await res.json()
+
+    if (json.success) {
+      const data = json.data
+      // Import data using store actions
+      if (data.websites) websiteStore.overwriteWebsites(data.websites)
+      if (data.categories) categoryStore.overwriteCategories(data.categories)
+      if (data.tags) tagStore.overwriteTags(data.tags)
+
+      uiStore.showToast('恢复成功', 'success')
+    } else {
+      throw new Error(json.message)
+    }
+  } catch (e) {
+    console.error(e)
+    uiStore.showToast('恢复失败，请重试', 'error')
+  } finally {
+    loading.close()
+  }
 }
 
 const closeImportConfirm = () => {

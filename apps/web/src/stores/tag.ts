@@ -89,6 +89,22 @@ export const useTagStore = defineStore('tag', () => {
     localStorage.removeItem('tags')
   }
 
+  const overwriteTags = (data: unknown[]) => {
+    if (Array.isArray(data)) {
+      const now = new Date()
+      tags.value = data.map((t: any) => ({
+        id: t.id || generateId(),
+        name: t.name || '',
+        color: t.color || TAG_COLORS[0],
+        order: typeof t.order === 'number' ? t.order : 0,
+        usageCount: typeof t.usageCount === 'number' ? t.usageCount : 0,
+        createdAt: t.createdAt ? new Date(t.createdAt) : now,
+        updatedAt: t.updatedAt ? new Date(t.updatedAt) : now
+      }))
+      saveToLocalStorage()
+    }
+  }
+
   return {
     tags: readonly(tags),
     tagColors,
@@ -99,6 +115,7 @@ export const useTagStore = defineStore('tag', () => {
     getTagById,
     saveToLocalStorage,
     clearAllTags,
-    initializeData
+    initializeData,
+    overwriteTags
   }
 })

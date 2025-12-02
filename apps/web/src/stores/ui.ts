@@ -58,6 +58,15 @@ export const useUIStore = defineStore('ui', () => {
     isLoading.value = loading
   }
 
+  const showLoading = (message?: string) => {
+    isLoading.value = true
+    return {
+      close: () => {
+        isLoading.value = false
+      }
+    }
+  }
+
   const toggleSidebar = () => {
     sidebarOpen.value = !sidebarOpen.value
   }
@@ -75,6 +84,7 @@ export const useUIStore = defineStore('ui', () => {
     showToast,
     removeToast,
     setLoading,
+    showLoading,
     toggleSidebar
   }
 })
