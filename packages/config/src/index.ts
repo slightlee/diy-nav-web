@@ -27,7 +27,8 @@ export const configSchema = z
 
     // Icon
     DEFAULT_ICON_URL: z.string().default('/icons/default.svg'),
-    ICON_SIZE: z.coerce.number().default(64)
+    ICON_SIZE: z.coerce.number().default(64),
+    GOOGLE_FAVICON_URL: z.string().default('https://www.google.com/s2/favicons')
   })
   .superRefine((data, ctx) => {
     if (data.STORAGE_PROVIDER === 'aws') {

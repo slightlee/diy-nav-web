@@ -1,6 +1,12 @@
-import type { GetIconResponse, GetIconRequest } from '@nav/icon-core'
+import type { GetIconResponse } from '@nav/icon-core'
 
-const API_BASE_URL = import.meta.env.VITE_ICON_API_URL || 'http://localhost:8787/api'
+const API_CONFIG = {
+  BASE_URL: import.meta.env.VITE_ICON_API_URL || 'http://localhost:8787',
+  ENDPOINTS: {
+    ICON: '/api/icon'
+  },
+  TIMEOUT: 10000
+} as const
 
 export class ApiClient {
   private static instance: ApiClient
@@ -19,22 +25,34 @@ export class ApiClient {
     refresh?: boolean
   }): Promise<GetIconResponse | null> {
     try {
-      const url = new URL(`${API_BASE_URL}/icon`)
-      if (params.domain) url.searchParams.append('domain', params.domain)
-      if (params.url) url.searchParams.append('url', params.url)
-      if (params.refresh) url.searchParams.append('refresh', 'true')
+      // Construct URL using config
+      const url = new URL(API_CONFIG.ENDPOINTS.ICON, API_CONFIG.BASE_URL)
+
+      // Clean and append search params
+      const searchParams = new URLSearchParams()
+      if (params.domain) searchParams.append('domain', params.domain)
+      if (params.url) searchParams.append('url', params.url)
+      if (params.refresh) searchParams.append('refresh', 'true')
+
+      url.search = searchParams.toString()
 
       const res = await fetch(url.toString(), {
         method: 'GET',
-        headers: { accept: 'application/json' }
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        signal: AbortSignal.timeout(API_CONFIG.TIMEOUT)
       })
 
-      if (!res.ok) return null
+      if (!res.ok) {
+        console.warn(`[ApiClient] API error: ${res.status} ${res.statusText}`)
+        return null
+      }
 
-      const data = (await res.json()) as GetIconResponse
-      return data
+      return (await res.json()) as GetIconResponse
     } catch (e) {
-      console.error('Failed to fetch icon:', e)
+      console.error('[ApiClient] Network request failed:', e)
       return null
     }
   }

@@ -7,13 +7,15 @@
  * 配置：size 指定 sz 参数，默认 64
  */
 import type { IconFetchResult } from '../types.js'
+import { loadConfig } from '@nav/config'
 
 export async function fetchFromGoogleS2(
   domain: string,
   size: number = 64
 ): Promise<IconFetchResult | null> {
+  const config = loadConfig()
   const sz = Number.isFinite(size) && size > 0 ? size : 64
-  const url = `https://www.google.com/s2/favicons?domain=${domain}&sz=${sz}`
+  const url = `${config.GOOGLE_FAVICON_URL}?domain=${domain}&sz=${sz}`
 
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 3000)
