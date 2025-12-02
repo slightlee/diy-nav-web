@@ -348,8 +348,8 @@ defineExpose({
     color: var(--color-white);
     border-color: var(--color-error);
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
-      background-color: rgba(var(--color-error-rgb), 0.1);
-      border-color: rgba(var(--color-error-rgb), 0.1);
+      background-color: #dc2626; /* Darker red (red-600) for hover */
+      border-color: #dc2626;
       transform: translateY(-1px);
       box-shadow: var(--shadow-md);
     }

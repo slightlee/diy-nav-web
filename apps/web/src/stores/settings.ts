@@ -5,6 +5,7 @@ import type { UserSettings } from '@/types'
 const DEFAULT_SETTINGS: UserSettings = {
   theme: 'auto',
   autoBackup: true,
+  backupTime: '21:00',
   defaultHome: 'home'
 }
 

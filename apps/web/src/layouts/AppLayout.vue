@@ -56,6 +56,7 @@
       v-if="uiStore.modalState.dataManagement"
       :is-open="uiStore.modalState.dataManagement"
       title="数据管理"
+      size="lg"
       @close="() => uiStore.closeModal('dataManagement')"
     >
       <DataManagementModal @close="() => uiStore.closeModal('dataManagement')" />

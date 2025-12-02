@@ -41,6 +41,7 @@ export interface UserSettings {
   theme: 'light' | 'dark' | 'auto'
   customBackground?: string
   autoBackup: boolean
+  backupTime?: string
   defaultHome?: 'home' | 'all'
 }
 

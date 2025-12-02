@@ -1,93 +1,189 @@
 <template>
   <div class="data-management-modal">
+    <!-- Section 1: Backup Settings -->
     <div class="data-management-modal__section">
-      <h3 class="data-management-modal__section-title">
-        <i class="fas fa-database" />
-        数据管理
-      </h3>
-
-      <div class="data-management-modal__data-actions">
-        <div class="data-management-modal__data-action">
-          <h4 class="data-management-modal__action-title">导入数据</h4>
-          <p class="data-management-modal__action-description">
-            从 JSON 文件导入网站、分类和标签数据
-          </p>
-          <input
-            ref="fileInputRef"
-            type="file"
-            accept=".json"
-            style="display: none"
-            @change="handleFileImport"
-          />
-          <BaseButton
-            variant="outline"
-            :loading="importing"
-            class="data-management-modal__action-btn"
-            title="从本地文件导入数据"
-            aria-label="导入数据"
-            @click="triggerFileImport"
-          >
-            <i class="fas fa-download" />
-            导入数据
-          </BaseButton>
+      <div class="section-header">
+        <div class="section-icon blue">
+          <i class="fas fa-shield-alt" />
         </div>
-
-        <div class="data-management-modal__data-action">
-          <h4 class="data-management-modal__action-title">导出数据</h4>
-          <p class="data-management-modal__action-description">
-            将网站、分类和标签数据导出为 JSON 文件
-          </p>
-          <BaseButton
-            variant="outline"
-            :loading="exporting"
-            class="data-management-modal__action-btn"
-            title="导出数据到本地文件"
-            aria-label="导出数据"
-            @click="handleExport"
-          >
-            <i class="fas fa-upload" />
-            导出数据
-          </BaseButton>
+        <div class="section-info">
+          <h3 class="section-title">备份设置</h3>
+          <p class="section-description">确保数据定期备份，防止意外丢失</p>
         </div>
       </div>
-    </div>
 
-    <div class="data-management-modal__section">
-      <h3 class="data-management-modal__section-title">
-        <i class="fas fa-shield-alt" />
-        备份设置
-      </h3>
+      <div class="settings-container">
+        <!-- Auto Backup -->
+        <div class="setting-row">
+          <div class="setting-main">
+            <div class="setting-info">
+              <span class="setting-title">自动备份</span>
+              <span class="setting-desc">定期自动备份数据到本地存储。</span>
+            </div>
+          </div>
+          <div class="setting-action">
+            <label class="switch">
+              <input v-model="autoBackup" type="checkbox" />
+              <span class="slider round" />
+            </label>
+          </div>
+        </div>
 
-      <div class="data-management-modal__setting-group">
-        <label class="data-management-modal__checkbox-setting">
-          <input v-model="autoBackup" type="checkbox" class="data-management-modal__checkbox" />
-          <span class="data-management-modal__checkbox-text">自动备份</span>
-          <span class="data-management-modal__checkbox-description">
-            定期自动备份数据到本地存储
-          </span>
-        </label>
+        <div class="divider" />
+
+        <!-- Manual Backup -->
+        <div class="setting-row">
+          <div class="setting-main">
+            <div class="setting-info">
+              <span class="setting-title">手动备份</span>
+              <span class="setting-desc">需要立即备份当前数据时，可手动触发一次备份。</span>
+            </div>
+          </div>
+          <div class="setting-action">
+            <BaseButton
+              variant="primary"
+              shape="pill"
+              size="sm"
+              :loading="backingUp"
+              class="backup-btn"
+              @click="handleManualBackup"
+            >
+              立即备份
+            </BaseButton>
+          </div>
+        </div>
+
+        <div class="divider" />
+
+        <!-- History -->
+        <div class="history-section">
+          <h4 class="history-title">
+            历史备份
+            <span class="history-subtitle">（最近 3 条）</span>
+          </h4>
+          <div class="history-table-wrapper">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>备份时间</th>
+                  <th>类型</th>
+                  <th>存储位置</th>
+                  <th>大小</th>
+                  <th class="text-right">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in backupHistory" :key="item.id">
+                  <td>{{ item.time }}</td>
+                  <td>
+                    <span
+                      class="badge"
+                      :class="item.type === 'auto' ? 'badge-green' : 'badge-blue'"
+                    >
+                      {{ item.type === 'auto' ? '自动备份' : '手动备份' }}
+                    </span>
+                  </td>
+                  <td>{{ item.location }}</td>
+                  <td>{{ item.size }}</td>
+                  <td class="text-right">
+                    <button class="restore-link" @click="handleRestore(item)">恢复</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 
+    <!-- Section 2: Data Management -->
     <div class="data-management-modal__section">
-      <h3 class="data-management-modal__section-title">
-        <i class="fas fa-exclamation-triangle" />
-        危险操作
-      </h3>
+      <div class="section-header">
+        <div class="section-icon blue">
+          <i class="fas fa-database" />
+        </div>
+        <div class="section-info">
+          <h3 class="section-title">数据管理</h3>
+          <p class="section-description">导入 / 导出网站、分类和标签数据</p>
+        </div>
+      </div>
 
-      <div class="data-management-modal__danger-actions">
-        <p class="data-management-modal__danger-description">以下操作不可恢复，请谨慎操作</p>
-        <BaseButton
-          variant="danger"
-          class="data-management-modal__danger-btn"
-          @click="openClearConfirm"
-        >
-          <i class="fas fa-trash-alt" />
-          清除所有数据
-        </BaseButton>
+      <div class="data-actions-grid">
+        <!-- Import Card -->
+        <div class="action-card">
+          <div class="action-card__content">
+            <h4 class="action-card__title">导入数据</h4>
+            <p class="action-card__description">从 JSON 文件导入网站、分类和标签数据。</p>
+          </div>
+          <div class="action-card__action">
+            <input
+              ref="fileInputRef"
+              type="file"
+              accept=".json"
+              style="display: none"
+              @change="handleFileImport"
+            />
+            <BaseButton
+              variant="outline"
+              shape="pill"
+              size="sm"
+              :loading="importing"
+              class="action-btn outline-blue"
+              @click="triggerFileImport"
+            >
+              <i class="fas fa-download" />
+              导入数据
+            </BaseButton>
+          </div>
+        </div>
+
+        <!-- Export Card -->
+        <div class="action-card">
+          <div class="action-card__content">
+            <h4 class="action-card__title">导出数据</h4>
+            <p class="action-card__description">将当前网站、分类和标签数据导出为 JSON 文件。</p>
+          </div>
+          <div class="action-card__action">
+            <BaseButton
+              variant="outline"
+              shape="pill"
+              size="sm"
+              :loading="exporting"
+              class="action-btn outline-blue"
+              @click="handleExport"
+            >
+              <i class="fas fa-upload" />
+              导出数据
+            </BaseButton>
+          </div>
+        </div>
       </div>
     </div>
 
+    <!-- Section 3: Danger Zone -->
+    <div class="danger-zone">
+      <div class="danger-content">
+        <div class="danger-icon-wrapper">
+          <i class="fas fa-exclamation-triangle" />
+        </div>
+        <div class="danger-info">
+          <h3 class="danger-title">危险操作</h3>
+          <p class="danger-desc">以下操作不可恢复，请务必谨慎执行</p>
+        </div>
+      </div>
+      <BaseButton
+        variant="danger"
+        shape="pill"
+        size="sm"
+        class="danger-btn"
+        @click="openClearConfirm"
+      >
+        <i class="fas fa-trash-alt" />
+        清除所有数据
+      </BaseButton>
+    </div>
+
+    <!-- Modals -->
     <BaseModal
       v-if="clearConfirmOpen"
       :is-open="clearConfirmOpen"
@@ -108,9 +204,20 @@
       </div>
       <template #footer>
         <div class="danger-confirm__actions">
-          <BaseButton variant="secondary" @click="closeClearConfirm">取消</BaseButton>
+          <BaseButton
+            variant="secondary"
+            size="sm"
+            shape="pill"
+            class="confirm-btn"
+            @click="closeClearConfirm"
+          >
+            取消
+          </BaseButton>
           <BaseButton
             variant="danger"
+            size="sm"
+            shape="pill"
+            class="confirm-btn"
             :disabled="countdown > 0 || clearing"
             :loading="clearing"
             @click="confirmClearData"
@@ -121,6 +228,7 @@
         </div>
       </template>
     </BaseModal>
+
     <BaseModal
       v-if="importConfirmOpen"
       :is-open="importConfirmOpen"
@@ -193,6 +301,7 @@ const autoBackup = computed({
 const fileInputRef = ref<HTMLInputElement>()
 const exporting = ref(false)
 const importing = ref(false)
+const backingUp = ref(false)
 const clearConfirmOpen = ref(false)
 const clearing = ref(false)
 const countdown = ref(0)
@@ -205,6 +314,13 @@ let pendingImportData: {
   categories?: unknown[]
   tags?: unknown[]
 } | null = null
+
+// Mock History Data
+const backupHistory = ref([
+  { id: 1, time: '2024-03-21 20:34', type: 'auto', location: '本地', size: '1.2 MB' },
+  { id: 2, time: '2024-03-15 10:12', type: 'manual', location: '本地', size: '980 KB' },
+  { id: 3, time: '2024-03-01 09:05', type: 'auto', location: '本地', size: '1.0 MB' }
+])
 
 const triggerFileImport = () => {
   fileInputRef.value?.click()
@@ -254,6 +370,34 @@ const handleExport = async () => {
   } finally {
     exporting.value = false
   }
+}
+
+const handleManualBackup = async () => {
+  if (backingUp.value) return
+  backingUp.value = true
+  // Mock backup process
+  setTimeout(() => {
+    backingUp.value = false
+    uiStore.showToast('备份成功', 'success')
+    // Add to history
+    const now = new Date()
+    const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+    backupHistory.value.unshift({
+      id: Date.now(),
+      time: timeStr,
+      type: 'manual',
+      location: '本地',
+      size: '1.2 MB' // Mock size
+    })
+    if (backupHistory.value.length > 3) {
+      backupHistory.value.pop()
+    }
+  }, 1000)
+}
+
+const handleRestore = (item: { time: string }) => {
+  uiStore.showToast(`正在恢复 ${item.time} 的备份...`, 'info')
+  // Mock restore
 }
 
 const closeImportConfirm = () => {
@@ -348,101 +492,432 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .data-management-modal {
   width: 100%;
-  max-width: 700px;
-  max-height: 85vh;
+  max-width: 1000px;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xl);
+  gap: 16px; /* Reduced from var(--spacing-xl) to match design */
 }
+
 .data-management-modal__section {
-  padding: var(--spacing-lg);
-  background-color: var(--color-neutral-100);
+  display: flex;
+  flex-direction: column;
+  gap: 6px; /* Further reduced from 12px for tighter spacing */
+  padding: 20px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
+  background-color: var(--color-bg-primary);
 }
-.data-management-modal__section-title {
+
+.section-icon {
+  width: 40px; /* Increased from 32px */
+  height: 40px; /* Increased from 32px */
+  border-radius: 10px; /* Adjusted radius */
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-neutral-800);
-  margin: 0 0 var(--spacing-lg) 0;
+  justify-content: center;
+  font-size: 1.25rem; /* Increased icon size */
+  flex-shrink: 0;
+
+  &.blue {
+    background-color: #eff6ff;
+    color: #3b82f6;
+  }
 }
-.data-management-modal__setting-group {
+
+.section-info {
   display: flex;
   flex-direction: column;
+  gap: 2px;
+}
+
+.section-title {
+  font-size: 18px; /* Increased from 16px */
+  font-weight: 600;
+  color: var(--color-neutral-900);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.section-description {
+  font-size: 14px; /* Increased from 13px */
+  color: var(--color-neutral-500);
+  margin: 0;
+}
+
+/* Data Actions Grid */
+.data-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px; /* Reduced from var(--spacing-md) */
+}
+
+.action-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px; /* Reduced padding */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px; /* Reduced from var(--spacing-md) */
+  background-color: var(--color-bg-primary);
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+}
+
+.action-card__content {
+  flex: 1;
+}
+
+.action-card__title {
+  font-size: 14px; /* Reduced from 16px */
+  font-weight: 600;
+  color: var(--color-neutral-800);
+  margin: 0 0 4px 0;
+}
+
+.action-card__description {
+  font-size: 12px; /* Reduced from 13px */
+  color: var(--color-neutral-500);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.action-btn {
+  white-space: nowrap;
+  padding-left: 24px !important; /* Increased horizontal padding for pill buttons */
+  padding-right: 24px !important; /* Increased horizontal padding for pill buttons */
+
+  &.outline-blue {
+    color: #3b82f6;
+    border-color: #3b82f6;
+    background-color: transparent;
+
+    &:hover {
+      background-color: rgba(59, 130, 246, 0.05);
+    }
+  }
+}
+
+/* Settings Container */
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0; /* Further reduced from 12px for tighter spacing */
+}
+
+.setting-main {
+  display: flex;
+  align-items: center;
   gap: var(--spacing-md);
 }
-.data-management-modal__checkbox-setting {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-sm);
-  cursor: pointer;
-}
-.data-management-modal__checkbox {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--color-primary);
-  margin-top: 2px;
-}
-.data-management-modal__checkbox-text {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-neutral-700);
-}
-.data-management-modal__checkbox-description {
-  font-size: var(--font-size-xs);
-  color: var(--color-neutral-500);
-  margin-top: var(--spacing-xs);
-}
-.data-management-modal__data-actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--spacing-lg);
-}
-.data-management-modal__data-action {
-  padding: var(--spacing-md);
-  border: 1px solid var(--color-neutral-200);
-  border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
-}
-.data-management-modal__action-title {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-neutral-800);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-.data-management-modal__action-description {
-  font-size: var(--font-size-sm);
-  color: var(--color-neutral-600);
-  margin: 0 0 var(--spacing-md) 0;
-  line-height: var(--line-height-normal);
-}
-.data-management-modal__action-btn {
-  width: 100%;
-}
 
-.data-management-modal__danger-actions {
+.setting-info {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
-}
-.data-management-modal__danger-description {
-  font-size: var(--font-size-sm);
-  color: var(--color-neutral-600);
-}
-.data-management-modal__danger-btn {
-  align-self: flex-start;
+  gap: 4px;
 }
 
+.setting-title {
+  font-size: 14px; /* Reduced from 16px */
+  font-weight: 600;
+  color: var(--color-neutral-800);
+}
+
+.setting-desc {
+  font-size: 12px; /* Reduced from 13px */
+  color: var(--color-neutral-500);
+}
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 0; /* Remove margin, rely on section gap */
+}
+
+/* ... (intervening code) ... */
+
+.divider {
+  height: 0;
+  border-top: 1px solid var(--color-border);
+  background-color: transparent;
+  margin: 0;
+}
+
+.setting-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0 0 0 0;
+  background-color: var(--color-neutral-300);
+  transition: 0.4s;
+}
+
+.slider::before {
+  position: absolute;
+  content: '';
+  height: 20px;
+  width: 20px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: 0.4s;
+}
+
+input:checked + .slider {
+  background-color: var(--color-primary);
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px var(--color-primary);
+}
+
+input:checked + .slider::before {
+  transform: translateX(20px);
+}
+
+.slider.round {
+  border-radius: 24px;
+}
+
+.slider.round::before {
+  border-radius: 50%;
+}
+
+/* Time Select */
+.time-select {
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-primary);
+  color: var(--color-neutral-700);
+  font-size: var(--font-size-sm);
+  outline: none;
+  cursor: pointer;
+  min-width: 140px;
+
+  &:focus {
+    border-color: var(--color-primary);
+  }
+}
+
+/* History Table */
+.history-section {
+  margin-top: 12px; /* Reduced from 20px to match design */
+}
+
+.history-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral-600);
+  margin: 0 0 12px 0; /* Reduced from var(--spacing-md) */
+}
+
+.history-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-400);
+  font-weight: normal;
+}
+
+.history-table-wrapper {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+
+  th,
+  td {
+    padding: 12px; /* Reduced from var(--spacing-md) */
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  th {
+    background-color: var(--color-neutral-50);
+    color: var(--color-neutral-500);
+    font-weight: var(--font-weight-medium);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  .text-right {
+    text-align: right;
+  }
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+
+  &.badge-green {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+  }
+
+  &.badge-blue {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+  }
+}
+
+.backup-btn {
+  padding-left: 24px !important; /* Increased horizontal padding for pill buttons */
+  padding-right: 24px !important; /* Increased horizontal padding for pill buttons */
+}
+
+.restore-link {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  padding: 0;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/* Danger Zone */
+.danger-zone {
+  background-color: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl); /* Add bottom margin for spacing */
+}
+
+.danger-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.danger-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%; /* Changed to circle */
+  background-color: rgba(245, 101, 101, 0.15); /* Lighter red background */
+  color: #c53030;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.danger-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.danger-title {
+  font-size: 14px; /* Matched to other card titles */
+  font-weight: 600;
+  color: #c53030;
+  margin: 0;
+}
+
+.danger-desc {
+  font-size: 12px; /* Matched to other descriptions */
+  color: #e53e3e;
+  margin: 0;
+}
+
+.danger-btn {
+  padding-left: 24px !important; /* Increased horizontal padding for pill buttons */
+  padding-right: 24px !important; /* Increased horizontal padding for pill buttons */
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .data-actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .action-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .action-card__action {
+    width: 100%;
+
+    .action-btn {
+      width: 100%;
+    }
+  }
+
+  .setting-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+
+  .setting-action {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .danger-zone {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+
+  .danger-btn {
+    width: 100%;
+  }
+}
+
+/* Modal styles from original file */
 .danger-confirm__content {
-  padding: var(--spacing-md) 0;
+  padding: 12px 0; /* Reduced from var(--spacing-md) */
 }
 .danger-confirm__header {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: 8px; /* Reduced from var(--spacing-sm) */
 }
 .danger-confirm__icon {
   color: var(--color-error);
@@ -452,14 +927,15 @@ onUnmounted(() => {
   color: var(--color-neutral-800);
 }
 .danger-confirm__list {
-  margin: var(--spacing-md) 0 0 0;
+  margin: 12px 0 0 0; /* Reduced from var(--spacing-md) */
   padding-left: 1.2rem;
   color: var(--color-neutral-700);
+  line-height: 1.6; /* Add line-height for better readability */
 }
 .danger-confirm__actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--spacing-md);
+  gap: 12px; /* Reduced from var(--spacing-md) */
 }
 
 .import-confirm__content {
@@ -505,5 +981,9 @@ onUnmounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: var(--spacing-md);
+}
+
+.confirm-btn {
+  min-width: 100px;
 }
 </style>
