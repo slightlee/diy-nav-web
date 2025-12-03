@@ -5,7 +5,7 @@ import CryptoJS from 'crypto-js'
 export interface BackupConfig {
   d1: D1Client
   r2: R2Client
-  maxAutoBackups?: number
+  maxBackups?: number
   backupRootDir?: string
 }
 
@@ -23,13 +23,13 @@ export interface BackupRecord {
 export class BackupService {
   private d1: D1Client
   private r2: R2Client
-  private maxAutoBackups: number
+  private maxBackups: number
   private backupRootDir: string
 
   constructor(config: BackupConfig) {
     this.d1 = config.d1
     this.r2 = config.r2
-    this.maxAutoBackups = config.maxAutoBackups || 5
+    this.maxBackups = config.maxBackups || 5
     this.backupRootDir = config.backupRootDir || 'backups'
   }
 
@@ -94,10 +94,8 @@ export class BackupService {
       [userId, name, type, storageKey, fileHash, size, timestamp]
     )
 
-    // Cleanup old auto backups
-    if (type === 'AUTO') {
-      await this.cleanupOldBackups(userId)
-    }
+    // Cleanup old backups
+    await this.cleanupOldBackups(userId, type)
 
     // Return the new record
     return this.d1.first<BackupRecord>(`SELECT * FROM data_backups WHERE storage_key = ?`, [
@@ -158,16 +156,16 @@ export class BackupService {
   }
 
   /**
-   * Cleanup old auto backups
+   * Cleanup old backups
    */
-  private async cleanupOldBackups(userId: number): Promise<void> {
+  private async cleanupOldBackups(userId: number, type: 'MANUAL' | 'AUTO'): Promise<void> {
     const backups = await this.d1.all<BackupRecord>(
-      `SELECT * FROM data_backups WHERE user_id = ? AND type = 'AUTO' ORDER BY created_at DESC`,
-      [userId]
+      `SELECT * FROM data_backups WHERE user_id = ? AND type = ? ORDER BY created_at DESC`,
+      [userId, type]
     )
 
-    if (backups.length > this.maxAutoBackups) {
-      const toDelete = backups.slice(this.maxAutoBackups)
+    if (backups.length > this.maxBackups) {
+      const toDelete = backups.slice(this.maxBackups)
 
       for (const backup of toDelete) {
         // Delete from R2

@@ -22,7 +22,7 @@ export const r2Client = new R2Client({
 export const backupService = new BackupService({
   d1: d1Client,
   r2: r2Client,
-  maxAutoBackups: config.backup.maxRetained,
+  maxBackups: config.backup.maxRetained,
   backupRootDir: config.backup.rootDir
 })
 
