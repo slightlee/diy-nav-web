@@ -91,10 +91,10 @@ export const useCategoryStore = defineStore('category', () => {
 
   const getCategoryById = (id: string) => categories.value.find(c => c.id === id)
 
-  const overwriteCategories = (data: unknown[]) => {
+  const overwriteCategories = (data: Partial<Category>[]) => {
     if (Array.isArray(data)) {
       const now = new Date()
-      categories.value = data.map((c: any) => ({
+      categories.value = data.map((c: Partial<Category>) => ({
         id: c.id || generateId(),
         name: c.name || '',
         description: c.description,

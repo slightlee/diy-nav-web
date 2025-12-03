@@ -5,7 +5,6 @@ import type { UserSettings } from '@/types'
 const DEFAULT_SETTINGS: UserSettings = {
   theme: 'auto',
   autoBackup: true,
-  backupTime: '21:00',
   defaultHome: 'home'
 }
 
@@ -19,7 +18,11 @@ export const useSettingsStore = defineStore('settings', () => {
     if (stored) {
       try {
         const parsed = JSON.parse(stored)
-        settings.value = { ...DEFAULT_SETTINGS, ...parsed }
+        settings.value = {
+          theme: parsed.theme ?? DEFAULT_SETTINGS.theme,
+          autoBackup: parsed.autoBackup ?? DEFAULT_SETTINGS.autoBackup,
+          defaultHome: parsed.defaultHome ?? DEFAULT_SETTINGS.defaultHome
+        }
       } catch {
         settings.value = { ...DEFAULT_SETTINGS }
       }
@@ -81,7 +84,11 @@ export const useSettingsStore = defineStore('settings', () => {
   const importSettings = (data: string) => {
     try {
       const imported = JSON.parse(data)
-      settings.value = { ...DEFAULT_SETTINGS, ...imported }
+      settings.value = {
+        theme: imported.theme ?? DEFAULT_SETTINGS.theme,
+        autoBackup: imported.autoBackup ?? DEFAULT_SETTINGS.autoBackup,
+        defaultHome: imported.defaultHome ?? DEFAULT_SETTINGS.defaultHome
+      }
       saveToLocalStorage()
       applyTheme()
       return true
@@ -108,7 +115,12 @@ export const useSettingsStore = defineStore('settings', () => {
       if (backup.categories) localStorage.setItem('categories', backup.categories)
       if (backup.tags) localStorage.setItem('tags', backup.tags)
       if (backup.settings) {
-        settings.value = { ...DEFAULT_SETTINGS, ...JSON.parse(backup.settings) }
+        const parsed = JSON.parse(backup.settings)
+        settings.value = {
+          theme: parsed.theme ?? DEFAULT_SETTINGS.theme,
+          autoBackup: parsed.autoBackup ?? DEFAULT_SETTINGS.autoBackup,
+          defaultHome: parsed.defaultHome ?? DEFAULT_SETTINGS.defaultHome
+        }
         applyTheme()
       }
       saveToLocalStorage()

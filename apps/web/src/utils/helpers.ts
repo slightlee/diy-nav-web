@@ -1,5 +1,3 @@
-import { apiClient } from '@/api/client'
-
 // 生成唯一ID
 export const generateId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2)
@@ -25,23 +23,6 @@ export const formatUrl = (url: string): string => {
   }
 
   return url
-}
-
-export const fetchIconFromApi = async (
-  url: string,
-  refresh: boolean = false
-): Promise<string | null> => {
-  try {
-    const u = new URL(formatUrl(url))
-    const params = new URLSearchParams({ url: u.href })
-    if (refresh) {
-      params.append('refresh', 'true')
-    }
-    const res = await apiClient.getIcon({ url: u.href, refresh })
-    return res?.url || null
-  } catch {
-    return null
-  }
 }
 
 export const getLetterFavicon = (text: string, size = 64): string => {

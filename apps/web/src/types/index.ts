@@ -39,9 +39,7 @@ export interface Tag {
 
 export interface UserSettings {
   theme: 'light' | 'dark' | 'auto'
-  customBackground?: string
   autoBackup: boolean
-  backupTime?: string
   defaultHome?: 'home' | 'all'
 }
 
@@ -78,3 +76,22 @@ export interface ModalPayloads {
 }
 
 export const ERROR_DUPLICATE_NAME = 'DUPLICATE_NAME'
+
+export interface BackupData {
+  websites: Partial<Website>[]
+  categories: Partial<Category>[]
+  tags: Partial<Tag>[]
+  settings?: Partial<UserSettings>
+}
+
+export interface BackupMetadata {
+  version: string
+  createdAt: string
+  appVersion?: string
+  platform?: string
+}
+
+export interface BackupPayload {
+  meta: BackupMetadata
+  data: BackupData
+}

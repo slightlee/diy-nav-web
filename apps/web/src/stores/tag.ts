@@ -89,10 +89,10 @@ export const useTagStore = defineStore('tag', () => {
     localStorage.removeItem('tags')
   }
 
-  const overwriteTags = (data: unknown[]) => {
+  const overwriteTags = (data: Partial<Tag>[]) => {
     if (Array.isArray(data)) {
       const now = new Date()
-      tags.value = data.map((t: any) => ({
+      tags.value = data.map((t: Partial<Tag>) => ({
         id: t.id || generateId(),
         name: t.name || '',
         color: t.color || TAG_COLORS[0],

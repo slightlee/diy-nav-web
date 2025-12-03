@@ -44,7 +44,7 @@
               variant="primary"
               shape="pill"
               size="sm"
-              :loading="backingUp"
+              :loading="operating"
               class="backup-btn"
               @click="handleManualBackup"
             >
@@ -74,17 +74,17 @@
               </thead>
               <tbody>
                 <tr v-for="item in backupHistory" :key="item.id">
-                  <td>{{ item.time }}</td>
+                  <td>{{ new Date(item.created_at).toLocaleString() }}</td>
                   <td class="text-center">
                     <span
                       class="badge"
-                      :class="item.type === 'auto' ? 'badge-green' : 'badge-blue'"
+                      :class="item.type === 'AUTO' ? 'badge-green' : 'badge-blue'"
                     >
-                      {{ item.type === 'auto' ? '自动备份' : '手动备份' }}
+                      {{ item.type === 'AUTO' ? '自动备份' : '手动备份' }}
                     </span>
                   </td>
-                  <td class="text-center">{{ item.location }}</td>
-                  <td class="text-center">{{ item.size }}</td>
+                  <td class="text-center">云端 (R2)</td>
+                  <td class="text-center">{{ formatSize(item.size) }}</td>
                   <td class="text-center">
                     <div class="action-buttons">
                       <button class="restore-link" @click="handleRestore(item)">恢复</button>
@@ -130,7 +130,7 @@
               variant="outline"
               shape="pill"
               size="sm"
-              :loading="importing"
+              :loading="operating"
               class="action-btn outline-blue"
               @click="triggerFileImport"
             >
@@ -291,7 +291,7 @@
           <div class="danger-confirm__title">确定要删除此备份吗？</div>
         </div>
         <p v-if="backupToDelete" class="danger-confirm__list">
-          备份时间：{{ backupToDelete.time }}
+          备份时间：{{ new Date(backupToDelete.created_at).toLocaleString() }}
           <br />
           此操作无法撤销，删除后将无法恢复该备份数据。
         </p>
@@ -312,7 +312,7 @@
             size="sm"
             shape="pill"
             class="confirm-btn"
-            :loading="deleting"
+            :loading="operating"
             @click="confirmDelete"
           >
             <i class="fas fa-trash" />
@@ -337,7 +337,7 @@
           <div class="danger-confirm__title">确定要恢复此备份吗？</div>
         </div>
         <p v-if="backupToRestore" class="danger-confirm__list">
-          备份时间：{{ backupToRestore.time }}
+          备份时间：{{ new Date(backupToRestore.created_at).toLocaleString() }}
           <br />
           恢复后，当前的所有数据将被此备份覆盖。
         </p>
@@ -358,7 +358,7 @@
             size="sm"
             shape="pill"
             class="confirm-btn"
-            :loading="restoring"
+            :loading="operating"
             @click="confirmRestore"
           >
             <i class="fas fa-undo" />
@@ -379,6 +379,8 @@ import { useSettingsStore } from '@/stores/settings'
 import { useCategoryStore } from '@/stores/category'
 import { useTagStore } from '@/stores/tag'
 import { BaseButton, BaseModal } from '@nav/ui'
+import { useBackup } from '@/composables/useBackup'
+import type { BackupItem } from '@/api/backup'
 
 const emit = defineEmits(['close'])
 
@@ -394,9 +396,29 @@ const autoBackup = computed({
 })
 
 const fileInputRef = ref<HTMLInputElement>()
+const {
+  backups: backupHistory,
+  operating,
+  fetchBackups,
+  createBackup: doCreateBackup,
+  restoreBackup: doRestoreBackup,
+  deleteBackup: doDeleteBackup
+} = useBackup()
+
+// Load history on mount
+import { onMounted } from 'vue'
+onMounted(() => {
+  fetchBackups()
+})
+
+const formatSize = (bytes: number) => {
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
+
 const exporting = ref(false)
 const importing = ref(false)
-const backingUp = ref(false)
 const clearConfirmOpen = ref(false)
 const clearing = ref(false)
 const countdown = ref(0)
@@ -411,78 +433,17 @@ let pendingImportData: {
 } | null = null
 
 const deleteConfirmOpen = ref(false)
-const backupToDelete = ref<any>(null)
-const deleting = ref(false)
+const backupToDelete = ref<BackupItem | null>(null)
 
 const restoreConfirmOpen = ref(false)
-const backupToRestore = ref<any>(null)
-const restoring = ref(false)
-
-// Real History Data
-const backupHistory = ref<any[]>([])
-const loadingHistory = ref(false)
-
-const fetchBackups = async () => {
-  loadingHistory.value = true
-  try {
-    const res = await fetch(`${import.meta.env.VITE_ICON_API_URL}/api/backups`)
-    const json = await res.json()
-    if (json.success) {
-      backupHistory.value = json.data.map((item: any) => ({
-        id: item.id,
-        time: new Date(item.created_at).toLocaleString(),
-        type: item.type === 'AUTO' ? 'auto' : 'manual',
-        location: '云端 (R2)',
-        size: formatSize(item.size)
-      }))
-    }
-  } catch (e) {
-    console.error('Failed to fetch backups:', e)
-    uiStore.showToast('获取备份列表失败', 'error')
-  } finally {
-    loadingHistory.value = false
-  }
-}
-
-const formatSize = (bytes: number) => {
-  if (bytes < 1024) return bytes + ' B'
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
-}
-
-// Load history on mount
-import { onMounted } from 'vue'
-onMounted(() => {
-  fetchBackups()
-})
+const backupToRestore = ref<BackupItem | null>(null)
 
 const handleManualBackup = async () => {
-  if (backingUp.value) return
-  backingUp.value = true
-  try {
-    const data = websiteStore.exportData()
-    const res = await fetch(`${import.meta.env.VITE_ICON_API_URL}/api/backup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data, type: 'MANUAL' })
-    })
-    const json = await res.json()
-
-    if (json.success) {
-      uiStore.showToast('备份成功', 'success')
-      await fetchBackups() // Refresh list
-    } else {
-      throw new Error(json.message)
-    }
-  } catch (e) {
-    console.error(e)
-    uiStore.showToast('备份失败，请重试', 'error')
-  } finally {
-    backingUp.value = false
-  }
+  const data = websiteStore.exportData()
+  await doCreateBackup(data, 'MANUAL')
 }
 
-const handleRestore = (item: any) => {
+const handleRestore = (item: BackupItem) => {
   backupToRestore.value = item
   restoreConfirmOpen.value = true
 }
@@ -493,42 +454,17 @@ const closeRestoreConfirm = () => {
 }
 
 const confirmRestore = async () => {
-  if (!backupToRestore.value || restoring.value) return
+  if (!backupToRestore.value) return
 
-  restoring.value = true
   const item = backupToRestore.value
-  const loading = uiStore.showLoading('正在恢复数据...')
+  const success = await doRestoreBackup(item)
 
-  try {
-    const res = await fetch(`${import.meta.env.VITE_ICON_API_URL}/api/backup/restore`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ backupId: item.id })
-    })
-    const json = await res.json()
-
-    if (json.success) {
-      const data = json.data
-      // Import data using store actions
-      if (data.websites) websiteStore.overwriteWebsites(data.websites)
-      if (data.categories) categoryStore.overwriteCategories(data.categories)
-      if (data.tags) tagStore.overwriteTags(data.tags)
-
-      uiStore.showToast('恢复成功', 'success')
-      closeRestoreConfirm()
-    } else {
-      throw new Error(json.message)
-    }
-  } catch (e) {
-    console.error(e)
-    uiStore.showToast('恢复失败，请重试', 'error')
-  } finally {
-    loading.close()
-    restoring.value = false
+  if (success) {
+    closeRestoreConfirm()
   }
 }
 
-const handleDelete = (item: any) => {
+const handleDelete = (item: BackupItem) => {
   backupToDelete.value = item
   deleteConfirmOpen.value = true
 }
@@ -539,29 +475,13 @@ const closeDeleteConfirm = () => {
 }
 
 const confirmDelete = async () => {
-  if (!backupToDelete.value || deleting.value) return
+  if (!backupToDelete.value) return
 
-  deleting.value = true
   const item = backupToDelete.value
+  const success = await doDeleteBackup(item.id)
 
-  try {
-    const res = await fetch(`${import.meta.env.VITE_ICON_API_URL}/api/backup/${item.id}`, {
-      method: 'DELETE'
-    })
-    const json = await res.json()
-
-    if (json.success) {
-      uiStore.showToast('删除成功', 'success')
-      await fetchBackups() // Refresh list
-      closeDeleteConfirm()
-    } else {
-      throw new Error(json.message)
-    }
-  } catch (e) {
-    console.error(e)
-    uiStore.showToast('删除失败，请重试', 'error')
-  } finally {
-    deleting.value = false
+  if (success) {
+    closeDeleteConfirm()
   }
 }
 

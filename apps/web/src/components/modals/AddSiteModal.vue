@@ -152,7 +152,8 @@ import { useWebsiteStore } from '@/stores/website'
 import { useCategoryStore } from '@/stores/category'
 import { useTagStore } from '@/stores/tag'
 import { useUIStore } from '@/stores/ui'
-import { formatUrl, isValidUrl, fetchIconFromApi } from '@/utils/helpers'
+import { formatUrl, isValidUrl } from '@/utils/helpers'
+import { getIcon } from '@/api/icon'
 import { BaseInput, BaseButton } from '@nav/ui'
 import type { Website } from '@/types'
 
@@ -273,7 +274,8 @@ const handleUrlBlur = async () => {
   validateField('url')
   faviconLoading.value = true
   // 失焦自动获取,不带refresh,优先使用缓存
-  const fetched = await fetchIconFromApi(formData.value.url, false)
+  const res = await getIcon({ url: formData.value.url, refresh: false })
+  const fetched = res.data?.url
   apiFaviconUrl.value = fetched || ''
   faviconSource.value = fetched ? 'api' : 'default'
   faviconLoading.value = false
@@ -297,7 +299,8 @@ const handleSubmit = async () => {
       } else {
         // 只在没有缓存时才重新获取,不带refresh
         faviconLoading.value = true
-        const fetched = await fetchIconFromApi(formData.value.url, false)
+        const res = await getIcon({ url: formData.value.url, refresh: false })
+        const fetched = res.data?.url
         apiFaviconUrl.value = fetched || ''
         iconUrl = fetched || undefined
         faviconLoading.value = false
@@ -404,7 +407,8 @@ watch(
     if (v === 'api' && formData.value.url.trim()) {
       // watch触发时不带refresh,使用缓存
       faviconLoading.value = true
-      const fetched = await fetchIconFromApi(formData.value.url, false)
+      const res = await getIcon({ url: formData.value.url, refresh: false })
+      const fetched = res.data?.url
       apiFaviconUrl.value = fetched || ''
       faviconSource.value = fetched ? 'api' : 'default'
       faviconLoading.value = false
@@ -427,7 +431,8 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
   // 点击按钮时,带refresh=true强制刷新最新图标
   if (source === 'api' && formData.value.url.trim()) {
     faviconLoading.value = true
-    const fetched = await fetchIconFromApi(formData.value.url, true)
+    const res = await getIcon({ url: formData.value.url, refresh: true })
+    const fetched = res.data?.url
     apiFaviconUrl.value = fetched || ''
     faviconSource.value = fetched ? 'api' : 'default'
     faviconLoading.value = false

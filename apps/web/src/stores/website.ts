@@ -1,13 +1,23 @@
 import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
-import type { Website, SearchFilters, SortField, SortOrder } from '@/types'
+import type {
+  Website,
+  SearchFilters,
+  SortField,
+  SortOrder,
+  BackupPayload,
+  BackupData,
+  UserSettings
+} from '@/types'
 import { generateId } from '@/utils/helpers'
+import { useSettingsStore } from './settings'
 
 export const useWebsiteStore = defineStore('website', () => {
   const websites = ref<Website[]>([])
   const searchFilters = ref<SearchFilters>({ keyword: '', categoryIds: [], tagIds: [] })
   const sortField = ref<SortField>('order')
   const sortOrder = ref<SortOrder>('asc')
+  const settingsStore = useSettingsStore()
 
   const initializeData = () => {
     try {
@@ -185,15 +195,36 @@ export const useWebsiteStore = defineStore('website', () => {
     }
   }
 
-  const exportData = () => {
-    return {
+  const exportData = (): BackupPayload => {
+    const data: BackupData = {
       websites: websites.value,
       categories: JSON.parse(localStorage.getItem('categories') || '[]'),
-      tags: JSON.parse(localStorage.getItem('tags') || '[]')
+      tags: JSON.parse(localStorage.getItem('tags') || '[]'),
+      settings: settingsStore.settings
+    }
+
+    return {
+      meta: {
+        version: '1.0.0',
+        createdAt: new Date().toISOString(),
+        appVersion: '0.0.1',
+        platform: 'web'
+      },
+      data
     }
   }
 
-  const importData = (data: { websites?: Partial<Website>[] }) => {
+  const importData = (payload: Partial<BackupPayload> | { websites?: Partial<Website>[] }) => {
+    // Handle legacy format (direct object with websites) or new format (BackupPayload)
+    let data: Partial<BackupData>
+
+    if ('data' in payload && payload.data) {
+      data = payload.data
+    } else {
+      // Legacy support or direct partial update
+      data = payload as unknown as Partial<BackupData>
+    }
+
     if (data.websites) {
       const now = new Date()
       websites.value = data.websites.map((w: Partial<Website>, i: number) => {
@@ -219,6 +250,10 @@ export const useWebsiteStore = defineStore('website', () => {
         }
       })
       saveToLocalStorage()
+    }
+
+    if (data.settings) {
+      settingsStore.updateSettings(data.settings)
     }
   }
 
