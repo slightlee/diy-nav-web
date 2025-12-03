@@ -42,7 +42,7 @@ const backupRoutes: FastifyPluginAsyncZod = async app => {
   })
 
   const restoreBodySchema = z.object({
-    backupId: z.number()
+    backupId: z.coerce.number().int().positive()
   })
 
   app.post(
@@ -67,7 +67,7 @@ const backupRoutes: FastifyPluginAsyncZod = async app => {
   )
 
   const deleteParamsSchema = z.object({
-    id: z.string().transform(Number)
+    id: z.coerce.number().int().positive()
   })
 
   app.delete(

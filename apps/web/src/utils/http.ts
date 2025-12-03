@@ -27,7 +27,7 @@ async function http<T>(endpoint: string, options: RequestOptions = {}): Promise<
     const res = await fetch(url.toString(), {
       ...init,
       headers: {
-        'Content-Type': 'application/json',
+        ...(init.body ? { 'Content-Type': 'application/json' } : {}),
         ...init.headers
       },
       signal: AbortSignal.timeout(TIMEOUT)
