@@ -11,10 +11,10 @@ export function getStorageAdapter(config: Config): StorageAdapter {
     return new S3StorageAdapter({
       bucket: config.STORAGE_BUCKET!,
       publicBaseUrl: config.STORAGE_PUBLIC_BASE_URL!,
-      region: config.AWS_REGION,
-      endpoint: config.AWS_ENDPOINT,
-      accessKeyId: config.AWS_ACCESS_KEY_ID,
-      secretAccessKey: config.AWS_SECRET_ACCESS_KEY,
+      region: config.STORAGE_S3_REGION,
+      endpoint: config.STORAGE_S3_ENDPOINT,
+      accessKeyId: config.STORAGE_S3_ACCESS_KEY_ID,
+      secretAccessKey: config.STORAGE_S3_SECRET_ACCESS_KEY,
       keyPrefix
     })
   }
@@ -22,9 +22,9 @@ export function getStorageAdapter(config: Config): StorageAdapter {
     return new CloudflareR2Adapter({
       bucket: config.STORAGE_BUCKET!,
       publicBaseUrl: config.STORAGE_PUBLIC_BASE_URL!,
-      endpoint: config.CF_R2_ENDPOINT,
-      accessKeyId: config.CF_R2_ACCESS_KEY_ID,
-      secretAccessKey: config.CF_R2_SECRET_ACCESS_KEY,
+      endpoint: config.STORAGE_R2_ENDPOINT,
+      accessKeyId: config.STORAGE_R2_ACCESS_KEY_ID,
+      secretAccessKey: config.STORAGE_R2_SECRET_ACCESS_KEY,
       keyPrefix
     })
   }
@@ -35,5 +35,5 @@ export function getStorageAdapter(config: Config): StorageAdapter {
 }
 
 export function getDefaultIconUrl(config: Config): string {
-  return config.DEFAULT_ICON_URL
+  return config.ICON_DEFAULT_URL
 }

@@ -15,7 +15,7 @@ export async function fetchFromGoogleS2(
 ): Promise<IconFetchResult | null> {
   const config = loadConfig()
   const sz = Number.isFinite(size) && size > 0 ? size : 64
-  const url = `${config.GOOGLE_FAVICON_URL}?domain=${domain}&sz=${sz}`
+  const url = `${config.ICON_GOOGLE_PROXY_URL}?domain=${domain}&sz=${sz}`
 
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 3000)

@@ -7,6 +7,7 @@ export const configSchema = z
   .object({
     PORT: z.coerce.number().default(8787),
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+    APP_NAME: z.string().default('diy-nav-web'),
 
     // Storage
     STORAGE_PROVIDER: z.enum(['local', 'aws', 'cloudflare']).default('local'),
@@ -15,20 +16,21 @@ export const configSchema = z
     STORAGE_KEY_PREFIX: z.string().default(''),
 
     // AWS S3
-    AWS_REGION: z.string().optional(),
-    AWS_ENDPOINT: z.string().optional(),
-    AWS_ACCESS_KEY_ID: z.string().optional(),
-    AWS_SECRET_ACCESS_KEY: z.string().optional(),
+    STORAGE_S3_REGION: z.string().optional(),
+    STORAGE_S3_ENDPOINT: z.string().optional(),
+    STORAGE_S3_ACCESS_KEY_ID: z.string().optional(),
+    STORAGE_S3_SECRET_ACCESS_KEY: z.string().optional(),
 
     // Cloudflare R2
-    CF_R2_ENDPOINT: z.string().optional(),
-    CF_R2_ACCESS_KEY_ID: z.string().optional(),
-    CF_R2_SECRET_ACCESS_KEY: z.string().optional(),
+    STORAGE_R2_ACCOUNT_ID: z.string().optional(),
+    STORAGE_R2_ENDPOINT: z.string().optional(),
+    STORAGE_R2_ACCESS_KEY_ID: z.string().optional(),
+    STORAGE_R2_SECRET_ACCESS_KEY: z.string().optional(),
 
     // Icon
-    DEFAULT_ICON_URL: z.string().default('/icons/default.svg'),
+    ICON_DEFAULT_URL: z.string().default('/icons/default.svg'),
     ICON_SIZE: z.coerce.number().default(64),
-    GOOGLE_FAVICON_URL: z.string().default('https://www.google.com/s2/favicons')
+    ICON_GOOGLE_PROXY_URL: z.string().default('https://www.google.com/s2/favicons')
   })
   .superRefine((data, ctx) => {
     if (data.STORAGE_PROVIDER === 'aws') {
@@ -82,9 +84,9 @@ export function loadConfig(): Config {
     }
   }
 
-  // Backward compatibility
-  if (process.env.ICON_API_PORT && !process.env.PORT) {
-    process.env.PORT = process.env.ICON_API_PORT
+  // Use APP_PORT if PORT is not set
+  if (process.env.APP_PORT && !process.env.PORT) {
+    process.env.PORT = process.env.APP_PORT
   }
 
   const result = configSchema.safeParse(process.env)

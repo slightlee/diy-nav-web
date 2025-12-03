@@ -30,7 +30,7 @@ export const backupService = new BackupService({
 const iconConfig = loadConfig()
 const storage = getStorageAdapter(iconConfig)
 const providers = getProviders(iconConfig)
-export const iconService = new IconService(storage, providers, iconConfig.DEFAULT_ICON_URL)
+export const iconService = new IconService(storage, providers, iconConfig.ICON_DEFAULT_URL)
 
 // Initialize tables
 export const initServices = async () => {
