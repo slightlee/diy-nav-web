@@ -59,7 +59,7 @@
         <div class="history-section">
           <h4 class="history-title">
             历史备份
-            <span class="history-subtitle">（最近 3 条）</span>
+            <!-- <span class="history-subtitle">（最近 3 条）</span> -->
           </h4>
           <div class="history-table-wrapper">
             <table class="history-table">
