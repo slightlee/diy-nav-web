@@ -14,17 +14,20 @@ const iconRoutes: FastifyPluginAsyncZod = async app => {
 
   const iconResponseSchema = {
     200: z.object({
-      url: z.string(),
-      source: z
-        .enum(['google', 'duckduckgo', 'clearbit', 'default', 'cache', 'storage'])
-        .or(z.string()),
-      processedAt: z.string().optional(),
-      metrics: z
-        .object({
-          fetchMs: z.number().optional(),
-          storeMs: z.number().optional()
-        })
-        .optional()
+      success: z.boolean(),
+      data: z.object({
+        url: z.string(),
+        source: z
+          .enum(['google', 'duckduckgo', 'clearbit', 'default', 'cache', 'storage'])
+          .or(z.string()),
+        processedAt: z.string().optional(),
+        metrics: z
+          .object({
+            fetchMs: z.number().optional(),
+            storeMs: z.number().optional()
+          })
+          .optional()
+      })
     }),
     400: z.object({
       code: z.string(),
@@ -57,9 +60,12 @@ const iconRoutes: FastifyPluginAsyncZod = async app => {
         const result = await iconService.getIconUrl(target, refresh || false)
 
         return {
-          url: result.url,
-          source: result.source,
-          metrics: result.metrics
+          success: true,
+          data: {
+            url: result.url,
+            source: result.source,
+            metrics: result.metrics
+          }
         }
       } catch (err) {
         req.log.error(err)
