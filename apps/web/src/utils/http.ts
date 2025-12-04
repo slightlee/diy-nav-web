@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 export interface ApiResponse<T = unknown> {
   success: boolean
   message?: string
@@ -9,10 +10,14 @@ const TIMEOUT = 10000
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | undefined>
+  timeout?: number
+  retries?: number
+  retryDelay?: number
+  keepalive?: boolean
 }
 
 async function http<T>(endpoint: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
-  const { params, ...init } = options
+  const { params, timeout = TIMEOUT, retries = 0, retryDelay = 1000, ...init } = options
 
   const url = new URL(endpoint, BASE_URL)
   if (params) {
@@ -23,33 +28,58 @@ async function http<T>(endpoint: string, options: RequestOptions = {}): Promise<
     })
   }
 
-  try {
-    const res = await fetch(url.toString(), {
-      ...init,
-      headers: {
-        ...(init.body ? { 'Content-Type': 'application/json' } : {}),
-        ...init.headers
-      },
-      signal: AbortSignal.timeout(TIMEOUT)
-    })
+  let attempt = 0
+  while (attempt <= retries) {
+    try {
+      const res = await fetch(url.toString(), {
+        ...init,
+        headers: {
+          ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+          ...init.headers
+        },
+        signal: AbortSignal.timeout(timeout),
+        keepalive: init.keepalive
+      })
 
-    const data = await res.json()
-    return data as ApiResponse<T>
-  } catch (e) {
-    console.error(`[HTTP] Request failed: ${endpoint}`, e)
-    return {
-      success: false,
-      message: e instanceof Error ? e.message : 'Network error'
+      const data = await res.json()
+      return data as ApiResponse<T>
+    } catch (e) {
+      attempt++
+      const isLastAttempt = attempt > retries
+      if (isLastAttempt) {
+        console.error(`[HTTP] Request failed: ${endpoint}`, e)
+        return {
+          success: false,
+          message: e instanceof Error ? e.message : 'Network error'
+        }
+      }
+
+      // Wait before retrying (exponential backoff)
+      const delay = retryDelay * Math.pow(2, attempt - 1)
+      console.warn(`[HTTP] Request failed, retrying in ${delay}ms... (${attempt}/${retries})`)
+      await new Promise(resolve => setTimeout(resolve, delay))
     }
   }
+
+  return { success: false, message: 'Max retries exceeded' }
 }
 
 export const request = {
-  get: <T>(endpoint: string, params?: Record<string, string | undefined>) =>
-    http<T>(endpoint, { method: 'GET', params }),
-  post: <T, B = unknown>(endpoint: string, body?: B) =>
-    http<T>(endpoint, { method: 'POST', body: JSON.stringify(body) }),
-  put: <T, B = unknown>(endpoint: string, body?: B) =>
-    http<T>(endpoint, { method: 'PUT', body: JSON.stringify(body) }),
-  delete: <T>(endpoint: string) => http<T>(endpoint, { method: 'DELETE' })
+  get: <T>(
+    endpoint: string,
+    params?: Record<string, string | undefined>,
+    options?: Omit<RequestOptions, 'method' | 'params'>
+  ) => http<T>(endpoint, { method: 'GET', params, ...options }),
+  post: <T, B = unknown>(
+    endpoint: string,
+    body?: B,
+    options?: Omit<RequestOptions, 'method' | 'body'>
+  ) => http<T>(endpoint, { method: 'POST', body: JSON.stringify(body), ...options }),
+  put: <T, B = unknown>(
+    endpoint: string,
+    body?: B,
+    options?: Omit<RequestOptions, 'method' | 'body'>
+  ) => http<T>(endpoint, { method: 'PUT', body: JSON.stringify(body), ...options }),
+  delete: <T>(endpoint: string, options?: Omit<RequestOptions, 'method'>) =>
+    http<T>(endpoint, { method: 'DELETE', ...options })
 }

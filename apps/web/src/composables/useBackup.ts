@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { ref } from 'vue'
 import {
   getBackups,
@@ -9,10 +10,14 @@ import {
 import type { BackupPayload } from '@/types'
 import { useUIStore } from '@/stores/ui'
 import { useWebsiteStore } from '@/stores/website'
+import { useCategoryStore } from '@/stores/category'
+import { useTagStore } from '@/stores/tag'
 
 export function useBackup() {
   const uiStore = useUIStore()
   const websiteStore = useWebsiteStore()
+  const categoryStore = useCategoryStore()
+  const tagStore = useTagStore()
 
   const backups = ref<BackupItem[]>([])
   const loading = ref(false)
@@ -66,6 +71,15 @@ export function useBackup() {
       if (res.success && res.data) {
         // res.data is BackupPayload
         websiteStore.importData(res.data)
+
+        if (res.data.data.categories) {
+          categoryStore.overwriteCategories(res.data.data.categories)
+        }
+
+        if (res.data.data.tags) {
+          tagStore.overwriteTags(res.data.data.tags)
+        }
+
         uiStore.showToast('恢复成功', 'success')
         return true
       } else {
