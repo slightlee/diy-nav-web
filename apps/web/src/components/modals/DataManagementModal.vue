@@ -73,25 +73,40 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="item in backupHistory" :key="item.id">
-                  <td>{{ new Date(item.created_at).toLocaleString() }}</td>
-                  <td class="text-center">
-                    <span
-                      class="badge"
-                      :class="item.type === 'AUTO' ? 'badge-green' : 'badge-blue'"
-                    >
-                      {{ item.type === 'AUTO' ? '自动备份' : '手动备份' }}
-                    </span>
-                  </td>
-                  <td class="text-center">云端 (R2)</td>
-                  <td class="text-center">{{ formatSize(item.size) }}</td>
-                  <td class="text-center">
-                    <div class="action-buttons">
-                      <button class="restore-link" @click="handleRestore(item)">恢复</button>
-                      <button class="delete-link" @click="handleDelete(item)">删除</button>
+                <tr v-if="loading">
+                  <td colspan="5">
+                    <div class="table-state">
+                      <i class="fas fa-spinner fa-spin" />
+                      <span>加载中...</span>
                     </div>
                   </td>
                 </tr>
+                <tr v-else-if="backupHistory.length === 0">
+                  <td colspan="5">
+                    <div class="table-state text-muted">暂无备份记录</div>
+                  </td>
+                </tr>
+                <template v-else>
+                  <tr v-for="item in backupHistory" :key="item.id">
+                    <td>{{ new Date(item.created_at).toLocaleString() }}</td>
+                    <td class="text-center">
+                      <span
+                        class="badge"
+                        :class="item.type === 'AUTO' ? 'badge-green' : 'badge-blue'"
+                      >
+                        {{ item.type === 'AUTO' ? '自动备份' : '手动备份' }}
+                      </span>
+                    </td>
+                    <td class="text-center">云端 (R2)</td>
+                    <td class="text-center">{{ formatSize(item.size) }}</td>
+                    <td class="text-center">
+                      <div class="action-buttons">
+                        <button class="restore-link" @click="handleRestore(item)">恢复</button>
+                        <button class="delete-link" @click="handleDelete(item)">删除</button>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
               </tbody>
             </table>
           </div>
@@ -398,6 +413,7 @@ const autoBackup = computed({
 const fileInputRef = ref<HTMLInputElement>()
 const {
   backups: backupHistory,
+  loading,
   operating,
   fetchBackups,
   createBackup: doCreateBackup,
@@ -798,6 +814,25 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.table-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 0;
+  color: var(--color-neutral-500);
+  font-size: 14px;
+
+  i {
+    font-size: 16px;
+    color: var(--color-primary);
+  }
+
+  &.text-muted {
+    color: var(--color-neutral-400);
+  }
 }
 
 /* Switch */
