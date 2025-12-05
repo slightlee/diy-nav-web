@@ -274,10 +274,10 @@ defineExpose({
   align-items: flex-start;
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
-  background-color: var(--color-white);
+  background-color: var(--bg-panel);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--border-tile);
   min-width: 300px;
   max-width: 400px;
   position: relative;
@@ -362,14 +362,14 @@ defineExpose({
 .toast-item__message {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
-  color: var(--color-neutral-800);
+  color: var(--text-main);
   line-height: var(--line-height-tight);
   margin-bottom: var(--spacing-xs);
 }
 
 .toast-item__description {
   font-size: var(--font-size-sm);
-  color: var(--color-neutral-600);
+  color: var(--text-secondary);
   line-height: var(--line-height-normal);
 }
 
@@ -390,8 +390,8 @@ defineExpose({
   font-size: var(--font-size-xs);
 
   &:hover {
-    background-color: var(--color-neutral-100);
-    color: var(--color-neutral-600);
+    background-color: var(--bg-tile-hover);
+    color: var(--text-main);
   }
 
   &:focus {
@@ -438,17 +438,17 @@ defineExpose({
 
 .toast-item__action-btn {
   padding: var(--spacing-xs) var(--spacing-sm);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--border-tile);
   border-radius: var(--radius-sm);
-  background-color: var(--color-white);
-  color: var(--color-neutral-700);
+  background-color: var(--bg-panel);
+  color: var(--text-secondary);
   font-size: var(--font-size-xs);
   cursor: pointer;
   transition: all var(--transition-fast);
 
   &:hover {
-    background-color: var(--color-neutral-50);
-    border-color: var(--color-neutral-300);
+    background-color: var(--bg-tile-hover);
+    border-color: var(--border-tile-hover);
   }
 
   &--primary {
