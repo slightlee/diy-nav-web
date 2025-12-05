@@ -3,7 +3,15 @@
     <div class="modal-content-wrapper">
       <!-- Category List -->
       <div class="category-list-container">
-        <TransitionGroup name="list" tag="div" class="category-list">
+        <!-- Empty State -->
+        <EmptyState
+          v-if="categories.length === 0"
+          type="no-categories"
+          :show-action-button="false"
+          size="small"
+        />
+
+        <TransitionGroup v-else name="list" tag="div" class="category-list">
           <div
             v-for="category in categories"
             :key="category.id"
@@ -125,7 +133,7 @@
 import { ref, computed } from 'vue'
 import { useCategoryStore } from '@/stores/category'
 import { useWebsiteStore } from '@/stores/website'
-import { BaseInput, BaseButton, BaseModal, IconPicker } from '@nav/ui'
+import { BaseInput, BaseButton, BaseModal, IconPicker, EmptyState } from '@nav/ui'
 import type { Category } from '@/types'
 import { computeReorderedIds } from '@/utils/helpers'
 

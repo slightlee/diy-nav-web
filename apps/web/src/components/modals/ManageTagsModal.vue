@@ -4,9 +4,13 @@
       <!-- 标签列表 -->
       <div class="tag-list-container">
         <!-- 空状态 -->
-        <EmptyState v-if="tags.length === 0" type="no-tags" :show-action-button="false" />
+        <EmptyState
+          v-if="tags.length === 0"
+          type="no-tags"
+          :show-action-button="false"
+          size="small"
+        />
 
-        <!-- 标签列表 -->
         <!-- 标签列表 -->
         <TransitionGroup v-else name="list" tag="div" class="tag-list">
           <TagListItem

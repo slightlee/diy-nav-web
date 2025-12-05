@@ -31,7 +31,18 @@
               <i class="fas fa-pencil-alt" />
             </button>
           </div>
-          <div class="tag-list">
+
+          <div v-if="tags.length === 0" class="sidebar-empty-state">
+            <p class="empty-desc-text">添加网站并打上标签后，你可以在这里按标签快速筛选。</p>
+            <div class="tag-list disabled">
+              <span class="tag-pill example">示例：GitHub</span>
+              <span class="tag-pill example">示例：云服务</span>
+              <span class="tag-pill example">示例：AI</span>
+            </div>
+            <button class="create-first-btn" @click="emit('manageTags')">创建第一个标签</button>
+          </div>
+
+          <div v-else class="tag-list">
             <button
               v-for="tag in tags"
               :key="tag.id"
@@ -52,7 +63,27 @@
               <i class="fas fa-pencil-alt" />
             </button>
           </div>
-          <div class="category-list">
+
+          <div v-if="categories.length === 0" class="sidebar-empty-state">
+            <p class="empty-desc-text">
+              为网站创建分类后，你可以在这里切换查看「云服务商」「在线工具」「博客论坛」等分组。
+            </p>
+            <div class="category-list">
+              <button class="category-item active" @click="selectCategory('all')">
+                <span class="category-name">全部 (0)</span>
+              </button>
+            </div>
+            <div class="tag-list disabled">
+              <span class="tag-pill example">示例：云服务商</span>
+              <span class="tag-pill example">示例：在线工具</span>
+              <span class="tag-pill example">示例：博客论坛</span>
+            </div>
+            <button class="create-first-btn" @click="emit('manageCategories')">
+              创建第一个分类
+            </button>
+          </div>
+
+          <div v-else class="category-list">
             <button
               class="category-item"
               :class="{ active: selectedCategory === 'all' }"
@@ -170,9 +201,19 @@
         <EmptyState
           v-if="filteredWebsites.length === 0 && !searchKeyword"
           type="no-websites"
+          message="暂时还没有网站"
+          description="点击下方按钮，添加你的第一个网站。之后你可以在「全部」中按标签、分类和关键字进行筛选和搜索。"
+          hint="小提示：建议为常用网站设置分类和标签，后续管理和查找会更轻松。"
           :show-action-button="true"
-          @action="onAddSite"
-        />
+          size="small"
+        >
+          <template #action>
+            <BaseButton variant="primary" size="md" shape="pill" @click="onAddSite">
+              <i class="fas fa-plus" />
+              添加第一个网站
+            </BaseButton>
+          </template>
+        </EmptyState>
       </main>
     </div>
   </div>
@@ -509,6 +550,80 @@ const onFavoriteToggle = (id: string) => {
     background-color: var(--color-primary);
     color: var(--color-white);
     box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+  }
+}
+
+.sidebar-empty-state {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 4px;
+}
+
+.empty-desc-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.tag-list.disabled {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.tag-pill.example {
+  background-color: var(--bg-body);
+  border: 1px solid var(--border-tile);
+  color: var(--text-muted);
+  cursor: default;
+  opacity: 0.6;
+  padding: 4px 12px;
+  font-size: 12px;
+
+  &:hover {
+    border-color: var(--border-tile);
+    color: var(--text-muted);
+  }
+}
+
+.category-item.example {
+  cursor: default;
+  opacity: 0.5;
+  padding: 8px 10px;
+  font-size: 13px;
+
+  &:hover {
+    background-color: transparent;
+    color: var(--text-secondary);
+  }
+
+  .category-name {
+    font-weight: 400;
+  }
+}
+
+.create-first-btn {
+  margin-top: 4px;
+  padding: 6px 16px;
+  border: 1px dashed var(--border-tile);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background-color: rgba(37, 99, 235, 0.05);
   }
 }
 
