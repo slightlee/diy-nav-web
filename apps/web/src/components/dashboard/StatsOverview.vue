@@ -23,6 +23,9 @@
         <span class="stat-value">{{ todayVisited }}</span>
       </div>
     </div>
+    <div v-if="totalSites === 0" class="stats-suggestion">
+      建议先添加几个每天都会访问的网站，后续趋势一目了然。
+    </div>
   </section>
 </template>
 
@@ -106,5 +109,11 @@ const { totalSites, favoriteTotal, recentAdded7d, todayVisited } = useWebsiteSta
   font-weight: 500;
   color: var(--text-main);
   border: 1px solid var(--border-tile-hover);
+}
+
+.stats-suggestion {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
 }
 </style>

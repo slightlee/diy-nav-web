@@ -26,7 +26,18 @@
         <i class="fas fa-chevron-right" />
         <span class="tag-name">更多</span>
       </button>
-      <div v-if="categoryPopular.length === 0" class="recent-empty">暂无分类</div>
+      <div v-if="categoryPopular.length === 0" class="filter-empty">
+        <p class="empty-text">
+          还没有分类。创建分类后，可以在这里一键切换「云服务商」「在线工具」等分组。
+        </p>
+        <div class="empty-examples">
+          <span class="example-label">示例：</span>
+          <span class="example-pill">云服务商 24</span>
+          <span class="example-pill">在线工具 15</span>
+          <span class="example-pill">博客论坛 11</span>
+        </div>
+        <button class="empty-create-btn" @click="openManageCategories">创建第一个分类</button>
+      </div>
     </div>
   </section>
 </template>
@@ -42,6 +53,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCategoryStore } from '@/stores/category'
+import { useUIStore } from '@/stores/ui'
 import { useWebsiteStats } from '@/composables/useWebsiteStats'
 
 const emit = defineEmits<{
@@ -50,7 +62,12 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const categoryStore = useCategoryStore()
+const uiStore = useUIStore()
 const { categoryCountMap } = useWebsiteStats()
+
+const openManageCategories = () => {
+  uiStore.openModal('manageCategories')
+}
 
 const POPULAR_LIMIT = 10
 const categoryPopular = computed(() =>
@@ -132,9 +149,60 @@ const goToAllWithCategory = (categoryId: string) =>
   color: var(--color-primary);
   border-style: dashed;
 }
-.recent-empty {
-  color: var(--text-muted);
+
+.filter-empty {
+  width: 100%;
+  padding: 4px 0;
+}
+
+.empty-text {
   font-size: 13px;
-  padding: 8px 0;
+  color: var(--text-secondary);
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.empty-examples {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 12px;
+}
+
+.example-label {
+  color: var(--text-muted);
+}
+
+.example-pill {
+  padding: 2px 8px;
+  background: var(--bg-body);
+  border: 1px solid var(--border-tile);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.empty-create-btn {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px dashed var(--border-tile);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background-color: rgba(37, 99, 235, 0.05);
+  }
 }
 </style>

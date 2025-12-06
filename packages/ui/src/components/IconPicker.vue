@@ -180,15 +180,15 @@ const icons = [
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--border-tile);
   border-radius: var(--radius-sm);
-  background-color: var(--color-white);
-  color: var(--color-neutral-600);
+  background-color: var(--bg-tile);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--transition-fast);
 
   &:hover {
-    background-color: var(--color-neutral-50);
+    background-color: var(--bg-tile-hover);
     color: var(--color-primary);
     border-color: var(--color-primary);
   }
@@ -212,10 +212,10 @@ const icons = [
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--border-tile);
   border-radius: var(--radius-md);
-  background-color: var(--color-white);
-  color: var(--color-neutral-700);
+  background-color: var(--bg-panel);
+  color: var(--text-main);
   cursor: pointer;
   transition: all var(--transition-fast);
   font-size: var(--font-size-lg);
@@ -230,8 +230,8 @@ const icons = [
   position: fixed;
   margin-top: 0;
   padding: var(--spacing-sm);
-  background-color: var(--color-white);
-  border: 1px solid var(--color-border);
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-tile);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
   width: 280px;

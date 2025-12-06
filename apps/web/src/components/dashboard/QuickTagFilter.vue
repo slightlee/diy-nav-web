@@ -27,7 +27,19 @@
         <i class="fas fa-chevron-right" />
         <span class="tag-name">更多</span>
       </button>
-      <div v-if="tagPopular.length === 0" class="recent-empty">暂无标签</div>
+      <div v-if="tagPopular.length === 0" class="filter-empty">
+        <p class="empty-text">
+          为网站打上标签后，可以在这里按「GitHub」「云服务」「AI」等标签快速筛选网站。
+        </p>
+        <div class="empty-examples">
+          <span class="example-label">示例：</span>
+          <span class="example-pill">GitHub 13</span>
+          <span class="example-pill">云服务 20</span>
+          <span class="example-pill">搜索引擎 10</span>
+          <span class="example-pill">博客 25</span>
+        </div>
+        <button class="empty-create-btn" @click="openManageTags">创建第一个标签</button>
+      </div>
     </div>
   </section>
 </template>
@@ -43,6 +55,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTagStore } from '@/stores/tag'
+import { useUIStore } from '@/stores/ui'
 import { useWebsiteStats } from '@/composables/useWebsiteStats'
 
 const emit = defineEmits<{
@@ -51,7 +64,12 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const tagStore = useTagStore()
+const uiStore = useUIStore()
 const { tagUsageMap } = useWebsiteStats()
+
+const openManageTags = () => {
+  uiStore.openModal('manageTags')
+}
 
 const POPULAR_LIMIT = 10
 const tagPopular = computed(() =>
@@ -136,9 +154,60 @@ const goToAllWithTag = (tagId: string) => router.push({ path: '/all', query: { t
   border-radius: 9999px;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
-.recent-empty {
-  color: var(--text-muted);
+
+.filter-empty {
+  width: 100%;
+  padding: 4px 0;
+}
+
+.empty-text {
   font-size: 13px;
-  padding: 8px 0;
+  color: var(--text-secondary);
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.empty-examples {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 12px;
+}
+
+.example-label {
+  color: var(--text-muted);
+}
+
+.example-pill {
+  padding: 2px 8px;
+  background: var(--bg-body);
+  border: 1px solid var(--border-tile);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.empty-create-btn {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px dashed var(--border-tile);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background-color: rgba(37, 99, 235, 0.05);
+  }
 }
 </style>

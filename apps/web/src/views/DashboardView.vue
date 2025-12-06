@@ -11,7 +11,27 @@
           <div id="recent-pager-portal" />
         </div>
         <div class="section-content">
-          <CompactList fixed-view="recent" :limit="12" @page-count="recentPageCount = $event" />
+          <CompactList fixed-view="recent" :limit="12" @page-count="recentPageCount = $event">
+            <template #empty>
+              <div class="empty-placeholder">
+                <div class="empty-icon-wrapper">
+                  <i class="fas fa-history" />
+                </div>
+                <h3 class="empty-title">暂无最近使用</h3>
+                <p class="empty-desc">
+                  在 DIY
+                  导航中打开的网站，都会自动记录在这里，方便你下一次直接从首页快速回到常用站点。
+                </p>
+                <div class="empty-actions">
+                  <button class="empty-btn primary" @click="handleAddSite">
+                    <i class="fas fa-plus" />
+                    添加第一个网站
+                  </button>
+                  <button class="empty-btn outline" @click="goToAll">浏览全部网站</button>
+                </div>
+              </div>
+            </template>
+          </CompactList>
         </div>
       </section>
       <section class="section-block">
@@ -23,7 +43,29 @@
           </h2>
           <div id="favorite-pager-portal" />
         </div>
-        <div class="section-content"><CompactList fixed-view="favorite" :limit="12" /></div>
+        <div class="section-content">
+          <CompactList fixed-view="favorite" :limit="12">
+            <template #empty>
+              <div class="empty-placeholder">
+                <div class="empty-icon-wrapper">
+                  <i class="fas fa-star" />
+                </div>
+                <h3 class="empty-title">暂无常用网站</h3>
+                <p class="empty-desc">
+                  在「全部」页面给网站打上星标，即可将它们固定为「常用」，优先展示在首页右侧。
+                </p>
+                <div class="empty-actions">
+                  <button class="empty-btn outline" @click="goToAll">去全部页面标记常用</button>
+                </div>
+                <div class="empty-examples">
+                  <span class="example-label">示例：</span>
+                  <span class="example-pill">GitHub</span>
+                  <span class="example-pill">Google</span>
+                </div>
+              </div>
+            </template>
+          </CompactList>
+        </div>
       </section>
     </div>
     <div class="bottom-area">
@@ -48,10 +90,24 @@ import CategorySelectModal from '@/components/modals/CategorySelectModal.vue'
 import TagSelectModal from '@/components/modals/TagSelectModal.vue'
 import { useWebsiteStats } from '@/composables/useWebsiteStats'
 
+import { useRouter } from 'vue-router'
+import { useUIStore } from '@/stores/ui'
+
 const { favoriteTotal } = useWebsiteStats()
 const recentPageCount = ref(0)
 const categorySelectOpen = ref(false)
 const tagSelectOpen = ref(false)
+
+const router = useRouter()
+const uiStore = useUIStore()
+
+const handleAddSite = () => {
+  uiStore.openModal('addSite', {})
+}
+
+const goToAll = () => {
+  router.push('/all')
+}
 </script>
 
 <style scoped lang="scss">
@@ -128,5 +184,106 @@ const tagSelectOpen = ref(false)
   @include desktop {
     grid-template-columns: repeat(3, 1fr);
   }
+}
+
+/* Empty State Styles */
+.empty-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.empty-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+  i {
+    font-size: 28px;
+    color: #3b82f6;
+  }
+}
+
+.empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0 0 8px 0;
+}
+
+.empty-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 24px 0;
+}
+
+.empty-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.empty-btn {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+
+  &.primary {
+    background: var(--primary-soft);
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+
+  &.outline {
+    background: transparent;
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+
+    &:hover {
+      background: rgba(59, 130, 246, 0.05);
+    }
+  }
+}
+
+.empty-examples {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.example-label {
+  color: var(--text-muted);
+}
+
+.example-pill {
+  padding: 2px 8px;
+  background: var(--bg-tile);
+  border: 1px solid var(--border-tile);
+  border-radius: 999px;
+  color: var(--text-secondary);
 }
 </style>

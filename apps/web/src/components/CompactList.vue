@@ -1,6 +1,10 @@
 <template>
   <div class="compact-list">
-    <EmptyState v-if="allList.length === 0" :message="emptyText" />
+    <div v-if="allList.length === 0" class="compact-list__empty">
+      <slot name="empty">
+        <EmptyState :message="emptyText" />
+      </slot>
+    </div>
     <div v-else class="tiles content-auto">
       <div
         v-for="w in pagedList"
@@ -175,6 +179,14 @@ const goNext = () => {
 
   --pager-h: 32px;
   --tile-h: clamp(88px, 9vh, 104px);
+}
+
+.compact-list__empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
 }
 
 .tiles {
