@@ -23,10 +23,6 @@
                   导航中打开的网站，都会自动记录在这里，方便你下一次直接从首页快速回到常用站点。
                 </p>
                 <div class="empty-actions">
-                  <button class="empty-btn primary" @click="handleAddSite">
-                    <i class="fas fa-plus" />
-                    添加第一个网站
-                  </button>
                   <button class="empty-btn outline" @click="goToAll">浏览全部网站</button>
                 </div>
               </div>
@@ -91,7 +87,6 @@ import TagSelectModal from '@/components/modals/TagSelectModal.vue'
 import { useWebsiteStats } from '@/composables/useWebsiteStats'
 
 import { useRouter } from 'vue-router'
-import { useUIStore } from '@/stores/ui'
 
 const { favoriteTotal } = useWebsiteStats()
 const recentPageCount = ref(0)
@@ -99,11 +94,6 @@ const categorySelectOpen = ref(false)
 const tagSelectOpen = ref(false)
 
 const router = useRouter()
-const uiStore = useUIStore()
-
-const handleAddSite = () => {
-  uiStore.openModal('addSite', {})
-}
 
 const goToAll = () => {
   router.push('/all')
@@ -246,16 +236,6 @@ const goToAll = () => {
   align-items: center;
   gap: 6px;
   transition: all 0.2s ease;
-
-  &.primary {
-    background: var(--primary-soft);
-    color: var(--color-primary);
-    border: 1px solid var(--color-primary);
-
-    &:hover {
-      opacity: 0.8;
-    }
-  }
 
   &.outline {
     background: transparent;
