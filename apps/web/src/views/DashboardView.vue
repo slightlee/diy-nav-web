@@ -1,5 +1,6 @@
 <template>
   <AppLayout>
+    <HomeSearch />
     <div class="two-pane">
       <section class="section-block">
         <div class="section-title-row">
@@ -79,6 +80,7 @@
 import { ref } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import CompactList from '@/components/CompactList.vue'
+import HomeSearch from '@/components/dashboard/HomeSearch.vue'
 import StatsOverview from '@/components/dashboard/StatsOverview.vue'
 import QuickCategoryFilter from '@/components/dashboard/QuickCategoryFilter.vue'
 import QuickTagFilter from '@/components/dashboard/QuickTagFilter.vue'

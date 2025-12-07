@@ -337,6 +337,7 @@ const onFavoriteToggle = (id: string) => {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   border-radius: 999px;
   padding-left: 1rem;
+  height: 56px; // Match HomeSearch
   transition:
     background-color 0.3s ease,
     box-shadow 0.3s ease;
@@ -351,6 +352,11 @@ const onFavoriteToggle = (id: string) => {
   }
 }
 
+:deep(.main-search-input .base-input__inner) {
+  font-size: 16px; // Match HomeSearch
+  height: 100%;
+}
+
 :global([data-theme='dark']) :deep(.main-search-input .base-input__wrapper) {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 
@@ -360,18 +366,28 @@ const onFavoriteToggle = (id: string) => {
 }
 
 .search-button {
-  background: none;
+  background: var(--color-primary);
   border: none;
-  color: var(--text-muted);
-  font-size: 18px;
+  color: white;
+  font-size: 14px;
   cursor: pointer;
-  transition: color 0.2s;
-  padding: 0 8px;
+  transition: all 0.2s;
+  padding: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 6px;
 
   &:hover {
-    color: var(--color-primary);
+    opacity: 0.9;
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
   }
 }
 
