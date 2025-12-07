@@ -113,8 +113,11 @@ const pagerTarget = computed(() => {
 
 const allList = computed<Website[]>(() => {
   if (props.fixedView === 'recent') {
+    const threeDaysAgo = new Date()
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3)
+
     return websiteStore.websites
-      .filter(w => !!w.lastVisited)
+      .filter(w => !!w.lastVisited && new Date(w.lastVisited) > threeDaysAgo)
       .sort((a, b) => (b.lastVisited?.getTime() ?? 0) - (a.lastVisited?.getTime() ?? 0))
   }
   if (props.fixedView === 'favorite') {
