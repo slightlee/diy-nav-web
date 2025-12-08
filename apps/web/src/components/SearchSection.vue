@@ -823,8 +823,18 @@ const onFavoriteToggle = (id: string) => {
     position: static;
   }
 
+  .main-content {
+    width: 100%;
+  }
+
   .website-grid {
     grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .website-draggable {
+    width: 100%;
+    overflow: hidden;
   }
 }
 </style>

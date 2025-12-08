@@ -348,12 +348,16 @@ const handleKeydown = (event: KeyboardEvent) => {
   flex-direction: column;
   height: 100%;
   gap: 0.75rem; // Reduced from 1rem
+  overflow: hidden; // Prevent content overflow
+  max-width: 100%; // Ensure content stays within card bounds
 }
 
 .website-card__header {
   display: flex;
   gap: 0.75rem; // Reduced from 1rem
   align-items: flex-start;
+  overflow: hidden; // Prevent header content overflow
+  max-width: 100%; // Ensure header stays within bounds
 }
 
 .website-card__favicon {
@@ -391,6 +395,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   flex: 1;
   min-width: 0;
   padding-top: 0; // Removed padding-top
+  overflow: hidden; // Prevent content overflow
 }
 
 .website-card__title {
@@ -399,6 +404,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   font-weight: 700;
   line-height: 1.3;
   color: var(--text-main);
+  overflow: hidden; // Prevent title overflow
 }
 
 .website-card__title-link {
@@ -421,6 +427,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   line-height: 1.5;
   @include text-truncate(2);
   min-height: 3em; // 2 lines
+  overflow-wrap: break-word; // Ensure long text wraps properly
 }
 
 .website-card__body {
@@ -579,6 +586,10 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 @media (max-width: 768px) {
+  .website-card {
+    width: 100%;
+  }
+
   .website-card__actions {
     opacity: 1;
     transform: none;
