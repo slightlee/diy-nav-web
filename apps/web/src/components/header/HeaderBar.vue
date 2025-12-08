@@ -250,6 +250,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   color: var(--text-main);
   margin: 0;
   letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 .header-actions {
   display: flex;
@@ -281,15 +282,19 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
     color: var(--text-main);
     font-weight: 600;
 
-    &::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: -4px;
-      height: 2px;
-      background-color: var(--color-primary);
-      border-radius: 2px;
+    span {
+      position: relative;
+
+      &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -6px;
+        height: 2px;
+        background-color: var(--color-primary);
+        border-radius: 2px;
+      }
     }
   }
 }
@@ -406,16 +411,44 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 }
 @media (max-width: 768px) {
   .header-content {
-    padding: 0.75rem;
+    padding: 0 0.75rem;
   }
   .header-left {
-    gap: 1.5rem;
+    gap: 0.75rem;
+  }
+  .logo-section {
+    gap: 0.5rem;
+  }
+  .logo-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+  .app-title {
+    display: none;
+  }
+  .view-nav {
+    gap: 1rem;
+  }
+  .view-nav__link {
+    font-size: 14px;
   }
   .header-actions {
     gap: 0.5rem;
   }
   .add-site-btn .btn-text {
     display: none;
+  }
+  :deep(.add-site-btn) {
+    height: 36px;
+    padding: 0 14px;
+    min-width: 44px;
+  }
+  :deep(.header-actions button:not(.add-site-btn)) {
+    min-width: 40px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
   }
 }
 
