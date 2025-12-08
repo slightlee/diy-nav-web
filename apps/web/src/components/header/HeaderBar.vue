@@ -67,7 +67,13 @@
             class="user-avatar-btn"
             @click="toggleSettingsDropdown"
           >
-            <div v-if="authStore.isAuthenticated" class="user-avatar">
+            <img
+              v-if="authStore.isAuthenticated && authStore.user?.avatar_url"
+              :src="authStore.user.avatar_url"
+              class="user-avatar"
+              alt="User Avatar"
+            />
+            <div v-else-if="authStore.isAuthenticated" class="user-avatar">
               {{ authStore.user?.email?.[0]?.toUpperCase() || 'U' }}
             </div>
             <i v-else class="fas fa-cog" />
@@ -422,13 +428,22 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 .user-avatar {
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-  color: white;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
   font-size: 14px;
+  object-fit: cover;
+}
+
+div.user-avatar {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: white;
+}
+
+img.user-avatar {
+  background: transparent;
 }
 
 .dropdown-header {

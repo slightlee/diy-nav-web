@@ -9,6 +9,8 @@
     "dev": "tsc -w"
   },
   "dependencies": {
+    "@dicebear/avatars": "^4.10.8",
+    "@dicebear/avatars-avataaars-sprites": "^4.10.8",
     "@nav/database": "workspace:^",
     "@nav/storage": "workspace:^",
     "bcryptjs": "^3.0.3",

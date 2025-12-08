@@ -1,6 +1,7 @@
 import { D1Client } from '@nav/database'
 import { v4 as uuidv4 } from 'uuid'
 import bcrypt from 'bcryptjs'
+import { AvatarService } from './avatar'
 
 export interface User {
   id: string
@@ -19,13 +20,16 @@ export interface User {
 
 export interface AuthConfig {
   d1: D1Client
+  avatarService: AvatarService
 }
 
 export class AuthService {
   private d1: D1Client
+  private avatarService: AvatarService
 
   constructor(config: AuthConfig) {
     this.d1 = config.d1
+    this.avatarService = config.avatarService
   }
 
   /**
@@ -79,10 +83,19 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(password, 10)
     const now = Date.now()
 
+    // Generate avatar
+    let avatarUrl: string | null = null
+    try {
+      avatarUrl = await this.avatarService.generateAndUpload(id)
+    } catch (error) {
+      console.error('Failed to generate avatar:', error)
+      // Continue registration even if avatar generation fails
+    }
+
     await this.d1.query(
-      `INSERT INTO users (id, email, password_hash, role, status, created_at, updated_at)
-       VALUES (?, ?, ?, 'USER', 'ACTIVE', ?, ?)`,
-      [id, email, passwordHash, now, now]
+      `INSERT INTO users (id, email, password_hash, avatar_url, role, status, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'USER', 'ACTIVE', ?, ?)`,
+      [id, email, passwordHash, avatarUrl, now, now]
     )
 
     const user = await this.d1.first<User>('SELECT * FROM users WHERE id = ?', [id])

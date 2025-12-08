@@ -1,6 +1,6 @@
 import { D1Client } from '@nav/database'
 import { R2Client } from '@nav/storage'
-import { BackupService, AuthService } from '@nav/core'
+import { BackupService, AuthService, AvatarService } from '@nav/core'
 import { config } from './config.js'
 import { loadConfig } from '@nav/config'
 import { IconService, getStorageAdapter, getProviders } from '@nav/icon-core'
@@ -26,8 +26,14 @@ export const backupService = new BackupService({
   backupRootDir: config.backup.rootDir
 })
 
+export const avatarService = new AvatarService({
+  r2: r2Client,
+  publicUrlBase: config.r2.publicUrlBase
+})
+
 export const authService = new AuthService({
-  d1: d1Client
+  d1: d1Client,
+  avatarService
 })
 
 // --- Icon Services ---

@@ -19,6 +19,7 @@ const envSchema = z.object({
   STORAGE_R2_ACCESS_KEY_ID: z.string().optional(),
   STORAGE_R2_SECRET_ACCESS_KEY: z.string().optional(),
   STORAGE_BUCKET: z.string().optional(),
+  STORAGE_PUBLIC_BASE_URL: z.string().optional(),
 
   // D1 Database
   DB_D1_DATABASE_ID: z.string().optional(),
@@ -61,7 +62,10 @@ export const config = {
   r2: {
     accessKeyId: processEnv.STORAGE_R2_ACCESS_KEY_ID || '',
     secretAccessKey: processEnv.STORAGE_R2_SECRET_ACCESS_KEY || '',
-    bucketName: processEnv.STORAGE_BUCKET || ''
+    bucketName: processEnv.STORAGE_BUCKET || '',
+    publicUrlBase:
+      processEnv.STORAGE_PUBLIC_BASE_URL ||
+      `https://${processEnv.STORAGE_BUCKET}.${accountId}.r2.cloudflarestorage.com`
   },
   backup: {
     maxRetained: processEnv.BACKUP_MAX_RETAINED,
