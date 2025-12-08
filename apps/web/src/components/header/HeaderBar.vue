@@ -74,7 +74,7 @@
               alt="User Avatar"
             />
             <div v-else-if="authStore.isAuthenticated" class="user-avatar">
-              {{ authStore.user?.email?.[0]?.toUpperCase() || 'U' }}
+              {{ authStore.user?.email?.[0]?.toUpperCase() }}
             </div>
             <i v-else class="fas fa-cog" />
           </BaseButton>
@@ -98,7 +98,6 @@
             <div v-if="authStore.isAuthenticated" class="dropdown-header">
               <div class="user-email">{{ authStore.user?.email }}</div>
             </div>
-            <div v-if="authStore.isAuthenticated" class="dropdown-divider" />
 
             <!-- Common Options -->
             <BaseButton variant="ghost" block class="dropdown-item" @click="onOpenDataManagement">

@@ -16,7 +16,7 @@ interface AuthState {
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref<User | null>(null)
+  const user = ref<User | null>(JSON.parse(localStorage.getItem('auth_user') || 'null'))
   const token = ref<string | null>(localStorage.getItem('auth_token'))
 
   const isAuthenticated = computed(() => !!token.value)
@@ -31,6 +31,7 @@ export const useAuthStore = defineStore('auth', () => {
       token.value = res.data.token
       user.value = res.data.user
       localStorage.setItem('auth_token', res.data.token)
+      localStorage.setItem('auth_user', JSON.stringify(res.data.user))
       return true
     }
     throw new Error(res.message || 'Login failed')
@@ -54,6 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
     const res = await request.get<User>('/api/auth/me')
     if (res.success && res.data) {
       user.value = res.data
+      localStorage.setItem('auth_user', JSON.stringify(res.data))
     } else {
       logout()
     }
@@ -63,6 +65,7 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     token.value = null
     localStorage.removeItem('auth_token')
+    localStorage.removeItem('auth_user')
   }
 
   return {
