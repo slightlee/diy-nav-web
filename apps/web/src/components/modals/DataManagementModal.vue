@@ -12,7 +12,7 @@
         </div>
       </div>
 
-      <div class="settings-container">
+      <div v-if="authStore.isAuthenticated" class="settings-container">
         <!-- Auto Backup -->
         <div class="setting-row">
           <div class="setting-main">
@@ -110,6 +110,18 @@
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+      <div v-else class="login-prompt">
+        <div class="login-prompt__content">
+          <i class="fas fa-cloud-upload-alt login-prompt__icon" />
+          <h4 class="login-prompt__title">开启云端备份</h4>
+          <p class="login-prompt__desc">
+            登录后可将数据安全备份至云端，防止丢失，并支持多设备同步。
+          </p>
+          <BaseButton variant="primary" shape="pill" size="md" @click="handleGoLogin">
+            去登录
+          </BaseButton>
         </div>
       </div>
     </div>
@@ -386,24 +398,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import type { Website } from '@/types'
 import { useWebsiteStore } from '@/stores/website'
 import { useUIStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
 import { useCategoryStore } from '@/stores/category'
 import { useTagStore } from '@/stores/tag'
+import { useAuthStore } from '@/stores/auth'
 import { BaseButton, BaseModal } from '@nav/ui'
 import { useBackup } from '@/composables/useBackup'
 import type { BackupItem } from '@/api/backup'
 
 const emit = defineEmits(['close'])
+const router = useRouter()
 
 const websiteStore = useWebsiteStore()
 const categoryStore = useCategoryStore()
 const tagStore = useTagStore()
 const uiStore = useUIStore()
 const settingsStore = useSettingsStore()
+const authStore = useAuthStore()
+
+const handleGoLogin = () => {
+  emit('close')
+  router.push('/login')
+}
 
 const autoBackup = computed({
   get: () => settingsStore.settings.autoBackup,
@@ -422,9 +443,10 @@ const {
 } = useBackup()
 
 // Load history on mount
-import { onMounted } from 'vue'
 onMounted(() => {
-  fetchBackups()
+  if (authStore.isAuthenticated) {
+    fetchBackups()
+  }
 })
 
 const formatSize = (bytes: number) => {
@@ -798,7 +820,45 @@ onUnmounted(() => {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  margin-bottom: 0; /* Remove margin, rely on section gap */
+}
+
+.login-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background-color: var(--color-neutral-50);
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-border);
+}
+
+.login-prompt__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 300px;
+}
+
+.login-prompt__icon {
+  font-size: 48px;
+  color: var(--color-primary);
+  margin-bottom: 16px;
+  opacity: 0.8;
+}
+
+.login-prompt__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-neutral-900);
+  margin: 0 0 8px 0;
+}
+
+.login-prompt__desc {
+  font-size: 14px;
+  color: var(--color-neutral-500);
+  margin: 0 0 24px 0;
+  line-height: 1.5;
 }
 
 /* ... (intervening code) ... */

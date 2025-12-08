@@ -31,12 +31,16 @@ async function http<T>(endpoint: string, options: RequestOptions = {}): Promise<
   let attempt = 0
   while (attempt <= retries) {
     try {
+      const token = localStorage.getItem('auth_token')
+      const headers: HeadersInit = {
+        ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...init.headers
+      }
+
       const res = await fetch(url.toString(), {
         ...init,
-        headers: {
-          ...(init.body ? { 'Content-Type': 'application/json' } : {}),
-          ...init.headers
-        },
+        headers,
         signal: AbortSignal.timeout(timeout),
         keepalive: init.keepalive
       })

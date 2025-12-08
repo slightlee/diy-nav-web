@@ -11,7 +11,7 @@ export interface BackupConfig {
 
 export interface BackupRecord {
   id: number
-  user_id: number
+  user_id: string
   name: string
   type: 'MANUAL' | 'AUTO'
   storage_key: string
@@ -40,7 +40,7 @@ export class BackupService {
     const sql = `
       CREATE TABLE IF NOT EXISTS data_backups (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
+        user_id TEXT NOT NULL,
         name TEXT NOT NULL,
         type TEXT NOT NULL,
         storage_key TEXT NOT NULL,
@@ -56,7 +56,7 @@ export class BackupService {
    * Create a new backup
    */
   async createBackup(
-    userId: number,
+    userId: string,
     data: any,
     type: 'MANUAL' | 'AUTO' = 'MANUAL'
   ): Promise<BackupRecord | null> {
@@ -73,7 +73,7 @@ export class BackupService {
       )
 
       if (lastBackup && lastBackup.file_hash === fileHash) {
-        console.log(`[Backup] Skipped auto backup for user ${userId}: content unchanged`)
+        // console.log(`[Backup] Skipped auto backup for user ${userId}: content unchanged`)
         return null
       }
     }
@@ -106,7 +106,7 @@ export class BackupService {
   /**
    * List backups for a user
    */
-  async listBackups(userId: number): Promise<BackupRecord[]> {
+  async listBackups(userId: string): Promise<BackupRecord[]> {
     return this.d1.all<BackupRecord>(
       `SELECT * FROM data_backups WHERE user_id = ? ORDER BY created_at DESC`,
       [userId]
@@ -116,7 +116,7 @@ export class BackupService {
   /**
    * Get backup content for restoration
    */
-  async getBackupContent(userId: number, backupId: number): Promise<any> {
+  async getBackupContent(userId: string, backupId: number): Promise<any> {
     const backup = await this.d1.first<BackupRecord>(
       `SELECT * FROM data_backups WHERE id = ? AND user_id = ?`,
       [backupId, userId]
@@ -133,7 +133,7 @@ export class BackupService {
   /**
    * Delete a backup
    */
-  async deleteBackup(userId: number, backupId: number): Promise<void> {
+  async deleteBackup(userId: string, backupId: number): Promise<void> {
     const backup = await this.d1.first<BackupRecord>(
       `SELECT * FROM data_backups WHERE id = ? AND user_id = ?`,
       [backupId, userId]
@@ -158,7 +158,7 @@ export class BackupService {
   /**
    * Cleanup old backups
    */
-  private async cleanupOldBackups(userId: number, type: 'MANUAL' | 'AUTO'): Promise<void> {
+  private async cleanupOldBackups(userId: string, type: 'MANUAL' | 'AUTO'): Promise<void> {
     const backups = await this.d1.all<BackupRecord>(
       `SELECT * FROM data_backups WHERE user_id = ? AND type = ? ORDER BY created_at DESC`,
       [userId, type]

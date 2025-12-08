@@ -7,6 +7,9 @@ import { config } from './src/config.js'
 import { initServices } from './src/services.js'
 import iconRoutes from './src/routes/icon.js'
 import backupRoutes from './src/routes/backup.js'
+import authRoutes from './src/routes/auth.js'
+import jwt from '@fastify/jwt'
+import rateLimit from '@fastify/rate-limit'
 
 // Fastify app
 const app = Fastify({
@@ -21,7 +24,23 @@ app.setSerializerCompiler(serializerCompiler)
 await app.register(cors, {
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
-  allowedHeaders: ['content-type']
+  allowedHeaders: ['content-type', 'authorization']
+})
+
+await app.register(rateLimit, {
+  global: false
+})
+
+await app.register(jwt, {
+  secret: config.auth.jwtSecret
+})
+
+app.decorate('authenticate', async function (req, reply) {
+  try {
+    await req.jwtVerify()
+  } catch (err) {
+    reply.send(err)
+  }
 })
 
 await app.register(staticPlugin, {
@@ -37,6 +56,7 @@ app.get('/readyz', async () => ({ status: 'ready' }))
 // Register Routes
 await app.register(iconRoutes, { prefix: '/api' })
 await app.register(backupRoutes, { prefix: '/api' })
+await app.register(authRoutes, { prefix: '/api' })
 
 // Start server
 const start = async () => {

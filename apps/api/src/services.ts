@@ -1,6 +1,6 @@
 import { D1Client } from '@nav/database'
 import { R2Client } from '@nav/storage'
-import { BackupService } from '@nav/core'
+import { BackupService, AuthService } from '@nav/core'
 import { config } from './config.js'
 import { loadConfig } from '@nav/config'
 import { IconService, getStorageAdapter, getProviders } from '@nav/icon-core'
@@ -26,6 +26,10 @@ export const backupService = new BackupService({
   backupRootDir: config.backup.rootDir
 })
 
+export const authService = new AuthService({
+  d1: d1Client
+})
+
 // --- Icon Services ---
 const iconConfig = loadConfig()
 const storage = getStorageAdapter(iconConfig)
@@ -36,8 +40,9 @@ export const iconService = new IconService(storage, providers, iconConfig.ICON_D
 export const initServices = async () => {
   try {
     await backupService.initTable()
-    console.log('Backup table initialized')
+    await authService.initTable()
+    console.log('Services initialized')
   } catch (err) {
-    console.error('Failed to init backup table:', err)
+    console.error('Failed to init services:', err)
   }
 }

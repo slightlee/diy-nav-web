@@ -11,14 +11,14 @@ const backupRoutes: FastifyPluginAsyncZod = async app => {
   app.post(
     '/backup',
     {
+      onRequest: [app.authenticate],
       schema: {
         body: backupBodySchema
       }
     },
     async (req, reply) => {
       const { data, type } = req.body
-      // TODO: Get real user ID from auth
-      const userId = 1
+      const userId = req.user.sub
 
       try {
         const result = await backupService.createBackup(userId, data, type)
@@ -30,16 +30,22 @@ const backupRoutes: FastifyPluginAsyncZod = async app => {
     }
   )
 
-  app.get('/backups', async (req, reply) => {
-    const userId = 1
-    try {
-      const backups = await backupService.listBackups(userId)
-      return { success: true, data: backups }
-    } catch (err) {
-      req.log.error(err)
-      return reply.code(500).send({ code: 'LIST_FAILED', message: 'Failed to list backups' })
+  app.get(
+    '/backups',
+    {
+      onRequest: [app.authenticate]
+    },
+    async (req, reply) => {
+      const userId = req.user.sub
+      try {
+        const backups = await backupService.listBackups(userId)
+        return { success: true, data: backups }
+      } catch (err) {
+        req.log.error(err)
+        return reply.code(500).send({ code: 'LIST_FAILED', message: 'Failed to list backups' })
+      }
     }
-  })
+  )
 
   const restoreBodySchema = z.object({
     backupId: z.coerce.number().int().positive()
@@ -48,13 +54,14 @@ const backupRoutes: FastifyPluginAsyncZod = async app => {
   app.post(
     '/backup/restore',
     {
+      onRequest: [app.authenticate],
       schema: {
         body: restoreBodySchema
       }
     },
     async (req, reply) => {
       const { backupId } = req.body
-      const userId = 1
+      const userId = req.user.sub
 
       try {
         const content = await backupService.getBackupContent(userId, backupId)
@@ -73,13 +80,14 @@ const backupRoutes: FastifyPluginAsyncZod = async app => {
   app.delete(
     '/backup/:id',
     {
+      onRequest: [app.authenticate],
       schema: {
         params: deleteParamsSchema
       }
     },
     async (req, reply) => {
       const { id } = req.params
-      const userId = 1
+      const userId = req.user.sub
 
       try {
         await backupService.deleteBackup(userId, id)

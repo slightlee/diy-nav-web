@@ -64,12 +64,37 @@
             shape="circle"
             :aria-expanded="showSettingsDropdown ? 'true' : 'false'"
             aria-haspopup="menu"
-            aria-controls="settings-menu"
+            class="user-avatar-btn"
             @click="toggleSettingsDropdown"
           >
-            <i class="fas fa-cog" />
+            <div v-if="authStore.isAuthenticated" class="user-avatar">
+              {{ authStore.user?.email?.[0]?.toUpperCase() || 'U' }}
+            </div>
+            <i v-else class="fas fa-cog" />
           </BaseButton>
-          <div v-if="showSettingsDropdown" id="settings-menu" class="dropdown-menu" role="menu">
+
+          <div v-if="showSettingsDropdown" class="dropdown-menu" role="menu">
+            <!-- Guest: Login Option -->
+            <template v-if="!authStore.isAuthenticated">
+              <BaseButton
+                variant="ghost"
+                block
+                class="dropdown-item text-primary"
+                @click="router.push('/login')"
+              >
+                <i class="fas fa-sign-in-alt" />
+                登录 / 注册
+              </BaseButton>
+              <div class="dropdown-divider" />
+            </template>
+
+            <!-- User Info Header -->
+            <div v-if="authStore.isAuthenticated" class="dropdown-header">
+              <div class="user-email">{{ authStore.user?.email }}</div>
+            </div>
+            <div v-if="authStore.isAuthenticated" class="dropdown-divider" />
+
+            <!-- Common Options -->
             <BaseButton variant="ghost" block class="dropdown-item" @click="onOpenDataManagement">
               <i class="fas fa-exchange-alt" />
               数据管理
@@ -78,6 +103,20 @@
               <i class="fas fa-cog" />
               设置
             </BaseButton>
+
+            <!-- User: Logout Option -->
+            <template v-if="authStore.isAuthenticated">
+              <div class="dropdown-divider" />
+              <BaseButton
+                variant="ghost"
+                block
+                class="dropdown-item text-danger"
+                @click="handleLogout"
+              >
+                <i class="fas fa-sign-out-alt" />
+                退出登录
+              </BaseButton>
+            </template>
           </div>
         </div>
       </div>
@@ -87,11 +126,16 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useSettingsStore } from '@/stores/settings'
+import { useAuthStore } from '@/stores/auth'
 import { BaseButton } from '@nav/ui'
 
 const emit = defineEmits(['addSite', 'openSettings', 'openDataManagement'])
+const router = useRouter()
 const settingsStore = useSettingsStore()
+const authStore = useAuthStore()
+
 const currentTheme = computed(() => settingsStore.settings.theme)
 const themeToggleIcon = computed(() =>
   currentTheme.value === 'light'
@@ -107,6 +151,7 @@ const showSettingsDropdown = ref(false)
 const showClickTooltip = ref(false)
 const hoveringTheme = ref(false)
 let clickTooltipTimer: number | undefined
+
 const toggleSettingsDropdown = () => {
   showSettingsDropdown.value = !showSettingsDropdown.value
 }
@@ -118,6 +163,12 @@ const onOpenDataManagement = () => {
   emit('openDataManagement')
   showSettingsDropdown.value = false
 }
+const handleLogout = () => {
+  authStore.logout()
+  showSettingsDropdown.value = false
+  router.push('/login')
+}
+
 const cycleTheme = () => {
   const order: Array<'light' | 'dark' | 'auto'> = ['light', 'dark', 'auto']
   const next = order[(order.indexOf(currentTheme.value) + 1) % order.length]
@@ -136,7 +187,10 @@ const handleClickOutside = (event: Event) => {
   const target = event.target as HTMLElement
   if (!target.closest('.settings-dropdown')) showSettingsDropdown.value = false
 }
-onMounted(() => document.addEventListener('click', handleClickOutside))
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+  authStore.fetchUser()
+})
 onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 </script>
 
@@ -357,6 +411,55 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   }
   .add-site-btn .btn-text {
     display: none;
+  }
+}
+
+.user-avatar-btn {
+  padding: 0;
+  overflow: hidden;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.dropdown-header {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-tile);
+  margin-bottom: 4px;
+}
+
+.user-email {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.text-danger {
+  color: var(--color-error) !important;
+
+  &:hover {
+    background-color: rgba(var(--color-error-rgb), 0.1) !important;
+  }
+}
+
+.text-primary {
+  color: var(--color-primary) !important;
+  font-weight: 600;
+
+  &:hover {
+    background-color: rgba(var(--color-primary-rgb), 0.1) !important;
   }
 }
 </style>

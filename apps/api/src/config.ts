@@ -27,7 +27,9 @@ const envSchema = z.object({
   // Backup
   BACKUP_MAX_RETAINED: z.string().transform(Number).default('5'),
   BACKUP_ROOT_DIR: z.string().default('backups'),
-  BACKUP_AUTO_INTERVAL: z.string().transform(Number).default('3600000')
+  BACKUP_AUTO_INTERVAL: z.string().transform(Number).default('3600000'),
+  // Auth
+  JWT_SECRET: z.string().default('dev-secret-do-not-use-in-prod')
 })
 
 const processEnv = envSchema.parse(process.env)
@@ -47,6 +49,9 @@ export const config = {
   server: {
     port: processEnv.PORT,
     env: processEnv.NODE_ENV
+  },
+  auth: {
+    jwtSecret: processEnv.JWT_SECRET
   },
   cloudflare: {
     accountId,

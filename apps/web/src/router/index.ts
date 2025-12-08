@@ -48,6 +48,16 @@ const router = createRouter({
       name: 'all',
       component: () => import('@/views/WebsiteListView.vue'),
       meta: { fixedView: 'all' }
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/AuthView.vue')
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('@/views/AuthView.vue')
     }
   ]
 })
