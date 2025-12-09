@@ -150,6 +150,7 @@ const handleSearch = () => {
   cursor: pointer;
   border-right: 1px solid var(--border-tile);
   user-select: none;
+  width: 130px;
 }
 
 .current-engine {
