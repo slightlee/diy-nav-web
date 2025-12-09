@@ -378,6 +378,8 @@ const onFavoriteToggle = (id: string) => {
   justify-content: center;
   width: 40px;
   height: 40px;
+  min-height: 0;
+  min-width: 0;
   border-radius: 50%;
   margin-right: 6px;
 
@@ -500,6 +502,8 @@ const onFavoriteToggle = (id: string) => {
   cursor: pointer;
   font-size: 13px;
   padding: 4px;
+  min-height: 0;
+  min-width: 0;
   border-radius: 4px;
   transition: all 0.2s;
 
@@ -517,6 +521,8 @@ const onFavoriteToggle = (id: string) => {
 
 .tag-pill {
   padding: 4px 12px;
+  min-height: 0;
+  min-width: 0;
   border-radius: 999px;
   font-size: 12px;
   border: 1px solid var(--border-tile);
@@ -547,6 +553,8 @@ const onFavoriteToggle = (id: string) => {
   display: flex;
   align-items: center;
   padding: 8px 12px;
+  min-height: 0;
+  min-width: 0;
   border-radius: 8px;
   border: none;
   background: transparent;
@@ -624,6 +632,8 @@ const onFavoriteToggle = (id: string) => {
 .create-first-btn {
   margin-top: 4px;
   padding: 6px 16px;
+  min-height: 0;
+  min-width: 0;
   border: 1px dashed var(--border-tile);
   border-radius: 999px;
   background: transparent;
@@ -698,6 +708,8 @@ const onFavoriteToggle = (id: string) => {
   border: none;
   background: none;
   padding: 0;
+  min-height: 0;
+  min-width: 0;
   cursor: pointer;
   color: inherit;
   opacity: 0.6;
@@ -715,6 +727,8 @@ const onFavoriteToggle = (id: string) => {
   color: var(--color-primary);
   font-size: 13px;
   cursor: pointer;
+  min-height: 0;
+  min-width: 0;
   padding: 4px 8px;
 
   &:hover {
