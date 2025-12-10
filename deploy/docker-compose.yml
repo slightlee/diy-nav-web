@@ -1,6 +1,7 @@
 services:
   # 前端服务 (Web Application)
   web:
+    image: nav-web:${TAG:-latest}
     build:
       # 构建上下文：指向项目根目录 (因为需要访问 packages/ 下的共享库)
       context: ../
@@ -43,6 +44,7 @@ services:
 
   # 后端服务 (API Application)
   api:
+    image: nav-api:${TAG:-latest}
     build:
       context: ../
       dockerfile: apps/api/Dockerfile
