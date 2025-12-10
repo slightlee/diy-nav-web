@@ -14,6 +14,14 @@ const mockAvatarService = {
   generateAndUpload: vi.fn()
 } as unknown as AvatarService
 
+// Mock logger
+const mockLogger = {
+  info: vi.fn(),
+  error: vi.fn(),
+  warn: vi.fn(),
+  debug: vi.fn()
+} as any
+
 describe('AuthService', () => {
   let authService: AuthService
 
@@ -21,7 +29,8 @@ describe('AuthService', () => {
     vi.clearAllMocks()
     authService = new AuthService({
       d1: mockD1,
-      avatarService: mockAvatarService
+      avatarService: mockAvatarService,
+      logger: mockLogger
     })
   })
 
@@ -49,9 +58,6 @@ describe('AuthService', () => {
     })
 
     it('should continue registration if avatar generation fails', async () => {
-      // Suppress console.error for this test as we expect it to be called
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
       vi.spyOn(mockD1, 'first').mockResolvedValueOnce(null).mockResolvedValueOnce({ id: 'new-id' })
 
       vi.spyOn(mockAvatarService, 'generateAndUpload').mockRejectedValue(new Error('Avatar failed'))
@@ -59,9 +65,13 @@ describe('AuthService', () => {
       await authService.register('test@example.com', 'password')
 
       expect(mockD1.query).toHaveBeenCalled()
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to generate avatar:', expect.any(Error))
-
-      consoleSpy.mockRestore()
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          err: expect.any(Error),
+          userId: expect.any(String)
+        }),
+        'Failed to generate avatar'
+      )
     })
   })
 

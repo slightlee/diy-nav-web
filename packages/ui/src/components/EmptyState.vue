@@ -21,7 +21,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-interface Props {
+export interface Props {
   type?: 'default' | 'no-data' | 'no-results' | 'no-websites' | 'no-tags' | 'no-categories'
   message?: string
   description?: string

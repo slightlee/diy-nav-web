@@ -16,6 +16,14 @@ const mockR2 = {
   delete: vi.fn()
 } as unknown as R2Client
 
+// Mock logger
+const mockLogger = {
+  info: vi.fn(),
+  error: vi.fn(),
+  warn: vi.fn(),
+  debug: vi.fn()
+} as any
+
 describe('BackupService', () => {
   let backupService: BackupService
 
@@ -25,7 +33,8 @@ describe('BackupService', () => {
       d1: mockD1,
       r2: mockR2,
       maxBackups: 2, // Small number for testing cleanup
-      backupRootDir: 'backups'
+      backupRootDir: 'backups',
+      logger: mockLogger
     })
   })
 

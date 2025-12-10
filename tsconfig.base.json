@@ -11,6 +11,14 @@
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@nav/core": ["./packages/core/src/index.ts"],
+      "@nav/database": ["./packages/database/src/index.ts"],
+      "@nav/storage": ["./packages/storage/src/index.ts"],
+      "@nav/config": ["./packages/config/src/index.ts"],
+      "@nav/ui": ["./packages/ui/src/index.ts"],
+      "@nav/icon-core": ["./packages/icon-core/index.ts"]
+    }
   }
 }
