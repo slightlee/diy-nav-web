@@ -2,6 +2,7 @@ import { D1Client } from '@nav/database'
 import { v4 as uuidv4 } from 'uuid'
 import bcrypt from 'bcryptjs'
 import { AvatarService } from './avatar.js'
+import { logger as defaultLogger, Logger } from '../logger.js'
 
 export interface User {
   id: string
@@ -21,15 +22,18 @@ export interface User {
 export interface AuthConfig {
   d1: D1Client
   avatarService: AvatarService
+  logger?: Logger
 }
 
 export class AuthService {
   private d1: D1Client
   private avatarService: AvatarService
+  private logger: Logger
 
   constructor(config: AuthConfig) {
     this.d1 = config.d1
     this.avatarService = config.avatarService
+    this.logger = config.logger || defaultLogger
   }
 
   /**
@@ -88,7 +92,7 @@ export class AuthService {
     try {
       avatarUrl = await this.avatarService.generateAndUpload(id)
     } catch (error) {
-      console.error('Failed to generate avatar:', error)
+      this.logger.error({ err: error, userId: id }, 'Failed to generate avatar')
       // Continue registration even if avatar generation fails
     }
 

@@ -12,9 +12,25 @@ import authRoutes from './src/routes/auth.js'
 import jwt from '@fastify/jwt'
 import rateLimit from '@fastify/rate-limit'
 
+import { createRequire } from 'module'
+
 // Fastify app
+const require = createRequire(import.meta.url)
+const isDev = process.env.NODE_ENV === 'development'
+
 const app = Fastify({
-  logger: true
+  logger: isDev
+    ? {
+        transport: {
+          target: require.resolve('pino-pretty'),
+          options: {
+            translateTime: 'HH:MM:ss Z',
+            ignore: 'pid,hostname',
+            colorize: true
+          }
+        }
+      }
+    : true
 }).withTypeProvider<ZodTypeProvider>()
 
 // Setup Zod validation
@@ -100,12 +116,12 @@ await app.register(authRoutes, { prefix: '/api' })
 const start = async () => {
   try {
     // Initialize services (DB tables, etc.)
-    await initServices()
+    await initServices(app.log)
 
     const port = config.server.port
     await app.listen({ port, host: '0.0.0.0' })
-    console.log(`Server listening on port ${port} in ${config.server.env} mode`)
-    console.log(app.printRoutes())
+    app.log.info(`Server listening on port ${port} in ${config.server.env} mode`)
+    app.log.info(app.printRoutes())
   } catch (err) {
     app.log.error(err)
     process.exit(1)

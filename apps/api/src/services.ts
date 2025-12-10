@@ -42,13 +42,15 @@ const storage = getStorageAdapter(iconConfig)
 const providers = getProviders(iconConfig)
 export const iconService = new IconService(storage, providers, iconConfig.ICON_DEFAULT_URL)
 
+import { FastifyBaseLogger } from 'fastify'
+
 // Initialize tables
-export const initServices = async () => {
+export const initServices = async (logger: FastifyBaseLogger) => {
   try {
     await backupService.initTable()
     await authService.initTable()
-    console.log('Services initialized')
+    logger.info('Services initialized')
   } catch (err) {
-    console.error('Failed to init services:', err)
+    logger.error({ err }, 'Failed to init services')
   }
 }

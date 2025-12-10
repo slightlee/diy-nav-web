@@ -1,12 +1,15 @@
 import { D1Client } from '@nav/database'
 import { R2Client } from '@nav/storage'
 import CryptoJS from 'crypto-js'
+import CryptoJS from 'crypto-js'
+import { logger as defaultLogger, Logger } from '../logger.js'
 
 export interface BackupConfig {
   d1: D1Client
   r2: R2Client
   maxBackups?: number
   backupRootDir?: string
+  logger?: Logger
 }
 
 export interface BackupRecord {
@@ -25,12 +28,14 @@ export class BackupService {
   private r2: R2Client
   private maxBackups: number
   private backupRootDir: string
+  private logger: Logger
 
   constructor(config: BackupConfig) {
     this.d1 = config.d1
     this.r2 = config.r2
     this.maxBackups = config.maxBackups || 5
     this.backupRootDir = config.backupRootDir || 'backups'
+    this.logger = config.logger || defaultLogger
   }
 
   /**
@@ -73,7 +78,7 @@ export class BackupService {
       )
 
       if (lastBackup && lastBackup.file_hash === fileHash) {
-        // console.log(`[Backup] Skipped auto backup for user ${userId}: content unchanged`)
+        this.logger.info({ userId }, 'Skipped auto backup: content unchanged')
         return null
       }
     }
@@ -147,7 +152,7 @@ export class BackupService {
     try {
       await this.r2.delete(backup.storage_key)
     } catch (e) {
-      console.error(`[Backup] Failed to delete R2 file ${backup.storage_key}:`, e)
+      logger.error({ err: e, storageKey: backup.storage_key }, 'Failed to delete R2 file')
       // Continue to delete from DB even if R2 fails (to keep DB clean)
     }
 
@@ -172,7 +177,7 @@ export class BackupService {
         try {
           await this.r2.delete(backup.storage_key)
         } catch (e) {
-          console.error(`[Backup] Failed to delete R2 file ${backup.storage_key}:`, e)
+          this.logger.error({ err: e, storageKey: backup.storage_key }, 'Failed to delete R2 file')
         }
 
         // Delete from D1
