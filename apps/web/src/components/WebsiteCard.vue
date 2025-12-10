@@ -414,6 +414,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%; // Ensure it doesn't overflow
 
   &:hover {
     color: var(--color-primary);
@@ -423,11 +424,17 @@ const handleKeydown = (event: KeyboardEvent) => {
 .website-card__description {
   margin: 0;
   color: var(--text-secondary);
-  font-size: 12px; // Reduced from 13px
+  font-size: 12px;
   line-height: 1.5;
-  @include text-truncate(2);
-  min-height: 3em; // 2 lines
-  overflow-wrap: break-word; // Ensure long text wraps properly
+  /* Explicit line clamp styles */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 3em;
+  width: 100%; /* Ensure it knows its width */
+  overflow-wrap: break-word; /* Standard property */
 }
 
 .website-card__body {

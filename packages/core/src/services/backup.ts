@@ -1,7 +1,6 @@
 import { D1Client } from '@nav/database'
 import { R2Client } from '@nav/storage'
 import CryptoJS from 'crypto-js'
-import CryptoJS from 'crypto-js'
 import { logger as defaultLogger, Logger } from '../logger.js'
 
 export interface BackupConfig {
@@ -152,7 +151,7 @@ export class BackupService {
     try {
       await this.r2.delete(backup.storage_key)
     } catch (e) {
-      logger.error({ err: e, storageKey: backup.storage_key }, 'Failed to delete R2 file')
+      this.logger.error({ err: e, storageKey: backup.storage_key }, 'Failed to delete R2 file')
       // Continue to delete from DB even if R2 fails (to keep DB clean)
     }
 
