@@ -5,6 +5,7 @@ import { validatorCompiler, serializerCompiler, ZodTypeProvider } from 'fastify-
 import { join } from 'path'
 import { config } from './src/config.js'
 import { initServices } from './src/services.js'
+import { AppError } from '@nav/core'
 import iconRoutes from './src/routes/icon.js'
 import backupRoutes from './src/routes/backup.js'
 import authRoutes from './src/routes/auth.js'
@@ -19,6 +20,43 @@ const app = Fastify({
 // Setup Zod validation
 app.setValidatorCompiler(validatorCompiler)
 app.setSerializerCompiler(serializerCompiler)
+
+app.setErrorHandler((error, request, reply) => {
+  // Handle AppError
+  if (error instanceof AppError) {
+    return reply.status(error.statusCode).send({
+      success: false,
+      code: error.code,
+      message: error.message,
+      isOperational: error.isOperational
+    })
+  }
+
+  // Handle Zod Validation Errors
+  // Fastify validation errors typically have a 'validation' property
+  interface FastifyValidationError extends Error {
+    validation: any[] // or specific validation error shape
+    statusCode?: number
+  }
+
+  const validationError = error as FastifyValidationError
+  if (validationError.validation) {
+    return reply.status(400).send({
+      success: false,
+      code: 'VALIDATION_ERROR',
+      message: 'Validation failed',
+      details: validationError.validation
+    })
+  }
+
+  // Handle generic errors
+  app.log.error(error)
+  return reply.status(500).send({
+    success: false,
+    code: 'INTERNAL_SERVER_ERROR',
+    message: 'Internal Server Error'
+  })
+})
 
 // Plugins
 await app.register(cors, {
