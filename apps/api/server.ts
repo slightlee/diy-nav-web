@@ -11,6 +11,7 @@ import backupRoutes from './src/routes/backup.js'
 import authRoutes from './src/routes/auth.js'
 import jwt from '@fastify/jwt'
 import rateLimit from '@fastify/rate-limit'
+import helmet from '@fastify/helmet'
 
 import { createRequire } from 'module'
 
@@ -79,6 +80,11 @@ await app.register(cors, {
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
   allowedHeaders: ['content-type', 'authorization']
+})
+
+// Security Headers
+await app.register(helmet, {
+  contentSecurityPolicy: false
 })
 
 await app.register(rateLimit, {
