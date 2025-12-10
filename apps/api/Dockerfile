@@ -40,4 +40,4 @@ EXPOSE 8787
 
 USER node
 
-CMD ["node", "dist/server.js"]
+CMD ["node", "dist/apps/api/server.js"]
