@@ -1,0 +1,81 @@
+services:
+  # 前端服务 (Web Application)
+  web:
+    build:
+      # 构建上下文：指向项目根目录 (因为需要访问 packages/ 下的共享库)
+      context: ../
+      # Dockerfile 路径
+      dockerfile: apps/web/Dockerfile
+    ports:
+      # 端口映射：主机 3000 -> 容器 80
+      - '3000:80'
+    # 容器名称：方便管理和查看日志
+    container_name: nav-web
+    # 重启策略：总是重启 (除非手动停止)
+    restart: always
+    depends_on:
+      # 依赖 API 服务：等待 API 健康检查通过后再启动 Web
+      api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          # 资源限制：防止单容器耗尽宿主机资源
+          cpus: '0.50' # 限制使用 0.5 个 CPU 核
+          memory: 512M # 限制使用 512MB 内存
+    logging:
+      # 日志配置：防止日志文件无限增长导致磁盘爆满
+      driver: 'json-file'
+      options:
+        max-size: '10m' # 单个日志文件最大 10MB
+        max-file: '3' # 最多保留 3 个日志文件
+    volumes:
+      # 时区同步：挂载宿主机时区配置，确保日志时间正确
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    healthcheck:
+      # 健康检查：每 30s 检查一次 Nginx 是否存活
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:80']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # 后端服务 (API Application)
+  api:
+    build:
+      context: ../
+      dockerfile: apps/api/Dockerfile
+    ports:
+      # 端口映射：主机 8787 -> 容器 8787
+      - '8787:8787'
+    container_name: nav-api
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    healthcheck:
+      # 健康检查：访问 /healthz 接口
+      test:
+        ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:8787/healthz']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    environment:
+      # 环境变量：生产环境模式，开启性能优化
+      - NODE_ENV=production
+      - PORT=8787
+    env_file:
+      # 加载根目录的 .env 文件
+      - ../.env

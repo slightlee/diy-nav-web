@@ -1,16 +1,29 @@
+FROM node:20-alpine AS prune
+WORKDIR /app
+RUN npm install -g turbo
+COPY . .
+RUN turbo prune --scope=api --docker
+
 FROM node:20-alpine AS builder
+WORKDIR /app
 
 # Enable pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-WORKDIR /app
+# Copy pruned json files
+COPY --from=prune /app/out/json/ .
+COPY --from=prune /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
-# Copy entire monorepo
-COPY . .
-
-# Install dependencies and build
+# Install dependencies
 RUN pnpm install --frozen-lockfile
-RUN pnpm run build
+
+# Copy pruned source code
+COPY --from=prune /app/out/full/ .
+COPY --from=prune /app/tsconfig.base.json .
+COPY --from=prune /app/turbo.json .
+
+# Build
+RUN npx turbo run build --filter=api...
 
 # Create a pruned production deployment for the api app
 RUN pnpm --filter api --prod deploy /prod/api
