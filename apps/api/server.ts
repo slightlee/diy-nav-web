@@ -129,3 +129,14 @@ const start = async () => {
 }
 
 start()
+
+// Graceful Shutdown
+const signals = ['SIGTERM', 'SIGINT'] as const
+
+signals.forEach(signal => {
+  process.on(signal, async () => {
+    app.log.info(`Received ${signal}, shutting down...`)
+    await app.close()
+    process.exit(0)
+  })
+})
