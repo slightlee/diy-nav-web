@@ -1,0 +1,26 @@
+name: 'Setup Environment'
+description: 'Sets up the environment with Node.js, pnpm, and dependencies'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: pnpm
+
+    - name: Turbo Cache
+      uses: actions/cache@v4
+      with:
+        path: .turbo
+        key: turbo-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          turbo-${{ runner.os }}-
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile

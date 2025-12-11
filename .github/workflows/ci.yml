@@ -44,30 +44,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Format check
-        run: pnpm run format:check
-
-      - name: ESLint
-        run: pnpm run lint:check
-
-      - name: Stylelint
-        run: pnpm run stylelint
-
-      - name: Type check
-        run: pnpm run type-check
-
+      - name: Check All (Lint, Format, Types)
+        run: npx turbo run check
 
   security:
     name: Security Scan
@@ -80,15 +61,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
+
       - name: pnpm audit (prod)
         run: pnpm audit --prod || true
       - name: Dependency review (PR only)
@@ -96,7 +72,7 @@ jobs:
         uses: actions/dependency-review-action@v4
 
   build:
-    name: Build
+    name: Build (Turbo)
     runs-on: ubuntu-latest
     needs: [commitlint, quality]
     permissions:
@@ -108,121 +84,43 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Environment
+        uses: ./.github/actions/setup-env
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
+      - name: Configure Environment (.env)
+        run: |
+          # 1. Initialize with example defaults
+          cp .env.example .env
+          
+          # 2. Inject Secrets (if available)
+          # Frontend Config (VITE_ variables are embedded during build)
+          if [ -n "${{ vars.VITE_ICON_API_URL }}" ]; then echo "VITE_ICON_API_URL=${{ vars.VITE_ICON_API_URL }}" >> .env; fi
+          
+          # GitHub Pages Base Path Injection
+          # If running on GitHub Actions, set VITE_BASE to /repo-name/
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
+            echo "VITE_BASE=/$REPO_NAME/" >> .env
+            
+            # Enable Hash Router for GitHub Pages to fix 404 on refresh
+            echo "VITE_USE_HASH_ROUTER=true" >> .env
+          fi
+          
+          # Print .env content for debugging (masking secrets)
+          # echo "Generated .env content:"
+          # cat .env
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Build All
+        run: npx turbo run build
 
-      - name: Build Web (hash router)
-        run: pnpm -C apps/web build
-        env:
-          VITE_BASE: ./
-          VITE_USE_HASH_ROUTER: 'true'
-
-      - name: Add SPA fallback
-        run: cp apps/web/dist/index.html apps/web/dist/404.html
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: apps/web/dist
-
-  build-prod:
-    name: Build (Prod Artifact)
-    runs-on: ubuntu-latest
-    needs: [commitlint, quality]
-    permissions:
-      contents: read
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Web (history router)
-        run: pnpm -C apps/web build
-        env:
-          VITE_BASE: '/'
-          VITE_USE_HASH_ROUTER: 'false'
-
-      - name: Upload prod artifact
+      - name: Upload Web Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dist-prod
+          name: web-dist
           path: apps/web/dist
           if-no-files-found: error
           retention-days: 7
 
-  icon-api-ci:
-    name: Icon API Build & Smoke Test
-    runs-on: ubuntu-latest
-    needs: [commitlint, quality]
-    permissions:
-      contents: read
-    timeout-minutes: 15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build icon-core & icon-api
-        run: pnpm run icon-api:build
-
-      - name: Smoke test (health)
-        run: |
-          node apps/icon-api/dist/server.js &
-          sleep 2
-          curl -sS http://localhost:8787/health | tee /tmp/health.json
-          pkill -f "apps/icon-api/dist/server.js" || true
-          grep -q '"ok": true' /tmp/health.json
-      - name: Smoke test (default fallback)
-        run: |
-          node apps/icon-api/dist/server.js &
-          sleep 2
-          curl -sS "http://localhost:8787/api/icon?url=https://unknown-tld.invalid" | tee /tmp/icon.json
-          pkill -f "apps/icon-api/dist/server.js" || true
-          grep -q '"url":"http://localhost:8787/icons/default.svg"' /tmp/icon.json
-      
-      - name: Upload icon-api dist artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: icon-api-dist
-          path: apps/icon-api/dist
-          if-no-files-found: error
-          retention-days: 7
 
   deploy:
     name: Deploy to GitHub Pages
@@ -237,6 +135,17 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Download Web Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: apps/web/dist
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/dist
+
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
@@ -251,5 +160,16 @@ jobs:
       id-token: write
       contents: read
     steps:
+      - name: Download Web Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: apps/web/dist
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/dist
+
       - name: Deploy
         uses: actions/deploy-pages@v4
