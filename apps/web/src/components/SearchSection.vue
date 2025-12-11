@@ -38,7 +38,7 @@
           <div class="results-header">
             <h3>搜索结果</h3>
             <BaseButton
-              variant="neutral-outline"
+              variant="ghost"
               size="sm"
               shape="pill"
               class="action-btn"
