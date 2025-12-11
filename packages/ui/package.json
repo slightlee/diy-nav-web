@@ -4,19 +4,23 @@
   "type": "module",
   "main": "dist/nav-ui.umd.js",
   "module": "dist/nav-ui.es.js",
-  "types": "dist/index.d.ts",
+  "types": "./src/index.ts",
   "files": [
     "dist",
-    "src/styles"
+    "src"
   ],
   "exports": {
     ".": {
       "development": "./src/index.ts",
-      "types": "./dist/index.d.ts",
+      "types": "./src/index.ts",
       "import": "./dist/nav-ui.es.js",
       "require": "./dist/nav-ui.umd.js"
     },
     "./style.css": "./dist/style.css",
+    "./styles": {
+      "development": "./src/style.scss",
+      "default": "./dist/style.css"
+    },
     "./styles/*": "./src/styles/*"
   },
   "scripts": {

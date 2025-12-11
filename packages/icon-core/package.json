@@ -3,17 +3,53 @@
   "version": "0.0.1",
   "type": "module",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "types": "./index.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./iconService": "./dist/iconService.js",
-    "./storage/factory": "./dist/storage/factory.js",
-    "./storage/local": "./dist/storage/local.js",
-    "./storage/s3": "./dist/storage/s3.js",
-    "./providers": "./dist/providers/index.js",
-    "./providers/google": "./dist/providers/google.js",
-    "./providers/clearbit": "./dist/providers/clearbit.js",
-    "./providers/duckduckgo": "./dist/providers/duckduckgo.js"
+    ".": {
+      "development": "./index.ts",
+      "types": "./index.ts",
+      "import": "./dist/index.js"
+    },
+    "./iconService": {
+      "development": "./iconService.ts",
+      "types": "./iconService.ts",
+      "import": "./dist/iconService.js"
+    },
+    "./storage/factory": {
+      "development": "./storage/factory.ts",
+      "types": "./storage/factory.ts",
+      "import": "./dist/storage/factory.js"
+    },
+    "./storage/local": {
+      "development": "./storage/local.ts",
+      "types": "./storage/local.ts",
+      "import": "./dist/storage/local.js"
+    },
+    "./storage/s3": {
+      "development": "./storage/s3.ts",
+      "types": "./storage/s3.ts",
+      "import": "./dist/storage/s3.js"
+    },
+    "./providers": {
+      "development": "./providers/index.ts",
+      "types": "./providers/index.ts",
+      "import": "./dist/providers/index.js"
+    },
+    "./providers/google": {
+      "development": "./providers/google.ts",
+      "types": "./providers/google.ts",
+      "import": "./dist/providers/google.js"
+    },
+    "./providers/clearbit": {
+      "development": "./providers/clearbit.ts",
+      "types": "./providers/clearbit.ts",
+      "import": "./dist/providers/clearbit.js"
+    },
+    "./providers/duckduckgo": {
+      "development": "./providers/duckduckgo.ts",
+      "types": "./providers/duckduckgo.ts",
+      "import": "./dist/providers/duckduckgo.js"
+    }
   },
   "scripts": {
     "build": "tsc -p ./tsconfig.json"
