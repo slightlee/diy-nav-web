@@ -31,8 +31,8 @@ import type { Tag, Category } from '@/types'
 const props = defineProps<{
   selectedTags: string[]
   selectedCategory: string
-  tags: Tag[]
-  categories: Category[]
+  tags: readonly Tag[]
+  categories: readonly Category[]
 }>()
 
 defineEmits<{

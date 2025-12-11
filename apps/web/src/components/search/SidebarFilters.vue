@@ -84,8 +84,8 @@
 import type { Tag, Category } from '@/types'
 
 defineProps<{
-  tags: Tag[]
-  categories: Category[]
+  tags: readonly Tag[]
+  categories: readonly Category[]
   selectedTags: string[]
   selectedCategory: string
 }>()

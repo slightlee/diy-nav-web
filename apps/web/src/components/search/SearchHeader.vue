@@ -8,7 +8,7 @@
         size="lg"
         shape="rounded"
         class="main-search-input"
-        @update:model-value="$emit('update:modelValue', $event)"
+        @update:model-value="$emit('update:modelValue', $event as string)"
       >
         <template #suffix>
           <button class="search-button" aria-label="搜索">
