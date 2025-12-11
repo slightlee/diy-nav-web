@@ -29,7 +29,7 @@ export default defineConfig(({ mode }) => {
       host: true,
       proxy: {
         '/api/icon': {
-          target: env.VITE_ICON_API_URL || 'http://localhost:8787',
+          target: env.VITE_API_BASE_URL || 'http://localhost:8787',
           changeOrigin: true
         }
       }

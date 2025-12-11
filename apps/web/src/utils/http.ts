@@ -5,7 +5,7 @@ export interface ApiResponse<T = unknown> {
   data?: T
 }
 
-const BASE_URL = import.meta.env.VITE_ICON_API_URL || 'http://localhost:8787'
+const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787'
 const TIMEOUT = 10000
 
 interface RequestOptions extends RequestInit {
@@ -19,7 +19,7 @@ interface RequestOptions extends RequestInit {
 async function http<T>(endpoint: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
   const { params, timeout = TIMEOUT, retries = 0, retryDelay = 1000, ...init } = options
 
-  const url = new URL(endpoint, BASE_URL)
+  const url = new URL(endpoint, baseURL)
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) {

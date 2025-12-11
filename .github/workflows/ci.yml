@@ -94,7 +94,7 @@ jobs:
           
           # 2. Inject Secrets (if available)
           # Frontend Config (VITE_ variables are embedded during build)
-          if [ -n "${{ vars.VITE_ICON_API_URL }}" ]; then echo "VITE_ICON_API_URL=${{ vars.VITE_ICON_API_URL }}" >> .env; fi
+          if [ -n "${{ vars.VITE_API_BASE_URL }}" ]; then echo "VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL }}" >> .env; fi
           
           # GitHub Pages Base Path Injection
           # If running on GitHub Actions, set VITE_BASE to /repo-name/
