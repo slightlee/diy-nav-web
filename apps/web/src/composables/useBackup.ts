@@ -1,5 +1,5 @@
 import { logger } from '@nav/logger'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import {
   getBackups,
   createBackup,
@@ -19,9 +19,15 @@ export function useBackup() {
   const categoryStore = useCategoryStore()
   const tagStore = useTagStore()
 
+  /* State */
   const backups = ref<BackupItem[]>([])
   const loading = ref(false)
-  const operating = ref(false)
+  const isCreating = ref(false)
+  const isRestoring = ref(false)
+  const isDeleting = ref(false)
+
+  // Computed for backward compatibility or general busy state
+  const operating = computed(() => isCreating.value || isRestoring.value || isDeleting.value)
 
   const fetchBackups = async () => {
     loading.value = true
@@ -42,7 +48,7 @@ export function useBackup() {
 
   const handleCreateBackup = async (data: BackupPayload, type: 'MANUAL' | 'AUTO' = 'MANUAL') => {
     if (operating.value) return false
-    operating.value = true
+    isCreating.value = true
     try {
       const res = await createBackup(data, type)
       if (res.success) {
@@ -57,13 +63,13 @@ export function useBackup() {
       uiStore.showToast('备份失败，请重试', 'error')
       return false
     } finally {
-      operating.value = false
+      isCreating.value = false
     }
   }
 
   const handleRestoreBackup = async (item: BackupItem): Promise<boolean | null> => {
     if (operating.value) return null
-    operating.value = true
+    isRestoring.value = true
     const loadingInstance = uiStore.showLoading('正在恢复数据...')
 
     try {
@@ -91,13 +97,13 @@ export function useBackup() {
       return null
     } finally {
       loadingInstance.close()
-      operating.value = false
+      isRestoring.value = false
     }
   }
 
   const handleDeleteBackup = async (backupId: string) => {
     if (operating.value) return false
-    operating.value = true
+    isDeleting.value = true
     try {
       const res = await deleteBackup(backupId)
       if (res.success) {
@@ -112,7 +118,7 @@ export function useBackup() {
       uiStore.showToast('删除失败，请重试', 'error')
       return false
     } finally {
-      operating.value = false
+      isDeleting.value = false
     }
   }
 
@@ -120,6 +126,9 @@ export function useBackup() {
     backups,
     loading,
     operating,
+    isCreating,
+    isRestoring,
+    isDeleting,
     fetchBackups,
     createBackup: handleCreateBackup,
     restoreBackup: handleRestoreBackup,

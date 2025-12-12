@@ -44,7 +44,7 @@
               variant="primary"
               shape="pill"
               size="sm"
-              :loading="operating"
+              :loading="isCreating"
               class="backup-btn"
               @click="handleManualBackup"
             >
@@ -157,7 +157,7 @@
               variant="outline"
               shape="pill"
               size="sm"
-              :loading="operating"
+              :loading="false"
               class="action-btn outline-blue"
               @click="triggerFileImport"
             >
@@ -339,7 +339,7 @@
             size="sm"
             shape="pill"
             class="confirm-btn"
-            :loading="operating"
+            :loading="isDeleting"
             @click="confirmDelete"
           >
             <i class="fas fa-trash" />
@@ -385,7 +385,7 @@
             size="sm"
             shape="pill"
             class="confirm-btn"
-            :loading="operating"
+            :loading="isRestoring"
             @click="confirmRestore"
           >
             <i class="fas fa-undo" />
@@ -437,6 +437,9 @@ const {
   backups: backupHistory,
   loading,
   operating,
+  isCreating,
+  isRestoring,
+  isDeleting,
   fetchBackups,
   createBackup: doCreateBackup,
   restoreBackup: doRestoreBackup,
@@ -643,13 +646,16 @@ const handleFileImport = (event: Event) => {
   reader.onload = e => {
     try {
       const json = JSON.parse(e.target?.result as string)
-      pendingImportData = json
+
+      // Handle both legacy (flat) and new (nested data) formats
+      const data = json.data || json
+      pendingImportData = data
 
       // Calculate preview stats
       importPreview.value = {
-        websites: json.websites?.length || 0,
-        categories: json.categories?.length || 0,
-        tags: json.tags?.length || 0
+        websites: data.websites?.length || 0,
+        categories: data.categories?.length || 0,
+        tags: data.tags?.length || 0
       }
 
       importConfirmOpen.value = true
