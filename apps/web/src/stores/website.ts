@@ -278,8 +278,17 @@ export const useWebsiteStore = defineStore('website', () => {
   }
 
   const checkAndRestoreCloudData = async () => {
-    // Only restore if local data is empty
-    if (websites.value.length > 0) return
+    // Check if ALL data stores are empty.
+    // Explicitly check websites, categories, AND tags.
+    // If ANY of them have data, we assume the user has local data they might want to keep (or invalid partial state),
+    // but critically, if ONLY websites has data (e.g. default) but categories are missing, we MIGHT want to sync.
+    // However, to be safe and simple: "New Browser" = Everything Empty.
+    const hasLocalData =
+      websites.value.length > 0 || categoryStore.categories.length > 0 || tagStore.tags.length > 0
+
+    if (hasLocalData) {
+      return
+    }
 
     isSyncing.value = true
     try {
@@ -289,6 +298,7 @@ export const useWebsiteStore = defineStore('website', () => {
         const latestBackup = res.data[0]
         const restoreRes = await restoreBackup(latestBackup.id)
         if (restoreRes.success && restoreRes.data) {
+          logger.info('Restoring cloud data...')
           importData(restoreRes.data)
         }
       }
