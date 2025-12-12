@@ -22,6 +22,7 @@ export const useWebsiteStore = defineStore('website', () => {
   const searchFilters = ref<SearchFilters>({ keyword: '', categoryIds: [], tagIds: [] })
   const sortField = ref<SortField>('order')
   const sortOrder = ref<SortOrder>('asc')
+  const isSyncing = ref(false)
   const settingsStore = useSettingsStore()
   const categoryStore = useCategoryStore()
   const tagStore = useTagStore()
@@ -280,6 +281,7 @@ export const useWebsiteStore = defineStore('website', () => {
     // Only restore if local data is empty
     if (websites.value.length > 0) return
 
+    isSyncing.value = true
     try {
       const res = await getBackups()
       if (res.success && res.data && res.data.length > 0) {
@@ -293,6 +295,8 @@ export const useWebsiteStore = defineStore('website', () => {
     } catch (error) {
       // Silent fail if sync fails, user can manually restore later
       logger.error({ err: error }, 'Failed to sync cloud data')
+    } finally {
+      isSyncing.value = false
     }
   }
 
@@ -301,6 +305,7 @@ export const useWebsiteStore = defineStore('website', () => {
     searchFilters: readonly(searchFilters),
     sortField: readonly(sortField),
     sortOrder: readonly(sortOrder),
+    isSyncing: readonly(isSyncing),
     filteredWebsites,
     initializeData,
     addWebsite,
