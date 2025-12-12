@@ -113,7 +113,6 @@ const start = async () => {
     const port = config.server.port
     await app.listen({ port, host: '0.0.0.0' })
     app.log.info(`Server listening on port ${port} in ${config.server.env} mode`)
-    app.log.info(app.printRoutes())
   } catch (err) {
     app.log.error(err)
     process.exit(1)
