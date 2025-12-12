@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+import { logger } from '@nav/logger'
 export interface ApiResponse<T = unknown> {
   success: boolean
   message?: string
@@ -51,7 +51,7 @@ async function http<T>(endpoint: string, options: RequestOptions = {}): Promise<
       attempt++
       const isLastAttempt = attempt > retries
       if (isLastAttempt) {
-        console.error(`[HTTP] Request failed: ${endpoint}`, e)
+        logger.error({ err: e }, `[HTTP] Request failed: ${endpoint}`)
         return {
           success: false,
           message: e instanceof Error ? e.message : 'Network error'
@@ -60,7 +60,7 @@ async function http<T>(endpoint: string, options: RequestOptions = {}): Promise<
 
       // Wait before retrying (exponential backoff)
       const delay = retryDelay * Math.pow(2, attempt - 1)
-      console.warn(`[HTTP] Request failed, retrying in ${delay}ms... (${attempt}/${retries})`)
+      logger.warn(`[HTTP] Request failed, retrying in ${delay}ms... (${attempt}/${retries})`)
       await new Promise(resolve => setTimeout(resolve, delay))
     }
   }

@@ -7,7 +7,6 @@ import type {
   SortOrder,
   BackupPayload,
   BackupData,
-  UserSettings,
   Category,
   Tag
 } from '@/types'
@@ -16,6 +15,7 @@ import { useSettingsStore } from './settings'
 import { useCategoryStore } from './category'
 import { useTagStore } from './tag'
 import { getBackups, restoreBackup } from '@/api/backup'
+import { logger } from '@nav/logger'
 
 export const useWebsiteStore = defineStore('website', () => {
   const websites = ref<Website[]>([])
@@ -292,7 +292,7 @@ export const useWebsiteStore = defineStore('website', () => {
       }
     } catch (error) {
       // Silent fail if sync fails, user can manually restore later
-      console.error('Failed to sync cloud data:', error)
+      logger.error({ err: error }, 'Failed to sync cloud data')
     }
   }
 

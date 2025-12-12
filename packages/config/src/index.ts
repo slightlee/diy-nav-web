@@ -2,6 +2,7 @@ import { z } from 'zod'
 import dotenv from 'dotenv'
 import { existsSync } from 'fs'
 import { resolve } from 'path'
+import { logger } from '@nav/logger'
 
 export const configSchema = z
   .object({
@@ -92,10 +93,7 @@ export function loadConfig(): Config {
   const result = configSchema.safeParse(process.env)
 
   if (!result.success) {
-    console.error(
-      '❌ Invalid environment variables:',
-      JSON.stringify(result.error.format(), null, 2)
-    )
+    logger.error({ errors: result.error.format() }, 'Invalid environment variables')
     throw new Error('Invalid environment variables')
   }
 

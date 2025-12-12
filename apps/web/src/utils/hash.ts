@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+import { logger } from '@nav/logger'
 export async function computeHash(message: string): Promise<string> {
   // Check if crypto.subtle is available (Secure Context)
   if (crypto && crypto.subtle && crypto.subtle.digest) {
@@ -9,7 +9,7 @@ export async function computeHash(message: string): Promise<string> {
       const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
       return hashHex
     } catch (e) {
-      console.warn('[Hash] Crypto API failed, falling back to simple hash', e)
+      logger.warn({ err: e }, '[Hash] Crypto API failed, falling back to simple hash')
     }
   }
 

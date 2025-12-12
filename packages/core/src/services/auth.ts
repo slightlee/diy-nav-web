@@ -2,7 +2,7 @@ import { D1Client } from '@nav/database'
 import { v4 as uuidv4 } from 'uuid'
 import bcrypt from 'bcryptjs'
 import { AvatarService } from './avatar.js'
-import { logger as defaultLogger, Logger } from '../logger.js'
+import { logger as defaultLogger, type Logger } from '@nav/logger'
 
 export interface User {
   id: string

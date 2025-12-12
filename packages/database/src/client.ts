@@ -1,4 +1,5 @@
 import { ofetch } from 'ofetch'
+import { logger } from '@nav/logger'
 
 export interface D1Config {
   accountId: string
@@ -42,7 +43,7 @@ export class D1Client {
   /**
    * Execute a raw SQL query
    */
-  async query<T = unknown>(sql: string, params: any[] = []): Promise<D1Result<T>> {
+  async query<T = unknown>(sql: string, params: unknown[] = []): Promise<D1Result<T>> {
     try {
       const response = await ofetch<D1Result<T>>(`${this.baseUrl}/query`, {
         method: 'POST',
@@ -62,7 +63,7 @@ export class D1Client {
 
       return response
     } catch (error) {
-      console.error('D1 Execution Failed:', error)
+      logger.error({ error }, 'D1 Execution Failed')
       throw error
     }
   }
@@ -70,7 +71,7 @@ export class D1Client {
   /**
    * Helper to get the first result from a query
    */
-  async first<T = unknown>(sql: string, params: any[] = []): Promise<T | null> {
+  async first<T = unknown>(sql: string, params: unknown[] = []): Promise<T | null> {
     const res = await this.query<T>(sql, params)
     const rows = res.result?.[0]?.results
     return rows && rows.length > 0 ? rows[0] : null
@@ -79,7 +80,7 @@ export class D1Client {
   /**
    * Helper to get all results from a query
    */
-  async all<T = unknown>(sql: string, params: any[] = []): Promise<T[]> {
+  async all<T = unknown>(sql: string, params: unknown[] = []): Promise<T[]> {
     const res = await this.query<T>(sql, params)
     return res.result?.[0]?.results || []
   }

@@ -409,6 +409,7 @@ import { useTagStore } from '@/stores/tag'
 import { useAuthStore } from '@/stores/auth'
 import { BaseButton, BaseModal } from '@nav/ui'
 import { useBackup } from '@/composables/useBackup'
+import { logger } from '@nav/logger'
 import type { BackupItem } from '@/api/backup'
 
 const emit = defineEmits(['close'])
@@ -620,7 +621,7 @@ const handleExport = async () => {
     URL.revokeObjectURL(url)
     uiStore.showToast('导出成功', 'success')
   } catch (e) {
-    console.error(e)
+    logger.error({ err: e }, 'Export failed')
     uiStore.showToast('导出失败', 'error')
   } finally {
     exporting.value = false
@@ -653,7 +654,7 @@ const handleFileImport = (event: Event) => {
 
       importConfirmOpen.value = true
     } catch (e) {
-      console.error(e)
+      logger.error({ err: e }, 'Import parsing failed')
       uiStore.showToast('文件格式错误', 'error')
     }
   }

@@ -1,10 +1,10 @@
-/* eslint-disable no-console */
 import { onMounted, onUnmounted } from 'vue'
 import { useWebsiteStore } from '@/stores/website'
 import { useAuthStore } from '@/stores/auth'
 import { useSettingsStore } from '@/stores/settings'
 import { createBackup } from '@/api/backup'
 import { computeHash } from '@/utils/hash'
+import { logger } from '@nav/logger'
 
 const AUTO_BACKUP_INTERVAL = Number(import.meta.env.VITE_AUTO_BACKUP_INTERVAL) || 1 * 60 * 60 * 1000
 
@@ -30,12 +30,12 @@ export function useAutoBackup() {
 
     if (timeSinceLastBackup > AUTO_BACKUP_INTERVAL) {
       try {
-        console.log('[AutoBackup] Starting automatic backup check...')
+        logger.info('[AutoBackup] Starting automatic backup check...')
         const data = websiteStore.exportData()
 
         // Check if there is data to backup
         if (!data.data.websites.length && !data.data.categories.length && !data.data.tags.length) {
-          console.log('[AutoBackup] No data to backup, skipping.')
+          logger.info('[AutoBackup] No data to backup, skipping.')
           return
         }
 
@@ -44,7 +44,7 @@ export function useAutoBackup() {
         const lastHash = localStorage.getItem('lastAutoBackupHash')
 
         if (currentHash === lastHash) {
-          console.log('[AutoBackup] Data has not changed since last backup, skipping.')
+          logger.info('[AutoBackup] Data has not changed since last backup, skipping.')
           // Update time to avoid checking again too soon
           localStorage.setItem('lastAutoBackupTime', now.toString())
           return
@@ -53,18 +53,15 @@ export function useAutoBackup() {
         const res = await createBackup(data, 'AUTO')
 
         if (res.success) {
-          console.log('[AutoBackup] Backup successful')
+          logger.info('[AutoBackup] Backup successful')
           localStorage.setItem('lastAutoBackupTime', now.toString())
           localStorage.setItem('lastAutoBackupHash', currentHash)
         } else {
-          console.error('[AutoBackup] Backup failed:', res.message)
+          logger.error({ err: res.message }, '[AutoBackup] Backup failed')
         }
       } catch (e) {
-        console.error('[AutoBackup] Error:', e)
+        logger.error({ err: e }, '[AutoBackup] Error')
       }
-    } else {
-      // Optional: Log only if debugging, otherwise it might be too noisy for a loop
-      // console.log('[AutoBackup] Skipping backup, last backup was', Math.round(timeSinceLastBackup / 1000 / 60), 'minutes ago')
     }
   }
 

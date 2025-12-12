@@ -6,6 +6,7 @@ import { join } from 'path'
 import { config } from './src/config.js'
 import { initServices } from './src/services.js'
 import { AppError } from '@nav/core'
+import { configs } from '@nav/logger'
 import iconRoutes from './src/routes/icon.js'
 import backupRoutes from './src/routes/backup.js'
 import authRoutes from './src/routes/auth.js'
@@ -13,25 +14,10 @@ import jwt from '@fastify/jwt'
 import rateLimit from '@fastify/rate-limit'
 import helmet from '@fastify/helmet'
 
-import { createRequire } from 'module'
-
 // Fastify app
-const require = createRequire(import.meta.url)
-const isDev = process.env.NODE_ENV === 'development'
 
 const app = Fastify({
-  logger: isDev
-    ? {
-        transport: {
-          target: require.resolve('pino-pretty'),
-          options: {
-            translateTime: 'HH:MM:ss Z',
-            ignore: 'pid,hostname',
-            colorize: true
-          }
-        }
-      }
-    : true
+  logger: configs.node
 }).withTypeProvider<ZodTypeProvider>()
 
 // Setup Zod validation

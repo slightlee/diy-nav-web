@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+import { logger } from '@nav/logger'
 import { ref } from 'vue'
 import {
   getBackups,
@@ -33,7 +33,7 @@ export function useBackup() {
         throw new Error(res.message || '获取备份列表失败')
       }
     } catch (e) {
-      console.error('Failed to fetch backups:', e)
+      logger.error({ err: e }, 'Failed to fetch backups')
       uiStore.showToast('获取备份列表失败', 'error')
     } finally {
       loading.value = false
@@ -53,7 +53,7 @@ export function useBackup() {
         throw new Error(res.message)
       }
     } catch (e) {
-      console.error(e)
+      logger.error({ err: e }, 'Create backup failed')
       uiStore.showToast('备份失败，请重试', 'error')
       return false
     } finally {
@@ -86,7 +86,7 @@ export function useBackup() {
         throw new Error(res.message || '恢复失败')
       }
     } catch (e) {
-      console.error(e)
+      logger.error({ err: e }, 'Restore backup failed')
       uiStore.showToast('恢复失败，请重试', 'error')
       return null
     } finally {
@@ -108,7 +108,7 @@ export function useBackup() {
         throw new Error(res.message)
       }
     } catch (e) {
-      console.error(e)
+      logger.error({ err: e }, 'Delete backup failed')
       uiStore.showToast('删除失败，请重试', 'error')
       return false
     } finally {

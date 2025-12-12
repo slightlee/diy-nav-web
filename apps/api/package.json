@@ -19,6 +19,7 @@
     "@nav/core": "workspace:^",
     "@nav/database": "workspace:^",
     "@nav/icon-core": "workspace:*",
+    "@nav/logger": "workspace:^",
     "@nav/storage": "workspace:^",
     "dotenv": "^16.6.1",
     "fastify": "^5.6.2",
@@ -26,7 +27,6 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "pino-pretty": "^13.0.0",
     "tsx": "^4.21.0"
   }
 }

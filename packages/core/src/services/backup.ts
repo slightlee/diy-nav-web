@@ -1,7 +1,7 @@
 import { D1Client } from '@nav/database'
 import { R2Client } from '@nav/storage'
 import CryptoJS from 'crypto-js'
-import { logger as defaultLogger, Logger } from '../logger.js'
+import { logger as defaultLogger, type Logger } from '@nav/logger'
 
 export interface BackupConfig {
   d1: D1Client
