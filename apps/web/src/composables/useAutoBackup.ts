@@ -1,6 +1,8 @@
 /* eslint-disable no-console */
 import { onMounted, onUnmounted } from 'vue'
 import { useWebsiteStore } from '@/stores/website'
+import { useAuthStore } from '@/stores/auth'
+import { useSettingsStore } from '@/stores/settings'
 import { createBackup } from '@/api/backup'
 import { computeHash } from '@/utils/hash'
 
@@ -8,9 +10,16 @@ const AUTO_BACKUP_INTERVAL = Number(import.meta.env.VITE_AUTO_BACKUP_INTERVAL) |
 
 export function useAutoBackup() {
   const websiteStore = useWebsiteStore()
+  const authStore = useAuthStore()
+  const settingsStore = useSettingsStore()
   let intervalId: number | null = null
 
   const checkAndRunBackup = async () => {
+    // Check if user is logged in and auto backup is enabled
+    if (!authStore.isAuthenticated || !settingsStore.settings.autoBackup) {
+      return
+    }
+
     const lastBackupTimeStr = localStorage.getItem('lastAutoBackupTime')
     const lastBackupTime = lastBackupTimeStr ? parseInt(lastBackupTimeStr, 10) : 0
     const now = Date.now()
