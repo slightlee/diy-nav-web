@@ -282,11 +282,13 @@
 import { ref, reactive, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useWebsiteStore } from '@/stores/website'
 import { isValidEmail, isValidPassword } from '@/utils/validators'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const websiteStore = useWebsiteStore()
 
 const currentView = ref<'login' | 'register'>('login')
 const loading = ref(false)
@@ -373,6 +375,9 @@ const handleLogin = async () => {
 
   try {
     await authStore.login(loginForm.email, loginForm.password)
+    await authStore.login(loginForm.email, loginForm.password)
+    // Try to sync cloud data if local is empty
+    await websiteStore.checkAndRestoreCloudData()
     router.push('/')
   } catch (error) {
     const message = getErrorMessage(error)
@@ -416,6 +421,9 @@ const handleRegister = async () => {
     await authStore.register(registerForm.email, registerForm.password)
     // Auto login
     await authStore.login(registerForm.email, registerForm.password)
+    await authStore.login(registerForm.email, registerForm.password)
+    // Try to sync cloud data if local is empty
+    await websiteStore.checkAndRestoreCloudData()
     router.push('/')
   } catch (error) {
     const message = getErrorMessage(error)

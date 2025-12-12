@@ -7,10 +7,15 @@ import type {
   SortOrder,
   BackupPayload,
   BackupData,
-  UserSettings
+  UserSettings,
+  Category,
+  Tag
 } from '@/types'
 import { generateId } from '@/utils/helpers'
 import { useSettingsStore } from './settings'
+import { useCategoryStore } from './category'
+import { useTagStore } from './tag'
+import { getBackups, restoreBackup } from '@/api/backup'
 
 export const useWebsiteStore = defineStore('website', () => {
   const websites = ref<Website[]>([])
@@ -18,6 +23,8 @@ export const useWebsiteStore = defineStore('website', () => {
   const sortField = ref<SortField>('order')
   const sortOrder = ref<SortOrder>('asc')
   const settingsStore = useSettingsStore()
+  const categoryStore = useCategoryStore()
+  const tagStore = useTagStore()
 
   const initializeData = () => {
     try {
@@ -252,6 +259,14 @@ export const useWebsiteStore = defineStore('website', () => {
       saveToLocalStorage()
     }
 
+    if (data.categories) {
+      categoryStore.overwriteCategories(data.categories as Partial<Category>[])
+    }
+
+    if (data.tags) {
+      tagStore.overwriteTags(data.tags as Partial<Tag>[])
+    }
+
     if (data.settings) {
       settingsStore.updateSettings(data.settings)
     }
@@ -259,6 +274,26 @@ export const useWebsiteStore = defineStore('website', () => {
 
   const overwriteWebsites = (data: Partial<Website>[]) => {
     importData({ websites: data })
+  }
+
+  const checkAndRestoreCloudData = async () => {
+    // Only restore if local data is empty
+    if (websites.value.length > 0) return
+
+    try {
+      const res = await getBackups()
+      if (res.success && res.data && res.data.length > 0) {
+        // Get the latest backup
+        const latestBackup = res.data[0]
+        const restoreRes = await restoreBackup(latestBackup.id)
+        if (restoreRes.success && restoreRes.data) {
+          importData(restoreRes.data)
+        }
+      }
+    } catch (error) {
+      // Silent fail if sync fails, user can manually restore later
+      console.error('Failed to sync cloud data:', error)
+    }
   }
 
   return {
@@ -279,6 +314,7 @@ export const useWebsiteStore = defineStore('website', () => {
     moveFavoriteBefore,
     exportData,
     importData,
-    overwriteWebsites
+    overwriteWebsites,
+    checkAndRestoreCloudData
   }
 })
