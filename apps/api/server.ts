@@ -9,7 +9,9 @@ import { AppError } from '@nav/core'
 import { configs } from '@nav/logger'
 import iconRoutes from './src/routes/icon.js'
 import backupRoutes from './src/routes/backup.js'
-import authRoutes from './src/routes/auth.js'
+import authRoutes from './src/routes/auth.route.js'
+import { authProviderPlugin, LinuxDoProvider } from '@nav/auth-providers'
+import { httpClient } from './src/lib/http.js'
 import jwt from '@fastify/jwt'
 import rateLimit from '@fastify/rate-limit'
 import helmet from '@fastify/helmet'
@@ -102,6 +104,22 @@ app.get('/readyz', async () => ({ status: 'ready' }))
 // Register Routes
 await app.register(iconRoutes, { prefix: '/api' })
 await app.register(backupRoutes, { prefix: '/api' })
+await app.register(authProviderPlugin)
+
+// Register OAuth Strategies (DI)
+const { linuxDo } = config.auth
+if (linuxDo.clientId && linuxDo.clientSecret && linuxDo.redirectUri) {
+  const provider = new LinuxDoProvider(
+    {
+      clientId: linuxDo.clientId,
+      clientSecret: linuxDo.clientSecret,
+      redirectUri: linuxDo.redirectUri
+    },
+    httpClient
+  )
+  app.authProviderFactory.register(provider)
+}
+
 await app.register(authRoutes, { prefix: '/api' })
 
 // Start server

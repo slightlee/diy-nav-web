@@ -50,6 +50,11 @@ const router = createRouter({
       meta: { fixedView: 'all' }
     },
     {
+      path: '/oauth2/callback',
+      name: 'oauth2-callback',
+      component: () => import('@/views/OAuthCallback.vue')
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('@/views/AuthView.vue')

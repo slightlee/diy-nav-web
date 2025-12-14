@@ -9,9 +9,9 @@ dotenv.config({ path: resolve(process.cwd(), envFile) })
 dotenv.config({ path: resolve(process.cwd(), '../../.env') })
 
 const envSchema = z.object({
-  // Server
   PORT: z.string().transform(Number).default('8787'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  APP_NAME: z.string().default('DIY-Nav'),
 
   // R2 Storage
   STORAGE_R2_ACCOUNT_ID: z.string().optional(),
@@ -30,7 +30,13 @@ const envSchema = z.object({
   BACKUP_ROOT_DIR: z.string().default('backups'),
   BACKUP_AUTO_INTERVAL: z.string().transform(Number).default('3600000'),
   // Auth
-  JWT_SECRET: z.string().default('dev-secret-do-not-use-in-prod')
+  JWT_SECRET: z.string().default('dev-secret-do-not-use-in-prod'),
+  // Linux.do OAuth
+  LINUX_DO_CLIENT_ID: z.string().optional(),
+  LINUX_DO_CLIENT_SECRET: z.string().optional(),
+  LINUX_DO_REDIRECT_URI: z.string().optional()
+
+  // System
 })
 
 const processEnv = envSchema.parse(process.env)
@@ -51,9 +57,18 @@ export const config = {
     port: processEnv.PORT,
     env: processEnv.NODE_ENV
   },
-  auth: {
-    jwtSecret: processEnv.JWT_SECRET
+  app: {
+    name: processEnv.APP_NAME
   },
+  auth: {
+    jwtSecret: processEnv.JWT_SECRET,
+    linuxDo: {
+      clientId: processEnv.LINUX_DO_CLIENT_ID,
+      clientSecret: processEnv.LINUX_DO_CLIENT_SECRET,
+      redirectUri: processEnv.LINUX_DO_REDIRECT_URI
+    }
+  },
+  system: {},
   cloudflare: {
     accountId,
     apiToken: processEnv.DB_D1_API_TOKEN || '',

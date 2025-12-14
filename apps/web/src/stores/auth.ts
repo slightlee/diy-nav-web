@@ -10,11 +10,6 @@ export interface User {
   role: 'USER' | 'ADMIN'
 }
 
-interface AuthState {
-  user: User | null
-  token: string | null
-}
-
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(JSON.parse(localStorage.getItem('auth_user') || 'null'))
   const token = ref<string | null>(localStorage.getItem('auth_token'))
@@ -35,6 +30,21 @@ export const useAuthStore = defineStore('auth', () => {
       return true
     }
     throw new Error(res.message || 'Login failed')
+  }
+
+  async function loginWithProvider(provider: string, code: string) {
+    const res = await request.post<{ token: string; user: User }>(`/api/auth/${provider}/login`, {
+      code
+    })
+
+    if (res.success && res.data) {
+      token.value = res.data.token
+      user.value = res.data.user
+      localStorage.setItem('auth_token', res.data.token)
+      localStorage.setItem('auth_user', JSON.stringify(res.data.user))
+      return true
+    }
+    throw new Error(res.message || 'OAuth Login failed')
   }
 
   async function register(email: string, password: string) {
@@ -73,6 +83,7 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     isAuthenticated,
     login,
+    loginWithProvider,
     register,
     fetchUser,
     logout

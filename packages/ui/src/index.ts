@@ -4,8 +4,19 @@ import BaseModal from './components/BaseModal.vue'
 import IconPicker from './components/IconPicker.vue'
 import EmptyState from './components/EmptyState.vue'
 import ColorPicker from './components/ColorPicker.vue'
+import AuthLayout from './components/AuthLayout.vue'
+import BrandLogo from './components/BrandLogo.vue'
 
-export { BaseButton, BaseInput, BaseModal, IconPicker, EmptyState, ColorPicker }
+export {
+  BaseButton,
+  BaseInput,
+  BaseModal,
+  IconPicker,
+  EmptyState,
+  ColorPicker,
+  AuthLayout,
+  BrandLogo
+}
 
 export type { Props as BaseButtonProps } from './components/BaseButton.vue'
 export type { Props as BaseInputProps } from './components/BaseInput.vue'

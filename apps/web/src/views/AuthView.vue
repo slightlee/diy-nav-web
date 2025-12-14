@@ -1,293 +1,254 @@
 <template>
-  <div class="auth-layout">
-    <div class="page">
-      <div class="card">
-        <!-- Logo in top-left corner -->
-        <router-link to="/" class="card-logo" title="返回首页">D</router-link>
+  <AuthLayout>
+    <!-- Logo -->
+    <div class="logo-container">
+      <BrandLogo link="/" title="返回首页">D</BrandLogo>
+    </div>
 
-        <div class="auth-views">
-          <!-- Login View -->
-          <div class="view" :class="{ active: currentView === 'login' }">
-            <div class="header">
-              <div class="header-sub">在任意设备上，继续你的高效工作流</div>
-            </div>
-
-            <form @submit.prevent="handleLogin">
-              <div class="form-group">
-                <label class="form-label">
-                  邮箱
-                  <span>*</span>
-                </label>
-                <div class="input-wrap">
-                  <svg class="input-icon" viewBox="0 0 24 24">
-                    <rect x="3" y="5" width="18" height="14" rx="2" />
-                    <polyline points="4 7 12 12 20 7" />
-                  </svg>
-                  <input
-                    v-model="loginForm.email"
-                    type="email"
-                    placeholder="your@email.com"
-                    required
-                  />
-                </div>
-                <div v-if="loginErrors.email" class="error-text">{{ loginErrors.email }}</div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">
-                  密码
-                  <span>*</span>
-                </label>
-                <div class="input-wrap">
-                  <svg class="input-icon" viewBox="0 0 24 24">
-                    <rect x="5" y="10" width="14" height="10" rx="2" />
-                    <path d="M9 10V8a3 3 0 0 1 6 0v2" />
-                  </svg>
-                  <input
-                    v-model="loginForm.password"
-                    :type="showLoginPassword ? 'text' : 'password'"
-                    placeholder="请输入密码"
-                    class="pwd"
-                    required
-                  />
-                  <button
-                    class="toggle-password"
-                    type="button"
-                    aria-label="显示或隐藏密码"
-                    @click="showLoginPassword = !showLoginPassword"
-                  >
-                    <svg v-if="!showLoginPassword" class="eye-icon eye-open" viewBox="0 0 24 24">
-                      <path
-                        d="M2.5 12S5.5 6.5 12 6.5 21.5 12 21.5 12 18.5 17.5 12 17.5 2.5 12 2.5 12Z"
-                      />
-                      <circle cx="12" cy="12" r="2.6" />
-                    </svg>
-                    <svg v-else class="eye-icon eye-closed" viewBox="0 0 24 24">
-                      <path d="M4 4l16 16" />
-                      <path d="M5 9s2.5-4 7-4 7 4 7 4-2.5 4-7 4c-.7 0-1.37-.07-2-.2" />
-                      <path d="M9 13a3 3 0 0 1 4-4" />
-                    </svg>
-                  </button>
-                </div>
-                <div v-if="loginErrors.password" class="error-text">{{ loginErrors.password }}</div>
-              </div>
-
-              <button class="btn-primary" type="submit" :disabled="loading">
-                {{ loading ? '登录中...' : '登录' }}
-              </button>
-
-              <div class="row-helper">
-                <a href="#">忘记密码？</a>
-              </div>
-
-              <div class="divider"><span>或使用第三方登录</span></div>
-
-              <div class="social-row">
-                <button type="button" class="social-btn" title="GitHub 登录">
-                  <svg class="social-icon" viewBox="0 0 16 16">
-                    <path
-                      fill="#111827"
-                      fill-rule="evenodd"
-                      d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 
-                        6.53 5.47 7.59.4.07.55-.17.55-.38 
-                        0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52 
-                        -.01-.53.63-.01 1.08.58 1.23.82.72 
-                        1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07 
-                        -1.78-.2-3.64-.89-3.64-3.95 
-                        0-.87.31-1.59.82-2.15C3.6 6.1 3.32 
-                        5.28 3.76 4.18c0 0 .67-.21 2.2.82A7.65 
-                        7.65 0 018 4.68c.68 0 1.36.09 
-                        2 .26 1.53-1.04 2.2-.82 2.2-.82.44 
-                        1.1.16 1.92.08 2.12.51.56.82 1.27.82 
-                        2.15 0 3.07-1.87 3.75-3.65 
-                        3.95.29.25.54.73.54 
-                        1.48 0 1.07-.01 1.93-.01 2.2 0 
-                        .21.15.46.55.38A8.012 
-                        8.012 0 0016 8c0-4.42-3.58-8-8-8z"
-                    />
-                  </svg>
-                </button>
-                <button type="button" class="social-btn" title="Google 登录">
-                  <svg class="social-icon" viewBox="0 0 24 24">
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      fill="#fff"
-                      stroke="#e5e7eb"
-                      stroke-width="1.2"
-                    />
-                    <path
-                      fill="#2563eb"
-                      d="M12 6a6 6 0 0 1 4 1.5l-1.7 
-                        1.7A3.5 3.5 0 0 0 12 8.6c-2 
-                        0-3.5 1.45-3.5 3.4S10 15.4 
-                        12 15.4c1.7 0 2.7-.9 3-2.3H12v-2h5A6 
-                        6 0 0 1 12 18c-3.3 0-6-2.7-6-6s2.7-6 
-                        6-6Z"
-                    />
-                  </svg>
-                </button>
-                <button type="button" class="social-btn" title="微信登录">
-                  <svg class="social-icon" viewBox="0 0 24 24">
-                    <rect x="3" y="6" width="11" height="8" rx="4" fill="#22c55e" />
-                    <circle cx="8" cy="10" r="1" fill="#fff" />
-                    <circle cx="12" cy="10" r="1" fill="#fff" />
-                    <rect x="10" y="10" width="11" height="8" rx="4" fill="#16a34a" />
-                    <circle cx="14.5" cy="14" r="1" fill="#fff" />
-                    <circle cx="18.5" cy="14" r="1" fill="#fff" />
-                  </svg>
-                </button>
-              </div>
-
-              <div class="switch-row">
-                还没有账号？
-                <a href="#" @click.prevent="switchView('register')">免费注册</a>
-              </div>
-
-              <div class="legal">登录即表示你已阅读并同意《用户协议》和《隐私政策》</div>
-            </form>
-          </div>
-
-          <!-- Register View -->
-          <div class="view" :class="{ active: currentView === 'register' }">
-            <div class="header">
-              <div class="header-sub">同步多端导航配置，随时云端备份</div>
-            </div>
-
-            <form @submit.prevent="handleRegister">
-              <div class="form-group">
-                <label class="form-label">
-                  邮箱
-                  <span>*</span>
-                </label>
-                <div class="input-wrap">
-                  <svg class="input-icon" viewBox="0 0 24 24">
-                    <rect x="3" y="5" width="18" height="14" rx="2" />
-                    <polyline points="4 7 12 12 20 7" />
-                  </svg>
-                  <input
-                    v-model="registerForm.email"
-                    type="email"
-                    placeholder="your@email.com"
-                    required
-                  />
-                </div>
-                <div v-if="registerErrors.email" class="error-text">{{ registerErrors.email }}</div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">
-                  密码
-                  <span>*</span>
-                </label>
-                <div class="input-wrap">
-                  <svg class="input-icon" viewBox="0 0 24 24">
-                    <rect x="5" y="10" width="14" height="10" rx="2" />
-                    <path d="M9 10V8a3 3 0 0 1 6 0v2" />
-                  </svg>
-                  <input
-                    v-model="registerForm.password"
-                    :type="showRegisterPassword ? 'text' : 'password'"
-                    placeholder="至少 8 位字符"
-                    minlength="8"
-                    class="pwd"
-                    required
-                  />
-                  <button
-                    class="toggle-password"
-                    type="button"
-                    aria-label="显示或隐藏密码"
-                    @click="showRegisterPassword = !showRegisterPassword"
-                  >
-                    <svg v-if="!showRegisterPassword" class="eye-icon eye-open" viewBox="0 0 24 24">
-                      <path
-                        d="M2.5 12S5.5 6.5 12 6.5 21.5 12 21.5 12 18.5 17.5 12 17.5 2.5 12 2.5 12Z"
-                      />
-                      <circle cx="12" cy="12" r="2.6" />
-                    </svg>
-                    <svg v-else class="eye-icon eye-closed" viewBox="0 0 24 24">
-                      <path d="M4 4l16 16" />
-                      <path d="M5 9s2.5-4 7-4 7 4 7 4-2.5 4-7 4c-.7 0-1.37-.07-2-.2" />
-                      <path d="M9 13a3 3 0 0 1 4-4" />
-                    </svg>
-                  </button>
-                </div>
-                <div v-if="registerErrors.password" class="error-text">
-                  {{ registerErrors.password }}
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">
-                  确认密码
-                  <span>*</span>
-                </label>
-                <div class="input-wrap">
-                  <svg class="input-icon" viewBox="0 0 24 24">
-                    <rect x="5" y="10" width="14" height="10" rx="2" />
-                    <path d="M9 10V8a3 3 0 0 1 6 0v2" />
-                  </svg>
-                  <input
-                    v-model="registerForm.confirmPassword"
-                    :type="showConfirmPassword ? 'text' : 'password'"
-                    placeholder="请再次输入密码"
-                    minlength="8"
-                    class="pwd"
-                    required
-                  />
-                  <button
-                    class="toggle-password"
-                    type="button"
-                    aria-label="显示或隐藏密码"
-                    @click="showConfirmPassword = !showConfirmPassword"
-                  >
-                    <svg v-if="!showConfirmPassword" class="eye-icon eye-open" viewBox="0 0 24 24">
-                      <path
-                        d="M2.5 12S5.5 6.5 12 6.5 21.5 12 21.5 12 18.5 17.5 12 17.5 2.5 12 2.5 12Z"
-                      />
-                      <circle cx="12" cy="12" r="2.6" />
-                    </svg>
-                    <svg v-else class="eye-icon eye-closed" viewBox="0 0 24 24">
-                      <path d="M4 4l16 16" />
-                      <path d="M5 9s2.5-4 7-4 7 4 7 4-2.5 4-7 4c-.7 0-1.37-.07-2-.2" />
-                      <path d="M9 13a3 3 0 0 1 4-4" />
-                    </svg>
-                  </button>
-                </div>
-                <div v-if="registerErrors.confirmPassword" class="error-text">
-                  {{ registerErrors.confirmPassword }}
-                </div>
-              </div>
-
-              <button class="btn-primary" type="submit" :disabled="loading">
-                {{ loading ? '注册中...' : '创建账号' }}
-              </button>
-
-              <div class="switch-row">
-                已经有账号？
-                <a href="#" @click.prevent="switchView('login')">去登录</a>
-              </div>
-
-              <div class="legal">创建账号即表示你已阅读并同意《用户协议》和《隐私政策》</div>
-            </form>
-          </div>
+    <!-- Login/Register Views -->
+    <div class="auth-views">
+      <!-- Login View -->
+      <div class="view" :class="{ active: currentView === 'login' }">
+        <div class="header">
+          <div class="header-sub">在任意设备上，继续你的高效工作流</div>
         </div>
+
+        <form @submit.prevent="handleLogin">
+          <div class="form-group">
+            <label class="form-label">
+              邮箱
+              <span>*</span>
+            </label>
+            <div class="input-wrap">
+              <svg class="input-icon" viewBox="0 0 24 24">
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+                <polyline points="4 7 12 12 20 7" />
+              </svg>
+              <input v-model="loginForm.email" type="email" placeholder="your@email.com" required />
+            </div>
+            <div v-if="loginErrors.email" class="error-text">{{ loginErrors.email }}</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              密码
+              <span>*</span>
+            </label>
+            <div class="input-wrap">
+              <svg class="input-icon" viewBox="0 0 24 24">
+                <rect x="5" y="10" width="14" height="10" rx="2" />
+                <path d="M9 10V8a3 3 0 0 1 6 0v2" />
+              </svg>
+              <input
+                v-model="loginForm.password"
+                :type="showLoginPassword ? 'text' : 'password'"
+                placeholder="请输入密码"
+                class="pwd"
+                required
+              />
+              <button
+                class="toggle-password"
+                type="button"
+                aria-label="显示或隐藏密码"
+                @click="showLoginPassword = !showLoginPassword"
+              >
+                <svg v-if="!showLoginPassword" class="eye-icon eye-open" viewBox="0 0 24 24">
+                  <path
+                    d="M2.5 12S5.5 6.5 12 6.5 21.5 12 21.5 12 18.5 17.5 12 17.5 2.5 12 2.5 12Z"
+                  />
+                  <circle cx="12" cy="12" r="2.6" />
+                </svg>
+                <svg v-else class="eye-icon eye-closed" viewBox="0 0 24 24">
+                  <path d="M4 4l16 16" />
+                  <path d="M5 9s2.5-4 7-4 7 4 7 4-2.5 4-7 4c-.7 0-1.37-.07-2-.2" />
+                  <path d="M9 13a3 3 0 0 1 4-4" />
+                </svg>
+              </button>
+            </div>
+            <div v-if="loginErrors.password" class="error-text">{{ loginErrors.password }}</div>
+          </div>
+
+          <button class="btn-primary" type="submit" :disabled="loading">
+            {{ loading ? '登录中...' : '登录' }}
+          </button>
+
+          <div class="row-helper">
+            <a href="#">忘记密码？</a>
+          </div>
+
+          <div class="divider"><span>或使用第三方登录</span></div>
+
+          <div class="social-row">
+            <button
+              type="button"
+              class="social-btn"
+              title="Linuxdo 登录"
+              @click="handleLinuxDoLogin"
+            >
+              <svg class="social-icon" viewBox="0 0 24 24" fill="none">
+                <defs>
+                  <clipPath id="linuxdo-clip">
+                    <circle cx="12" cy="12" r="12" />
+                  </clipPath>
+                </defs>
+                <g clip-path="url(#linuxdo-clip)">
+                  <rect x="0" y="0" width="24" height="8" fill="#000000" />
+                  <rect x="0" y="8" width="24" height="8" fill="#FFFFFF" />
+                  <rect x="0" y="16" width="24" height="8" fill="#FFB11B" />
+                </g>
+              </svg>
+            </button>
+          </div>
+
+          <div class="switch-row">
+            还没有账号？
+            <a href="#" @click.prevent="switchView('register')">免费注册</a>
+          </div>
+
+          <div class="legal">登录即表示你已阅读并同意《用户协议》和《隐私政策》</div>
+        </form>
+      </div>
+
+      <!-- Register View -->
+      <div class="view" :class="{ active: currentView === 'register' }">
+        <div class="header">
+          <div class="header-sub">同步多端导航配置，随时云端备份</div>
+        </div>
+
+        <form @submit.prevent="handleRegister">
+          <div class="form-group">
+            <label class="form-label">
+              邮箱
+              <span>*</span>
+            </label>
+            <div class="input-wrap">
+              <svg class="input-icon" viewBox="0 0 24 24">
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+                <polyline points="4 7 12 12 20 7" />
+              </svg>
+              <input
+                v-model="registerForm.email"
+                type="email"
+                placeholder="your@email.com"
+                required
+              />
+            </div>
+            <div v-if="registerErrors.email" class="error-text">{{ registerErrors.email }}</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              密码
+              <span>*</span>
+            </label>
+            <div class="input-wrap">
+              <svg class="input-icon" viewBox="0 0 24 24">
+                <rect x="5" y="10" width="14" height="10" rx="2" />
+                <path d="M9 10V8a3 3 0 0 1 6 0v2" />
+              </svg>
+              <input
+                v-model="registerForm.password"
+                :type="showRegisterPassword ? 'text' : 'password'"
+                placeholder="至少 8 位字符"
+                minlength="8"
+                class="pwd"
+                required
+              />
+              <button
+                class="toggle-password"
+                type="button"
+                aria-label="显示或隐藏密码"
+                @click="showRegisterPassword = !showRegisterPassword"
+              >
+                <svg v-if="!showRegisterPassword" class="eye-icon eye-open" viewBox="0 0 24 24">
+                  <path
+                    d="M2.5 12S5.5 6.5 12 6.5 21.5 12 21.5 12 18.5 17.5 12 17.5 2.5 12 2.5 12Z"
+                  />
+                  <circle cx="12" cy="12" r="2.6" />
+                </svg>
+                <svg v-else class="eye-icon eye-closed" viewBox="0 0 24 24">
+                  <path d="M4 4l16 16" />
+                  <path d="M5 9s2.5-4 7-4 7 4 7 4-2.5 4-7 4c-.7 0-1.37-.07-2-.2" />
+                  <path d="M9 13a3 3 0 0 1 4-4" />
+                </svg>
+              </button>
+            </div>
+            <div v-if="registerErrors.password" class="error-text">
+              {{ registerErrors.password }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              确认密码
+              <span>*</span>
+            </label>
+            <div class="input-wrap">
+              <svg class="input-icon" viewBox="0 0 24 24">
+                <rect x="5" y="10" width="14" height="10" rx="2" />
+                <path d="M9 10V8a3 3 0 0 1 6 0v2" />
+              </svg>
+              <input
+                v-model="registerForm.confirmPassword"
+                :type="showConfirmPassword ? 'text' : 'password'"
+                placeholder="请再次输入密码"
+                minlength="8"
+                class="pwd"
+                required
+              />
+              <button
+                class="toggle-password"
+                type="button"
+                aria-label="显示或隐藏密码"
+                @click="showConfirmPassword = !showConfirmPassword"
+              >
+                <svg v-if="!showConfirmPassword" class="eye-icon eye-open" viewBox="0 0 24 24">
+                  <path
+                    d="M2.5 12S5.5 6.5 12 6.5 21.5 12 21.5 12 18.5 17.5 12 17.5 2.5 12 2.5 12Z"
+                  />
+                  <circle cx="12" cy="12" r="2.6" />
+                </svg>
+                <svg v-else class="eye-icon eye-closed" viewBox="0 0 24 24">
+                  <path d="M4 4l16 16" />
+                  <path d="M5 9s2.5-4 7-4 7 4 7 4-2.5 4-7 4c-.7 0-1.37-.07-2-.2" />
+                  <path d="M9 13a3 3 0 0 1 4-4" />
+                </svg>
+              </button>
+            </div>
+            <div v-if="registerErrors.confirmPassword" class="error-text">
+              {{ registerErrors.confirmPassword }}
+            </div>
+          </div>
+
+          <button class="btn-primary" type="submit" :disabled="loading">
+            {{ loading ? '注册中...' : '创建账号' }}
+          </button>
+
+          <div class="switch-row">
+            已经有账号？
+            <a href="#" @click.prevent="switchView('login')">去登录</a>
+          </div>
+
+          <div class="legal">创建账号即表示你已阅读并同意《用户协议》和《隐私政策》</div>
+        </form>
       </div>
     </div>
-  </div>
+  </AuthLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useUIStore } from '@/stores/ui'
 
 import { isValidEmail, isValidPassword } from '@/utils/validators'
+import { AuthLayout, BrandLogo } from '@nav/ui'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const uiStore = useUIStore()
 
 const currentView = ref<'login' | 'register'>('login')
 const loading = ref(false)
@@ -317,8 +278,36 @@ const registerErrors = reactive({
   confirmPassword: ''
 })
 
-// Initialize view based on route
-onMounted(() => {
+const handleLinuxDoLogin = () => {
+  const clientId = import.meta.env.VITE_LINUX_DO_CLIENT_ID
+  const redirectUri = import.meta.env.VITE_LINUX_DO_REDIRECT_URI
+
+  if (!clientId || !redirectUri) {
+    uiStore.showToast('配置缺失: 无法启动登录', 'error')
+    return
+  }
+
+  // Security: Generate random state for CSRF protection
+  const array = new Uint32Array(4)
+  window.crypto.getRandomValues(array)
+  const state = Array.from(array)
+    .map(n => n.toString(16).padStart(8, '0'))
+    .join('')
+
+  // Store state for validation on callback
+  localStorage.setItem('oauth_state', state)
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    response_type: 'code',
+    redirect_uri: redirectUri,
+    state
+  })
+
+  window.location.href = `https://connect.linux.do/oauth2/authorize?${params.toString()}`
+}
+
+onMounted(async () => {
   const path = route.path
   if (path === '/register') {
     currentView.value = 'register'
@@ -451,87 +440,19 @@ const handleRegister = async () => {
   padding: 0;
 }
 
-.auth-layout {
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 32px 16px;
-  font-family:
-    system-ui,
-    -apple-system,
-    'PingFang SC',
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  /* Background color should be inherited or set here if needed, 
-     but assuming body has it or we set it here */
-  background-color: #f3f4f8; /* var(--bg-page) */
-}
+/* Layout handled by AuthLayout and BrandLogo */
 
-.page {
-  width: 100%;
-  max-width: 520px;
-  /* Padding removed to ensure max-width is the actual content width constraint */
-}
-
-/* 品牌区域 - 移除外部品牌区域样式，改为内部样式 */
-/* .logo-container {
+.logo-container {
   display: flex;
   justify-content: center;
   margin-bottom: 24px;
-}
-.brand-logo {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #2563eb, #4f46e5);
-  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.35);
-} */
-
-/* 卡片 */
-.card {
-  background: #fff; /* var(--bg-card) */
-  border-radius: 26px; /* var(--radius-card) */
-  padding: 40px 52px 32px;
-  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.16);
-  width: 100%;
-  position: relative; /* Ensure absolute children are relative to card */
-}
-
-/* 顶部居中 Logo */
-.card-logo {
-  margin: 0 auto 16px; /* Reduced from 32px to bring subtitle closer */
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); /* Match HeaderBar gradient */
-  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.35);
-  cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-
-  /* Text styles for 'D' */
-  color: #fff;
-  text-decoration: none; /* Remove link underline */
-  display: flex; /* Override display: block to flex for centering */
-  align-items: center;
-  justify-content: center;
-  font-size: 26px; /* Scaled up from 18px (32->48) */
-  font-weight: bold;
-}
-.card-logo:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 20px rgba(37, 99, 235, 0.45);
 }
 
 /* 登录 / 注册视图容器 */
 .auth-views {
   position: relative;
   min-height: 560px;
+  width: 100%; /* Fix: Prevent collapse in flex column */
 }
 .view {
   position: absolute;
@@ -554,11 +475,11 @@ const handleRegister = async () => {
   font-weight: 700;
   letter-spacing: 0.02em;
   margin-bottom: 8px;
-  color: #111827;
+  color: var(--text-main, #111827);
 }
 .header-sub {
   font-size: 14px;
-  color: #6b7280; /* var(--text-sub) */
+  color: var(--text-secondary, #6b7280);
 }
 
 .form-group {
@@ -568,28 +489,28 @@ const handleRegister = async () => {
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 8px;
-  color: #374151;
+  color: var(--text-main, #374151);
   display: inline-flex;
   align-items: center;
 }
 .form-label span {
-  color: #ef4444;
+  color: var(--color-error, #ef4444);
   margin-left: 4px;
 }
 
 .input-wrap {
   height: 48px;
   border-radius: 999px; /* var(--radius-input) */
-  border: 1px solid #e5e7eb; /* var(--border) */
-  background: #f9fafb; /* var(--input-bg) */
+  border: 1px solid var(--border, #e5e7eb);
+  background: var(--bg-tile, #f9fafb);
   padding: 0 18px;
   display: flex;
   align-items: center;
   transition: 0.2s;
 }
 .input-wrap:focus-within {
-  border-color: #2563eb; /* var(--primary) */
-  background: #fff;
+  border-color: var(--color-primary, #2563eb);
+  background: var(--bg-tile-hover, #fff);
   box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.35);
 }
 
@@ -597,7 +518,7 @@ const handleRegister = async () => {
   width: 18px;
   height: 18px;
   margin-right: 10px;
-  stroke: #9ca3af;
+  stroke: var(--text-muted, #9ca3af);
   stroke-width: 1.8;
   fill: none;
 }
@@ -608,11 +529,11 @@ input {
   background: none;
   font-size: 14px;
   outline: none;
-  color: #111827; /* var(--text-main) */
+  color: var(--text-main, #111827);
   width: 100%; /* Ensure input takes full width */
 }
 input::placeholder {
-  color: #c1c7d5;
+  color: var(--text-muted, #c1c7d5);
 }
 
 .toggle-password {
@@ -626,7 +547,7 @@ input::placeholder {
 .eye-icon {
   width: 18px;
   height: 18px;
-  stroke: #9ca3af;
+  stroke: var(--text-muted, #9ca3af);
   stroke-width: 1.8;
   fill: none;
 }
@@ -637,7 +558,7 @@ input::placeholder {
   height: 50px;
   border-radius: 999px;
   border: none;
-  background: #2563eb; /* var(--primary) */
+  background: var(--color-primary, #2563eb);
   color: #fff;
   font-size: 16px;
   font-weight: 600;
@@ -646,7 +567,7 @@ input::placeholder {
   transition: 0.15s ease;
 }
 .btn-primary:hover {
-  background: #1d4ed8; /* var(--primary-hover) */
+  background: var(--color-primary-dark, #1d4ed8);
 }
 .btn-primary:disabled {
   opacity: 0.7;
@@ -659,7 +580,7 @@ input::placeholder {
   font-size: 13px;
 }
 .row-helper a {
-  color: #2563eb; /* var(--primary) */
+  color: var(--color-primary, #2563eb);
   text-decoration: none;
 }
 
@@ -668,13 +589,13 @@ input::placeholder {
   align-items: center;
   margin: 24px 0 16px;
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--text-muted, #9ca3af);
 }
 .divider::before,
 .divider::after {
   content: '';
   flex: 1;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border, #e5e7eb);
 }
 .divider span {
   margin: 0 10px;
@@ -691,8 +612,8 @@ input::placeholder {
   width: 40px;
   height: 40px;
   border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border: 1px solid var(--border, #e5e7eb);
+  background: var(--bg-tile, #f9fafb);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -700,23 +621,24 @@ input::placeholder {
   transition: 0.15s;
 }
 .social-btn:hover {
-  background: #eef2ff;
-  border-color: #c7d2fe;
+  background: var(--bg-tile-hover, #eef2ff);
+  border-color: var(--color-primary-soft, #c7d2fe);
 }
 .social-icon {
   width: 20px;
   height: 20px;
   display: block;
 }
+/* Ensure svg stroke follows theme if set, but some social icons are hardcoded colors usually */
 
 .switch-row {
   margin-top: 22px;
   text-align: center;
   font-size: 14px;
-  color: #6b7280; /* var(--text-sub) */
+  color: var(--text-secondary, #6b7280);
 }
 .switch-row a {
-  color: #2563eb; /* var(--primary) */
+  color: var(--color-primary, #2563eb);
   font-weight: 500;
   text-decoration: none;
   margin-left: 4px;
@@ -726,24 +648,25 @@ input::placeholder {
   margin-top: 14px;
   text-align: center;
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--text-muted, #9ca3af);
 }
 .legal a {
-  color: #9ca3af;
+  color: var(--text-muted, #9ca3af);
   text-decoration: underline;
 }
 
 .error-text {
-  color: #ef4444;
+  color: var(--color-error, #ef4444);
   font-size: 12px;
   margin-top: 4px;
   margin-left: 4px;
 }
 
-@media (max-width: 640px) {
-  .card {
-    padding: 32px 22px 24px;
-    border-radius: 22px;
-  }
+/* Specific Dark Mode overrides if variables aren't catching everything correctly */
+:global([data-theme='dark']) .social-icon polyline,
+:global([data-theme='dark']) .social-icon line,
+:global([data-theme='dark']) .social-icon path[fill='#111827'] {
+  stroke: #e2e8f0;
+  fill: #e2e8f0;
 }
 </style>
