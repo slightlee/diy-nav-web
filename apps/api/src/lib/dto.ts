@@ -5,7 +5,7 @@ import { User } from '@nav/core'
  */
 export interface UserDTO {
   id: string
-  email: string
+  email: string | null
   nickname: string | null
   avatar_url: string | null
   role: 'USER' | 'ADMIN'

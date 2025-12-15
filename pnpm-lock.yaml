@@ -295,6 +295,9 @@ importers:
       '@nav/config':
         specifier: workspace:^
         version: link:../config
+      '@nav/logger':
+        specifier: workspace:^
+        version: link:../logger
 
   packages/logger:
     dependencies:

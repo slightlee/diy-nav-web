@@ -52,8 +52,8 @@ export class LinuxDoProvider implements IOAuthProvider {
     return {
       id: String(data.sub || data.id),
       email: data.email,
-      name: data.name || data.nickname || data.preferred_username,
-      avatar_url: data.picture || data.avatar_url,
+      name: data.username,
+      avatar_url: data.avatar_url,
       raw: data
     }
   }

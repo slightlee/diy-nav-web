@@ -84,4 +84,97 @@ export class D1Client {
     const res = await this.query<T>(sql, params)
     return res.result?.[0]?.results || []
   }
+
+  /**
+   * Execute multiple SQL statements in a single batch (Transaction)
+   * Note: Since D1 HTTP API does not support parameterized batch queries,
+   * we perform client-side parameter inlining (Sanitization) here.
+   */
+  async batch<T = unknown>(
+    statements: { sql: string; params?: unknown[] }[]
+  ): Promise<D1Result<T>> {
+    try {
+      // Inline parameters for each statement
+      const sql = statements
+        .map(stmt => {
+          const query = stmt.sql
+          const params = stmt.params || []
+
+          // Naive but effective replacement for named/positional params
+          // We assume '?' matches the order of params
+          let paramIdx = 0
+          return query.replace(/\?/g, () => {
+            if (paramIdx >= params.length) {
+              throw new Error(`Parameter mismatch: Expected more params for statement: ${query}`)
+            }
+            const val = params[paramIdx++]
+            return this.escapeSqlValue(val)
+          })
+        })
+        .join('; ')
+
+      const response = await ofetch<D1Result<T>>(`${this.baseUrl}/query`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.config.apiToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: {
+          sql,
+          params: [] // Params are already inlined
+        }
+      })
+
+      if (!response.success) {
+        throw new Error(`D1 Batch Error: ${response.errors?.[0]?.message || 'Unknown error'}`)
+      }
+    } catch (error: unknown) {
+      const errorDetail = this.extractErrorDetail(error)
+      logger.error({ error: errorDetail }, 'D1 Batch Execution Failed')
+      throw error
+    }
+  }
+
+  /**
+   * Safe SQL Value Escaping
+   * Handles check for null, number, string (single quote escape), etc.
+   */
+  private escapeSqlValue(value: unknown): string {
+    if (value === null || value === undefined) {
+      return 'NULL'
+    }
+    if (typeof value === 'number') {
+      return value.toString()
+    }
+    if (typeof value === 'boolean') {
+      return value ? '1' : '0'
+    }
+    if (value instanceof Date) {
+      return value.getTime().toString()
+    }
+    if (typeof value === 'string') {
+      // Standard SQL string escaping: replace ' with ''
+      return `'${value.replace(/'/g, "''")}'`
+    }
+    // Fallback for objects/arrays -> JSON stringify? or Error?
+    // In our UserRepo, objects are already stringified before passing to repo helpers.
+    // If we receive an object here that isn't null/date, we might want to cast to string safely.
+    if (typeof value === 'object') {
+      return `'${JSON.stringify(value).replace(/'/g, "''")}'`
+    }
+
+    return `'${String(value).replace(/'/g, "''")}'`
+  }
+
+  /**
+   * Safely extract error details from unknown error objects (e.g. ofetch errors)
+   */
+  private extractErrorDetail(error: unknown): unknown {
+    if (typeof error === 'object' && error !== null) {
+      // Use loose typing for extraction to avoid 'any' but handle potential shapes
+      const err = error as { data?: unknown; response?: { _data?: unknown }; message?: string }
+      return err.data || err.response?._data || err.message
+    }
+    return String(error)
+  }
 }

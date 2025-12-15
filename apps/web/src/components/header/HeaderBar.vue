@@ -74,7 +74,7 @@
               alt="User Avatar"
             />
             <div v-else-if="authStore.isAuthenticated" class="user-avatar">
-              {{ authStore.user?.email?.[0]?.toUpperCase() }}
+              {{ (authStore.user?.nickname || authStore.user?.email || '?')?.[0]?.toUpperCase() }}
             </div>
             <i v-else class="fas fa-cog" />
           </BaseButton>
@@ -96,7 +96,7 @@
 
             <!-- User Info Header -->
             <div v-if="authStore.isAuthenticated" class="dropdown-header">
-              <div class="user-email">{{ authStore.user?.email }}</div>
+              <div class="user-email">{{ authStore.user?.nickname || authStore.user?.email }}</div>
             </div>
 
             <!-- Common Options -->

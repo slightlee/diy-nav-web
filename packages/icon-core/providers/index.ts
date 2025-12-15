@@ -6,6 +6,7 @@
  */
 import type { IconFetchResult } from '../types.js'
 import type { Config } from '@nav/config'
+import { logger } from '@nav/logger'
 import { fetchFromDuckDuckGo } from './duckduckgo.js'
 import { fetchFromClearbit } from './clearbit.js'
 import { fetchFromGoogleS2 } from './google.js'
@@ -50,12 +51,12 @@ export async function fetchIconByProviders(
   providers: IconProvider[] = defaultProviders
 ): Promise<IconFetchResult | null> {
   const debug = process.env.LOG_LEVEL === 'debug'
-  if (debug) console.debug('[icon] try providers', { domain })
+  if (debug) logger.debug({ domain }, '[icon] try providers')
   for (const p of providers) {
     try {
       const result = await p(domain)
       if (result) {
-        if (debug) console.debug('[icon] provider hit', { domain, source: result.source })
+        if (debug) logger.debug({ domain, source: result.source }, '[icon] provider hit')
         return result
       }
     } catch {
