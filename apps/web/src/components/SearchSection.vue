@@ -56,7 +56,7 @@
               @visit="onVisit"
               @edit="emit('edit', site)"
               @delete="emit('delete', site.id)"
-              @toggle-favorite="onFavoriteToggle"
+              @favorite-toggle="onFavoriteToggle"
             />
           </div>
           <EmptyState
@@ -84,7 +84,7 @@
               @visit="onVisit"
               @edit="emit('edit', site)"
               @delete="emit('delete', site.id)"
-              @toggle-favorite="onFavoriteToggle"
+              @favorite-toggle="onFavoriteToggle"
             />
           </div>
 
