@@ -4,10 +4,7 @@ import { useSettingsStore } from '@/stores/settings'
 import { createBackup } from '@/api/backup'
 import { computeCanonicalHash } from '@/utils/hash'
 import { logger } from '@nav/logger'
-
-const ENV_INTERVAL = Number(import.meta.env.VITE_AUTO_BACKUP_INTERVAL) || 60 * 60 * 1000
-const MIN_INTERVAL = 5 * 60 * 1000 // Minimum 5 minutes
-const AUTO_BACKUP_INTERVAL = Math.max(ENV_INTERVAL, MIN_INTERVAL)
+import { BACKUP_CONFIG } from '@/config'
 
 export function useAutoBackup() {
   const websiteStore = useWebsiteStore()
@@ -31,10 +28,10 @@ export function useAutoBackup() {
 
     logger.debug(
       {
-        interval: AUTO_BACKUP_INTERVAL,
+        interval: BACKUP_CONFIG.INTERVAL,
         lastBackupTime,
         timeSince: timeSinceLastBackup,
-        shouldBackup: timeSinceLastBackup > AUTO_BACKUP_INTERVAL
+        shouldBackup: timeSinceLastBackup > BACKUP_CONFIG.INTERVAL
       },
       '[AutoBackup] Check'
     )
@@ -43,13 +40,13 @@ export function useAutoBackup() {
     const lockTimeStr = localStorage.getItem('autoBackupLock')
     if (lockTimeStr) {
       const lockTime = parseInt(lockTimeStr, 10)
-      if (!isNaN(lockTime) && now - lockTime < 2 * 60 * 1000) {
+      if (!isNaN(lockTime) && now - lockTime < BACKUP_CONFIG.LOCK_DURATION) {
         logger.debug('[AutoBackup] Backup in progress (locked), skipping')
         return
       }
     }
 
-    if (timeSinceLastBackup > AUTO_BACKUP_INTERVAL) {
+    if (timeSinceLastBackup > BACKUP_CONFIG.INTERVAL) {
       try {
         // Acquire Lock
         localStorage.setItem('autoBackupLock', now.toString())
@@ -100,8 +97,8 @@ export function useAutoBackup() {
     // Clear existing
     if (intervalId) clearInterval(intervalId)
 
-    // Initial check after 3 seconds (let app hydrate), then interval
-    setTimeout(checkAndRunBackup, 3000)
+    // Initial check after app hydration, then interval
+    setTimeout(checkAndRunBackup, BACKUP_CONFIG.INITIAL_DELAY)
 
     intervalId = window.setInterval(checkAndRunBackup, 60 * 1000) as unknown as number
   }
