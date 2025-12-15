@@ -165,6 +165,15 @@ importers:
       '@nav/ui':
         specifier: workspace:^
         version: link:../../packages/ui
+      '@nav/utils':
+        specifier: workspace:^
+        version: link:../../packages/utils
+      '@types/crypto-js':
+        specifier: ^4.2.2
+        version: 4.2.2
+      crypto-js:
+        specifier: ^4.2.0
+        version: 4.2.0
       pinia:
         specifier: ^3.0.4
         version: 3.0.4(typescript@5.9.3)(vue@3.5.24)
@@ -245,6 +254,9 @@ importers:
       '@nav/storage':
         specifier: workspace:^
         version: link:../storage
+      '@nav/utils':
+        specifier: workspace:^
+        version: link:../utils
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
@@ -358,6 +370,12 @@ importers:
       vue-tsc:
         specifier: ^2.2.12
         version: 2.2.12(typescript@5.9.3)
+
+  packages/utils:
+    devDependencies:
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
 
 packages:
 
@@ -3074,7 +3092,6 @@ packages:
 
   /@types/crypto-js@4.2.2:
     resolution: {integrity: sha512-sDOLlVbHhXpAUAL0YHDUUwDZf3iN4Bwi4W6a0W0b+QcAezUbRtH4FVb+9J4h+XFPW7l/gQ9F8qC7P+Ec4k8QVQ==}
-    dev: true
 
   /@types/deep-eql@4.0.2:
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
@@ -3260,7 +3277,7 @@ packages:
       vue: ^3.2.25
     dependencies:
       '@rolldown/pluginutils': 1.0.0-beta.29
-      vite: 7.2.2(@types/node@24.10.1)
+      vite: 7.2.2(@types/node@24.10.1)(sass@1.94.0)
       vue: 3.5.24(typescript@5.9.3)
     dev: true
 
@@ -6502,57 +6519,6 @@ packages:
         optional: true
     dependencies:
       '@types/node': 20.19.25
-      esbuild: 0.25.12
-      fdir: 6.5.0(picomatch@4.0.3)
-      picomatch: 4.0.3
-      postcss: 8.5.6
-      rollup: 4.53.2
-      tinyglobby: 0.2.15
-    optionalDependencies:
-      fsevents: 2.3.3
-    dev: true
-
-  /vite@7.2.2(@types/node@24.10.1):
-    resolution: {integrity: sha512-BxAKBWmIbrDgrokdGZH1IgkIk/5mMHDreLDmCJ0qpyJaAteP8NvMhkwr/ZCQNqNH97bw/dANTE9PDzqwJghfMQ==}
-    engines: {node: ^20.19.0 || >=22.12.0}
-    hasBin: true
-    peerDependencies:
-      '@types/node': ^20.19.0 || >=22.12.0
-      jiti: '>=1.21.0'
-      less: ^4.0.0
-      lightningcss: ^1.21.0
-      sass: ^1.70.0
-      sass-embedded: ^1.70.0
-      stylus: '>=0.54.8'
-      sugarss: ^5.0.0
-      terser: ^5.16.0
-      tsx: ^4.8.1
-      yaml: ^2.4.2
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-      jiti:
-        optional: true
-      less:
-        optional: true
-      lightningcss:
-        optional: true
-      sass:
-        optional: true
-      sass-embedded:
-        optional: true
-      stylus:
-        optional: true
-      sugarss:
-        optional: true
-      terser:
-        optional: true
-      tsx:
-        optional: true
-      yaml:
-        optional: true
-    dependencies:
-      '@types/node': 24.10.1
       esbuild: 0.25.12
       fdir: 6.5.0(picomatch@4.0.3)
       picomatch: 4.0.3

@@ -13,6 +13,7 @@ export interface User {
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(JSON.parse(localStorage.getItem('auth_user') || 'null'))
   const token = ref<string | null>(localStorage.getItem('auth_token'))
+  const isNewRegistration = ref(false)
 
   const isAuthenticated = computed(() => !!token.value)
 
@@ -54,6 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
     })
 
     if (res.success) {
+      isNewRegistration.value = true
       return true
     }
     throw new Error(res.message || 'Registration failed')
@@ -74,6 +76,7 @@ export const useAuthStore = defineStore('auth', () => {
   function logout() {
     user.value = null
     token.value = null
+    isNewRegistration.value = false
     localStorage.removeItem('auth_token')
     localStorage.removeItem('auth_user')
   }
@@ -81,6 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     user,
     token,
+    isNewRegistration,
     isAuthenticated,
     login,
     loginWithProvider,

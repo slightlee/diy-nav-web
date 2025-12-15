@@ -62,6 +62,16 @@
       <DataManagementModal @close="() => uiStore.closeModal('dataManagement')" />
     </BaseModal>
 
+    <BaseModal
+      v-if="uiStore.modalState.dataManagement"
+      :is-open="uiStore.modalState.dataManagement"
+      title="数据管理"
+      size="lg"
+      @close="() => uiStore.closeModal('dataManagement')"
+    >
+      <DataManagementModal @close="() => uiStore.closeModal('dataManagement')" />
+    </BaseModal>
+
     <ToastContainer />
 
     <!-- Sync Loading Indicator -->
@@ -88,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { useWebsiteStore } from '@/stores/website'
 import { useAuthStore } from '@/stores/auth'
@@ -138,13 +148,6 @@ watch(
     }
   }
 )
-
-// Sync data on app load if authenticated
-onMounted(() => {
-  if (authStore.isAuthenticated) {
-    websiteStore.checkAndRestoreCloudData()
-  }
-})
 </script>
 
 <style scoped lang="scss">
@@ -177,7 +180,6 @@ onMounted(() => {
   inset: 88px auto auto 50%; // Highly visible area below header
   transform: translateX(-50%);
   background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   padding: 10px 20px;
   border-radius: 12px;

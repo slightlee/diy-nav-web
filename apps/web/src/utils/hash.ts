@@ -1,23 +1,59 @@
 import { logger } from '@nav/logger'
-export async function computeHash(message: string): Promise<string> {
-  // Check if crypto.subtle is available (Secure Context)
-  if (crypto && crypto.subtle && crypto.subtle.digest) {
-    try {
-      const msgBuffer = new TextEncoder().encode(message)
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer)
-      const hashArray = Array.from(new Uint8Array(hashBuffer))
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-      return hashHex
-    } catch (e) {
-      logger.warn({ err: e }, '[Hash] Crypto API failed, falling back to simple hash')
-    }
-  }
+import MD5 from 'crypto-js/md5'
+import { stableStringify } from '@nav/utils'
+import HashWorker from '@/workers/hash.worker?worker'
 
-  // Fallback: Simple DJB2-like hash for insecure contexts
-  // This is not cryptographically secure but sufficient for change detection
-  let hash = 5381
-  for (let i = 0; i < message.length; i++) {
-    hash = (hash * 33) ^ message.charCodeAt(i)
+export function computeMd5(message: string): string {
+  try {
+    return MD5(message).toString()
+  } catch (e) {
+    logger.error({ err: e }, '[Hash] MD5 calculation failed')
+    return ''
   }
-  return (hash >>> 0).toString(16)
+}
+
+// Singleton worker instance
+let worker: Worker | null = null
+
+export function computeCanonicalHash(obj: unknown): Promise<string> {
+  return new Promise(resolve => {
+    try {
+      if (!worker) {
+        worker = new HashWorker()
+      }
+
+      worker.onmessage = e => {
+        if (e.data.success) {
+          resolve(e.data.hash)
+        } else {
+          logger.error({ err: e.data.error }, '[Hash] Worker calculation failed')
+          // Fallback to main thread if worker fails?
+          // For now, reject or fallback. Let's fallback to sync for robustness.
+          // Fallback logic:
+          resolve(computeSyncCanonicalHash(obj))
+        }
+      }
+
+      worker.onerror = err => {
+        logger.error({ err }, '[Hash] Worker error')
+        resolve(computeSyncCanonicalHash(obj))
+      }
+
+      worker.postMessage(obj)
+    } catch (e) {
+      logger.error({ err: e }, '[Hash] Failed to dispatch to worker')
+      resolve(computeSyncCanonicalHash(obj))
+    }
+  })
+}
+
+// Sync fallback (and for internal use if needed)
+export function computeSyncCanonicalHash(obj: unknown): string {
+  try {
+    const message = stableStringify(obj)
+    return computeMd5(message)
+  } catch (e) {
+    logger.error({ err: e }, '[Hash] Canonical Hash calculation failed')
+    return ''
+  }
 }

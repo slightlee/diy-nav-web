@@ -6,7 +6,8 @@ export interface BackupItem {
   created_at: string
   type: 'AUTO' | 'MANUAL'
   size: number
-  data: BackupData
+  file_hash: string
+  data?: BackupData
 }
 
 const BACKUP_TIMEOUT_MS = 60 * 1000

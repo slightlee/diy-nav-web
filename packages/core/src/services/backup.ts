@@ -2,6 +2,7 @@ import { D1Client } from '@nav/database'
 import { R2Client } from '@nav/storage'
 import CryptoJS from 'crypto-js'
 import { logger as defaultLogger, type Logger } from '@nav/logger'
+import { stableStringify } from '@nav/utils'
 
 export interface BackupConfig {
   d1: D1Client
@@ -65,7 +66,12 @@ export class BackupService {
     type: 'MANUAL' | 'AUTO' = 'MANUAL'
   ): Promise<BackupRecord | null> {
     const jsonContent = JSON.stringify(data)
-    const fileHash = CryptoJS.MD5(jsonContent).toString()
+
+    // Calculate hash based on CORE CONTENT only (ignoring metadata like timestamps)
+    // This allows efficient deduplication even if metadata changes
+    const coreContent = data && data.data ? data.data : data
+    const fileHash = CryptoJS.MD5(stableStringify(coreContent)).toString()
+
     const size = Buffer.byteLength(jsonContent)
     const timestamp = Date.now()
 

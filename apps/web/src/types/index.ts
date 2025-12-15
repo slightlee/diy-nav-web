@@ -56,6 +56,7 @@ export interface ModalState {
   manageTags: boolean
   settings: boolean
   dataManagement: boolean
+  syncConflict: boolean
 }
 
 export interface SearchFilters {
@@ -73,6 +74,7 @@ export interface ModalPayloads {
   manageTags?: undefined
   settings?: undefined
   dataManagement?: undefined
+  syncConflict?: { localCount: number; remoteCount: number; remoteDate: Date }
 }
 
 export const ERROR_DUPLICATE_NAME = 'DUPLICATE_NAME'

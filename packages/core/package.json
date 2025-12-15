@@ -22,6 +22,7 @@
     "@nav/database": "workspace:^",
     "@nav/logger": "workspace:^",
     "@nav/storage": "workspace:^",
+    "@nav/utils": "workspace:^",
     "bcryptjs": "^3.0.3",
     "crypto-js": "^4.2.0",
     "uuid": "^13.0.0"

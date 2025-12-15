@@ -9,6 +9,7 @@
     { "path": "./packages/core" },
     { "path": "./packages/database" },
     { "path": "./packages/storage" },
-    { "path": "./packages/auth-providers" }
+    { "path": "./packages/auth-providers" },
+    { "path": "./packages/utils" }
   ]
 }

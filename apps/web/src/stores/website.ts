@@ -14,7 +14,9 @@ import { generateId } from '@/utils/helpers'
 import { useSettingsStore } from './settings'
 import { useCategoryStore } from './category'
 import { useTagStore } from './tag'
-import { getBackups, restoreBackup } from '@/api/backup'
+import { useUIStore } from './ui'
+import { getBackups, restoreBackup, createBackup as saveBackup } from '@/api/backup'
+import { computeCanonicalHash } from '@/utils/hash'
 import { logger } from '@nav/logger'
 
 export const useWebsiteStore = defineStore('website', () => {
@@ -26,6 +28,7 @@ export const useWebsiteStore = defineStore('website', () => {
   const settingsStore = useSettingsStore()
   const categoryStore = useCategoryStore()
   const tagStore = useTagStore()
+  const uiStore = useUIStore()
 
   const initializeData = () => {
     try {
@@ -277,36 +280,160 @@ export const useWebsiteStore = defineStore('website', () => {
     importData({ websites: data })
   }
 
-  const checkAndRestoreCloudData = async () => {
-    // Check if ALL data stores are empty.
-    // Explicitly check websites, categories, AND tags.
-    // If ANY of them have data, we assume the user has local data they might want to keep (or invalid partial state),
-    // but critically, if ONLY websites has data (e.g. default) but categories are missing, we MIGHT want to sync.
-    // However, to be safe and simple: "New Browser" = Everything Empty.
+  const checkAndRestoreCloudData = async (isNewRegistration = false) => {
     const hasLocalData =
       websites.value.length > 0 || categoryStore.categories.length > 0 || tagStore.tags.length > 0
 
-    if (hasLocalData) {
-      return
+    // SCENARIO 1 & 3: Empty Local, Empty Remote (implicitly handled)
+    // SCENARIO 2: New User + Local Data -> Auto Backup (Migrate Guest Data)
+    if (isNewRegistration) {
+      if (hasLocalData) {
+        logger.info('Migrating guest data to cloud...')
+        try {
+          const payload = exportData()
+          await saveBackup(payload, 'AUTO') // Mark as AUTO for migration
+
+          // Update local storage to prevent useAutoBackup from running immediately
+          const now = Date.now()
+          localStorage.setItem('lastAutoBackupTime', now.toString())
+          const hash = await import('@/utils/hash').then(m => m.computeCanonicalHash(payload.data))
+          localStorage.setItem('lastAutoBackupHash', hash)
+        } catch (e: unknown) {
+          logger.error({ err: e }, 'Failed to migrate guest data')
+        }
+      }
+      return // Skip sync check for new users
     }
 
+    // SCENARIO 4: Old User + Local Data (Potential Conflict or Manual Sync needed)
+    // We check remote data to see if we need to show conflict modal.
+
+    // NOTE: We do NOT set isSyncing.value = true here, to keep the check silent.
+    try {
+      const res = await getBackups()
+      const backups = res.data || []
+      const hasRemoteData = backups.length > 0
+
+      if (!hasRemoteData) {
+        // Case 4: Local Data Only -> Do nothing (wait for manual backup)
+        // Case 3: Empty/Empty -> Do nothing
+        return
+      }
+
+      // Case 5: Empty Local + Has Remote -> Auto Restore
+      if (!hasLocalData && hasRemoteData) {
+        isSyncing.value = true // Show syncing pill now that we are actually restoring
+        const latestBackup = backups[0]
+        const restoreRes = await restoreBackup(latestBackup.id)
+        if (restoreRes.success && restoreRes.data) {
+          logger.info('Auto-restoring cloud data...')
+          importData(restoreRes.data)
+        }
+        return
+      }
+
+      // Case 6: Local Data + Remote Data -> CONFLICT
+      if (hasLocalData && hasRemoteData) {
+        const latest = backups[0]
+
+        // Hash Check: If content is identical, we consider it synced and skip conflict
+        // NOTE: Server now stores 'file_hash' as the hash of CORE DATA (ignoring metadata).
+        // So we can safely compare it with our local payload data hash.
+        try {
+          const localPayload = exportData()
+          const localMd5 = await computeCanonicalHash(localPayload.data)
+
+          if (latest.file_hash && localMd5 === latest.file_hash) {
+            logger.info('Local and remote data are identical (MD5 match), skipping conflict check.')
+
+            // Sync local auto-backup state to prevent redundant upload
+            const localSha = await computeCanonicalHash(localPayload.data)
+            localStorage.setItem('lastAutoBackupHash', localSha)
+
+            return
+          }
+        } catch (e) {
+          logger.warn(
+            { err: e },
+            'Failed to compute hash for conflict check, falling back to modal'
+          )
+        }
+
+        const localCount = websites.value.length
+        let remoteCount = latest.data?.websites?.length ?? 0
+
+        // If remote count is unknown (List API), fetch details to improve UX
+        if (remoteCount === 0) {
+          try {
+            logger.info('Fetching remote backup content to display sync stats...')
+            const detailRes = await restoreBackup(latest.id)
+            if (detailRes.success && detailRes.data) {
+              remoteCount = detailRes.data.data?.websites?.length ?? 0
+            }
+          } catch (e) {
+            logger.warn({ err: e }, 'Failed to fetch remote details for stats')
+          }
+        }
+
+        uiStore.openModal('syncConflict', {
+          localCount,
+          remoteCount,
+          remoteDate: new Date(latest.created_at)
+        })
+      }
+    } catch (error: unknown) {
+      logger.error({ err: error }, 'Failed to check cloud data')
+    } finally {
+      isSyncing.value = false
+    }
+  }
+
+  const confirmRestoreCloud = async () => {
     isSyncing.value = true
     try {
       const res = await getBackups()
       if (res.success && res.data && res.data.length > 0) {
-        // Get the latest backup
-        const latestBackup = res.data[0]
-        const restoreRes = await restoreBackup(latestBackup.id)
+        const latest = res.data[0]
+        const restoreRes = await restoreBackup(latest.id)
         if (restoreRes.success && restoreRes.data) {
-          logger.info('Restoring cloud data...')
+          logger.info('User confirmed cloud restore')
+          // Clear local components first? importData handles overwrites mostly.
+          // But strict overwrite might need clearing.
+          // Current logic: overwriteWebsites calls importData.
+          // Let's assume importData overwrites by ID match but new items stay?
+          // To be pure Sync (Overwrite), we should clear first?
+          // "Use Cloud Data" implies Replace. `websites.value = ...` in importData handles it?
+          // importData map: `websites.value = data.websites.map...` -> YES it replaces the array.
           importData(restoreRes.data)
+          uiStore.closeModal('syncConflict')
         }
       }
-    } catch (error) {
-      // Silent fail if sync fails, user can manually restore later
-      logger.error({ err: error }, 'Failed to sync cloud data')
+    } catch (e: unknown) {
+      logger.error({ err: e }, 'Failed to restore cloud data')
     } finally {
       isSyncing.value = false
+    }
+  }
+
+  const ignoreCloudData = () => {
+    uiStore.closeModal('syncConflict')
+    // creating a backup of current local state might be smart here to become the new "Latest"
+    // preventing the modal from showing again next time.
+    logger.info('User ignored cloud data, updating cloud with local...')
+    try {
+      const payload = exportData()
+      // We don't await this to keep UI snappy
+      saveBackup(payload, 'AUTO')
+        .then(async () => {
+          // Update local status so auto-backup doesn't run again immediately
+          const now = Date.now()
+          localStorage.setItem('lastAutoBackupTime', now.toString())
+          const hash = await computeCanonicalHash(payload.data)
+          localStorage.setItem('lastAutoBackupHash', hash)
+        })
+        .catch(err => logger.error({ err }, 'Background backup failed'))
+    } catch {
+      // ignore
     }
   }
 
@@ -330,6 +457,8 @@ export const useWebsiteStore = defineStore('website', () => {
     exportData,
     importData,
     overwriteWebsites,
-    checkAndRestoreCloudData
+    checkAndRestoreCloudData,
+    confirmRestoreCloud,
+    ignoreCloudData
   }
 })
