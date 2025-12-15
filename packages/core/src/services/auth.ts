@@ -106,13 +106,13 @@ export class AuthService {
     provider: string,
     providerUid: string,
     rawData: { email?: string; nickname?: string; avatar_url?: string }
-  ): Promise<User> {
+  ): Promise<{ user: User; isNewUser: boolean }> {
     // 1. Try to find existing link
     const identity = await this.userRepo.findIdentity(provider, providerUid)
 
     if (identity) {
       const user = await this.getUserById(identity.user_id)
-      if (user) return user
+      if (user) return { user, isNewUser: false }
     }
 
     // 2. If not found, try to find user by email (auto-link)
@@ -143,14 +143,14 @@ export class AuthService {
         profileData: rawData
       })
 
-      return newUser
+      return { user: newUser, isNewUser: true }
     }
 
     // 4. If User existed (via email match), just link identity
     // Reuse repo method for single identity creation
     await this.userRepo.createIdentity(user.id, provider, providerUid, rawData)
 
-    return user
+    return { user, isNewUser: false }
   }
 
   /**

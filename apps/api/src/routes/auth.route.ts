@@ -102,11 +102,15 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
       const userData = await provider.getUserInfo(tokenData.access_token)
 
       // 4. Find or Create User (Business Logic)
-      const user = await authService.findOrCreateByProvider(provider.name, userData.id, {
-        email: userData.email,
-        nickname: userData.name,
-        avatar_url: userData.avatar_url
-      })
+      const { user, isNewUser } = await authService.findOrCreateByProvider(
+        provider.name,
+        userData.id,
+        {
+          email: userData.email,
+          nickname: userData.name,
+          avatar_url: userData.avatar_url
+        }
+      )
 
       // 5. Update Stats & Issue Token
       await authService.updateLoginStats(user.id, req.ip)
@@ -117,7 +121,8 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
         success: true,
         data: {
           token,
-          user: toUserDto(user)
+          user: toUserDto(user),
+          isNewUser
         }
       }
     }

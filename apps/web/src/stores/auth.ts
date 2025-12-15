@@ -34,11 +34,15 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function loginWithProvider(provider: string, code: string) {
-    const res = await request.post<{ token: string; user: User }>(`/api/auth/${provider}/login`, {
-      code
-    })
+    const res = await request.post<{ token: string; user: User; isNewUser?: boolean }>(
+      `/api/auth/${provider}/login`,
+      {
+        code
+      }
+    )
 
     if (res.success && res.data) {
+      isNewRegistration.value = !!res.data.isNewUser
       token.value = res.data.token
       user.value = res.data.user
       localStorage.setItem('auth_token', res.data.token)
