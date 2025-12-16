@@ -1,5 +1,5 @@
 {
-  "name": "@nav/utils",
+  "name": "@nav/types",
   "version": "0.0.1",
   "type": "module",
   "main": "./dist/index.js",
@@ -17,11 +17,5 @@
   },
   "devDependencies": {
     "typescript": "^5.3.3"
-  },
-  "dependencies": {
-    "@nav/logger": "workspace:^",
-    "@nav/types": "workspace:^",
-    "@types/crypto-js": "^4.2.2",
-    "crypto-js": "^4.2.0"
   }
 }

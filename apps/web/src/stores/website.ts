@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed, readonly } from 'vue'
+import { ref, computed, readonly, toRaw } from 'vue'
 import type {
   Website,
   SearchFilters,
@@ -18,6 +18,7 @@ import { useUIStore } from './ui'
 import { getBackups, restoreBackup, createBackup as saveBackup } from '@/api/backup'
 import { computeCanonicalHash } from '@/utils/hash'
 import { logger } from '@nav/logger'
+import { cleanDataForHash } from '@nav/utils'
 
 export const useWebsiteStore = defineStore('website', () => {
   const websites = ref<Website[]>([])
@@ -225,6 +226,24 @@ export const useWebsiteStore = defineStore('website', () => {
     }
   }
 
+  // Optimized data for collision detection (Ignore volatile fields)
+  const getHashData = () => {
+    // We only backup if critical data changes:
+    // 1. Websites list (order, content) - excluding stats
+    // 2. Categories / Tags / Settings
+    // Use shared utility from @nav/core for consistency with server
+    const cleanWebsites = cleanDataForHash(websites.value) as Website[]
+
+    // Use toRaw to unwrap proxies for Worker compatibility (avoids DataCloneError)
+    // Faster and more consistent than reading from localStorage
+    return {
+      websites: cleanWebsites,
+      categories: toRaw(categoryStore.categories),
+      tags: toRaw(tagStore.tags),
+      settings: toRaw(settingsStore.settings)
+    }
+  }
+
   const importData = (payload: Partial<BackupPayload> | { websites?: Partial<Website>[] }) => {
     // Handle legacy format (direct object with websites) or new format (BackupPayload)
     let data: Partial<BackupData>
@@ -328,6 +347,12 @@ export const useWebsiteStore = defineStore('website', () => {
         if (restoreRes.success && restoreRes.data) {
           logger.info('Auto-restoring cloud data...')
           importData(restoreRes.data)
+
+          // Sync local state to prevent immediate re-backup
+          const now = Date.now()
+          const newHash = await computeCanonicalHash(getHashData())
+          localStorage.setItem('lastAutoBackupHash', newHash)
+          localStorage.setItem('lastAutoBackupTime', now.toString())
         }
         return
       }
@@ -340,15 +365,15 @@ export const useWebsiteStore = defineStore('website', () => {
         // NOTE: Server now stores 'file_hash' as the hash of CORE DATA (ignoring metadata).
         // So we can safely compare it with our local payload data hash.
         try {
-          const localPayload = exportData()
-          const localMd5 = await computeCanonicalHash(localPayload.data)
+          const localHashData = getHashData()
+          const localMd5 = await computeCanonicalHash(localHashData)
 
           if (latest.file_hash && localMd5 === latest.file_hash) {
             logger.info('Local and remote data are identical (MD5 match), skipping conflict check.')
 
             // Sync local auto-backup state to prevent redundant upload
-            const localSha = await computeCanonicalHash(localPayload.data)
-            localStorage.setItem('lastAutoBackupHash', localSha)
+            // We must save the CLEAN hash, because useAutoBackup uses clean hash for comparison.
+            localStorage.setItem('lastAutoBackupHash', localMd5)
 
             return
           }
@@ -405,6 +430,13 @@ export const useWebsiteStore = defineStore('website', () => {
           // "Use Cloud Data" implies Replace. `websites.value = ...` in importData handles it?
           // importData map: `websites.value = data.websites.map...` -> YES it replaces the array.
           importData(restoreRes.data)
+
+          // Sync local state to prevent immediate re-backup
+          const now = Date.now()
+          const newHash = await computeCanonicalHash(getHashData())
+          localStorage.setItem('lastAutoBackupHash', newHash)
+          localStorage.setItem('lastAutoBackupTime', now.toString())
+
           uiStore.closeModal('syncConflict')
         }
       }
@@ -455,6 +487,7 @@ export const useWebsiteStore = defineStore('website', () => {
     moveWebsiteBefore,
     moveFavoriteBefore,
     exportData,
+    getHashData,
     importData,
     overwriteWebsites,
     checkAndRestoreCloudData,

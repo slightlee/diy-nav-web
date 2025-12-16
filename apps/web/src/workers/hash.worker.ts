@@ -1,5 +1,5 @@
-import { stableStringify } from '@nav/utils'
 import MD5 from 'crypto-js/md5'
+import { stableStringify } from '@nav/utils'
 
 self.onmessage = (e: MessageEvent) => {
   try {

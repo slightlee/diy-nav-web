@@ -4,7 +4,7 @@ import { User } from '@nav/core'
 export function generateAccessToken(app: FastifyInstance, user: User) {
   return app.jwt.sign({
     sub: user.id,
-    email: user.email,
+    email: user.email || '', // Handle null email for OAuth users
     role: user.role
   })
 }

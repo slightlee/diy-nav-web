@@ -1,8 +1,7 @@
 import { D1Client } from '@nav/database'
 import { R2Client } from '@nav/storage'
-import CryptoJS from 'crypto-js'
 import { logger as defaultLogger, type Logger } from '@nav/logger'
-import { stableStringify } from '@nav/utils'
+import { cleanDataForHash, computeHash } from '@nav/utils'
 
 export interface BackupConfig {
   d1: D1Client
@@ -67,10 +66,10 @@ export class BackupService {
   ): Promise<BackupRecord | null> {
     const jsonContent = JSON.stringify(data)
 
-    // Calculate hash based on CORE CONTENT only (ignoring metadata like timestamps)
-    // This allows efficient deduplication even if metadata changes
-    const coreContent = data && data.data ? data.data : data
-    const fileHash = CryptoJS.MD5(stableStringify(coreContent)).toString()
+    // Calculate semantic hash (ignoring volatile stats)
+    // Calculate semantic hash (ignoring volatile stats)
+    const coreContent = cleanDataForHash(data?.data || data)
+    const fileHash = computeHash(coreContent)
 
     const size = Buffer.byteLength(jsonContent)
     const timestamp = Date.now()

@@ -128,6 +128,8 @@ export class D1Client {
       if (!response.success) {
         throw new Error(`D1 Batch Error: ${response.errors?.[0]?.message || 'Unknown error'}`)
       }
+
+      return response
     } catch (error: unknown) {
       const errorDetail = this.extractErrorDetail(error)
       logger.error({ error: errorDetail }, 'D1 Batch Execution Failed')

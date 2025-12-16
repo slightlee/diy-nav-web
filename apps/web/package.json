@@ -14,6 +14,7 @@
     "@nav/logger": "workspace:^",
     "@nav/ui": "workspace:^",
     "@nav/utils": "workspace:^",
+    "@nav/types": "workspace:^",
     "@types/crypto-js": "^4.2.2",
     "crypto-js": "^4.2.0",
     "pinia": "^3.0.4",

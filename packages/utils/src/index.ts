@@ -2,10 +2,18 @@
  * Deterministic JSON Stringify
  * Sorts object keys recursively to ensure consistent hash generation
  */
+export * from './backup.js'
+export * from './helpers.js'
+export * from './hash.js'
 export const stableStringify = (obj: unknown): string => {
   // Handle primitives
   if (obj === null || typeof obj !== 'object') {
     return JSON.stringify(obj)
+  }
+
+  // Handle toJSON (e.g. Date)
+  if (typeof (obj as { toJSON?: () => unknown }).toJSON === 'function') {
+    return stableStringify((obj as { toJSON: () => unknown }).toJSON())
   }
 
   // Handle Arrays (preserve order)
