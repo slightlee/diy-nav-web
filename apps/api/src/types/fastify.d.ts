@@ -14,9 +14,12 @@ declare module '@fastify/jwt' {
       role: string
     }
     user: {
-      sub: string
+      sub: string // jwt sub is mapped to id
+      id: string
       email: string
       role: string
+      exp?: number
+      iat?: number
     }
   }
 }

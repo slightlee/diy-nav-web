@@ -1,8 +1,10 @@
 import { logger } from '@nav/logger'
+
 export interface ApiResponse<T = unknown> {
   success: boolean
   message?: string
   data?: T
+  code?: string
 }
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787'
@@ -16,74 +18,157 @@ interface RequestOptions extends RequestInit {
   keepalive?: boolean
 }
 
-async function http<T>(endpoint: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
-  const { params, timeout = TIMEOUT, retries = 0, retryDelay = 1000, ...init } = options
+type UnauthorizedHandler = () => void
+type TokenRefreshedHandler = (token: string) => void
 
-  const url = new URL(endpoint, baseURL)
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined) {
-        url.searchParams.append(key, value)
-      }
+class HttpClient {
+  private unauthorizedHandlers: UnauthorizedHandler[] = []
+  private tokenRefreshedHandlers: TokenRefreshedHandler[] = []
+  private defaultTimeout: number
+
+  constructor(
+    private baseUrl: string,
+    timeout = TIMEOUT
+  ) {
+    this.defaultTimeout = timeout
+  }
+
+  public onUnauthorized(handler: UnauthorizedHandler) {
+    this.unauthorizedHandlers.push(handler)
+  }
+
+  public onTokenRefreshed(handler: TokenRefreshedHandler) {
+    this.tokenRefreshedHandlers.push(handler)
+  }
+
+  private handleUnauthorized() {
+    this.unauthorizedHandlers.forEach(handler => handler())
+  }
+
+  private handleTokenRefreshed(token: string) {
+    this.tokenRefreshedHandlers.forEach(handler => handler(token))
+  }
+
+  private async fetchWithTimeout(
+    url: string,
+    options: RequestInit & { timeout?: number }
+  ): Promise<Response> {
+    const { timeout = this.defaultTimeout, ...init } = options
+
+    // Use AbortSignal.timeout if available (recent browsers/Node), otherwise fallback
+    const signal = AbortSignal.timeout(timeout)
+
+    return fetch(url, {
+      ...init,
+      signal
     })
   }
 
-  let attempt = 0
-  while (attempt <= retries) {
-    try {
-      const token = localStorage.getItem('auth_token')
-      const headers: HeadersInit = {
-        ...(init.body ? { 'Content-Type': 'application/json' } : {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...init.headers
-      }
-
-      const res = await fetch(url.toString(), {
-        ...init,
-        headers,
-        signal: AbortSignal.timeout(timeout),
-        keepalive: init.keepalive
-      })
-
-      const data = await res.json()
-      return data as ApiResponse<T>
-    } catch (e) {
-      attempt++
-      const isLastAttempt = attempt > retries
-      if (isLastAttempt) {
-        logger.error({ err: e }, `[HTTP] Request failed: ${endpoint}`)
-        return {
-          success: false,
-          message: e instanceof Error ? e.message : 'Network error'
-        }
-      }
-
-      // Wait before retrying (exponential backoff)
-      const delay = retryDelay * Math.pow(2, attempt - 1)
-      logger.warn(`[HTTP] Request failed, retrying in ${delay}ms... (${attempt}/${retries})`)
-      await new Promise(resolve => setTimeout(resolve, delay))
+  private getHeaders(options: RequestOptions): HeadersInit {
+    const token = localStorage.getItem('auth_token')
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers
     }
   }
 
-  return { success: false, message: 'Max retries exceeded' }
-}
+  private buildUrl(endpoint: string, params?: Record<string, string | undefined>): string {
+    const url = new URL(endpoint, this.baseUrl)
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          url.searchParams.append(key, value)
+        }
+      })
+    }
+    return url.toString()
+  }
 
-export const request = {
-  get: <T>(
+  async http<T>(endpoint: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
+    const { params, retries = 0, retryDelay = 1000, ...init } = options
+    const url = this.buildUrl(endpoint, params)
+
+    let attempt = 0
+    while (attempt <= retries) {
+      try {
+        const headers = this.getHeaders(options)
+        const response = await this.fetchWithTimeout(url, { ...init, headers })
+
+        // Constants
+        const TOKEN_HEADER_NAME = 'x-nav-token'
+
+        // ...
+        // Auto-renew token from header
+        const newToken = response.headers.get(TOKEN_HEADER_NAME)
+        if (newToken) {
+          localStorage.setItem('auth_token', newToken)
+          this.handleTokenRefreshed(newToken)
+        }
+
+        if (response.status === 401) {
+          this.handleUnauthorized()
+          return {
+            success: false,
+            message: 'Unauthorized',
+            code: 'UNAUTHORIZED'
+          }
+        }
+
+        const data = await response.json()
+
+        // Enhance: If success is explicitly false in data, we can log it here?
+        // But for now, just return data as is, trusting server structure.
+        return data as ApiResponse<T>
+      } catch (e: unknown) {
+        attempt++
+        const isLastAttempt = attempt > retries
+
+        if (isLastAttempt) {
+          logger.error({ err: e }, `[HTTP] Request failed: ${endpoint}`)
+          return {
+            success: false,
+            message: e instanceof Error ? e.message : 'Network error'
+          }
+        }
+
+        // Exponential backoff
+        const delay = retryDelay * Math.pow(2, attempt - 1)
+        logger.warn(`[HTTP] Request failed, retrying in ${delay}ms... (${attempt}/${retries})`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    }
+
+    return { success: false, message: 'Max retries exceeded' }
+  }
+
+  get<T>(
     endpoint: string,
     params?: Record<string, string | undefined>,
     options?: Omit<RequestOptions, 'method' | 'params'>
-  ) => http<T>(endpoint, { method: 'GET', params, ...options }),
-  post: <T, B = unknown>(
+  ) {
+    return this.http<T>(endpoint, { method: 'GET', params, ...options })
+  }
+
+  post<T, B = unknown>(
     endpoint: string,
     body?: B,
     options?: Omit<RequestOptions, 'method' | 'body'>
-  ) => http<T>(endpoint, { method: 'POST', body: JSON.stringify(body), ...options }),
-  put: <T, B = unknown>(
+  ) {
+    return this.http<T>(endpoint, { method: 'POST', body: JSON.stringify(body), ...options })
+  }
+
+  put<T, B = unknown>(
     endpoint: string,
     body?: B,
     options?: Omit<RequestOptions, 'method' | 'body'>
-  ) => http<T>(endpoint, { method: 'PUT', body: JSON.stringify(body), ...options }),
-  delete: <T>(endpoint: string, options?: Omit<RequestOptions, 'method'>) =>
-    http<T>(endpoint, { method: 'DELETE', ...options })
+  ) {
+    return this.http<T>(endpoint, { method: 'PUT', body: JSON.stringify(body), ...options })
+  }
+
+  delete<T>(endpoint: string, options?: Omit<RequestOptions, 'method'>) {
+    return this.http<T>(endpoint, { method: 'DELETE', ...options })
+  }
 }
+
+export const request = new HttpClient(baseURL)

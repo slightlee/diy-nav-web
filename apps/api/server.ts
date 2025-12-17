@@ -12,6 +12,7 @@ import backupRoutes from './src/routes/backup.js'
 import authRoutes from './src/routes/auth.route.js'
 import { authProviderPlugin, LinuxDoProvider } from '@nav/auth-providers'
 import { httpClient } from './src/lib/http.js'
+import authRenewalPlugin from './src/plugins/auth-renewal.js'
 import jwt from '@fastify/jwt'
 import rateLimit from '@fastify/rate-limit'
 import helmet from '@fastify/helmet'
@@ -80,7 +81,10 @@ await app.register(rateLimit, {
 })
 
 await app.register(jwt, {
-  secret: config.auth.jwtSecret
+  secret: config.auth.jwtSecret,
+  sign: {
+    expiresIn: '7d'
+  }
 })
 
 app.decorate('authenticate', async function (req, reply) {
@@ -121,6 +125,8 @@ if (linuxDo.clientId && linuxDo.clientSecret && linuxDo.redirectUri) {
 }
 
 await app.register(authRoutes, { prefix: '/api' })
+
+await app.register(authRenewalPlugin)
 
 // Start server
 const start = async () => {
