@@ -8,7 +8,8 @@ export interface ApiResponse<T = unknown> {
 }
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787'
-const TIMEOUT = 10000
+// Use 30s timeout to accommodate slow external OAuth API calls
+const TIMEOUT = 30000
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | undefined>
