@@ -74,7 +74,12 @@ class HttpClient {
   }
 
   private buildUrl(endpoint: string, params?: Record<string, string | undefined>): string {
-    const url = new URL(endpoint, this.baseUrl)
+    // Support relative base URL (e.g., /api) by resolving it against the current origin
+    const base = this.baseUrl.startsWith('http')
+      ? this.baseUrl
+      : `${window.location.origin}${this.baseUrl.startsWith('/') ? '' : '/'}${this.baseUrl}`
+
+    const url = new URL(endpoint, base)
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined) {

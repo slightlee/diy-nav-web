@@ -28,8 +28,9 @@ export default defineConfig(({ mode }) => {
       open: false,
       host: true,
       proxy: {
-        '/api/icon': {
-          target: env.VITE_API_BASE_URL || 'http://localhost:8787',
+        '/api': {
+          // 本地开发代理目标始终指向后端服务端口
+          target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:8787',
           changeOrigin: true
         }
       }
