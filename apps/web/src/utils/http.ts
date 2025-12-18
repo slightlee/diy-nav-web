@@ -66,11 +66,20 @@ class HttpClient {
 
   private getHeaders(options: RequestOptions): HeadersInit {
     const token = localStorage.getItem('auth_token')
-    return {
-      'Content-Type': 'application/json',
+
+    // Default headers
+    const headers: Record<string, string> = {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers
+      ...(options.headers as Record<string, string>)
     }
+
+    // Only set Content-Type: application/json if there is a body
+    // Fastify throws FST_ERR_CTP_EMPTY_JSON_BODY if Content-Type is json but body is empty
+    if (options.body) {
+      headers['Content-Type'] = 'application/json'
+    }
+
+    return headers
   }
 
   private buildUrl(endpoint: string, params?: Record<string, string | undefined>): string {
