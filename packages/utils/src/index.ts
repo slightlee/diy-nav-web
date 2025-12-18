@@ -24,10 +24,13 @@ export const stableStringify = (obj: unknown): string => {
   // Handle Objects (sort keys)
   // We know obj is an object here due to previous checks
   const keys = Object.keys(obj as Record<string, unknown>).sort()
-  const parts = keys.map(key => {
+  const parts: string[] = []
+
+  for (const key of keys) {
     const value = (obj as Record<string, unknown>)[key]
-    return JSON.stringify(key) + ':' + stableStringify(value)
-  })
+    if (value === undefined) continue
+    parts.push(JSON.stringify(key) + ':' + stableStringify(value))
+  }
 
   return '{' + parts.join(',') + '}'
 }
