@@ -7,9 +7,9 @@
     "doc": "doc"
   },
   "scripts": {
-    "dev": "pnpm --filter \"./apps/*\" --parallel dev",
-    "dev:web": "pnpm -C apps/web dev",
-    "dev:api": "pnpm -C apps/api dev",
+    "dev": "turbo run dev --concurrency 20",
+    "dev:web": "turbo run dev --filter=web... --concurrency 20",
+    "dev:api": "turbo run dev --filter=api... --concurrency 20",
     "build": "turbo run build",
     "build:web": "turbo run build --filter=web",
     "build:api": "turbo run build --filter=api",

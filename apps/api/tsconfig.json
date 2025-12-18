@@ -5,14 +5,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "noEmit": false,
-    "allowImportingTsExtensions": false,
-    "paths": {
-      "@nav/core": ["../../packages/core/src/index.ts"],
-      "@nav/database": ["../../packages/database/src/index.ts"],
-      "@nav/storage": ["../../packages/storage/src/index.ts"],
-      "@nav/config": ["../../packages/config/src/index.ts"],
-      "@nav/icon-core": ["../../packages/icon-core/index.ts"]
-    }
+    "allowImportingTsExtensions": false
   },
   "include": ["./**/*.ts"]
 }

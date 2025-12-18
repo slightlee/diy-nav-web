@@ -2,61 +2,67 @@
   "name": "@nav/icon-core",
   "version": "0.0.1",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "./index.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "development": "./index.ts",
-      "types": "./index.ts",
-      "import": "./dist/index.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./iconService": {
-      "development": "./iconService.ts",
-      "types": "./iconService.ts",
-      "import": "./dist/iconService.js"
+      "types": "./dist/iconService.d.ts",
+      "import": "./dist/iconService.js",
+      "require": "./dist/iconService.cjs"
     },
     "./storage/factory": {
-      "development": "./storage/factory.ts",
-      "types": "./storage/factory.ts",
-      "import": "./dist/storage/factory.js"
+      "types": "./dist/storage/factory.d.ts",
+      "import": "./dist/storage/factory.js",
+      "require": "./dist/storage/factory.cjs"
     },
     "./storage/local": {
-      "development": "./storage/local.ts",
-      "types": "./storage/local.ts",
-      "import": "./dist/storage/local.js"
+      "types": "./dist/storage/local.d.ts",
+      "import": "./dist/storage/local.js",
+      "require": "./dist/storage/local.cjs"
     },
     "./storage/s3": {
-      "development": "./storage/s3.ts",
-      "types": "./storage/s3.ts",
-      "import": "./dist/storage/s3.js"
+      "types": "./dist/storage/s3.d.ts",
+      "import": "./dist/storage/s3.js",
+      "require": "./dist/storage/s3.cjs"
     },
     "./providers": {
-      "development": "./providers/index.ts",
-      "types": "./providers/index.ts",
-      "import": "./dist/providers/index.js"
+      "types": "./dist/providers/index.d.ts",
+      "import": "./dist/providers/index.js",
+      "require": "./dist/providers/index.cjs"
     },
     "./providers/google": {
-      "development": "./providers/google.ts",
-      "types": "./providers/google.ts",
-      "import": "./dist/providers/google.js"
+      "types": "./dist/providers/google.d.ts",
+      "import": "./dist/providers/google.js",
+      "require": "./dist/providers/google.cjs"
     },
     "./providers/clearbit": {
-      "development": "./providers/clearbit.ts",
-      "types": "./providers/clearbit.ts",
-      "import": "./dist/providers/clearbit.js"
+      "types": "./dist/providers/clearbit.d.ts",
+      "import": "./dist/providers/clearbit.js",
+      "require": "./dist/providers/clearbit.cjs"
     },
     "./providers/duckduckgo": {
-      "development": "./providers/duckduckgo.ts",
-      "types": "./providers/duckduckgo.ts",
-      "import": "./dist/providers/duckduckgo.js"
+      "types": "./dist/providers/duckduckgo.d.ts",
+      "import": "./dist/providers/duckduckgo.js",
+      "require": "./dist/providers/duckduckgo.cjs"
     }
   },
   "scripts": {
-    "build": "tsc -p ./tsconfig.json"
+    "build": "tsup",
+    "dev": "tsup --watch"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.669.0",
     "@nav/config": "workspace:^",
     "@nav/logger": "workspace:^"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "~5.7.2"
   }
 }

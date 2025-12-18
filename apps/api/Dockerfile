@@ -21,6 +21,7 @@ RUN pnpm install --frozen-lockfile
 COPY --from=prune /app/out/full/ .
 COPY --from=prune /app/tsconfig.base.json .
 COPY --from=prune /app/turbo.json .
+COPY --from=prune /app/tsup.config.ts .
 
 # Build
 RUN npx turbo run build --filter=api...
@@ -40,4 +41,4 @@ EXPOSE 8787
 
 USER node
 
-CMD ["node", "dist/apps/api/server.js"]
+CMD ["node", "dist/server.js"]

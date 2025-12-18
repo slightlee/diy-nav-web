@@ -4,27 +4,29 @@
   "type": "module",
   "main": "dist/nav-ui.umd.js",
   "module": "dist/nav-ui.es.js",
-  "types": "./src/index.ts",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist",
-    "src"
+    "src/styles"
   ],
   "exports": {
     ".": {
-      "development": "./src/index.ts",
-      "types": "./src/index.ts",
+      "types": "./dist/index.d.ts",
       "import": "./dist/nav-ui.es.js",
       "require": "./dist/nav-ui.umd.js"
     },
-    "./style.css": "./dist/style.css",
+    "./style.css": "./dist/ui.css",
     "./styles": {
-      "development": "./src/style.scss",
-      "default": "./dist/style.css"
+      "import": "./dist/ui.css",
+      "require": "./dist/ui.css",
+      "default": "./dist/ui.css"
     },
+    "./styles/variables": "./src/styles/variables.scss",
+    "./styles/mixins": "./src/styles/mixins.scss",
     "./styles/*": "./src/styles/*"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "vite build --watch",
     "build": "vite build && vue-tsc --emitDeclarationOnly --declaration --declarationDir dist"
   },
   "peerDependencies": {
@@ -34,12 +36,10 @@
     "@fortawesome/fontawesome-free": "^6.4.0"
   },
   "devDependencies": {
-    "@types/node": "^20.19.25",
-    "@vitejs/plugin-vue": "^5.2.4",
-    "sass": "^1.94.0",
-    "typescript": "^5.9.3",
-    "vite": "^5.4.21",
-    "vue": "^3.5.24",
-    "vue-tsc": "^2.2.12"
+    "sass": "^1.83.0",
+    "typescript": "~5.7.2",
+    "vite": "^6.0.3",
+    "vue": "3.5.13",
+    "vue-tsc": "^2.1.10"
   }
 }

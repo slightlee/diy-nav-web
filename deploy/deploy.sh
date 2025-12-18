@@ -22,7 +22,7 @@ cd "$(dirname "$0")/.."
 # -f deploy/docker-compose.yml: 指定配置文件路径
 # --build: 强制重新构建 (确保包含最新代码)
 # -d: 后台运行
-TAG=$TAG docker compose -f deploy/docker-compose.yml up --build -d
+TAG=$TAG docker compose --env-file .env -f deploy/docker-compose.yml up --build -d
 
 if [ $? -eq 0 ]; then
   echo "✅ Deployment successful! Version: $TAG"
