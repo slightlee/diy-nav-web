@@ -1,8 +1,7 @@
 import { D1Client } from '@nav/database'
 import { R2Client } from '@nav/storage'
 import { BackupService, AuthService, AvatarService } from '@nav/core'
-import { config } from './config.js'
-import { loadConfig } from '@nav/config'
+import { config, loadRawConfig } from '@nav/config'
 import { IconService, getStorageAdapter, getProviders } from '@nav/icon-core'
 
 // --- Backup Services ---
@@ -37,7 +36,7 @@ export const authService = new AuthService({
 })
 
 // --- Icon Services ---
-const iconConfig = loadConfig()
+const iconConfig = loadRawConfig()
 const storage = getStorageAdapter(iconConfig)
 const providers = getProviders(iconConfig)
 export const iconService = new IconService(storage, providers, iconConfig.ICON_DEFAULT_URL)

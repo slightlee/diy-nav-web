@@ -1,102 +1,53 @@
-import { z } from 'zod'
-import dotenv from 'dotenv'
-import { existsSync } from 'fs'
-import { resolve } from 'path'
-import { logger } from '@nav/logger'
+/**
+ * @nav/config - Main Entry
+ * 单一配置入口（Single Source of Truth）
+ *
+ * 使用方式:
+ * ```typescript
+ * import { config } from '@nav/config'
+ * config.server.port
+ * config.auth.jwtSecret
+ * ```
+ *
+ * 或按需导入:
+ * ```typescript
+ * import { getServerConfig, getAuthConfig } from '@nav/config'
+ * const server = getServerConfig()
+ * ```
+ */
 
-export const configSchema = z
-  .object({
-    PORT: z.coerce.number().default(8787),
-    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-    APP_NAME: z.string().default('diy-nav-web'),
+// 核心导出
+export { configSchema, type RawConfig } from './schema.js'
+export { loadRawConfig, getConfig, type Config } from './loader.js'
 
-    // Storage
-    STORAGE_PROVIDER: z.enum(['local', 'aws', 'cloudflare']).default('local'),
-    STORAGE_BUCKET: z.string().optional(),
-    STORAGE_PUBLIC_BASE_URL: z.string().optional(),
-    STORAGE_KEY_PREFIX: z.string().default(''),
+// 命名空间导出
+export * from './namespaces/index.js'
 
-    // AWS S3
-    STORAGE_S3_REGION: z.string().optional(),
-    STORAGE_S3_ENDPOINT: z.string().optional(),
-    STORAGE_S3_ACCESS_KEY_ID: z.string().optional(),
-    STORAGE_S3_SECRET_ACCESS_KEY: z.string().optional(),
+// 便捷导出：预加载的配置对象
+import { getConfig } from './loader.js'
 
-    // Cloudflare R2
-    STORAGE_R2_ACCOUNT_ID: z.string().optional(),
-    STORAGE_R2_ENDPOINT: z.string().optional(),
-    STORAGE_R2_ACCESS_KEY_ID: z.string().optional(),
-    STORAGE_R2_SECRET_ACCESS_KEY: z.string().optional(),
+/**
+ * 全局配置对象（延迟初始化）
+ * 推荐在应用启动时使用，自动加载并验证环境变量
+ */
+let _config: ReturnType<typeof getConfig> | null = null
 
-    // Icon
-    ICON_DEFAULT_URL: z.string().default('/icons/default.svg'),
-    ICON_SIZE: z.coerce.number().default(64),
-    ICON_GOOGLE_PROXY_URL: z.string().default('https://www.google.com/s2/favicons')
-  })
-  .superRefine((data, ctx) => {
-    if (data.STORAGE_PROVIDER === 'aws') {
-      if (!data.STORAGE_BUCKET)
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'STORAGE_BUCKET required for aws provider',
-          path: ['STORAGE_BUCKET']
-        })
-      if (!data.STORAGE_PUBLIC_BASE_URL)
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'STORAGE_PUBLIC_BASE_URL required for aws provider',
-          path: ['STORAGE_PUBLIC_BASE_URL']
-        })
-    }
-    if (data.STORAGE_PROVIDER === 'cloudflare') {
-      if (!data.STORAGE_BUCKET)
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'STORAGE_BUCKET required for cloudflare provider',
-          path: ['STORAGE_BUCKET']
-        })
-      if (!data.STORAGE_PUBLIC_BASE_URL)
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'STORAGE_PUBLIC_BASE_URL required for cloudflare provider',
-          path: ['STORAGE_PUBLIC_BASE_URL']
-        })
-    }
-  })
-
-export type Config = z.infer<typeof configSchema>
-
-let configCache: Config | null = null
-
-export function loadConfig(): Config {
-  if (configCache) return configCache
-
-  // Try loading .env if not already loaded
-  dotenv.config()
-
-  // Try loading from root if in a monorepo structure
-  // We check a few common locations up the tree
-  const pathsToCheck = ['../../.env', '../../../.env']
-  for (const p of pathsToCheck) {
-    const fullPath = resolve(process.cwd(), p)
-    if (existsSync(fullPath)) {
-      dotenv.config({ path: fullPath })
-      break
-    }
+export function loadConfig() {
+  if (!_config) {
+    _config = getConfig()
   }
-
-  // Use APP_PORT if PORT is not set
-  if (process.env.APP_PORT && !process.env.PORT) {
-    process.env.PORT = process.env.APP_PORT
-  }
-
-  const result = configSchema.safeParse(process.env)
-
-  if (!result.success) {
-    logger.error({ errors: result.error.format() }, 'Invalid environment variables')
-    throw new Error('Invalid environment variables')
-  }
-
-  configCache = result.data
-  return result.data
+  return _config
 }
+
+/**
+ * 便捷的全局配置对象（延迟初始化）
+ * 使用 Proxy 实现懒加载，首次访问时自动加载配置
+ */
+export const config = new Proxy({} as ReturnType<typeof getConfig>, {
+  get(_, prop) {
+    if (!_config) {
+      _config = getConfig()
+    }
+    return _config[prop as keyof typeof _config]
+  }
+})

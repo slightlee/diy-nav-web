@@ -233,9 +233,6 @@ importers:
 
   packages/config:
     dependencies:
-      '@nav/logger':
-        specifier: workspace:^
-        version: link:../logger
       dotenv:
         specifier: ^16.6.1
         version: 16.6.1

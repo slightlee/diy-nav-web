@@ -5,7 +5,7 @@
  * 类型：IconProvider 接受域名字符串，异步返回 IconFetchResult 或 null
  */
 import type { IconFetchResult } from '../types.js'
-import type { Config } from '@nav/config'
+import type { RawConfig } from '@nav/config'
 import { logger } from '@nav/logger'
 import { fetchFromDuckDuckGo } from './duckduckgo.js'
 import { fetchFromClearbit } from './clearbit.js'
@@ -31,7 +31,7 @@ export const defaultProviders: IconProvider[] = [
   fetchFromDuckDuckGo
 ]
 
-export function getProviders(config: Config): IconProvider[] {
+export function getProviders(config: RawConfig): IconProvider[] {
   return [
     domain => fetchFromGoogleS2(domain, config.ICON_SIZE),
     fetchFromIconHorse,

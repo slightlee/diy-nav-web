@@ -1,13 +1,12 @@
 import axios from 'axios'
 import axiosRetry from 'axios-retry'
-import { HttpsProxyAgent } from 'https-proxy-agent'
-import { config } from '../config.js'
+import { config } from '@nav/config'
 
 // Create a centralized Axios instance
 export const httpClient = axios.create({
   timeout: 15000,
   headers: {
-    'User-Agent': config.app?.name || 'DIY-Nav'
+    'User-Agent': config.server?.appName || 'DIY-Nav'
   }
 })
 

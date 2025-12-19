@@ -17,7 +17,6 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
-    "@nav/logger": "workspace:^",
     "dotenv": "^16.6.1",
     "zod": "^3.25.76"
   },

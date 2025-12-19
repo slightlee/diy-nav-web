@@ -1,9 +1,9 @@
 import { LocalStorageAdapter } from './local.js'
 import { S3StorageAdapter, CloudflareR2Adapter } from './s3.js'
 import type { StorageAdapter } from '../types.js'
-import type { Config } from '@nav/config'
+import type { RawConfig } from '@nav/config'
 
-export function getStorageAdapter(config: Config): StorageAdapter {
+export function getStorageAdapter(config: RawConfig): StorageAdapter {
   const provider = config.STORAGE_PROVIDER
   const keyPrefix = config.STORAGE_KEY_PREFIX.replace(/^\/+|\/+$/g, '')
 
@@ -34,6 +34,6 @@ export function getStorageAdapter(config: Config): StorageAdapter {
   })
 }
 
-export function getDefaultIconUrl(config: Config): string {
+export function getDefaultIconUrl(config: RawConfig): string {
   return config.ICON_DEFAULT_URL
 }

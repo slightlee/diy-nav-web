@@ -7,13 +7,13 @@
  * 配置：size 指定 sz 参数，默认 64
  */
 import type { IconFetchResult } from '../types.js'
-import { loadConfig } from '@nav/config'
+import { loadRawConfig } from '@nav/config'
 
 export async function fetchFromGoogleS2(
   domain: string,
   size: number = 64
 ): Promise<IconFetchResult | null> {
-  const config = loadConfig()
+  const config = loadRawConfig()
   const sz = Number.isFinite(size) && size > 0 ? size : 64
   const url = `${config.ICON_GOOGLE_PROXY_URL}?domain=${domain}&sz=${sz}`
 
