@@ -145,24 +145,40 @@ export class D1Client {
     if (value === null || value === undefined) {
       return 'NULL'
     }
+
     if (typeof value === 'number') {
+      // Reject NaN, Infinity, -Infinity to prevent injection via special values
+      if (!Number.isFinite(value)) {
+        throw new Error('Invalid number value: must be finite')
+      }
       return value.toString()
     }
+
     if (typeof value === 'boolean') {
       return value ? '1' : '0'
     }
+
     if (value instanceof Date) {
       return value.getTime().toString()
     }
+
     if (typeof value === 'string') {
+      // Detect potentially dangerous SQL patterns
+      if (/;\s*(DROP|DELETE|UPDATE|INSERT|ALTER|CREATE|TRUNCATE)/i.test(value)) {
+        throw new Error('Potentially dangerous SQL pattern detected in value')
+      }
       // Standard SQL string escaping: replace ' with ''
       return `'${value.replace(/'/g, "''")}'`
     }
-    // Fallback for objects/arrays -> JSON stringify? or Error?
-    // In our UserRepo, objects are already stringified before passing to repo helpers.
-    // If we receive an object here that isn't null/date, we might want to cast to string safely.
+
+    // Fallback for objects/arrays -> JSON stringify
     if (typeof value === 'object') {
-      return `'${JSON.stringify(value).replace(/'/g, "''")}'`
+      const jsonStr = JSON.stringify(value)
+      // Also check JSON string for dangerous patterns
+      if (/;\s*(DROP|DELETE|UPDATE|INSERT|ALTER|CREATE|TRUNCATE)/i.test(jsonStr)) {
+        throw new Error('Potentially dangerous SQL pattern detected in object value')
+      }
+      return `'${jsonStr.replace(/'/g, "''")}'`
     }
 
     return `'${String(value).replace(/'/g, "''")}'`
