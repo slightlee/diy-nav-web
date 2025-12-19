@@ -91,7 +91,12 @@ app.decorate('authenticate', async function (req, reply) {
   try {
     await req.jwtVerify()
   } catch (err) {
-    reply.send(err)
+    app.log.warn({ err, ip: req.ip }, 'JWT verification failed')
+    return reply.status(401).send({
+      success: false,
+      code: 'UNAUTHORIZED',
+      message: 'Invalid or expired token'
+    })
   }
 })
 
