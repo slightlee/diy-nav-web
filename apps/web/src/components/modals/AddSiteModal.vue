@@ -27,9 +27,21 @@
       </div>
 
       <div class="add-site-modal__form-group">
+        <div class="description-header">
+          <label class="add-site-modal__label">网站描述</label>
+          <button
+            v-if="isAIAvailable"
+            type="button"
+            class="ai-generate-btn"
+            :disabled="!formData.url || !formData.name || aiGenerating"
+            @click="handleAIGenerate"
+          >
+            <i :class="aiGenerating ? 'fas fa-spinner fa-spin' : 'fas fa-wand-magic-sparkles'" />
+            {{ aiGenerating ? '生成中...' : 'AI 生成' }}
+          </button>
+        </div>
         <BaseInput
           v-model="formData.description"
-          label="网站描述"
           type="textarea"
           placeholder="简单描述这个网站的用途..."
           :maxlength="100"
@@ -152,8 +164,10 @@ import { useWebsiteStore } from '@/stores/website'
 import { useCategoryStore } from '@/stores/category'
 import { useTagStore } from '@/stores/tag'
 import { useUIStore } from '@/stores/ui'
+import { useAuthStore } from '@/stores/auth'
 import { formatUrl, isValidUrl } from '@/utils/helpers'
 import { getIcon } from '@/api/icon'
+import { generateDescription } from '@/api/ai'
 import { BaseInput, BaseButton } from '@nav/ui'
 import type { Website } from '@/types'
 
@@ -175,6 +189,28 @@ const websiteStore = useWebsiteStore()
 const categoryStore = useCategoryStore()
 const tagStore = useTagStore()
 const uiStore = useUIStore()
+const authStore = useAuthStore()
+
+// AI state
+const aiGenerating = ref(false)
+const isAIAvailable = computed(() => authStore.isAuthenticated)
+
+// AI description generation
+const handleAIGenerate = async () => {
+  if (!formData.value.url || !formData.value.name || aiGenerating.value) return
+
+  aiGenerating.value = true
+  try {
+    const result = await generateDescription(formData.value.name, formData.value.url)
+    formData.value.description = result.description
+    uiStore.showToast('描述已生成', 'success')
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '生成失败，请稍后重试'
+    uiStore.showToast(message, 'error')
+  } finally {
+    aiGenerating.value = false
+  }
+}
 
 // 组件引用
 const nameInputRef = ref()
@@ -459,6 +495,45 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.description-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ai-generate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+
+  i {
+    font-size: 11px;
+  }
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    box-shadow: 0 4px 8px rgba(99, 102, 241, 0.4);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
 }
 
 .add-site-modal__label {

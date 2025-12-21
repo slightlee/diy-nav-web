@@ -10,6 +10,7 @@ import { configs } from '@nav/logger'
 import iconRoutes from './src/routes/icon.js'
 import backupRoutes from './src/routes/backup.js'
 import authRoutes from './src/routes/auth.route.js'
+import aiRoutes from './src/routes/ai.route.js'
 import { authProviderPlugin, LinuxDoProvider } from '@nav/auth-providers'
 import { httpClient } from './src/lib/http.js'
 import authRenewalPlugin from './src/plugins/auth-renewal.js'
@@ -130,6 +131,7 @@ if (linuxDo.clientId && linuxDo.clientSecret && linuxDo.redirectUri) {
 }
 
 await app.register(authRoutes, { prefix: '/api' })
+await app.register(aiRoutes, { prefix: '/api' })
 
 await app.register(authRenewalPlugin)
 
