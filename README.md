@@ -11,7 +11,7 @@
 >
 > _A lightweight, fast, and customizable modern personal navigation management platform._
 >
-> 🔗 **在线演示**: [https://demo-nav.fpic.top](https://demo-nav.fpic.top)（完整功能体验，未配置 API 服务故登录和云备份不可用）
+> 🔗 **在线演示**: [https://demo-nav.fpic.top](https://demo-nav.fpic.top)（暂未配置API服务故登录、云备份、AI助手功能不可用，完整功能体验可本地启动查看效果）
 
 ---
 
@@ -23,14 +23,14 @@
 
 ## ✨ 核心特性 (Features)
 
-| 特性             | 说明                                                       |
-| :--------------- | :--------------------------------------------------------- |
-| ⚡️ **极致性能** | 基于 Vite 构建，秒级启动；Fastify 后端，高并发处理能力。   |
-| 🎨 **精美 UI**   | 现代化卡片式设计，响应式布局，完美适配桌面与移动端。       |
-| 🔐 **数据安全**  | 支持 **Cloudflare R2** 自动与手动云备份，数据永不丢失。    |
-| 🔍 **智能检索**  | 支持按名称、描述、分类、标签进行毫秒级实时搜索。           |
-| 🏷 **灵活分类**  | 强大的多标签与分类系统，支持拖拽排序，管理井井有条。       |
-| ☁️ **云原生**    | 原生支持 Cloudflare D1 (SQL) 和 R2 (Object Storage) 部署。 |
+| 特性            | 说明                                                       |
+| :-------------- | :--------------------------------------------------------- |
+| 🎨 **精美 UI**  | 现代化卡片式设计，响应式布局，完美适配桌面与移动端。       |
+| 🔐 **数据安全** | 支持 **Cloudflare R2** 自动与手动云备份，数据永不丢失。    |
+| 🔍 **智能检索** | 支持按名称、描述、分类、标签进行毫秒级实时搜索。           |
+| 🏷 **灵活分类** | 强大的多标签与分类系统，支持拖拽排序。                     |
+| ☁️ **云原生**   | 原生支持 Cloudflare D1 (SQL) 和 R2 (Object Storage) 部署。 |
+| 🤖 **AI 助手**  | 智能对话管理网站，自动获取图标、生成描述、推断分类标签。   |
 
 ## 📸 预览 (Screenshots)
 
@@ -50,12 +50,21 @@
 | :------------------------------: | :-----------------------------------: | :----------------------------------------: |
 | ![Login](doc/images/backups.png) | ![Backups](doc/images/home-phone.png) | ![Backups](doc/images/all-sites-phone.png) |
 
+|          AI助手页面           |         AI助手-添加网站          |
+| :---------------------------: | :------------------------------: |
+| ![Login](doc/images/ai-1.png) | ![Register](doc/images/ai-2.png) |
+
+|       AI助手-网站添加标签       |         AI助手-备份数据         |       AI助手-查看备份数据       |
+| :-----------------------------: | :-----------------------------: | :-----------------------------: |
+| ![Login](doc/images/ai-2-1.png) | ![Backups](doc/images/ai-3.png) | ![Backups](doc/images/ai-4.png) |
+
 ## 🛠 技术栈 (Tech Stack)
 
 本项目采用现代化的全栈技术架构：
 
 - **Frontend**: [Vue 3](https://vuejs.org/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/), [Pinia](https://pinia.vuejs.org/), [SCSS](https://sass-lang.com/)
 - **Backend**: [Node.js](https://nodejs.org/), [Fastify](https://www.fastify.io/), [Zod](https://zod.dev/)
+- **AI**: OpenAI Compatible API, 多 Provider 支持 (OpenAI/Claude/Qwen/文心一言)
 - **Infrastructure**: [Cloudflare D1](https://developers.cloudflare.com/d1/), [Cloudflare R2](https://developers.cloudflare.com/r2/)
 - **Tooling**: [pnpm](https://pnpm.io/) (Monorepo), [TurboRepo](https://turbo.build/), [ESLint](https://eslint.org/), [Prettier](https://prettier.io/)
 
@@ -109,6 +118,10 @@ pnpm install
     | `STORAGE_PUBLIC_BASE_URL`      | **是** | R2 绑定的公开访问域名 (例如 `https://r2.example.com`) |
     | **认证 (Auth)**                |        |                                                       |
     | `JWT_SECRET`                   | **是** | JWT 签名密钥 (生产环境必须 32 位以上)                 |
+    | **AI 助手**                    |        |                                                       |
+    | `AI_OPENAI_API_KEY`            |   否   | OpenAI 兼容 API Key（启用 AI 助手功能）               |
+    | `AI_OPENAI_BASE_URL`           |   否   | 自定义 API 地址（如使用 Claude/通义千问等）           |
+    | `AI_OPENAI_MODEL`              |   否   | 模型名称，默认 `gpt-4o-mini`                          |
     | **第三方登录 (OAuth)**         |        |                                                       |
     | `VITE_LINUX_DO_CLIENT_ID`      |   否   | Linux Do 第三方登录 Client ID (前端可见)              |
     | `LINUX_DO_CLIENT_ID`           |   否   | Linux Do 第三方登录 Client ID (后端使用)              |
@@ -173,12 +186,19 @@ pnpm build
 - [x] Cloudflare R2 云端备份
 - [x] 多用户系统（注册/登录）
 - [x] 第三方登录（Linuxdo）
+- [x] Docker 容器化部署
+- [x] **AI 智能助手**
+  - 自然语言管理网站、分类、标签、数据备份
+  - 智能添加网站（自动获取图标、生成描述、推断分类以及标签）
+  - 支持 OpenAI 兼容 API
 
 ### 🚧 规划中
 
-- [ ] 更多 OAuth 提供商（GitHub / Google）
+- [ ] 自定义AI服务商（支持多 Provider 配置持久化）
+- [ ] 更多 OAuth 提供商登录（GitHub / Google）
 - [ ] 快捷键支持
 - [ ] 首页小组件（可拖拽自定义布局）
+- [ ] 网站健康检测（自动检查链接有效性）
 
 ## 🤝 贡献指南 (Contributing)
 
