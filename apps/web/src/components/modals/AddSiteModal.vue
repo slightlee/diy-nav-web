@@ -514,18 +514,18 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: #fff;
   border: none;
-  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 
   i {
     font-size: 11px;
   }
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    box-shadow: 0 4px 8px rgba(99, 102, 241, 0.4);
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
     transform: translateY(-1px);
   }
 
