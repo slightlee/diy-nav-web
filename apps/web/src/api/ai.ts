@@ -114,3 +114,25 @@ export async function getAIUsage(): Promise<AIUsageStats> {
   }
   throw new Error(res.message || 'Failed to get AI usage')
 }
+
+// Chat types
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system'
+  content: string
+}
+
+export interface ChatResult {
+  content: string
+  tokensUsed?: number
+}
+
+/**
+ * Send chat messages to AI
+ */
+export async function sendChatMessage(messages: ChatMessage[]): Promise<ChatResult> {
+  const res = await request.post<ChatResult>('/api/ai/chat', { messages })
+  if (res.success && res.data) {
+    return res.data
+  }
+  throw new Error(res.message || 'Failed to send chat message')
+}
