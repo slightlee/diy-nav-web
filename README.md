@@ -107,15 +107,22 @@ pnpm install
     | **基础配置**                   |        |                                                       |
     | `NODE_ENV`                     |   是   | 环境模式 (development/production)                     |
     | `APP_PORT`                     |   是   | API 服务端口，默认 `8787`                             |
-    | **数据存储 (Cloudflare)**      |        |                                                       |
-    | `DB_D1_API_TOKEN`              | **是** | Cloudflare API Token (需 D1 读写权限)                 |
-    | `DB_D1_DATABASE_ID`            | **是** | D1 数据库 ID                                          |
-    | `STORAGE_PROVIDER`             |   是   | 存储提供商，默认 `cloudflare`                         |
-    | `STORAGE_BUCKET`               | **是** | R2 存储桶名称                                         |
-    | `STORAGE_R2_ACCOUNT_ID`        | **是** | Cloudflare Account ID                                 |
+    | **Cloudflare 配置**            |        |                                                       |
+    | `STORAGE_R2_ACCOUNT_ID`        | **是** | Cloudflare Account ID (R2 和 D1 共用)                 |
+    | `STORAGE_R2_ENDPOINT`          | **是** | R2 API Endpoint                                       |
     | `STORAGE_R2_ACCESS_KEY_ID`     | **是** | R2 Access Key                                         |
     | `STORAGE_R2_SECRET_ACCESS_KEY` | **是** | R2 Secret Key                                         |
+    | `DB_D1_API_TOKEN`              | **是** | Cloudflare API Token (需 D1 读写权限)                 |
+    | `DB_D1_DATABASE_ID`            | **是** | D1 数据库 ID                                          |
+    | **存储配置**                   |        |                                                       |
+    | `PUBLIC_STORAGE_PROVIDER`      |   是   | 公开资源存储: `r2` / `local` (s3 计划支持中)          |
+    | `BACKUP_STORAGE_PROVIDER`      |   是   | 备份存储: `r2` / `webdav`                             |
+    | `STORAGE_BUCKET`               | **是** | R2/S3 存储桶名称                                      |
     | `STORAGE_PUBLIC_BASE_URL`      | **是** | R2 绑定的公开访问域名 (例如 `https://r2.example.com`) |
+    | **WebDAV 配置 (可选)**         |        | 当 `BACKUP_STORAGE_PROVIDER=webdav` 时使用            |
+    | `WEBDAV_URL`                   |   否   | WebDAV 服务地址 (如坚果云、Nextcloud)                 |
+    | `WEBDAV_USERNAME`              |   否   | WebDAV 用户名                                         |
+    | `WEBDAV_PASSWORD`              |   否   | WebDAV 密码                                           |
     | **认证 (Auth)**                |        |                                                       |
     | `JWT_SECRET`                   | **是** | JWT 签名密钥 (生产环境必须 32 位以上)                 |
     | **AI 助手**                    |        |                                                       |
@@ -184,6 +191,7 @@ pnpm build
 - [x] 深色/浅色/自动主题切换
 - [x] 数据导入/导出 (JSON)
 - [x] Cloudflare R2 云端备份
+- [x] WebDAV 备份支持（坚果云、Nextcloud 等）
 - [x] 多用户系统（注册/登录）
 - [x] 第三方登录（Linuxdo）
 - [x] Docker 容器化部署
@@ -194,6 +202,7 @@ pnpm build
 
 ### 🚧 规划中
 
+- [ ] AWS S3 存储支持
 - [ ] 自定义AI服务商（支持多 Provider 配置持久化）
 - [ ] 更多 OAuth 提供商登录（GitHub / Google）
 - [ ] 快捷键支持
