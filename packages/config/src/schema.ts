@@ -80,8 +80,7 @@ export const iconSchema = z.object({
 // Backup 配置
 // ============================================
 export const backupSchema = z.object({
-  BACKUP_MAX_RETAINED: z.coerce.number().default(5),
-  BACKUP_ROOT_DIR: z.string().default('backups')
+  BACKUP_MAX_RETAINED: z.coerce.number().default(5)
 })
 
 // ============================================

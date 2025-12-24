@@ -146,8 +146,7 @@ export function getConfig() {
       googleProxyUrl: raw.ICON_GOOGLE_PROXY_URL
     },
     backup: {
-      maxRetained: raw.BACKUP_MAX_RETAINED,
-      rootDir: raw.BACKUP_ROOT_DIR
+      maxRetained: raw.BACKUP_MAX_RETAINED
     },
     log: {
       level: raw.LOG_LEVEL,
