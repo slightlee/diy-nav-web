@@ -1,19 +1,22 @@
 import { createAvatar } from '@dicebear/avatars'
 import * as avataaars from '@dicebear/avatars-avataaars-sprites'
-import { R2Client } from '@nav/storage'
+import type { StorageClient } from '@nav/storage'
 
 export interface AvatarConfig {
-  r2: R2Client
+  storage: StorageClient
   publicUrlBase?: string // Optional custom base URL for assets (e.g. https://cdn.example.com)
+  pathPrefix?: string // Storage path prefix (default: 'avatars')
 }
 
 export class AvatarService {
-  private r2: R2Client
+  private storage: StorageClient
   private publicUrlBase?: string
+  private pathPrefix: string
 
   constructor(config: AvatarConfig) {
-    this.r2 = config.r2
+    this.storage = config.storage
     this.publicUrlBase = config.publicUrlBase
+    this.pathPrefix = config.pathPrefix ?? 'avatars'
   }
 
   /**
@@ -29,10 +32,10 @@ export class AvatarService {
       const svg = createAvatar(avataaars, { seed, size: 128 })
 
       const filename = `avatar_${seed}.svg`
-      const key = `avatars/${filename}`
+      const key = `${this.pathPrefix}/${filename}`
 
       // Upload directly from memory (no local FS write needed)
-      await this.r2.upload(key, svg, 'image/svg+xml')
+      await this.storage.upload(key, svg, 'image/svg+xml')
 
       // Construct public URL
       if (this.publicUrlBase) {

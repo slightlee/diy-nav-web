@@ -4,15 +4,17 @@
  * 目标：优先命中存储，未命中则聚合第三方提供者抓取并写入存储
  * 返回：公共 URL、是否命中、性能指标（抓取/写入耗时）
  */
-import { LocalStorageAdapter } from './storage/local.js'
-import type { StorageAdapter, IconSource } from './types.js'
+import type { StorageClient } from '@nav/storage'
+import { LocalClient } from '@nav/storage'
+import type { IconSource } from './types.js'
 import { fetchIconByProviders, type IconProvider, defaultProviders } from './providers/index.js'
 
 export class IconService {
   constructor(
-    private storage: StorageAdapter = new LocalStorageAdapter(),
+    private storage: StorageClient = new LocalClient(),
     private providers: IconProvider[] = defaultProviders,
-    private defaultIconUrl: string = '/icons/default.svg'
+    private defaultIconUrl: string = '/icons/default.svg',
+    private pathPrefix: string = 'icons'
   ) {}
 
   async getIconUrl(
@@ -30,7 +32,7 @@ export class IconService {
     if (!forceRefresh) {
       const candidateExts = ['ico', 'png', 'jpg', 'jpeg', 'svg']
       for (const ext of candidateExts) {
-        const key = `${normalized}.${ext}`
+        const key = `${this.pathPrefix}/${normalized}.${ext}`
         const url = await this.storage.exists(key)
         if (url) return { url, hit: true, source: 'storage' }
       }
@@ -43,7 +45,7 @@ export class IconService {
 
     if (fetched) {
       // 3) 成功获取后：以实际类型生成 key，写入存储并记录写入耗时
-      const key = `${normalized}.${fetched.extension}`
+      const key = `${this.pathPrefix}/${normalized}.${fetched.extension}`
       const tStoreStart = performance.now()
       const url = await this.storage.store(key, fetched.data, fetched.contentType)
       const storeMs = Math.round(performance.now() - tStoreStart)

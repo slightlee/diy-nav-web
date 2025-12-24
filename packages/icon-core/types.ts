@@ -1,19 +1,6 @@
-export interface StorageAdapter {
-  exists(key: string): Promise<string | null>
-  store(key: string, data: ArrayBuffer, contentType: string): Promise<string>
-  getPublicUrl(key: string): string
-}
-
-export interface StorageConfig {
-  provider: 'local' | 'aws' | 'cloudflare'
-  bucket?: string
-  publicBaseUrl?: string
-  region?: string
-  endpoint?: string
-  accessKeyId?: string
-  secretAccessKey?: string
-  folderPath?: string
-}
+// StorageClient and related types are now exported from @nav/storage
+// Re-export for backwards compatibility
+export type { StorageClient as StorageAdapter } from '@nav/storage'
 
 export type IconSource =
   | 'google'

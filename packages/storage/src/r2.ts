@@ -2,24 +2,29 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
-  DeleteObjectCommand
+  DeleteObjectCommand,
+  HeadObjectCommand
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { Readable } from 'stream'
+import type { Readable } from 'stream'
+import type { R2Config } from './types.js'
+import { BaseStorageClient } from './base.js'
 
-export interface R2Config {
-  accountId: string
-  accessKeyId: string
-  secretAccessKey: string
-  bucketName: string
-}
+export { type R2Config } from './types.js'
 
-export class R2Client {
+/**
+ * Cloudflare R2 / S3 Compatible Storage Client
+ */
+export class R2Client extends BaseStorageClient {
   private client: S3Client
   private bucket: string
+  private publicBaseUrl: string
 
   constructor(config: R2Config) {
+    super(config.basePath)
     this.bucket = config.bucketName
+    this.publicBaseUrl = (config.publicBaseUrl || '').replace(/\/+$/, '')
+
     this.client = new S3Client({
       region: 'auto',
       endpoint: `https://${config.accountId}.r2.cloudflarestorage.com`,
@@ -40,7 +45,7 @@ export class R2Client {
   ): Promise<void> {
     const command = new PutObjectCommand({
       Bucket: this.bucket,
-      Key: key,
+      Key: this.getFullKey(key),
       Body: body,
       ContentType: contentType
     })
@@ -53,7 +58,7 @@ export class R2Client {
   async get(key: string): Promise<string> {
     const command = new GetObjectCommand({
       Bucket: this.bucket,
-      Key: key
+      Key: this.getFullKey(key)
     })
     const response = await this.client.send(command)
     return response.Body?.transformToString() || ''
@@ -65,7 +70,7 @@ export class R2Client {
   async delete(key: string): Promise<void> {
     const command = new DeleteObjectCommand({
       Bucket: this.bucket,
-      Key: key
+      Key: this.getFullKey(key)
     })
     await this.client.send(command)
   }
@@ -76,8 +81,40 @@ export class R2Client {
   async getDownloadUrl(key: string, expiresIn: number = 3600): Promise<string> {
     const command = new GetObjectCommand({
       Bucket: this.bucket,
-      Key: key
+      Key: this.getFullKey(key)
     })
     return getSignedUrl(this.client, command, { expiresIn })
+  }
+
+  /**
+   * Get the public URL for a file (synchronous)
+   */
+  getPublicUrl(key: string): string {
+    const fullKey = this.getFullKey(key)
+    return `${this.publicBaseUrl}/${fullKey}`
+  }
+
+  /**
+   * Check if a file exists and return its public URL
+   */
+  async exists(key: string): Promise<string | null> {
+    try {
+      const command = new HeadObjectCommand({
+        Bucket: this.bucket,
+        Key: this.getFullKey(key)
+      })
+      await this.client.send(command)
+      return this.getPublicUrl(key)
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Store a file and return its public URL
+   */
+  async store(key: string, data: ArrayBuffer, contentType: string): Promise<string> {
+    await this.upload(key, Buffer.from(data), contentType)
+    return this.getPublicUrl(key)
   }
 }

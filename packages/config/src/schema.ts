@@ -28,10 +28,17 @@ export const authSchema = z.object({
 // Storage 配置
 // ============================================
 export const storageSchema = z.object({
-  STORAGE_PROVIDER: z.enum(['local', 'aws', 'cloudflare']).default('local'),
+  // Storage providers
+  PUBLIC_STORAGE_PROVIDER: z.enum(['r2', 's3', 'local']).default('r2'),
+  BACKUP_STORAGE_PROVIDER: z.enum(['r2', 'webdav']).default('r2'),
+
   STORAGE_BUCKET: z.string().optional(),
   STORAGE_PUBLIC_BASE_URL: z.string().optional(),
-  STORAGE_KEY_PREFIX: z.string().default(''),
+
+  // Per-service path prefixes
+  STORAGE_ICONS_PATH: z.string().default('icons'),
+  STORAGE_AVATARS_PATH: z.string().default('avatars'),
+  STORAGE_BACKUPS_PATH: z.string().default('data-backups'),
 
   // AWS S3
   STORAGE_S3_REGION: z.string().optional(),
@@ -43,7 +50,13 @@ export const storageSchema = z.object({
   STORAGE_R2_ACCOUNT_ID: z.string().optional(),
   STORAGE_R2_ENDPOINT: z.string().optional(),
   STORAGE_R2_ACCESS_KEY_ID: z.string().optional(),
-  STORAGE_R2_SECRET_ACCESS_KEY: z.string().optional()
+  STORAGE_R2_SECRET_ACCESS_KEY: z.string().optional(),
+
+  // WebDAV (for backup storage)
+  WEBDAV_URL: z.string().optional(),
+  WEBDAV_USERNAME: z.string().optional(),
+  WEBDAV_PASSWORD: z.string().optional(),
+  WEBDAV_BASE_PATH: z.string().default('/nav-backup/')
 })
 
 // ============================================
@@ -112,18 +125,18 @@ export const configSchema = z
     // ============================================
     // 云存储提供商验证
     // ============================================
-    if (data.STORAGE_PROVIDER === 'aws' || data.STORAGE_PROVIDER === 'cloudflare') {
+    if (data.PUBLIC_STORAGE_PROVIDER === 'r2' || data.PUBLIC_STORAGE_PROVIDER === 's3') {
       if (!data.STORAGE_BUCKET) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `STORAGE_BUCKET required for ${data.STORAGE_PROVIDER} provider`,
+          message: `STORAGE_BUCKET required for ${data.PUBLIC_STORAGE_PROVIDER} provider`,
           path: ['STORAGE_BUCKET']
         })
       }
       if (!data.STORAGE_PUBLIC_BASE_URL) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `STORAGE_PUBLIC_BASE_URL required for ${data.STORAGE_PROVIDER} provider`,
+          message: `STORAGE_PUBLIC_BASE_URL required for ${data.PUBLIC_STORAGE_PROVIDER} provider`,
           path: ['STORAGE_PUBLIC_BASE_URL']
         })
       }

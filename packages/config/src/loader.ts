@@ -106,10 +106,15 @@ export function getConfig() {
       }
     },
     storage: {
-      provider: raw.STORAGE_PROVIDER,
+      publicProvider: raw.PUBLIC_STORAGE_PROVIDER,
+      backupProvider: raw.BACKUP_STORAGE_PROVIDER,
       bucket: raw.STORAGE_BUCKET,
       publicBaseUrl: raw.STORAGE_PUBLIC_BASE_URL,
-      keyPrefix: raw.STORAGE_KEY_PREFIX,
+      paths: {
+        icons: raw.STORAGE_ICONS_PATH,
+        avatars: raw.STORAGE_AVATARS_PATH,
+        backups: raw.STORAGE_BACKUPS_PATH
+      },
       s3: {
         region: raw.STORAGE_S3_REGION,
         endpoint: raw.STORAGE_S3_ENDPOINT,
@@ -121,6 +126,12 @@ export function getConfig() {
         endpoint: raw.STORAGE_R2_ENDPOINT,
         accessKeyId: raw.STORAGE_R2_ACCESS_KEY_ID,
         secretAccessKey: raw.STORAGE_R2_SECRET_ACCESS_KEY
+      },
+      webdav: {
+        url: raw.WEBDAV_URL,
+        username: raw.WEBDAV_USERNAME,
+        password: raw.WEBDAV_PASSWORD,
+        basePath: raw.WEBDAV_BASE_PATH
       }
     },
     database: {

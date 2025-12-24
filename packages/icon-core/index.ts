@@ -1,11 +1,11 @@
 export { IconService } from './iconService.js'
-export { getStorageAdapter, getDefaultIconUrl } from './storage/factory.js'
 export { getProviders } from './providers/index.js'
-export type {
-  StorageAdapter,
-  IconFetchResult,
-  StorageConfig,
-  GetIconRequest,
-  GetIconResponse,
-  IconSource
-} from './types.js'
+
+// Re-export storage from @nav/storage for backwards compatibility
+export {
+  createStorageClientFromEnv as getStorageAdapter,
+  type StorageClient as StorageAdapter,
+  LocalClient as LocalStorageAdapter
+} from '@nav/storage'
+
+export type { IconFetchResult, GetIconRequest, GetIconResponse, IconSource } from './types.js'

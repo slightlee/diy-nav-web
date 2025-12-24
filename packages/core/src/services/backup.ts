@@ -1,11 +1,11 @@
 import { D1Client } from '@nav/database'
-import { R2Client } from '@nav/storage'
+import type { StorageClient } from '@nav/storage'
 import { logger as defaultLogger, type Logger } from '@nav/logger'
 import { cleanDataForHash, computeHash } from '@nav/utils'
 
 export interface BackupConfig {
   d1: D1Client
-  r2: R2Client
+  storage: StorageClient
   maxBackups?: number
   backupRootDir?: string
   logger?: Logger
@@ -24,14 +24,14 @@ export interface BackupRecord {
 
 export class BackupService {
   private d1: D1Client
-  private r2: R2Client
+  private storage: StorageClient
   private maxBackups: number
   private backupRootDir: string
   private logger: Logger
 
   constructor(config: BackupConfig) {
     this.d1 = config.d1
-    this.r2 = config.r2
+    this.storage = config.storage
     this.maxBackups = config.maxBackups || 5
     this.backupRootDir = config.backupRootDir || 'backups'
     this.logger = config.logger || defaultLogger
@@ -90,7 +90,7 @@ export class BackupService {
     // Upload to R2
     const fileName = `backup_${userId}_${timestamp}.json`
     const storageKey = `${this.backupRootDir}/${userId}/${fileName}`
-    await this.r2.upload(storageKey, jsonContent)
+    await this.storage.upload(storageKey, jsonContent)
 
     // Record in D1
     const name =
@@ -135,7 +135,7 @@ export class BackupService {
       throw new Error('Backup not found')
     }
 
-    const content = await this.r2.get(backup.storage_key)
+    const content = await this.storage.get(backup.storage_key)
     return JSON.parse(content)
   }
 
@@ -152,12 +152,12 @@ export class BackupService {
       throw new Error('Backup not found')
     }
 
-    // Delete from R2
+    // Delete from storage
     try {
-      await this.r2.delete(backup.storage_key)
+      await this.storage.delete(backup.storage_key)
     } catch (e) {
-      this.logger.error({ err: e, storageKey: backup.storage_key }, 'Failed to delete R2 file')
-      // Continue to delete from DB even if R2 fails (to keep DB clean)
+      this.logger.error({ err: e, storageKey: backup.storage_key }, 'Failed to delete storage file')
+      // Continue to delete from DB even if storage fails (to keep DB clean)
     }
 
     // Delete from D1
@@ -177,11 +177,14 @@ export class BackupService {
       const toDelete = backups.slice(this.maxBackups)
 
       for (const backup of toDelete) {
-        // Delete from R2
+        // Delete from storage
         try {
-          await this.r2.delete(backup.storage_key)
+          await this.storage.delete(backup.storage_key)
         } catch (e) {
-          this.logger.error({ err: e, storageKey: backup.storage_key }, 'Failed to delete R2 file')
+          this.logger.error(
+            { err: e, storageKey: backup.storage_key },
+            'Failed to delete storage file'
+          )
         }
 
         // Delete from D1

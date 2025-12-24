@@ -16,21 +16,6 @@
       "import": "./dist/iconService.js",
       "require": "./dist/iconService.cjs"
     },
-    "./storage/factory": {
-      "types": "./dist/storage/factory.d.ts",
-      "import": "./dist/storage/factory.js",
-      "require": "./dist/storage/factory.cjs"
-    },
-    "./storage/local": {
-      "types": "./dist/storage/local.d.ts",
-      "import": "./dist/storage/local.js",
-      "require": "./dist/storage/local.cjs"
-    },
-    "./storage/s3": {
-      "types": "./dist/storage/s3.d.ts",
-      "import": "./dist/storage/s3.js",
-      "require": "./dist/storage/s3.cjs"
-    },
     "./providers": {
       "types": "./dist/providers/index.d.ts",
       "import": "./dist/providers/index.js",
@@ -57,9 +42,9 @@
     "dev": "tsup --watch"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.669.0",
     "@nav/config": "workspace:^",
-    "@nav/logger": "workspace:^"
+    "@nav/logger": "workspace:^",
+    "@nav/storage": "workspace:^"
   },
   "devDependencies": {
     "tsup": "^8.3.5",
