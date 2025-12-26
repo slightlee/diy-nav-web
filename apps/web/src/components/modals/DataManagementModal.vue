@@ -67,14 +67,13 @@
                 <tr>
                   <th>备份时间</th>
                   <th class="text-center">类型</th>
-                  <th class="text-center">存储位置</th>
                   <th class="text-center">大小</th>
                   <th class="text-center">操作</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-if="loading">
-                  <td colspan="5">
+                  <td colspan="4">
                     <div class="table-state">
                       <i class="fas fa-spinner fa-spin" />
                       <span>加载中...</span>
@@ -82,7 +81,7 @@
                   </td>
                 </tr>
                 <tr v-else-if="backupHistory.length === 0">
-                  <td colspan="5">
+                  <td colspan="4">
                     <div class="table-state text-muted">暂无备份记录</div>
                   </td>
                 </tr>
@@ -97,7 +96,6 @@
                         {{ item.type === 'AUTO' ? '自动备份' : '手动备份' }}
                       </span>
                     </td>
-                    <td class="text-center">云端 (R2)</td>
                     <td class="text-center">{{ formatSize(item.size) }}</td>
                     <td class="text-center">
                       <div class="action-buttons">
