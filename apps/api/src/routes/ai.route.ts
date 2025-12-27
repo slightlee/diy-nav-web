@@ -432,6 +432,7 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
   - removeAllTags: 设为true时移除网站所有标签
 - 生成描述: [ACTION:generate_description:{"name":"网站名"}]
   用于完善/更新网站描述，AI会自动抓取并生成
+- 刷新图标: [ACTION:refresh_website_icon:{"name":"网站名"}]
 
 ### 分类操作
 - 添加分类: [ACTION:add_category:{"name":"分类名"}]
@@ -466,11 +467,16 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
 回复：好的，我来添加GitHub。
 [ACTION:add_website:{"name":"GitHub","url":"https://github.com"}]
 
+用户：重新获取AWS的图标
+回复：好的，我来刷新AWS的图标。
+[ACTION:refresh_website_icon:{"name":"AWS"}]
+
 ## 注意
 1. 始终使用中文回复
 2. 当用户说"完善描述/更新描述"时，使用 generate_description
 3. 当用户说"移除所有标签"时，使用 removeAllTags:true
-4. 直接执行操作，不需要询问用户`
+4. 当用户说"刷新图标/重新获取图标/重新上传图标"时，使用 refresh_website_icon
+5. 直接执行操作，不需要询问用户`
         }
 
         const allMessages = [systemMessage, ...messages]

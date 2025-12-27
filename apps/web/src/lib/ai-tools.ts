@@ -96,7 +96,21 @@ export const aiTools = [
     type: 'function' as const,
     function: {
       name: 'generate_description',
-      description: '为网站自动生成AI描述（完善/更新描述）',
+      description: '为网站生成或更新文字描述/简介',
+      parameters: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: '网站名称' }
+        },
+        required: ['name']
+      }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'refresh_website_icon',
+      description: '刷新/重新获取网站的图标',
       parameters: {
         type: 'object',
         properties: {
@@ -458,6 +472,28 @@ export async function executeToolCall(
           success: true,
           message: `找到 ${results.length} 个匹配的网站`,
           data: results.slice(0, 5).map(w => ({ name: w.name, url: w.url }))
+        }
+      }
+
+      case 'refresh_website_icon': {
+        const websiteName = args.name as string
+        const found = findWebsiteByName(websiteStore.websites, websiteName)
+        if (!found) {
+          return { success: false, message: `未找到名为 "${websiteName}" 的网站` }
+        }
+
+        try {
+          const iconRes = await getIcon({ url: found.url, refresh: true })
+          if (iconRes.success && iconRes.data?.url) {
+            websiteStore.updateWebsite(found.id, { favicon: iconRes.data.url })
+            return {
+              success: true,
+              message: `已重新获取 "${found.name}" 的图标`
+            }
+          }
+          return { success: false, message: '图标获取失败，请稍后重试' }
+        } catch (e) {
+          return { success: false, message: `获取图标出错: ${(e as Error).message}` }
         }
       }
 
