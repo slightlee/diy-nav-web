@@ -125,22 +125,18 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .ai-panel {
   position: absolute;
   bottom: 75px;
   right: 0;
   width: 400px;
   height: 520px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
+  background: var(--ai-panel-bg);
   backdrop-filter: blur(20px);
   border-radius: 20px;
-  box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.12),
-    0 8px 24px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--ai-panel-shadow);
+  border: 1px solid var(--ai-panel-border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -221,7 +217,7 @@ onMounted(() => {
   padding: 20px;
   min-height: 220px;
   max-height: 340px;
-  background: linear-gradient(180deg, rgba(249, 250, 251, 0.5) 0%, rgba(255, 255, 255, 0) 100%);
+  background: transparent;
 }
 
 .empty-state {
@@ -233,7 +229,7 @@ onMounted(() => {
   width: 64px;
   height: 64px;
   margin: 0 auto 16px;
-  background: linear-gradient(135deg, #f0f0ff 0%, #e8e4ff 100%);
+  background: var(--ai-empty-icon-bg);
   border-radius: 16px;
   display: flex;
   align-items: center;
@@ -246,13 +242,13 @@ onMounted(() => {
   margin: 0 0 8px 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--text-main);
 }
 
 .empty-state p {
   margin: 0 0 20px 0;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 
 .quick-actions {
@@ -268,16 +264,16 @@ onMounted(() => {
   gap: 6px;
   padding: 8px 14px;
   font-size: 12px;
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--ai-quick-btn-bg);
+  border: 1px solid var(--ai-quick-btn-border);
   border-radius: 20px;
-  color: #4b5563;
+  color: var(--ai-quick-btn-color);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .quick-btn:hover {
-  background: #f3f4f6;
+  background: var(--bg-tile-hover);
   border-color: #8b5cf6;
   color: #3b82f6;
   transform: translateY(-1px);
@@ -327,24 +323,24 @@ onMounted(() => {
   display: flex;
   gap: 10px;
   padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.8);
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background: var(--ai-panel-bg);
+  border-top: 1px solid var(--border-tile);
 }
 
 .input-container textarea {
   flex: 1;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--ai-input-border);
   border-radius: 12px;
   padding: 12px 16px;
   resize: none;
   font-size: 14px;
-  background: white;
-  color: #1f2937;
+  background: var(--ai-input-bg);
+  color: var(--text-main);
   transition: all 0.2s ease;
 }
 
 .input-container textarea::placeholder {
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .input-container textarea:focus {
@@ -384,16 +380,8 @@ onMounted(() => {
   transform: scale(0.98);
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .ai-panel {
-    background: rgba(30, 30, 40, 0.95);
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow:
-      0 24px 48px rgba(0, 0, 0, 0.4),
-      0 8px 24px rgba(0, 0, 0, 0.3);
-  }
-
+// Dark mode overrides using global selector
+:global([data-theme='dark']) {
   .messages-container {
     background: transparent;
   }
@@ -402,40 +390,9 @@ onMounted(() => {
     background: linear-gradient(135deg, #2d2d3a 0%, #3d3d4f 100%);
   }
 
-  .empty-state h3 {
-    color: #f3f4f6;
-  }
-
-  .empty-state p {
-    color: #9ca3af;
-  }
-
-  .quick-btn {
-    background: #2d2d3a;
-    border-color: #404050;
-    color: #d1d5db;
-  }
-
   .quick-btn:hover {
     background: #3d3d4f;
-    border-color: #8b5cf6;
     color: #a78bfa;
-  }
-
-  .input-container {
-    background: rgba(30, 30, 40, 0.8);
-    border-top-color: rgba(255, 255, 255, 0.05);
-  }
-
-  .input-container textarea {
-    background: #2d2d3a;
-    border-color: #404050;
-    color: #f3f4f6;
-  }
-
-  .input-container textarea:focus {
-    border-color: #8b5cf6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
   }
 }
 </style>

@@ -31,7 +31,7 @@ const userAvatar = computed(() => authStore.user?.avatar_url)
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .ai-message {
   display: flex;
   gap: 12px;
@@ -79,8 +79,8 @@ const userAvatar = computed(() => authStore.user?.avatar_url)
 }
 
 .ai-message.assistant .avatar {
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  color: #6b7280;
+  background: var(--ai-avatar-assistant-bg);
+  color: var(--ai-avatar-assistant-color);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
@@ -101,11 +101,11 @@ const userAvatar = computed(() => authStore.user?.avatar_url)
 }
 
 .ai-message.assistant .bubble {
-  background: white;
-  color: #1f2937;
+  background: var(--ai-bubble-assistant-bg);
+  color: var(--text-main);
   border-bottom-left-radius: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--ai-bubble-assistant-border);
 }
 
 .content {
@@ -124,17 +124,10 @@ const userAvatar = computed(() => authStore.user?.avatar_url)
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
+// Dark mode overrides using global selector
+:global([data-theme='dark']) {
   .ai-message.assistant .avatar {
     background: linear-gradient(135deg, #3d3d4f 0%, #2d2d3a 100%);
-    color: #d1d5db;
-  }
-
-  .ai-message.assistant .bubble {
-    background: #2d2d3a;
-    color: #f3f4f6;
-    border-color: rgba(255, 255, 255, 0.05);
   }
 
   .content :deep(code) {

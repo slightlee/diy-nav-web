@@ -146,6 +146,21 @@ html {
   --text-muted: #9ca3af;
   --primary-soft: #e6f0ff;
 
+  // AI Assistant specific
+  --ai-panel-bg: rgba(255, 255, 255, 0.95);
+  --ai-panel-border: rgba(255, 255, 255, 0.5);
+  --ai-panel-shadow: 0 24px 48px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.08);
+  --ai-input-bg: #fff;
+  --ai-input-border: #e5e7eb;
+  --ai-bubble-assistant-bg: #fff;
+  --ai-bubble-assistant-border: rgba(0, 0, 0, 0.04);
+  --ai-avatar-assistant-bg: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  --ai-avatar-assistant-color: #6b7280;
+  --ai-empty-icon-bg: linear-gradient(135deg, #f0f0ff 0%, #e8e4ff 100%);
+  --ai-quick-btn-bg: #fff;
+  --ai-quick-btn-border: #e5e7eb;
+  --ai-quick-btn-color: #4b5563;
+
   // Override existing neutrals to match design exactly if needed,
   // but for now we introduce specific design tokens.
   --container-max-width: #{$container-max-width};
@@ -215,6 +230,21 @@ html {
   --border-tile: #1e293b;
   --border-tile-hover: #334155;
   --bg-body: #020617;
+
+  // AI Assistant specific (dark mode)
+  --ai-panel-bg: rgba(30, 30, 40, 0.95);
+  --ai-panel-border: rgba(255, 255, 255, 0.1);
+  --ai-panel-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+  --ai-input-bg: #2d2d3a;
+  --ai-input-border: #404050;
+  --ai-bubble-assistant-bg: #2d2d3a;
+  --ai-bubble-assistant-border: rgba(255, 255, 255, 0.05);
+  --ai-avatar-assistant-bg: linear-gradient(135deg, #3d3d4f 0%, #2d2d3a 100%);
+  --ai-avatar-assistant-color: #d1d5db;
+  --ai-empty-icon-bg: linear-gradient(135deg, #2d2d3a 0%, #3d3d4f 100%);
+  --ai-quick-btn-bg: #2d2d3a;
+  --ai-quick-btn-border: #404050;
+  --ai-quick-btn-color: #d1d5db;
 }
 
 // 暗色主题类
