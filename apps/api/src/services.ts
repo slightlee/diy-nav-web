@@ -1,6 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify'
 
-import { D1Client } from '@nav/database'
+import { createDatabaseClient } from '@nav/database'
 import { createStorageClientFromEnv, type R2Config } from '@nav/storage'
 import { BackupService, AuthService, AvatarService } from '@nav/core'
 import { config, loadRawConfig } from '@nav/config'
@@ -8,10 +8,13 @@ import { IconService, getProviders } from '@nav/icon-core'
 import { initAIProviderTable } from './lib/ai-provider-store.js'
 
 // --- Database Client ---
-export const d1Client = new D1Client({
-  accountId: config.cloudflare.accountId,
-  databaseId: config.cloudflare.d1DatabaseId,
-  apiToken: config.cloudflare.apiToken
+export const databaseClient = createDatabaseClient({
+  provider: 'd1',
+  config: {
+    accountId: config.cloudflare.accountId,
+    databaseId: config.cloudflare.d1DatabaseId,
+    apiToken: config.cloudflare.apiToken
+  }
 })
 
 // --- Storage Clients ---
@@ -32,7 +35,7 @@ export const backupStorage = createStorageClientFromEnv('backup', { r2: r2Config
 
 // --- Services ---
 export const backupService = new BackupService({
-  d1: d1Client,
+  db: databaseClient,
   storage: backupStorage,
   maxBackups: config.backup.maxRetained,
   backupRootDir: config.storage.paths.backups
@@ -45,7 +48,7 @@ export const avatarService = new AvatarService({
 })
 
 export const authService = new AuthService({
-  d1: d1Client,
+  db: databaseClient,
   avatarService
 })
 
@@ -66,7 +69,7 @@ export const initServices = async (logger: FastifyBaseLogger): Promise<void> => 
   try {
     await backupService.initTable()
     await authService.initTable()
-    await initAIProviderTable(d1Client)
+    await initAIProviderTable(databaseClient)
     logger.info('Services initialized')
   } catch (err) {
     logger.error({ err }, 'Failed to init services')

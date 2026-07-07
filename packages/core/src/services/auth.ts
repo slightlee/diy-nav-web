@@ -1,4 +1,4 @@
-import { D1Client } from '@nav/database'
+import type { DatabaseClient } from '@nav/database'
 import { v4 as uuidv4 } from 'uuid'
 import bcrypt from 'bcryptjs'
 import { AvatarService } from './avatar.js'
@@ -21,14 +21,8 @@ export interface User {
   deleted_at: number | null
 }
 
-export type D1Result<T> = {
-  results: T[]
-  success: boolean
-  meta: unknown
-}
-
-export interface AuthConfig {
-  d1: D1Client
+export interface AuthServiceOptions {
+  db: DatabaseClient
   avatarService: AvatarService
   logger?: Logger
 }
@@ -38,10 +32,10 @@ export class AuthService {
   private avatarService: AvatarService
   private logger: Logger
 
-  constructor(config: AuthConfig) {
+  constructor(config: AuthServiceOptions) {
     // We instantiate repository internally or it could be injected.
     // To match existing signature, we instantiate it here.
-    this.userRepo = new UserRepository(config.d1)
+    this.userRepo = new UserRepository(config.db)
     this.avatarService = config.avatarService
     this.logger = config.logger || defaultLogger
   }
@@ -52,7 +46,7 @@ export class AuthService {
   async initTable(): Promise<void> {
     // Keeping this for backward compatibility during dev
     // In strict enterprise env, this logic belongs to migrations
-    // Delegating to Repository to avoid direct D1 access
+    // Delegating to Repository to avoid direct database access
     await this.userRepo.initTable()
   }
 

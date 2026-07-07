@@ -1,4 +1,4 @@
-import type { D1Client } from '@nav/database'
+import type { DatabaseClient } from '@nav/database'
 import type { AIProviderConfig } from '@nav/ai-core'
 
 type AIProviderRow = {
@@ -30,8 +30,8 @@ const mapRowToConfig = (row: AIProviderRow): AIProviderConfig => ({
 /**
  * Initialize AI provider table if it doesn't exist
  */
-export const initAIProviderTable = async (d1: D1Client): Promise<void> => {
-  await d1.query(`
+export const initAIProviderTable = async (db: DatabaseClient): Promise<void> => {
+  await db.execute(`
     CREATE TABLE IF NOT EXISTS ai_providers (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
@@ -45,14 +45,14 @@ export const initAIProviderTable = async (d1: D1Client): Promise<void> => {
       updated_at INTEGER NOT NULL
     );
   `)
-  await d1.query(`CREATE INDEX IF NOT EXISTS idx_ai_providers_user_id ON ai_providers(user_id);`)
+  await db.execute(`CREATE INDEX IF NOT EXISTS idx_ai_providers_user_id ON ai_providers(user_id);`)
 }
 
 export const listUserProviders = async (
-  d1: D1Client,
+  db: DatabaseClient,
   userId: string
 ): Promise<AIProviderConfig[]> => {
-  const rows = await d1.all<AIProviderRow>(
+  const rows = await db.all<AIProviderRow>(
     `SELECT * FROM ai_providers WHERE user_id = ? ORDER BY created_at DESC`,
     [userId]
   )
@@ -60,11 +60,11 @@ export const listUserProviders = async (
 }
 
 export const findUserProviderById = async (
-  d1: D1Client,
+  db: DatabaseClient,
   userId: string,
   id: string
 ): Promise<AIProviderConfig | null> => {
-  const row = await d1.first<AIProviderRow>(
+  const row = await db.first<AIProviderRow>(
     `SELECT * FROM ai_providers WHERE user_id = ? AND id = ?`,
     [userId, id]
   )
@@ -72,10 +72,10 @@ export const findUserProviderById = async (
 }
 
 export const findUserDefaultProvider = async (
-  d1: D1Client,
+  db: DatabaseClient,
   userId: string
 ): Promise<AIProviderConfig | null> => {
-  const row = await d1.first<AIProviderRow>(
+  const row = await db.first<AIProviderRow>(
     `SELECT * FROM ai_providers WHERE user_id = ? AND is_default = 1 LIMIT 1`,
     [userId]
   )
@@ -83,22 +83,25 @@ export const findUserDefaultProvider = async (
 }
 
 export const findUserFirstProvider = async (
-  d1: D1Client,
+  db: DatabaseClient,
   userId: string
 ): Promise<AIProviderConfig | null> => {
-  const row = await d1.first<AIProviderRow>(
+  const row = await db.first<AIProviderRow>(
     `SELECT * FROM ai_providers WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`,
     [userId]
   )
   return row ? mapRowToConfig(row) : null
 }
 
-export const createProvider = async (d1: D1Client, provider: AIProviderConfig): Promise<void> => {
+export const createProvider = async (
+  db: DatabaseClient,
+  provider: AIProviderConfig
+): Promise<void> => {
   if (provider.isDefault) {
-    await d1.query(`UPDATE ai_providers SET is_default = 0 WHERE user_id = ?`, [provider.userId])
+    await db.execute(`UPDATE ai_providers SET is_default = 0 WHERE user_id = ?`, [provider.userId])
   }
 
-  await d1.query(
+  await db.execute(
     `INSERT INTO ai_providers (id, user_id, name, type, api_key_encrypted, base_url, model, is_default, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
@@ -117,29 +120,29 @@ export const createProvider = async (d1: D1Client, provider: AIProviderConfig): 
 }
 
 export const deleteProvider = async (
-  d1: D1Client,
+  db: DatabaseClient,
   userId: string,
   id: string
 ): Promise<boolean> => {
-  const existing = await findUserProviderById(d1, userId, id)
+  const existing = await findUserProviderById(db, userId, id)
   if (!existing) return false
 
-  await d1.query(`DELETE FROM ai_providers WHERE user_id = ? AND id = ?`, [userId, id])
+  await db.execute(`DELETE FROM ai_providers WHERE user_id = ? AND id = ?`, [userId, id])
   return true
 }
 
 export const updateProvider = async (
-  d1: D1Client,
+  db: DatabaseClient,
   provider: AIProviderConfig
 ): Promise<boolean> => {
-  const existing = await findUserProviderById(d1, provider.userId, provider.id)
+  const existing = await findUserProviderById(db, provider.userId, provider.id)
   if (!existing) return false
 
   if (provider.isDefault) {
-    await d1.query(`UPDATE ai_providers SET is_default = 0 WHERE user_id = ?`, [provider.userId])
+    await db.execute(`UPDATE ai_providers SET is_default = 0 WHERE user_id = ?`, [provider.userId])
   }
 
-  await d1.query(
+  await db.execute(
     `UPDATE ai_providers
      SET name = ?, type = ?, api_key_encrypted = ?, base_url = ?, model = ?, is_default = ?, updated_at = ?
      WHERE user_id = ? AND id = ?`,

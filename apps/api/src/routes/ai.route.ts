@@ -20,7 +20,7 @@ import {
 } from '@nav/ai-core'
 import { config } from '@nav/config'
 import { scrapeWebPage, formatContentForAI } from '../lib/web-scraper.js'
-import { d1Client } from '../services.js'
+import { databaseClient } from '../services.js'
 import {
   listUserProviders,
   createProvider,
@@ -75,7 +75,7 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
     },
     async req => {
       const userId = req.user.sub
-      const providers = await listUserProviders(d1Client, userId)
+      const providers = await listUserProviders(databaseClient, userId)
       return { success: true, data: providers.map(toProviderDTO) }
     }
   )
@@ -92,7 +92,7 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
     async (req, reply) => {
       const userId = req.user.sub
       const { id } = req.params
-      const provider = await findUserProviderById(d1Client, userId, id)
+      const provider = await findUserProviderById(databaseClient, userId, id)
 
       if (!provider) {
         return reply.code(404).send({ success: false, message: 'Provider not found' })
@@ -140,7 +140,7 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
         updatedAt: now
       }
 
-      await createProvider(d1Client, newProvider)
+      await createProvider(databaseClient, newProvider)
 
       return {
         success: true,
@@ -164,7 +164,7 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
       const { id } = req.params
       const { name, type, apiKey, baseUrl, model, isDefault } = req.body
 
-      const existing = await findUserProviderById(d1Client, userId, id)
+      const existing = await findUserProviderById(databaseClient, userId, id)
       if (!existing) {
         return reply.code(404).send({ success: false, message: 'Provider not found' })
       }
@@ -182,7 +182,7 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
         updatedAt
       }
 
-      const ok = await updateProvider(d1Client, updatedProvider)
+      const ok = await updateProvider(databaseClient, updatedProvider)
       if (!ok) {
         return reply.code(404).send({ success: false, message: 'Provider not found' })
       }
@@ -209,7 +209,7 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
       const userId = req.user.sub
       const { id } = req.params
 
-      const removed = await deleteProvider(d1Client, userId, id)
+      const removed = await deleteProvider(databaseClient, userId, id)
       if (!removed) {
         return reply.code(404).send({ success: false, message: 'Provider not found' })
       }
@@ -263,11 +263,11 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
       let providerConfig: AIProviderConfig | null = null
 
       if (providerId) {
-        providerConfig = await findUserProviderById(d1Client, userId, providerId)
+        providerConfig = await findUserProviderById(databaseClient, userId, providerId)
       } else {
         providerConfig =
-          (await findUserDefaultProvider(d1Client, userId)) ||
-          (await findUserFirstProvider(d1Client, userId))
+          (await findUserDefaultProvider(databaseClient, userId)) ||
+          (await findUserFirstProvider(databaseClient, userId))
       }
 
       if (!providerConfig) {
@@ -401,7 +401,7 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
       const userId = req.user.sub
       const { id } = req.params
 
-      const providerConfig = await findUserProviderById(d1Client, userId, id)
+      const providerConfig = await findUserProviderById(databaseClient, userId, id)
 
       if (!providerConfig) {
         return reply.code(404).send({ success: false, message: 'Provider not found' })
@@ -462,8 +462,8 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
 
       // Get provider
       const userProvider =
-        (await findUserDefaultProvider(d1Client, userId)) ||
-        (await findUserFirstProvider(d1Client, userId))
+        (await findUserDefaultProvider(databaseClient, userId)) ||
+        (await findUserFirstProvider(databaseClient, userId))
 
       let provider: AIProvider
       let providerIdForUsage = 'system'

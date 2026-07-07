@@ -1,21 +1,21 @@
-import { D1Client } from '@nav/database'
+import type { DatabaseClient } from '@nav/database'
 import { User } from '../services/auth.js'
 
 export class UserRepository {
-  constructor(private readonly d1: D1Client) {}
+  constructor(private readonly db: DatabaseClient) {}
 
   /**
    * Find user by email
    */
   async findByEmail(email: string): Promise<User | null> {
-    return this.d1.first<User>('SELECT * FROM users WHERE email = ?', [email])
+    return this.db.first<User>('SELECT * FROM users WHERE email = ?', [email])
   }
 
   /**
    * Find user by ID
    */
   async findById(id: string): Promise<User | null> {
-    return this.d1.first<User>('SELECT * FROM users WHERE id = ?', [id])
+    return this.db.first<User>('SELECT * FROM users WHERE id = ?', [id])
   }
 
   /**
@@ -23,7 +23,7 @@ export class UserRepository {
    */
   async updateLoginStats(userId: string, ip: string): Promise<void> {
     const now = Date.now()
-    await this.d1.query('UPDATE users SET last_login_at = ?, last_login_ip = ? WHERE id = ?', [
+    await this.db.execute('UPDATE users SET last_login_at = ?, last_login_ip = ? WHERE id = ?', [
       now,
       ip,
       userId
@@ -34,7 +34,7 @@ export class UserRepository {
    * Check if identity exists
    */
   async findIdentity(provider: string, providerUid: string): Promise<{ user_id: string } | null> {
-    return this.d1.first<{ user_id: string }>(
+    return this.db.first<{ user_id: string }>(
       'SELECT user_id FROM user_identities WHERE provider = ? AND provider_uid = ?',
       [provider, providerUid]
     )
@@ -45,7 +45,7 @@ export class UserRepository {
    */
   async create(user: User): Promise<void> {
     const stmt = this.prepareCreateUserStmt(user)
-    await this.d1.query(stmt.sql, stmt.params)
+    await this.db.execute(stmt.sql, stmt.params)
   }
 
   /**
@@ -58,7 +58,7 @@ export class UserRepository {
     profileData: unknown
   ): Promise<void> {
     const stmt = this.prepareCreateIdentityStmt(userId, provider, providerUid, profileData)
-    await this.d1.query(stmt.sql, stmt.params)
+    await this.db.execute(stmt.sql, stmt.params)
   }
 
   /**
@@ -76,7 +76,7 @@ export class UserRepository {
       identity.profileData
     )
 
-    await this.d1.batch([userStmt, identityStmt])
+    await this.db.batch([userStmt, identityStmt])
   }
 
   // --- Internal Helpers ---
@@ -87,7 +87,7 @@ export class UserRepository {
    */
   async initTable(): Promise<void> {
     // Create users table
-    await this.d1.query(`
+    await this.db.execute(`
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         email TEXT UNIQUE,
@@ -105,7 +105,7 @@ export class UserRepository {
     `)
 
     // Create user_identities table
-    await this.d1.query(`
+    await this.db.execute(`
       CREATE TABLE IF NOT EXISTS user_identities (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id TEXT NOT NULL,

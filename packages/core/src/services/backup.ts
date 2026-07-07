@@ -1,10 +1,10 @@
-import { D1Client } from '@nav/database'
+import type { DatabaseClient } from '@nav/database'
 import type { StorageClient } from '@nav/storage'
 import { logger as defaultLogger, type Logger } from '@nav/logger'
 import { cleanDataForHash, computeHash } from '@nav/utils'
 
-export interface BackupConfig {
-  d1: D1Client
+export interface BackupServiceOptions {
+  db: DatabaseClient
   storage: StorageClient
   maxBackups?: number
   backupRootDir?: string
@@ -23,14 +23,14 @@ export interface BackupRecord {
 }
 
 export class BackupService {
-  private d1: D1Client
+  private db: DatabaseClient
   private storage: StorageClient
   private maxBackups: number
   private backupRootDir: string
   private logger: Logger
 
-  constructor(config: BackupConfig) {
-    this.d1 = config.d1
+  constructor(config: BackupServiceOptions) {
+    this.db = config.db
     this.storage = config.storage
     this.maxBackups = config.maxBackups || 5
     this.backupRootDir = config.backupRootDir || 'backups'
@@ -53,7 +53,7 @@ export class BackupService {
         created_at INTEGER NOT NULL
       );
     `
-    await this.d1.query(sql)
+    await this.db.execute(sql)
   }
 
   /**
@@ -76,7 +76,7 @@ export class BackupService {
 
     // For auto backups, check if content has changed since last auto backup
     if (type === 'AUTO') {
-      const lastBackup = await this.d1.first<BackupRecord>(
+      const lastBackup = await this.db.first<BackupRecord>(
         `SELECT * FROM data_backups WHERE user_id = ? AND type = 'AUTO' ORDER BY created_at DESC LIMIT 1`,
         [userId]
       )
@@ -92,13 +92,13 @@ export class BackupService {
     const storageKey = `${this.backupRootDir}/${userId}/${fileName}`
     await this.storage.upload(storageKey, jsonContent)
 
-    // Record in D1
+    // Record in database
     const name =
       type === 'AUTO'
         ? `自动备份-${new Date(timestamp).toISOString().split('T')[0]}`
         : `手动备份-${new Date(timestamp).toISOString().split('T')[0]}`
 
-    await this.d1.query(
+    await this.db.execute(
       `INSERT INTO data_backups (user_id, name, type, storage_key, file_hash, size, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [userId, name, type, storageKey, fileHash, size, timestamp]
     )
@@ -107,7 +107,7 @@ export class BackupService {
     await this.cleanupOldBackups(userId, type)
 
     // Return the new record
-    return this.d1.first<BackupRecord>(`SELECT * FROM data_backups WHERE storage_key = ?`, [
+    return this.db.first<BackupRecord>(`SELECT * FROM data_backups WHERE storage_key = ?`, [
       storageKey
     ])
   }
@@ -116,7 +116,7 @@ export class BackupService {
    * List backups for a user
    */
   async listBackups(userId: string): Promise<BackupRecord[]> {
-    return this.d1.all<BackupRecord>(
+    return this.db.all<BackupRecord>(
       `SELECT * FROM data_backups WHERE user_id = ? ORDER BY created_at DESC`,
       [userId]
     )
@@ -126,7 +126,7 @@ export class BackupService {
    * Get backup content for restoration
    */
   async getBackupContent(userId: string, backupId: number): Promise<any> {
-    const backup = await this.d1.first<BackupRecord>(
+    const backup = await this.db.first<BackupRecord>(
       `SELECT * FROM data_backups WHERE id = ? AND user_id = ?`,
       [backupId, userId]
     )
@@ -143,7 +143,7 @@ export class BackupService {
    * Delete a backup
    */
   async deleteBackup(userId: string, backupId: number): Promise<void> {
-    const backup = await this.d1.first<BackupRecord>(
+    const backup = await this.db.first<BackupRecord>(
       `SELECT * FROM data_backups WHERE id = ? AND user_id = ?`,
       [backupId, userId]
     )
@@ -160,15 +160,15 @@ export class BackupService {
       // Continue to delete from DB even if storage fails (to keep DB clean)
     }
 
-    // Delete from D1
-    await this.d1.query(`DELETE FROM data_backups WHERE id = ?`, [backupId])
+    // Delete from database
+    await this.db.execute(`DELETE FROM data_backups WHERE id = ?`, [backupId])
   }
 
   /**
    * Cleanup old backups
    */
   private async cleanupOldBackups(userId: string, type: 'MANUAL' | 'AUTO'): Promise<void> {
-    const backups = await this.d1.all<BackupRecord>(
+    const backups = await this.db.all<BackupRecord>(
       `SELECT * FROM data_backups WHERE user_id = ? AND type = ? ORDER BY created_at DESC`,
       [userId, type]
     )
@@ -187,8 +187,8 @@ export class BackupService {
           )
         }
 
-        // Delete from D1
-        await this.d1.query(`DELETE FROM data_backups WHERE id = ?`, [backup.id])
+        // Delete from database
+        await this.db.execute(`DELETE FROM data_backups WHERE id = ?`, [backup.id])
       }
     }
   }
