@@ -1,16 +1,16 @@
 import { watch, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { useWebsiteStore } from '@/stores/website'
+import { useCloudSync } from '@/composables/useCloudSync'
 
 export function useDataSync() {
   const authStore = useAuthStore()
-  const websiteStore = useWebsiteStore()
+  const cloudSync = useCloudSync()
 
   const initSync = () => {
     // Sync data on app load if authenticated
     onMounted(() => {
       if (authStore.isAuthenticated) {
-        websiteStore.checkAndRestoreCloudData(authStore.isNewRegistration)
+        cloudSync.checkOnLogin(authStore.isNewRegistration)
       }
     })
 
@@ -19,7 +19,7 @@ export function useDataSync() {
       () => authStore.isAuthenticated,
       isAuthenticated => {
         if (isAuthenticated) {
-          websiteStore.checkAndRestoreCloudData(authStore.isNewRegistration)
+          cloudSync.checkOnLogin(authStore.isNewRegistration)
         }
       }
     )

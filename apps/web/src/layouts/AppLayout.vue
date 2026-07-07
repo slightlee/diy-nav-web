@@ -101,7 +101,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useUIStore } from '@/stores/ui'
-import { useWebsiteStore } from '@/stores/website'
+import { useCloudSync } from '@/composables/useCloudSync'
 import { BaseModal } from '@nav/ui'
 import HeaderBar from '@/components/header/HeaderBar.vue'
 import AddSiteModal from '@/components/modals/AddSiteModal.vue'
@@ -113,7 +113,7 @@ import AIConfigModal from '@/components/modals/AIConfigModal.vue'
 import ToastContainer from '@/components/toast/ToastContainer.vue'
 
 const uiStore = useUIStore()
-const websiteStore = useWebsiteStore()
+const cloudSync = useCloudSync()
 
 const addSiteTitle = computed(() => {
   return uiStore.getModalData('addSite')?.website ? '编辑网站' : '添加网站'
@@ -135,20 +135,17 @@ const openAISettings = () => uiStore.openModal('aiSettings')
 type SyncState = 'hidden' | 'syncing' | 'success'
 const visibleSyncState = ref<SyncState>('hidden')
 
-watch(
-  () => websiteStore.isSyncing,
-  isSyncing => {
-    if (isSyncing) {
-      visibleSyncState.value = 'syncing'
-    } else if (visibleSyncState.value === 'syncing') {
-      // Only show success if we were previously syncing
-      visibleSyncState.value = 'success'
-      setTimeout(() => {
-        visibleSyncState.value = 'hidden'
-      }, 2000)
-    }
+watch(cloudSync.isSyncing, isSyncing => {
+  if (isSyncing) {
+    visibleSyncState.value = 'syncing'
+  } else if (visibleSyncState.value === 'syncing') {
+    // Only show success if we were previously syncing
+    visibleSyncState.value = 'success'
+    setTimeout(() => {
+      visibleSyncState.value = 'hidden'
+    }, 2000)
   }
-)
+})
 </script>
 
 <style scoped lang="scss">
