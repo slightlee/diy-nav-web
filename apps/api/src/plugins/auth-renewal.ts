@@ -1,9 +1,9 @@
 import { FastifyPluginAsync } from 'fastify'
 import fp from 'fastify-plugin'
 import { generateAccessToken } from '../lib/token.js'
+import { setAuthCookie } from '../lib/auth-cookie.js'
 
 const RENEW_THRESHOLD_SEC = 2 * 24 * 60 * 60 // 2 days
-const TOKEN_HEADER_NAME = 'X-Nav-Token'
 
 const authRenewalPlugin: FastifyPluginAsync = async app => {
   app.addHook('onSend', async (req, reply, payload) => {
@@ -26,7 +26,7 @@ const authRenewalPlugin: FastifyPluginAsync = async app => {
 
       try {
         const newToken = generateAccessToken(app, userPayload)
-        reply.header(TOKEN_HEADER_NAME, newToken)
+        setAuthCookie(reply, newToken)
         app.log.info(`[Auth] Token auto-renewed for user ${userPayload.id}`)
       } catch (err) {
         app.log.error({ err }, '[Auth] Failed to auto-renew token')

@@ -177,7 +177,7 @@ const onOpenAISettings = () => {
   showSettingsDropdown.value = false
 }
 const handleLogout = () => {
-  authStore.logout()
+  void authStore.logout()
   showSettingsDropdown.value = false
   router.push('/login')
 }

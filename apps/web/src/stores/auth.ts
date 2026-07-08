@@ -12,29 +12,40 @@ export interface User {
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(JSON.parse(localStorage.getItem('auth_user') || 'null'))
-  const token = ref<string | null>(localStorage.getItem('auth_token'))
+  const hasCheckedSession = ref(false)
   const isNewRegistration = ref(false)
 
-  const isAuthenticated = computed(() => !!token.value)
+  const isAuthenticated = computed(() => hasCheckedSession.value && !!user.value)
+
+  function setCurrentUser(currentUser: User) {
+    user.value = currentUser
+    hasCheckedSession.value = true
+    localStorage.setItem('auth_user', JSON.stringify(currentUser))
+  }
+
+  function clearLocalAuth() {
+    user.value = null
+    hasCheckedSession.value = true
+    isNewRegistration.value = false
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('auth_user')
+  }
 
   async function login(email: string, password: string) {
-    const res = await request.post<{ token: string; user: User }>('/api/auth/login', {
+    const res = await request.post<{ user: User }>('/api/auth/login', {
       email,
       password
     })
 
     if (res.success && res.data) {
-      token.value = res.data.token
-      user.value = res.data.user
-      localStorage.setItem('auth_token', res.data.token)
-      localStorage.setItem('auth_user', JSON.stringify(res.data.user))
+      setCurrentUser(res.data.user)
       return true
     }
     throw new Error(res.message || 'Login failed')
   }
 
   async function loginWithProvider(provider: string, code: string) {
-    const res = await request.post<{ token: string; user: User; isNewUser?: boolean }>(
+    const res = await request.post<{ user: User; isNewUser?: boolean }>(
       `/api/auth/${provider}/login`,
       {
         code
@@ -43,10 +54,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     if (res.success && res.data) {
       isNewRegistration.value = !!res.data.isNewUser
-      token.value = res.data.token
-      user.value = res.data.user
-      localStorage.setItem('auth_token', res.data.token)
-      localStorage.setItem('auth_user', JSON.stringify(res.data.user))
+      setCurrentUser(res.data.user)
       return true
     }
     throw new Error(res.message || 'OAuth Login failed')
@@ -66,40 +74,37 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function fetchUser() {
-    if (!token.value) return
-
-    const res = await request.get<User>('/api/auth/me')
-    if (res.success && res.data) {
-      user.value = res.data
-      localStorage.setItem('auth_user', JSON.stringify(res.data))
-    } else {
-      logout()
+    try {
+      const res = await request.get<User>('/api/auth/me', undefined, {
+        skipUnauthorizedHandler: true
+      })
+      if (res.success && res.data) {
+        setCurrentUser(res.data)
+      } else {
+        clearLocalAuth()
+      }
+    } finally {
+      hasCheckedSession.value = true
     }
   }
 
-  function logout() {
-    user.value = null
-    token.value = null
-    isNewRegistration.value = false
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('auth_user')
-  }
-
-  function setToken(newToken: string) {
-    token.value = newToken
-    localStorage.setItem('auth_token', newToken)
+  async function logout() {
+    try {
+      await request.post('/api/auth/logout')
+    } finally {
+      clearLocalAuth()
+    }
   }
 
   return {
     user,
-    token,
+    hasCheckedSession,
     isNewRegistration,
     isAuthenticated,
     login,
     loginWithProvider,
     register,
     fetchUser,
-    logout,
-    setToken
+    logout
   }
 })

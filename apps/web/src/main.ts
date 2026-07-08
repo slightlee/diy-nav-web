@@ -22,20 +22,13 @@ app.use(router)
 // Setup global http interceptors
 request.onUnauthorized(() => {
   const authStore = useAuthStore()
-  authStore.logout()
+  void authStore.logout()
   router.push('/login')
 })
 
-request.onTokenRefreshed(newToken => {
-  const authStore = useAuthStore()
-  authStore.setToken(newToken)
-})
-
-// 应用启动时验证 token 并刷新用户信息
+// 应用启动时通过 httpOnly Cookie 验证会话并刷新用户信息
 const authStore = useAuthStore()
-if (authStore.isAuthenticated) {
-  authStore.fetchUser()
-}
+void authStore.fetchUser()
 
 const settingsStore = useSettingsStore()
 const websiteStore = useWebsiteStore()

@@ -22,6 +22,8 @@ import authRenewalPlugin from './src/plugins/auth-renewal.js'
 import jwt from '@fastify/jwt'
 import rateLimit from '@fastify/rate-limit'
 import helmet from '@fastify/helmet'
+import cookie from '@fastify/cookie'
+import { AUTH_COOKIE_NAME } from './src/lib/auth-cookie.js'
 
 // Fastify app
 
@@ -47,7 +49,7 @@ app.setErrorHandler((error, request, reply) => {
   // Handle Zod Validation Errors
   // Fastify validation errors typically have a 'validation' property
   interface FastifyValidationError extends Error {
-    validation: any[] // or specific validation error shape
+    validation: unknown[] // or specific validation error shape
     statusCode?: number
   }
 
@@ -72,7 +74,8 @@ app.setErrorHandler((error, request, reply) => {
 
 // Plugins
 await app.register(cors, {
-  origin: '*',
+  origin: true,
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
   allowedHeaders: ['content-type', 'authorization']
 })
@@ -86,8 +89,14 @@ await app.register(rateLimit, {
   global: false
 })
 
+await app.register(cookie)
+
 await app.register(jwt, {
   secret: config.auth.jwtSecret,
+  cookie: {
+    cookieName: AUTH_COOKIE_NAME,
+    signed: false
+  },
   sign: {
     expiresIn: '7d'
   }

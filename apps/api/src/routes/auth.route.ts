@@ -5,6 +5,7 @@ import { registerSchema, loginSchema, providerLoginSchema } from '../schemas/aut
 import { authService } from '../services.js'
 import { generateAccessToken } from '../lib/token.js'
 import { toUserDto } from '../lib/dto.js'
+import { clearAuthCookie, setAuthCookie } from '../lib/auth-cookie.js'
 
 const authRoutes: FastifyPluginAsyncZod = async app => {
   // Register
@@ -38,7 +39,7 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
         }
       }
     },
-    async req => {
+    async (req, reply) => {
       const { email, password } = req.body
       const user = await authService.validateUser(email, password)
       if (!user) {
@@ -50,16 +51,22 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
 
       // Generate Token
       const token = generateAccessToken(app, user)
+      setAuthCookie(reply, token)
 
       return {
         success: true,
         data: {
-          token,
           user: toUserDto(user)
         }
       }
     }
   )
+
+  // Logout
+  app.post('/auth/logout', async (_req, reply) => {
+    clearAuthCookie(reply)
+    return { success: true }
+  })
 
   // Me
   app.get(
@@ -88,7 +95,7 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
     {
       schema: providerLoginSchema
     },
-    async req => {
+    async (req, reply) => {
       const { provider: providerName } = req.params
       const { code } = req.body
 
@@ -116,11 +123,11 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
       await authService.updateLoginStats(user.id, req.ip)
 
       const token = generateAccessToken(app, user)
+      setAuthCookie(reply, token)
 
       return {
         success: true,
         data: {
-          token,
           user: toUserDto(user),
           isNewUser
         }

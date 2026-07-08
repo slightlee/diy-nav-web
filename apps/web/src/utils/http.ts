@@ -17,14 +17,13 @@ interface RequestOptions extends RequestInit {
   retries?: number
   retryDelay?: number
   keepalive?: boolean
+  skipUnauthorizedHandler?: boolean
 }
 
 type UnauthorizedHandler = () => void
-type TokenRefreshedHandler = (token: string) => void
 
 class HttpClient {
   private unauthorizedHandlers: UnauthorizedHandler[] = []
-  private tokenRefreshedHandlers: TokenRefreshedHandler[] = []
   private defaultTimeout: number
 
   constructor(
@@ -38,16 +37,8 @@ class HttpClient {
     this.unauthorizedHandlers.push(handler)
   }
 
-  public onTokenRefreshed(handler: TokenRefreshedHandler) {
-    this.tokenRefreshedHandlers.push(handler)
-  }
-
   private handleUnauthorized() {
     this.unauthorizedHandlers.forEach(handler => handler())
-  }
-
-  private handleTokenRefreshed(token: string) {
-    this.tokenRefreshedHandlers.forEach(handler => handler(token))
   }
 
   private async fetchWithTimeout(
@@ -61,16 +52,13 @@ class HttpClient {
 
     return fetch(url, {
       ...init,
+      credentials: init.credentials ?? 'include',
       signal
     })
   }
 
   private getHeaders(options: RequestOptions): HeadersInit {
-    const token = localStorage.getItem('auth_token')
-
-    // Default headers
     const headers: Record<string, string> = {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers as Record<string, string>)
     }
 
@@ -101,7 +89,13 @@ class HttpClient {
   }
 
   async http<T>(endpoint: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
-    const { params, retries = 0, retryDelay = 1000, ...init } = options
+    const {
+      params,
+      retries = 0,
+      retryDelay = 1000,
+      skipUnauthorizedHandler = false,
+      ...init
+    } = options
     const url = this.buildUrl(endpoint, params)
 
     let attempt = 0
@@ -110,19 +104,10 @@ class HttpClient {
         const headers = this.getHeaders(options)
         const response = await this.fetchWithTimeout(url, { ...init, headers })
 
-        // Constants
-        const TOKEN_HEADER_NAME = 'x-nav-token'
-
-        // ...
-        // Auto-renew token from header
-        const newToken = response.headers.get(TOKEN_HEADER_NAME)
-        if (newToken) {
-          localStorage.setItem('auth_token', newToken)
-          this.handleTokenRefreshed(newToken)
-        }
-
         if (response.status === 401) {
-          this.handleUnauthorized()
+          if (!skipUnauthorizedHandler) {
+            this.handleUnauthorized()
+          }
           return {
             success: false,
             message: 'Unauthorized',
