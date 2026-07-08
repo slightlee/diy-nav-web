@@ -19,6 +19,9 @@ const AUTO_BACKUP_CONFIG = {
   CHECK_INTERVAL_MS: 60 * 1000
 } as const
 
+const AUTO_BACKUP_LOCK_NAME = 'auto-backup-lock'
+const LOCAL_STORAGE_BACKUP_LOCK_KEY = 'autoBackupLock'
+
 /**
  * Composable for automatic backup functionality
  * Monitors data changes and triggers backups based on configured intervals
@@ -52,50 +55,73 @@ export function useAutoBackup() {
     }
   }
 
-  const checkAndRunBackup = async (isEventDriven = false) => {
-    // Check if user is logged in and auto backup is enabled
-    if (!authStore.isAuthenticated || !settingsStore.settings.autoBackup) {
-      return
-    }
-
-    const lastBackupTimeStr = localStorage.getItem('lastAutoBackupTime')
-    const lastBackupTime = lastBackupTimeStr ? parseInt(lastBackupTimeStr, 10) : 0
+  async function runWithLocalStorageBackupLock(task: () => Promise<void>) {
     const now = Date.now()
-
-    // Check if lastBackupTime is valid number, if not treat as 0 (never backed up)
-    const isValidTime = !isNaN(lastBackupTime) && lastBackupTime > 0
-    const timeSinceLastBackup = isValidTime ? now - lastBackupTime : Infinity
-
-    // Use configured interval as the strict rate limit.
-    // This allows the user to control the frequency via VITE_AUTO_BACKUP_INTERVAL.
-    const effectiveInterval = BACKUP_CONFIG.INTERVAL
-
-    logger.debug(
-      {
-        interval: effectiveInterval,
-        isEventDriven,
-        lastBackupTime,
-        timeSince: timeSinceLastBackup,
-        shouldBackup: timeSinceLastBackup > effectiveInterval
-      },
-      '[AutoBackup] Check'
-    )
-
-    // Race Condition Lock: Check if another instance is backing up
-    const lockTimeStr = localStorage.getItem('autoBackupLock')
+    const lockId = `${now}-${Math.random()}`
+    const lockTimeStr = localStorage.getItem(LOCAL_STORAGE_BACKUP_LOCK_KEY)
     if (lockTimeStr) {
-      const lockTime = parseInt(lockTimeStr, 10)
+      const [lockTimeValue] = lockTimeStr.split('-')
+      const lockTime = parseInt(lockTimeValue, 10)
       if (!isNaN(lockTime) && now - lockTime < BACKUP_CONFIG.LOCK_DURATION) {
         logger.debug('[AutoBackup] Backup in progress (locked), skipping')
         return
       }
     }
 
-    if (timeSinceLastBackup > effectiveInterval) {
-      try {
-        // Acquire Lock
-        localStorage.setItem('autoBackupLock', now.toString())
+    try {
+      localStorage.setItem(LOCAL_STORAGE_BACKUP_LOCK_KEY, lockId)
+      await task()
+    } finally {
+      if (localStorage.getItem(LOCAL_STORAGE_BACKUP_LOCK_KEY) === lockId) {
+        localStorage.removeItem(LOCAL_STORAGE_BACKUP_LOCK_KEY)
+      }
+    }
+  }
 
+  async function runWithBackupLock(task: () => Promise<void>) {
+    if (navigator.locks?.request) {
+      await navigator.locks.request(AUTO_BACKUP_LOCK_NAME, task)
+      return
+    }
+
+    await runWithLocalStorageBackupLock(task)
+  }
+
+  const checkAndRunBackup = async (isEventDriven = false) => {
+    // Check if user is logged in and auto backup is enabled
+    if (!authStore.isAuthenticated || !settingsStore.settings.autoBackup) {
+      return
+    }
+
+    await runWithBackupLock(async () => {
+      const lastBackupTimeStr = localStorage.getItem('lastAutoBackupTime')
+      const lastBackupTime = lastBackupTimeStr ? parseInt(lastBackupTimeStr, 10) : 0
+      const now = Date.now()
+
+      // Check if lastBackupTime is valid number, if not treat as 0 (never backed up)
+      const isValidTime = !isNaN(lastBackupTime) && lastBackupTime > 0
+      const timeSinceLastBackup = isValidTime ? now - lastBackupTime : Infinity
+
+      // Use configured interval as the strict rate limit.
+      // This allows the user to control the frequency via VITE_AUTO_BACKUP_INTERVAL.
+      const effectiveInterval = BACKUP_CONFIG.INTERVAL
+
+      logger.debug(
+        {
+          interval: effectiveInterval,
+          isEventDriven,
+          lastBackupTime,
+          timeSince: timeSinceLastBackup,
+          shouldBackup: timeSinceLastBackup > effectiveInterval
+        },
+        '[AutoBackup] Check'
+      )
+
+      if (timeSinceLastBackup <= effectiveInterval) {
+        return
+      }
+
+      try {
         logger.info('[AutoBackup] Starting automatic backup check...')
         const data = websiteStore.exportData()
 
@@ -129,11 +155,8 @@ export function useAutoBackup() {
         }
       } catch (e) {
         logger.error({ err: e }, '[AutoBackup] Error')
-      } finally {
-        // Release Lock
-        localStorage.removeItem('autoBackupLock')
       }
-    }
+    })
   }
 
   // Debounced backup trigger (wait 30s after last change)
