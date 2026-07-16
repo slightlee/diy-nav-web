@@ -1,11 +1,6 @@
 <template>
   <div class="app-container">
-    <HeaderBar
-      @add-site="handleAddSite"
-      @open-settings="openSettingsModal"
-      @open-data-management="openDataManagement"
-      @open-ai-settings="openAISettings"
-    />
+    <HeaderBar @add-site="handleAddSite" @open-account-panel="openAccountPanel" />
     <main class="main-content">
       <div class="container">
         <slot />
@@ -45,32 +40,16 @@
     </BaseModal>
 
     <BaseModal
-      v-if="uiStore.modalState.settings"
-      :is-open="uiStore.modalState.settings"
-      title="设置"
-      @close="() => uiStore.closeModal('settings')"
+      v-if="uiStore.modalState.accountPanel"
+      :is-open="uiStore.modalState.accountPanel"
+      title="账户与设置"
+      size="xl"
+      @close="closeAccountPanel"
     >
-      <SettingsModal @close="() => uiStore.closeModal('settings')" />
-    </BaseModal>
-
-    <BaseModal
-      v-if="uiStore.modalState.dataManagement"
-      :is-open="uiStore.modalState.dataManagement"
-      title="数据管理"
-      size="lg"
-      @close="() => uiStore.closeModal('dataManagement')"
-    >
-      <DataManagementModal @close="() => uiStore.closeModal('dataManagement')" />
-    </BaseModal>
-
-    <BaseModal
-      v-if="uiStore.modalState.aiSettings"
-      :is-open="uiStore.modalState.aiSettings"
-      title="AI 配置"
-      size="lg"
-      @close="() => uiStore.closeModal('aiSettings')"
-    >
-      <AIConfigModal @close="() => uiStore.closeModal('aiSettings')" />
+      <AccountPanelModal
+        :initial-tab="uiStore.getModalData('accountPanel')?.tab"
+        @close="closeAccountPanel"
+      />
     </BaseModal>
 
     <ToastContainer />
@@ -107,10 +86,9 @@ import HeaderBar from '@/components/header/HeaderBar.vue'
 import AddSiteModal from '@/components/modals/AddSiteModal.vue'
 import ManageCategoriesModal from '@/components/modals/ManageCategoriesModal.vue'
 import ManageTagsModal from '@/components/modals/ManageTagsModal.vue'
-import SettingsModal from '@/components/modals/SettingsModal.vue'
-import DataManagementModal from '@/components/modals/DataManagementModal.vue'
-import AIConfigModal from '@/components/modals/AIConfigModal.vue'
+import AccountPanelModal from '@/components/modals/AccountPanelModal.vue'
 import ToastContainer from '@/components/toast/ToastContainer.vue'
+import type { AccountPanelTab } from '@/types'
 
 const uiStore = useUIStore()
 const cloudSync = useCloudSync()
@@ -127,9 +105,40 @@ const closeAddSite = () => {
   uiStore.closeModal('addSite')
 }
 
-const openSettingsModal = () => uiStore.openModal('settings')
-const openDataManagement = () => uiStore.openModal('dataManagement')
-const openAISettings = () => uiStore.openModal('aiSettings')
+const openAccountPanel = (tab: AccountPanelTab = 'account') => {
+  uiStore.openModal('accountPanel', { tab })
+}
+
+const closeAccountPanel = () => {
+  uiStore.closeModal('accountPanel')
+}
+
+watch(
+  () => uiStore.modalState.settings,
+  isOpen => {
+    if (!isOpen) return
+    uiStore.closeModal('settings')
+    openAccountPanel('settings')
+  }
+)
+
+watch(
+  () => uiStore.modalState.dataManagement,
+  isOpen => {
+    if (!isOpen) return
+    uiStore.closeModal('dataManagement')
+    openAccountPanel('data')
+  }
+)
+
+watch(
+  () => uiStore.modalState.aiSettings,
+  isOpen => {
+    if (!isOpen) return
+    uiStore.closeModal('aiSettings')
+    openAccountPanel('ai')
+  }
+)
 
 // Sync State Management with "Success" feedback
 type SyncState = 'hidden' | 'syncing' | 'success'
@@ -170,6 +179,43 @@ watch(cloudSync.isSyncing, isSyncing => {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 var(--spacing-md);
+}
+
+:deep(.modal-size-xl) {
+  max-width: 1180px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 28px 80px rgba(15, 23, 42, 0.28),
+    0 0 0 1px rgba(15, 23, 42, 0.04);
+}
+
+:deep(.modal-size-xl .modal-header) {
+  padding: 16px 22px;
+  border-bottom-color: rgba(148, 163, 184, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.96)), #fff;
+}
+
+:deep(.modal-size-xl .modal-title) {
+  color: var(--text-main);
+  font-size: 16px;
+  font-weight: 750;
+}
+
+:deep(.modal-size-xl .modal-body) {
+  padding: 0;
+  overflow: hidden !important;
+}
+
+:deep(.modal-size-xl .modal-close-btn) {
+  border-radius: 999px;
+}
+
+@media (max-width: 768px) {
+  :deep(.modal-size-xl) {
+    border-radius: 0;
+    border: 0;
+  }
 }
 
 // Premium Sync Pill Styles

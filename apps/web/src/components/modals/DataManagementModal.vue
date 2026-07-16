@@ -18,7 +18,7 @@
           <div class="setting-main">
             <div class="setting-info">
               <span class="setting-title">自动备份</span>
-              <span class="setting-desc">定期自动备份数据到本地存储。</span>
+              <span class="setting-desc">定期自动备份数据到云端。</span>
             </div>
           </div>
           <div class="setting-action">

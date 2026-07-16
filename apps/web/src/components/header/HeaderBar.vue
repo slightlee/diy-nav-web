@@ -57,76 +57,36 @@
             <span :class="[{ active: currentTheme === 'auto' }]">跟随系统</span>
           </div>
         </div>
-        <div class="settings-dropdown">
+        <BaseButton
+          v-if="!authStore.isAuthenticated"
+          variant="outline"
+          size="sm"
+          shape="pill"
+          class="login-entry-btn"
+          @click="router.push('/login')"
+        >
+          登录 / 注册
+        </BaseButton>
+
+        <div v-else class="account-entry">
           <BaseButton
             variant="ghost"
             size="sm"
             shape="circle"
-            :aria-expanded="showSettingsDropdown ? 'true' : 'false'"
-            aria-haspopup="menu"
+            aria-label="打开账户与设置"
             class="user-avatar-btn"
-            @click="toggleSettingsDropdown"
+            @click="emit('openAccountPanel')"
           >
             <img
-              v-if="authStore.isAuthenticated && authStore.user?.avatar_url"
+              v-if="authStore.user?.avatar_url"
               :src="authStore.user.avatar_url"
               class="user-avatar"
-              alt="User Avatar"
+              alt="用户头像"
             />
-            <div v-else-if="authStore.isAuthenticated" class="user-avatar">
+            <div v-else class="user-avatar">
               {{ (authStore.user?.nickname || authStore.user?.email || '?')?.[0]?.toUpperCase() }}
             </div>
-            <i v-else class="fas fa-cog" />
           </BaseButton>
-
-          <div v-if="showSettingsDropdown" class="dropdown-menu" role="menu">
-            <!-- Guest: Login Option -->
-            <template v-if="!authStore.isAuthenticated">
-              <BaseButton
-                variant="ghost"
-                block
-                class="dropdown-item text-primary"
-                @click="router.push('/login')"
-              >
-                <i class="fas fa-sign-in-alt" />
-                登录 / 注册
-              </BaseButton>
-              <div class="dropdown-divider" />
-            </template>
-
-            <!-- User Info Header -->
-            <div v-if="authStore.isAuthenticated" class="dropdown-header">
-              <div class="user-email">{{ authStore.user?.nickname || authStore.user?.email }}</div>
-            </div>
-
-            <!-- Common Options -->
-            <BaseButton variant="ghost" block class="dropdown-item" @click="onOpenDataManagement">
-              <i class="fas fa-exchange-alt" />
-              数据管理
-            </BaseButton>
-            <BaseButton variant="ghost" block class="dropdown-item" @click="onOpenAISettings">
-              <i class="fas fa-robot" />
-              AI 配置
-            </BaseButton>
-            <BaseButton variant="ghost" block class="dropdown-item" @click="onOpenSettings">
-              <i class="fas fa-cog" />
-              设置
-            </BaseButton>
-
-            <!-- User: Logout Option -->
-            <template v-if="authStore.isAuthenticated">
-              <div class="dropdown-divider" />
-              <BaseButton
-                variant="ghost"
-                block
-                class="dropdown-item text-danger"
-                @click="handleLogout"
-              >
-                <i class="fas fa-sign-out-alt" />
-                退出登录
-              </BaseButton>
-            </template>
-          </div>
         </div>
       </div>
     </div>
@@ -134,13 +94,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSettingsStore } from '@/stores/settings'
 import { useAuthStore } from '@/stores/auth'
 import { BaseButton } from '@nav/ui'
 
-const emit = defineEmits(['addSite', 'openSettings', 'openDataManagement', 'openAiSettings'])
+const emit = defineEmits(['addSite', 'openAccountPanel'])
 const router = useRouter()
 const settingsStore = useSettingsStore()
 const authStore = useAuthStore()
@@ -156,31 +116,9 @@ const themeToggleIcon = computed(() =>
 const themeToggleTitle = computed(
   () => (({ light: '浅色', dark: '深色', auto: '跟随系统' }) as const)[currentTheme.value]
 )
-const showSettingsDropdown = ref(false)
 const showClickTooltip = ref(false)
 const hoveringTheme = ref(false)
 let clickTooltipTimer: number | undefined
-
-const toggleSettingsDropdown = () => {
-  showSettingsDropdown.value = !showSettingsDropdown.value
-}
-const onOpenSettings = () => {
-  emit('openSettings')
-  showSettingsDropdown.value = false
-}
-const onOpenDataManagement = () => {
-  emit('openDataManagement')
-  showSettingsDropdown.value = false
-}
-const onOpenAISettings = () => {
-  emit('openAiSettings')
-  showSettingsDropdown.value = false
-}
-const handleLogout = () => {
-  void authStore.logout()
-  showSettingsDropdown.value = false
-  router.push('/login')
-}
 
 const cycleTheme = () => {
   const order: Array<'light' | 'dark' | 'auto'> = ['light', 'dark', 'auto']
@@ -196,14 +134,6 @@ const onThemeHover = (hover: boolean) => {
   hoveringTheme.value = hover
   showClickTooltip.value = hover
 }
-const handleClickOutside = (event: Event) => {
-  const target = event.target as HTMLElement
-  if (!target.closest('.settings-dropdown')) showSettingsDropdown.value = false
-}
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 </script>
 
 <style scoped lang="scss">
@@ -374,47 +304,24 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   color: var(--color-primary);
   font-weight: 600;
 }
-.settings-dropdown {
+.account-entry {
   position: relative;
 }
-.dropdown-menu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 12px);
-  width: 200px;
-  background-color: var(--bg-panel);
-  border: 1px solid var(--border-tile);
-  border-radius: 12px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  padding: 6px;
-  z-index: 50;
-}
-.dropdown-item {
-  justify-content: flex-start;
-  margin: 2px 0;
-  color: var(--text-main);
-  font-weight: 500;
+
+:deep(.login-entry-btn) {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
   font-size: 14px;
-  border-radius: 8px;
-  padding: 8px 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+  border-color: rgba(var(--color-primary-rgb), 0.28);
+  background: rgba(var(--color-primary-rgb), 0.04);
 
   &:hover {
-    background-color: var(--bg-tile-hover);
+    background: rgba(var(--color-primary-rgb), 0.08);
+    border-color: rgba(var(--color-primary-rgb), 0.42);
   }
-}
-.dropdown-item i {
-  margin-right: 10px;
-  color: var(--text-muted);
-  width: 16px;
-  text-align: center;
-}
-.dropdown-item :deep(.button-text) {
-  overflow: visible;
-}
-.dropdown-divider {
-  height: 1px;
-  background-color: var(--border-tile);
-  margin: 4px 6px;
 }
 @media (max-width: 768px) {
   .header-content {
@@ -445,6 +352,10 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
   }
   .add-site-btn .btn-text {
     display: none;
+  }
+  :deep(.login-entry-btn) {
+    padding: 0 12px;
+    font-size: 13px;
   }
   :deep(.add-site-btn) {
     height: 36px;
@@ -483,37 +394,5 @@ div.user-avatar {
 
 img.user-avatar {
   background: transparent;
-}
-
-.dropdown-header {
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border-tile);
-  margin-bottom: 4px;
-}
-
-.user-email {
-  font-size: 13px;
-  color: var(--text-secondary);
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.text-danger {
-  color: var(--color-error) !important;
-
-  &:hover {
-    background-color: rgba(var(--color-error-rgb), 0.1) !important;
-  }
-}
-
-.text-primary {
-  color: var(--color-primary) !important;
-  font-weight: 600;
-
-  &:hover {
-    background-color: rgba(var(--color-primary-rgb), 0.1) !important;
-  }
 }
 </style>

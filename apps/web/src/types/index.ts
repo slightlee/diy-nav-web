@@ -21,11 +21,14 @@ export interface ModalState {
   addSite: boolean
   manageCategories: boolean
   manageTags: boolean
+  accountPanel: boolean
   settings: boolean
   dataManagement: boolean
   aiSettings: boolean
   syncConflict: boolean
 }
+
+export type AccountPanelTab = 'account' | 'data' | 'ai' | 'settings'
 
 export interface SearchFilters {
   keyword: string
@@ -40,6 +43,7 @@ export interface ModalPayloads {
   addSite?: { website?: Website; categoryId?: string }
   manageCategories?: undefined
   manageTags?: undefined
+  accountPanel?: { tab?: AccountPanelTab }
   settings?: undefined
   dataManagement?: undefined
   aiSettings?: undefined

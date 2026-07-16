@@ -7,6 +7,7 @@ export const useUIStore = defineStore('ui', () => {
     addSite: false,
     manageCategories: false,
     manageTags: false,
+    accountPanel: false,
     settings: false,
     dataManagement: false,
     aiSettings: false,
