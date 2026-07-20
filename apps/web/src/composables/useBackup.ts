@@ -10,14 +10,21 @@ import {
 import type { BackupPayload } from '@/types'
 import { useUIStore } from '@/stores/ui'
 import { useWebsiteStore } from '@/stores/website'
-import { useCategoryStore } from '@/stores/category'
-import { useTagStore } from '@/stores/tag'
+
+interface FetchBackupsOptions {
+  force?: boolean
+}
+
+interface CreateBackupOptions {
+  silent?: boolean
+  refresh?: boolean
+}
+
+let backupCache: BackupItem[] | null = null
 
 export function useBackup() {
   const uiStore = useUIStore()
   const websiteStore = useWebsiteStore()
-  const categoryStore = useCategoryStore()
-  const tagStore = useTagStore()
 
   /* State */
   const backups = ref<BackupItem[]>([])
@@ -29,12 +36,26 @@ export function useBackup() {
   // Computed for backward compatibility or general busy state
   const operating = computed(() => isCreating.value || isRestoring.value || isDeleting.value)
 
-  const fetchBackups = async () => {
+  const hasBackupData = (payload: BackupPayload) => {
+    return (
+      payload.data.websites.length > 0 ||
+      payload.data.categories.length > 0 ||
+      payload.data.tags.length > 0
+    )
+  }
+
+  const fetchBackups = async (options: FetchBackupsOptions = {}) => {
+    if (!options.force && backupCache) {
+      backups.value = backupCache
+      return
+    }
+
     loading.value = true
     try {
       const res = await getBackups()
       if (res.success && res.data) {
         backups.value = res.data
+        backupCache = res.data
       } else {
         throw new Error(res.message || '获取备份列表失败')
       }
@@ -46,14 +67,24 @@ export function useBackup() {
     }
   }
 
-  const handleCreateBackup = async (data: BackupPayload, type: 'MANUAL' | 'AUTO' = 'MANUAL') => {
+  const handleCreateBackup = async (
+    data: BackupPayload,
+    type: 'MANUAL' | 'AUTO' = 'MANUAL',
+    options: CreateBackupOptions = {}
+  ) => {
     if (operating.value) return false
     isCreating.value = true
     try {
       const res = await createBackup(data, type)
       if (res.success) {
-        uiStore.showToast('备份成功', 'success')
-        await fetchBackups()
+        if (!options.silent) {
+          uiStore.showToast('备份成功', 'success')
+        }
+        if (options.refresh !== false) {
+          await fetchBackups({ force: true })
+        } else {
+          backupCache = null
+        }
         return true
       } else {
         throw new Error(res.message)
@@ -67,25 +98,37 @@ export function useBackup() {
     }
   }
 
+  const createSafetyBackup = async () => {
+    const data = websiteStore.exportData()
+    if (!hasBackupData(data)) return true
+
+    try {
+      const res = await createBackup(data, 'MANUAL')
+      if (res.success) {
+        backupCache = null
+        return true
+      }
+      throw new Error(res.message)
+    } catch (e) {
+      logger.error({ err: e }, 'Create safety backup failed')
+      uiStore.showToast('操作前备份失败，已取消本次操作', 'error')
+      return false
+    }
+  }
+
   const handleRestoreBackup = async (item: BackupItem): Promise<boolean | null> => {
     if (operating.value) return null
     isRestoring.value = true
     const loadingInstance = uiStore.showLoading('正在恢复数据...')
 
     try {
+      const backedUp = await createSafetyBackup()
+      if (!backedUp) return false
+
       const res = await restoreBackup(item.id)
       if (res.success && res.data) {
-        // res.data is BackupPayload
         websiteStore.importData(res.data)
-
-        if (res.data.data.categories) {
-          categoryStore.overwriteCategories(res.data.data.categories)
-        }
-
-        if (res.data.data.tags) {
-          tagStore.overwriteTags(res.data.data.tags)
-        }
-
+        await fetchBackups({ force: true })
         uiStore.showToast('恢复成功', 'success')
         return true
       } else {
@@ -108,7 +151,7 @@ export function useBackup() {
       const res = await deleteBackup(backupId)
       if (res.success) {
         uiStore.showToast('删除成功', 'success')
-        await fetchBackups()
+        await fetchBackups({ force: true })
         return true
       } else {
         throw new Error(res.message)
@@ -131,6 +174,7 @@ export function useBackup() {
     isDeleting,
     fetchBackups,
     createBackup: handleCreateBackup,
+    createSafetyBackup,
     restoreBackup: handleRestoreBackup,
     deleteBackup: handleDeleteBackup
   }

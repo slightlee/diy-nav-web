@@ -8,6 +8,7 @@ import { useWebsiteStore } from '@/stores/website'
 import { computeCanonicalHash } from '@/utils/hash'
 
 const isSyncing = ref(false)
+const SYNC_CONFLICT_PENDING_KEY = 'syncConflictPending'
 
 const hasLocalData = () => {
   const websiteStore = useWebsiteStore()
@@ -26,6 +27,18 @@ const updateAutoBackupState = async (hashData: unknown) => {
   const hash = await computeCanonicalHash(hashData)
   localStorage.setItem('lastAutoBackupHash', hash)
   localStorage.setItem('lastAutoBackupTime', now.toString())
+}
+
+export const hasPendingSyncConflict = () => {
+  return localStorage.getItem(SYNC_CONFLICT_PENDING_KEY) === 'true'
+}
+
+const markSyncConflictPending = () => {
+  localStorage.setItem(SYNC_CONFLICT_PENDING_KEY, 'true')
+}
+
+const clearSyncConflictPending = () => {
+  localStorage.removeItem(SYNC_CONFLICT_PENDING_KEY)
 }
 
 export function useCloudSync() {
@@ -76,12 +89,14 @@ export function useCloudSync() {
       remoteCount,
       remoteDate: new Date(latestBackup.created_at)
     })
+    markSyncConflictPending()
   }
 
   const checkOnLogin = async (isNewRegistration = false) => {
     // New users keep guest data by migrating local content to cloud.
     if (isNewRegistration) {
       await migrateGuestData()
+      clearSyncConflictPending()
       return
     }
 
@@ -90,11 +105,15 @@ export function useCloudSync() {
       const backups = res.data || []
       const hasRemoteData = backups.length > 0
 
-      if (!hasRemoteData) return
+      if (!hasRemoteData) {
+        clearSyncConflictPending()
+        return
+      }
 
       // Existing users with no local data can safely adopt the latest cloud backup.
       if (!hasLocalData()) {
         await autoRestoreLatestBackup(backups[0].id)
+        clearSyncConflictPending()
         return
       }
 
@@ -106,6 +125,7 @@ export function useCloudSync() {
         if (latest.file_hash && localMd5 === latest.file_hash) {
           logger.info('Local and remote data are identical (MD5 match), skipping conflict check.')
           localStorage.setItem('lastAutoBackupHash', localMd5)
+          clearSyncConflictPending()
           return
         }
       } catch (e) {
@@ -131,6 +151,7 @@ export function useCloudSync() {
           logger.info('User confirmed cloud restore')
           websiteStore.importData(restoreRes.data)
           await updateAutoBackupState(websiteStore.getHashData())
+          clearSyncConflictPending()
           uiStore.closeModal('syncConflict')
         }
       }
@@ -143,6 +164,7 @@ export function useCloudSync() {
 
   const confirmKeepLocal = () => {
     uiStore.closeModal('syncConflict')
+    clearSyncConflictPending()
     logger.info('User ignored cloud data, updating cloud with local...')
 
     try {

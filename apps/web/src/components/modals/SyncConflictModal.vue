@@ -50,7 +50,6 @@
       <div class="data-card cloud">
         <div class="card-header">
           <span class="label">云端备份</span>
-          <span class="badge">推荐</span>
         </div>
         <div class="stats">
           <div class="stat-item">
@@ -78,7 +77,7 @@
         使用云端数据 (覆盖本地)
       </button>
 
-      <button class="btn-keep-local" @click="emit('keepLocal')">保留本地数据 (忽略云端)</button>
+      <button class="btn-keep-local" @click="emit('keepLocal')">本地覆盖云端</button>
     </div>
   </div>
 </template>

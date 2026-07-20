@@ -7,6 +7,11 @@ const TAG_COLORS = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4
 
 export const useTagStore = defineStore('tag', () => {
   const tags = ref<Tag[]>([])
+  const dataRevision = ref(0)
+
+  const bumpDataRevision = () => {
+    dataRevision.value += 1
+  }
 
   const initializeData = () => {
     try {
@@ -42,6 +47,7 @@ export const useTagStore = defineStore('tag', () => {
     }
     tags.value.push(newTag)
     saveToLocalStorage()
+    bumpDataRevision()
     return newTag
   }
 
@@ -55,6 +61,7 @@ export const useTagStore = defineStore('tag', () => {
       }
       tags.value[index] = { ...tags.value[index], ...updates, updatedAt: new Date() }
       saveToLocalStorage()
+      bumpDataRevision()
     }
   }
 
@@ -63,6 +70,7 @@ export const useTagStore = defineStore('tag', () => {
     if (index !== -1) {
       tags.value.splice(index, 1)
       saveToLocalStorage()
+      bumpDataRevision()
     }
   }
 
@@ -72,6 +80,7 @@ export const useTagStore = defineStore('tag', () => {
       if (tag) tag.order = newIndex
     })
     saveToLocalStorage()
+    bumpDataRevision()
   }
 
   const getTagById = (id: string) => tags.value.find(tag => tag.id === id)
@@ -87,6 +96,7 @@ export const useTagStore = defineStore('tag', () => {
   const clearAllTags = () => {
     tags.value = []
     localStorage.removeItem('tags')
+    bumpDataRevision()
   }
 
   const overwriteTags = (data: Partial<Tag>[]) => {
@@ -102,11 +112,13 @@ export const useTagStore = defineStore('tag', () => {
         updatedAt: t.updatedAt ? new Date(t.updatedAt) : now
       }))
       saveToLocalStorage()
+      bumpDataRevision()
     }
   }
 
   return {
     tags: readonly(tags),
+    dataRevision: readonly(dataRevision),
     tagColors,
     addTag,
     updateTag,

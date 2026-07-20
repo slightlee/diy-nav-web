@@ -181,43 +181,6 @@ watch(cloudSync.isSyncing, isSyncing => {
   padding: 0 var(--spacing-md);
 }
 
-:deep(.modal-size-xl) {
-  max-width: 1180px;
-  border-radius: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  box-shadow:
-    0 28px 80px rgba(15, 23, 42, 0.28),
-    0 0 0 1px rgba(15, 23, 42, 0.04);
-}
-
-:deep(.modal-size-xl .modal-header) {
-  padding: 16px 22px;
-  border-bottom-color: rgba(148, 163, 184, 0.16);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.96)), #fff;
-}
-
-:deep(.modal-size-xl .modal-title) {
-  color: var(--text-main);
-  font-size: 16px;
-  font-weight: 750;
-}
-
-:deep(.modal-size-xl .modal-body) {
-  padding: 0;
-  overflow: hidden !important;
-}
-
-:deep(.modal-size-xl .modal-close-btn) {
-  border-radius: 999px;
-}
-
-@media (max-width: 768px) {
-  :deep(.modal-size-xl) {
-    border-radius: 0;
-    border: 0;
-  }
-}
-
 // Premium Sync Pill Styles
 .sync-pill {
   position: fixed;
@@ -320,6 +283,48 @@ watch(cloudSync.isSyncing, isSyncing => {
 </style>
 
 <style lang="scss">
+// Global modal overrides: BaseModal is teleported to body, so scoped styles cannot own these reliably.
+.modal-size-xl {
+  max-width: 1180px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 28px 80px rgba(15, 23, 42, 0.28),
+    0 0 0 1px rgba(15, 23, 42, 0.04);
+}
+
+.modal-size-xl .modal-header {
+  padding: 16px 22px;
+  border-bottom-color: rgba(148, 163, 184, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.96)), #fff;
+}
+
+.modal-size-xl .modal-title {
+  color: var(--text-main);
+  font-size: 16px;
+  font-weight: 750;
+}
+
+.modal-size-xl .modal-body {
+  padding: 0;
+  overflow: hidden !important;
+}
+
+.modal-size-xl .modal-close-btn {
+  border-radius: 999px;
+}
+
+.modal-overlay:has(.modal-size-xl) {
+  backdrop-filter: none;
+}
+
+@media (max-width: 768px) {
+  .modal-size-xl {
+    border-radius: 0;
+    border: 0;
+  }
+}
+
 // Global overrides for theme adaptation (must be non-scoped to effectively target global theme attributes)
 [data-theme='dark'] .sync-pill {
   background: rgba(15, 23, 42, 0.85) !important; // Slate-900 transparent

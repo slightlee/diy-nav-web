@@ -5,7 +5,9 @@
     :is-open="uiStore.modalState.syncConflict"
     title="数据冲突"
     size="md"
-    @close="cloudSync.confirmKeepLocal"
+    :show-close-button="false"
+    :close-on-overlay="false"
+    :close-on-escape="false"
   >
     <SyncConflictModal
       :local-count="uiStore.getModalData('syncConflict')?.localCount ?? 0"

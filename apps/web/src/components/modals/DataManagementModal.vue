@@ -1,45 +1,36 @@
 <template>
   <div class="data-management-modal">
-    <!-- Section 1: Backup Settings -->
-    <div class="data-management-modal__section">
-      <div class="section-header">
-        <div class="section-icon blue">
-          <i class="fas fa-shield-alt" />
-        </div>
-        <div class="section-info">
-          <h3 class="section-title">备份设置</h3>
-          <p class="section-description">确保数据定期备份，防止意外丢失</p>
+    <section class="data-management-modal__section">
+      <div class="section-heading">
+        <div>
+          <h3 class="section-title">数据备份</h3>
+          <p class="section-description">保留当前导航数据，必要时可以恢复到历史状态</p>
         </div>
       </div>
 
       <div v-if="authStore.isAuthenticated" class="settings-container">
-        <!-- Auto Backup -->
-        <div class="setting-row">
-          <div class="setting-main">
-            <div class="setting-info">
-              <span class="setting-title">自动备份</span>
+        <div class="backup-control-grid">
+          <div class="backup-control-card">
+            <div class="backup-control-card__copy">
+              <div class="backup-control-card__title-row">
+                <span class="setting-title">自动备份</span>
+                <span class="state-pill" :class="{ enabled: autoBackup }">
+                  {{ autoBackup ? '已开启' : '未开启' }}
+                </span>
+              </div>
               <span class="setting-desc">定期自动备份数据到云端。</span>
             </div>
-          </div>
-          <div class="setting-action">
             <label class="switch">
               <input v-model="autoBackup" type="checkbox" />
               <span class="slider round" />
             </label>
           </div>
-        </div>
 
-        <div class="divider" />
-
-        <!-- Manual Backup -->
-        <div class="setting-row">
-          <div class="setting-main">
-            <div class="setting-info">
+          <div class="backup-control-card">
+            <div class="backup-control-card__copy">
               <span class="setting-title">手动备份</span>
-              <span class="setting-desc">需要立即备份当前数据时，可手动触发一次备份。</span>
+              <span class="setting-desc">立即保存一份当前数据快照。</span>
             </div>
-          </div>
-          <div class="setting-action">
             <BaseButton
               variant="primary"
               shape="pill"
@@ -50,63 +41,6 @@
             >
               立即备份
             </BaseButton>
-          </div>
-        </div>
-
-        <div class="divider" />
-
-        <!-- History -->
-        <div class="history-section">
-          <h4 class="history-title">
-            历史备份
-            <!-- <span class="history-subtitle">（最近 3 条）</span> -->
-          </h4>
-          <div class="history-table-wrapper">
-            <table class="history-table">
-              <thead>
-                <tr>
-                  <th>备份时间</th>
-                  <th class="text-center">类型</th>
-                  <th class="text-center">大小</th>
-                  <th class="text-center">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="loading">
-                  <td colspan="4">
-                    <div class="table-state">
-                      <i class="fas fa-spinner fa-spin" />
-                      <span>加载中...</span>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-else-if="backupHistory.length === 0">
-                  <td colspan="4">
-                    <div class="table-state text-muted">暂无备份记录</div>
-                  </td>
-                </tr>
-                <template v-else>
-                  <tr v-for="item in backupHistory" :key="item.id">
-                    <td>{{ new Date(item.created_at).toLocaleString() }}</td>
-                    <td class="text-center">
-                      <span
-                        class="badge"
-                        :class="item.type === 'AUTO' ? 'badge-green' : 'badge-blue'"
-                      >
-                        {{ item.type === 'AUTO' ? '自动备份' : '手动备份' }}
-                      </span>
-                    </td>
-                    <td class="text-center">{{ formatSize(item.size) }}</td>
-                    <td class="text-center">
-                      <div class="action-buttons">
-                        <button class="restore-link" @click="handleRestore(item)">恢复</button>
-                        <button class="delete-link" @click="handleDelete(item)">删除</button>
-                      </div>
-                    </td>
-                  </tr>
-                </template>
-              </tbody>
-            </table>
           </div>
         </div>
       </div>
@@ -122,26 +56,72 @@
           </BaseButton>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Section 2: Data Management -->
-    <div class="data-management-modal__section">
-      <div class="section-header">
-        <div class="section-icon blue">
-          <i class="fas fa-database" />
+    <section
+      v-if="authStore.isAuthenticated"
+      class="data-management-modal__section data-management-modal__section--history"
+    >
+      <div class="section-heading history-heading">
+        <div>
+          <h3 class="section-title">历史备份</h3>
+          <p class="section-description">选择一份备份恢复，或删除不再需要的记录</p>
         </div>
-        <div class="section-info">
-          <h3 class="section-title">数据管理</h3>
-          <p class="section-description">导入 / 导出网站、分类和标签数据</p>
+        <div class="history-actions">
+          <span v-if="!loading" class="history-count">{{ backupHistory.length }} 条记录</span>
+          <button
+            type="button"
+            class="history-refresh"
+            :disabled="loading"
+            title="刷新备份列表"
+            @click="refreshBackups"
+          >
+            <i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }" />
+          </button>
+        </div>
+      </div>
+
+      <div v-if="loading" class="table-state">
+        <i class="fas fa-spinner fa-spin" />
+        <span>加载中...</span>
+      </div>
+      <div v-else-if="backupHistory.length === 0" class="table-state text-muted">暂无备份记录</div>
+      <div v-else class="backup-list">
+        <div v-for="item in formattedBackupHistory" :key="item.id" class="backup-list__row">
+          <div class="backup-list__main">
+            <div class="backup-list__copy">
+              <div class="backup-list__title-row">
+                <span class="backup-type-tag" :class="item.type === 'AUTO' ? 'auto' : 'manual'">
+                  {{ item.type === 'AUTO' ? '自动备份' : '手动备份' }}
+                </span>
+                <span class="backup-list__time">{{ item.createdAtText }}</span>
+                <span class="backup-list__size">{{ item.sizeText }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="action-buttons">
+            <button class="restore-link" @click="handleRestore(item)">恢复</button>
+            <button class="delete-link" @click="handleDelete(item)">删除</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="data-management-modal__section data-management-modal__section--compact">
+      <div class="section-heading">
+        <div>
+          <h3 class="section-title">导入 / 导出</h3>
+          <p class="section-description">以 JSON 文件迁移网站、分类和标签数据</p>
         </div>
       </div>
 
       <div class="data-actions-grid">
-        <!-- Import Card -->
         <div class="action-card">
           <div class="action-card__content">
             <h4 class="action-card__title">导入数据</h4>
-            <p class="action-card__description">从 JSON 文件导入网站、分类和标签数据。</p>
+            <p class="action-card__description">
+              从 JSON 文件导入数据，只覆盖文件中包含的对应内容。
+            </p>
           </div>
           <div class="action-card__action">
             <input
@@ -159,17 +139,15 @@
               class="action-btn outline-blue"
               @click="triggerFileImport"
             >
-              <i class="fas fa-download" />
               导入数据
             </BaseButton>
           </div>
         </div>
 
-        <!-- Export Card -->
         <div class="action-card">
           <div class="action-card__content">
             <h4 class="action-card__title">导出数据</h4>
-            <p class="action-card__description">将当前网站、分类和标签数据导出为 JSON 文件。</p>
+            <p class="action-card__description">将当前数据导出为 JSON 文件，便于本地保存或迁移。</p>
           </div>
           <div class="action-card__action">
             <BaseButton
@@ -180,33 +158,27 @@
               class="action-btn outline-blue"
               @click="handleExport"
             >
-              <i class="fas fa-upload" />
               导出数据
             </BaseButton>
           </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Section 3: Danger Zone -->
     <div class="danger-zone">
       <div class="danger-content">
-        <div class="danger-icon-wrapper">
-          <i class="fas fa-exclamation-triangle" />
-        </div>
         <div class="danger-info">
-          <h3 class="danger-title">危险操作</h3>
-          <p class="danger-desc">以下操作不可恢复，请务必谨慎执行</p>
+          <h3 class="danger-title">清除本地数据</h3>
+          <p class="danger-desc">会清除本浏览器中的网站、分类、标签和设置。</p>
         </div>
       </div>
       <BaseButton
-        variant="danger"
+        variant="danger-outline"
         shape="pill"
         size="sm"
         class="danger-btn"
         @click="openClearConfirm"
       >
-        <i class="fas fa-trash-alt" />
         清除所有数据
       </BaseButton>
     </div>
@@ -288,7 +260,9 @@
             <div class="import-confirm__summary-label">标签</div>
           </div>
         </div>
-        <p class="import-confirm__warning">此操作将覆盖现有数据，确定继续吗？</p>
+        <p class="import-confirm__warning">
+          文件中包含的数据会覆盖当前对应内容，未包含的数据保持不变。
+        </p>
       </div>
       <template #footer>
         <div class="import-confirm__actions">
@@ -398,7 +372,7 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import type { Website } from '@/types'
+import type { BackupData } from '@/types'
 import { useWebsiteStore } from '@/stores/website'
 import { useUIStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
@@ -434,12 +408,12 @@ const fileInputRef = ref<HTMLInputElement>()
 const {
   backups: backupHistory,
   loading,
-  operating,
   isCreating,
   isRestoring,
   isDeleting,
   fetchBackups,
   createBackup: doCreateBackup,
+  createSafetyBackup,
   restoreBackup: doRestoreBackup,
   deleteBackup: doDeleteBackup
 } = useBackup()
@@ -457,6 +431,14 @@ const formatSize = (bytes: number) => {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
 }
 
+const formattedBackupHistory = computed(() =>
+  backupHistory.value.map(item => ({
+    ...item,
+    createdAtText: new Date(item.created_at).toLocaleString(),
+    sizeText: formatSize(item.size)
+  }))
+)
+
 const exporting = ref(false)
 const importing = ref(false)
 const clearConfirmOpen = ref(false)
@@ -466,11 +448,7 @@ let countdownTimer: number | null = null
 const importConfirmOpen = ref(false)
 const importFileName = ref('')
 const importPreview = ref({ websites: 0, categories: 0, tags: 0 })
-let pendingImportData: {
-  websites?: Partial<Website>[]
-  categories?: unknown[]
-  tags?: unknown[]
-} | null = null
+let pendingImportData: Partial<BackupData> | null = null
 
 const deleteConfirmOpen = ref(false)
 const backupToDelete = ref<BackupItem | null>(null)
@@ -481,6 +459,10 @@ const backupToRestore = ref<BackupItem | null>(null)
 const handleManualBackup = async () => {
   const data = websiteStore.exportData()
   await doCreateBackup(data, 'MANUAL')
+}
+
+const refreshBackups = () => {
+  fetchBackups({ force: true })
 }
 
 const handleRestore = (item: BackupItem) => {
@@ -537,16 +519,11 @@ const confirmImportData = async () => {
   if (!pendingImportData) return
   importing.value = true
   try {
-    const data = pendingImportData
-    websiteStore.importData(data)
-    if (data.categories) {
-      localStorage.setItem('categories', JSON.stringify(data.categories))
+    if (authStore.isAuthenticated) {
+      const backedUp = await createSafetyBackup()
+      if (!backedUp) return
     }
-    if (data.tags) {
-      localStorage.setItem('tags', JSON.stringify(data.tags))
-    }
-    categoryStore.initializeData()
-    tagStore.initializeData()
+    websiteStore.importData(pendingImportData)
     uiStore.showToast('数据导入成功', 'success')
     closeImportConfirm()
     emit('close')
@@ -595,6 +572,7 @@ const confirmClearData = async () => {
     websiteStore.initializeData()
     categoryStore.initializeData()
     tagStore.initializeData()
+    settingsStore.resetSettings()
 
     uiStore.showToast('所有数据已清除', 'success')
     closeClearConfirm()
@@ -633,6 +611,30 @@ const triggerFileImport = () => {
   fileInputRef.value?.click()
 }
 
+const getImportData = (raw: unknown): Partial<BackupData> | null => {
+  if (!raw || typeof raw !== 'object') return null
+
+  const candidate = raw as { data?: unknown }
+  const data = candidate.data && typeof candidate.data === 'object' ? candidate.data : raw
+  if (!data || typeof data !== 'object') return null
+
+  const parsed = data as Partial<BackupData>
+  const hasWebsites = Array.isArray(parsed.websites)
+  const hasCategories = Array.isArray(parsed.categories)
+  const hasTags = Array.isArray(parsed.tags)
+  const hasSettings =
+    !!parsed.settings && typeof parsed.settings === 'object' && !Array.isArray(parsed.settings)
+
+  if (!hasWebsites && !hasCategories && !hasTags && !hasSettings) return null
+
+  return {
+    ...(hasWebsites ? { websites: parsed.websites } : {}),
+    ...(hasCategories ? { categories: parsed.categories } : {}),
+    ...(hasTags ? { tags: parsed.tags } : {}),
+    ...(hasSettings ? { settings: parsed.settings } : {})
+  }
+}
+
 const handleFileImport = (event: Event) => {
   const input = event.target as HTMLInputElement
   if (!input.files?.length) return
@@ -644,16 +646,17 @@ const handleFileImport = (event: Event) => {
   reader.onload = e => {
     try {
       const json = JSON.parse(e.target?.result as string)
-
-      // Handle both legacy (flat) and new (nested data) formats
-      const data = json.data || json
+      const data = getImportData(json)
+      if (!data) {
+        uiStore.showToast('文件内容不符合导入格式', 'error')
+        return
+      }
       pendingImportData = data
 
-      // Calculate preview stats
       importPreview.value = {
-        websites: data.websites?.length || 0,
-        categories: data.categories?.length || 0,
-        tags: data.tags?.length || 0
+        websites: Array.isArray(data.websites) ? data.websites.length : 0,
+        categories: Array.isArray(data.categories) ? data.categories.length : 0,
+        tags: Array.isArray(data.tags) ? data.tags.length : 0
       }
 
       importConfirmOpen.value = true
@@ -661,6 +664,9 @@ const handleFileImport = (event: Event) => {
       logger.error({ err: e }, 'Import parsing failed')
       uiStore.showToast('文件格式错误', 'error')
     }
+  }
+  reader.onerror = () => {
+    uiStore.showToast('读取文件失败，请重试', 'error')
   }
   reader.readAsText(file)
 
@@ -679,206 +685,237 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .data-management-modal {
   width: 100%;
-  max-width: 1000px;
+  max-width: 800px;
   display: flex;
   flex-direction: column;
-  gap: 16px; /* Reduced from var(--spacing-xl) to match design */
+  gap: 16px;
 }
 
 .data-management-modal__section {
   display: flex;
   flex-direction: column;
-  gap: 6px; /* Further reduced from 12px for tighter spacing */
-  padding: 20px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background-color: var(--color-bg-primary);
+  gap: 0;
+  padding: 0;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: none;
+  contain: layout paint;
 }
 
-.section-icon {
-  width: 40px; /* Increased from 32px */
-  height: 40px; /* Increased from 32px */
-  border-radius: 10px; /* Adjusted radius */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem; /* Increased icon size */
-  flex-shrink: 0;
-
-  &.blue {
-    background-color: #eff6ff;
-    color: #3b82f6;
-  }
+.data-management-modal__section--compact {
+  gap: 0;
 }
 
-.section-info {
+.section-heading {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .section-title {
-  font-size: 18px; /* Increased from 16px */
-  font-weight: 600;
-  color: var(--color-neutral-900);
   margin: 0;
-  line-height: 1.4;
+  color: var(--text-main);
+  font-size: 16px;
+  font-weight: 740;
+  line-height: 1.35;
 }
 
 .section-description {
-  font-size: 14px; /* Increased from 13px */
-  color: var(--color-neutral-500);
-  margin: 0;
+  margin: 5px 0 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
-/* Data Actions Grid */
-.data-actions-grid {
+.settings-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.backup-control-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px; /* Reduced from var(--spacing-md) */
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
 }
 
-.action-card {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: 14px 16px; /* Reduced padding */
+.backup-control-card {
+  min-width: 0;
+  min-height: 78px;
+  padding: 16px 20px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 12px; /* Reduced from var(--spacing-md) */
-  background-color: var(--color-bg-primary);
-  transition: all 0.2s ease;
+  gap: 12px;
+  border-bottom: 0;
 
-  &:hover {
-    border-color: var(--color-primary);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  &:first-child {
+    border-right: 1px solid rgba(148, 163, 184, 0.1);
+  }
+
+  &:last-child {
+    border-right: 0;
   }
 }
 
-.action-card__content {
+.backup-control-card__copy {
+  min-width: 0;
   flex: 1;
-}
-
-.action-card__title {
-  font-size: 14px; /* Reduced from 16px */
-  font-weight: 600;
-  color: var(--color-neutral-800);
-  margin: 0 0 4px 0;
-}
-
-.action-card__description {
-  font-size: 12px; /* Reduced from 13px */
-  color: var(--color-neutral-500);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.action-btn {
-  white-space: nowrap;
-  padding-left: 24px !important; /* Increased horizontal padding for pill buttons */
-  padding-right: 24px !important; /* Increased horizontal padding for pill buttons */
-
-  &.outline-blue {
-    color: #3b82f6;
-    border-color: #3b82f6;
-    background-color: transparent;
-
-    &:hover {
-      background-color: rgba(59, 130, 246, 0.05);
-    }
-  }
-}
-
-/* Settings Container */
-
-.setting-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 0; /* Further reduced from 12px for tighter spacing */
-}
-
-.setting-main {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-}
-
-.setting-info {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
+.backup-control-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.state-pill {
+  padding: 2px 7px;
+  border-radius: 999px;
+  color: var(--text-muted);
+  background: rgba(148, 163, 184, 0.12);
+  font-size: 11px;
+  font-weight: 700;
+
+  &.enabled {
+    color: var(--color-primary);
+    background: rgba(var(--color-primary-rgb), 0.1);
+  }
+}
+
 .setting-title {
-  font-size: 14px; /* Reduced from 16px */
-  font-weight: 600;
-  color: var(--color-neutral-800);
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 740;
 }
 
 .setting-desc {
-  font-size: 12px; /* Reduced from 13px */
-  color: var(--color-neutral-500);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
-.section-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.login-prompt {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  background-color: var(--color-neutral-50);
-  border-radius: var(--radius-lg);
-  border: 1px dashed var(--color-border);
-}
-
-.login-prompt__content {
+.history-section {
   display: flex;
   flex-direction: column;
+  gap: 0;
+  border-top: 0;
+}
+
+.history-heading {
   align-items: center;
-  text-align: center;
-  max-width: 300px;
 }
 
-.login-prompt__icon {
-  font-size: 48px;
-  color: var(--color-primary);
-  margin-bottom: 16px;
-  opacity: 0.8;
-}
-
-.login-prompt__title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--color-neutral-900);
-  margin: 0 0 8px 0;
-}
-
-.login-prompt__desc {
-  font-size: 14px;
-  color: var(--color-neutral-500);
-  margin: 0 0 24px 0;
-  line-height: 1.5;
-}
-
-/* ... (intervening code) ... */
-
-.divider {
-  height: 0;
-  border-top: 1px solid var(--color-border);
-  background-color: transparent;
-  margin: 0;
-}
-
-.setting-action {
+.history-actions {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+}
+
+.history-count {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.history-refresh {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    border-color 0.16s ease,
+    color 0.16s ease,
+    background-color 0.16s ease;
+
+  &:hover:not(:disabled) {
+    border-color: rgba(var(--color-primary-rgb), 0.28);
+    color: var(--color-primary);
+    background: rgba(var(--color-primary-rgb), 0.05);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.backup-list {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+}
+
+.backup-list__row {
+  min-height: 54px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.backup-list__main {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.backup-list__copy {
+  min-width: 0;
+}
+
+.backup-list__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.backup-type-tag {
+  padding: 4px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+
+  &.auto {
+    color: var(--color-primary);
+    background: rgba(var(--color-primary-rgb), 0.1);
+  }
+
+  &.manual {
+    color: var(--text-secondary);
+    background: rgba(148, 163, 184, 0.12);
+  }
+}
+
+.backup-list__size {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.backup-list__time {
+  color: var(--text-secondary);
+  font-size: 12px;
 }
 
 .table-state {
@@ -886,21 +923,20 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 32px 0;
-  color: var(--color-neutral-500);
-  font-size: 14px;
+  min-height: 88px;
+  padding: 22px;
+  color: var(--text-secondary);
+  font-size: 13px;
 
   i {
-    font-size: 16px;
     color: var(--color-primary);
   }
 
   &.text-muted {
-    color: var(--color-neutral-400);
+    color: var(--text-muted);
   }
 }
 
-/* Switch */
 .switch {
   position: relative;
   display: inline-block;
@@ -919,8 +955,8 @@ onUnmounted(() => {
   position: absolute;
   cursor: pointer;
   inset: 0 0 0 0;
-  background-color: var(--color-neutral-300);
-  transition: 0.4s;
+  background-color: rgba(148, 163, 184, 0.42);
+  transition: 0.2s;
 }
 
 .slider::before {
@@ -931,7 +967,8 @@ onUnmounted(() => {
   left: 2px;
   bottom: 2px;
   background-color: white;
-  transition: 0.4s;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+  transition: 0.2s;
 }
 
 input:checked + .slider {
@@ -954,163 +991,109 @@ input:checked + .slider::before {
   border-radius: 50%;
 }
 
-/* Time Select */
-.time-select {
-  padding: 6px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background-color: var(--color-bg-primary);
-  color: var(--color-neutral-700);
-  font-size: var(--font-size-sm);
-  outline: none;
-  cursor: pointer;
-  min-width: 140px;
+.data-actions-grid {
+  display: flex;
+  flex-direction: column;
+}
 
-  &:focus {
-    border-color: var(--color-primary);
+.action-card {
+  min-width: 0;
+  min-height: 74px;
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+
+  &:last-child {
+    border-bottom: 0;
   }
 }
 
-/* History Table */
-.history-section {
-  margin-top: 12px; /* Reduced from 20px to match design */
+.action-card__content {
+  min-width: 0;
 }
 
-.history-title {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-neutral-600);
-  margin: 0 0 12px 0; /* Reduced from var(--spacing-md) */
+.action-card__title {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 740;
 }
 
-.history-subtitle {
-  font-size: var(--font-size-sm);
-  color: var(--color-neutral-400);
-  font-weight: normal;
-}
-
-.history-table-wrapper {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.history-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--font-size-sm);
-
-  th,
-  td {
-    padding: 12px; /* Reduced from var(--spacing-md) */
-    text-align: left;
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  th {
-    background-color: var(--color-neutral-50);
-    color: var(--color-neutral-500);
-    font-weight: var(--font-weight-medium);
-  }
-
-  tr:last-child td {
-    border-bottom: none;
-  }
-
-  .text-right {
-    text-align: right;
-  }
-
-  .text-center {
-    text-align: center;
-  }
-}
-
-.badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 12px;
+.action-card__description {
+  margin: 3px 0 0;
+  color: var(--text-secondary);
   font-size: 12px;
-  font-weight: 500;
-
-  &.badge-green {
-    background-color: rgba(16, 185, 129, 0.1);
-    color: #10b981;
-  }
-
-  &.badge-blue {
-    background-color: rgba(59, 130, 246, 0.1);
-    color: #3b82f6;
-  }
+  line-height: 1.45;
 }
 
+.action-card__action {
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.action-btn,
 .backup-btn {
-  padding-left: 24px !important; /* Increased horizontal padding for pill buttons */
-  padding-right: 24px !important; /* Increased horizontal padding for pill buttons */
+  min-width: 92px;
+  white-space: nowrap;
+}
+
+.restore-link,
+.delete-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease;
 }
 
 .restore-link {
-  background: none;
-  border: none;
   color: var(--color-primary);
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  padding: 0;
-  transition: opacity 0.2s;
 
   &:hover {
-    opacity: 0.8;
+    background: rgba(var(--color-primary-rgb), 0.08);
   }
 }
 
 .delete-link {
-  color: var(--color-neutral-400);
-  font-size: var(--font-size-sm);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.2s;
+  color: var(--text-muted);
 
   &:hover {
-    color: var(--color-danger);
+    color: var(--color-error);
+    background: rgba(var(--color-error-rgb), 0.07);
   }
 }
 
 .action-buttons {
   display: flex;
-  justify-content: center;
-  gap: 12px;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
-/* Danger Zone */
 .danger-zone {
-  background-color: #fff5f5;
-  border: 1px solid #fed7d7;
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-lg);
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--spacing-xl); /* Add bottom margin for spacing */
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 14px;
+  background: #fff;
 }
 
 .danger-content {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-}
-
-.danger-icon-wrapper {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%; /* Changed to circle */
-  background-color: rgba(245, 101, 101, 0.15); /* Lighter red background */
-  color: #c53030;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
+  min-width: 0;
 }
 
 .danger-info {
@@ -1120,62 +1103,105 @@ input:checked + .slider::before {
 }
 
 .danger-title {
-  font-size: 14px; /* Matched to other card titles */
-  font-weight: 600;
-  color: #c53030;
   margin: 0;
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 740;
 }
 
 .danger-desc {
-  font-size: 12px; /* Matched to other descriptions */
-  color: #e53e3e;
-  margin: 0;
+  margin: 3px 0 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .danger-btn {
-  padding-left: 24px !important; /* Increased horizontal padding for pill buttons */
-  padding-right: 24px !important; /* Increased horizontal padding for pill buttons */
+  flex-shrink: 0;
 }
 
-/* Responsive */
+.login-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  padding: 36px 20px;
+  border: 1px dashed rgba(148, 163, 184, 0.24);
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.72);
+}
+
+.login-prompt__content {
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.login-prompt__icon {
+  margin-bottom: 14px;
+  color: var(--color-primary);
+  font-size: 40px;
+  opacity: 0.86;
+}
+
+.login-prompt__title {
+  margin: 0 0 6px;
+  color: var(--text-main);
+  font-size: 16px;
+  font-weight: 740;
+}
+
+.login-prompt__desc {
+  margin: 0 0 20px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 @media (max-width: 640px) {
-  .data-actions-grid {
+  .backup-control-grid {
     grid-template-columns: 1fr;
   }
 
+  .backup-control-card,
   .action-card {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .action-card__action {
-    width: 100%;
-
-    .action-btn {
-      width: 100%;
-    }
+  .backup-control-card:first-child {
+    border-right: 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
   }
 
-  .setting-row {
-    flex-direction: column;
+  .switch {
+    align-self: flex-end;
+  }
+
+  .backup-list__row {
     align-items: flex-start;
-    gap: var(--spacing-md);
-  }
-
-  .setting-action {
-    width: 100%;
-    display: flex;
-    justify-content: flex-end;
+    flex-direction: column;
   }
 
   .danger-zone {
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--spacing-md);
   }
 
   .danger-btn {
     width: 100%;
+  }
+
+  .action-card__action,
+  .action-btn,
+  .backup-btn {
+    width: 100%;
+  }
+
+  .action-card__action {
+    justify-content: stretch;
   }
 }
 

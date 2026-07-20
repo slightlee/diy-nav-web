@@ -3,11 +3,13 @@ import { useAuthStore } from '@/stores/auth'
 import { useSettingsStore } from '@/stores/settings'
 import { useCategoryStore } from '@/stores/category'
 import { useTagStore } from '@/stores/tag'
+import { useUIStore } from '@/stores/ui'
 import { createBackup } from '@/api/backup'
+import { hasPendingSyncConflict } from '@/composables/useCloudSync'
 import { computeCanonicalHash } from '@/utils/hash'
 import { logger } from '@nav/logger'
 import { BACKUP_CONFIG } from '@/config'
-import { watch, onUnmounted } from 'vue'
+import { watch, onUnmounted, type WatchStopHandle } from 'vue'
 
 /**
  * Auto backup configuration constants
@@ -33,6 +35,7 @@ export function useAutoBackup() {
   const settingsStore = useSettingsStore()
   const categoryStore = useCategoryStore()
   const tagStore = useTagStore()
+  const uiStore = useUIStore()
 
   /**
    * Interval ID for periodic backup checks
@@ -40,6 +43,7 @@ export function useAutoBackup() {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/setInterval
    */
   let intervalId: number | null = null
+  let stopDataWatch: WatchStopHandle | null = null
 
   /**
    * Debounce utility with strict typing
@@ -90,6 +94,11 @@ export function useAutoBackup() {
   const checkAndRunBackup = async (isEventDriven = false) => {
     // Check if user is logged in and auto backup is enabled
     if (!authStore.isAuthenticated || !settingsStore.settings.autoBackup) {
+      return
+    }
+
+    if (uiStore.modalState.syncConflict || hasPendingSyncConflict()) {
+      logger.info('[AutoBackup] Sync conflict is pending, skipping automatic backup.')
       return
     }
 
@@ -144,6 +153,11 @@ export function useAutoBackup() {
           return
         }
 
+        if (uiStore.modalState.syncConflict || hasPendingSyncConflict()) {
+          logger.info('[AutoBackup] Sync conflict became pending, skipping automatic backup.')
+          return
+        }
+
         const res = await createBackup(data, 'AUTO')
 
         if (res.success) {
@@ -167,21 +181,18 @@ export function useAutoBackup() {
   const startAutoBackup = () => {
     // Clear existing
     if (intervalId) clearInterval(intervalId)
+    stopDataWatch?.()
 
-    // Watch for deep changes in website data
-    // We watch the computed hash data to be efficient? No, getting hash data is cheap.
-    // Or just watch the store refs?
-    // Watching the store refs directly is best for "any change"
-    // Note: This won't trigger on visitCount if visitCount is mutated but we don't watch it?
-    // Websites is a Ref array. Deep watch works.
-    watch(
-      [() => websiteStore.websites, () => categoryStore.categories, () => tagStore.tags],
+    stopDataWatch = watch(
+      [
+        () => websiteStore.dataRevision,
+        () => categoryStore.dataRevision,
+        () => tagStore.dataRevision
+      ],
       () => {
-        // Trigger debounced backup
         logger.debug('[AutoBackup] Change detected, scheduling backup...')
         triggerBackup()
-      },
-      { deep: true }
+      }
     )
 
     // Initial check after app hydration, then interval (fallback)
@@ -198,6 +209,8 @@ export function useAutoBackup() {
       clearInterval(intervalId)
       intervalId = null
     }
+    stopDataWatch?.()
+    stopDataWatch = null
   }
 
   // Ensure cleanup to prevent memory leaks if component unmounts

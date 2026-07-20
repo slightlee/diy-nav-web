@@ -6,6 +6,11 @@ import { generateId } from '@/utils/helpers'
 export const useCategoryStore = defineStore('category', () => {
   const categories = ref<Category[]>([])
   const searchFilters = ref({ keyword: '', categoryIds: [] as string[] })
+  const dataRevision = ref(0)
+
+  const bumpDataRevision = () => {
+    dataRevision.value += 1
+  }
 
   const initializeData = () => {
     try {
@@ -39,6 +44,7 @@ export const useCategoryStore = defineStore('category', () => {
     }
     categories.value.push(newCategory)
     saveToLocalStorage()
+    bumpDataRevision()
     return newCategory
   }
 
@@ -54,6 +60,7 @@ export const useCategoryStore = defineStore('category', () => {
       }
       categories.value[index] = { ...categories.value[index], ...updates, updatedAt: new Date() }
       saveToLocalStorage()
+      bumpDataRevision()
     }
   }
 
@@ -62,6 +69,7 @@ export const useCategoryStore = defineStore('category', () => {
     if (index !== -1) {
       categories.value.splice(index, 1)
       saveToLocalStorage()
+      bumpDataRevision()
     }
   }
 
@@ -71,6 +79,7 @@ export const useCategoryStore = defineStore('category', () => {
       if (category) category.order = newIndex
     })
     saveToLocalStorage()
+    bumpDataRevision()
   }
 
   const saveToLocalStorage = () => {
@@ -105,11 +114,13 @@ export const useCategoryStore = defineStore('category', () => {
         updatedAt: c.updatedAt ? new Date(c.updatedAt) : now
       }))
       saveToLocalStorage()
+      bumpDataRevision()
     }
   }
 
   return {
     categories: readonly(categories),
+    dataRevision: readonly(dataRevision),
     searchFilters,
     initializeData,
     addCategory,

@@ -21,9 +21,14 @@ export const useWebsiteStore = defineStore('website', () => {
   const searchFilters = ref<SearchFilters>({ keyword: '', categoryIds: [], tagIds: [] })
   const sortField = ref<SortField>('order')
   const sortOrder = ref<SortOrder>('asc')
+  const dataRevision = ref(0)
   const settingsStore = useSettingsStore()
   const categoryStore = useCategoryStore()
   const tagStore = useTagStore()
+
+  const bumpDataRevision = () => {
+    dataRevision.value += 1
+  }
 
   const initializeData = () => {
     try {
@@ -113,16 +118,22 @@ export const useWebsiteStore = defineStore('website', () => {
     }
     websites.value = [...websites.value, newWebsite]
     saveToLocalStorage()
+    bumpDataRevision()
     return newWebsite
   }
 
   const updateWebsite = (id: string, updates: Partial<Website>) => {
     const now = new Date()
-    const next = websites.value.map(w => (w.id === id ? { ...w, ...updates, updatedAt: now } : w))
-    if (next !== websites.value) {
-      websites.value = next
-      saveToLocalStorage()
-    }
+    let changed = false
+    const next = websites.value.map(w => {
+      if (w.id !== id) return w
+      changed = true
+      return { ...w, ...updates, updatedAt: now }
+    })
+    if (!changed) return
+    websites.value = next
+    saveToLocalStorage()
+    bumpDataRevision()
   }
 
   const deleteWebsite = (id: string) => {
@@ -130,6 +141,7 @@ export const useWebsiteStore = defineStore('website', () => {
     if (next.length !== websites.value.length) {
       websites.value = next.map((w, i) => ({ ...w, order: i }))
       saveToLocalStorage()
+      bumpDataRevision()
     }
   }
 
@@ -172,6 +184,7 @@ export const useWebsiteStore = defineStore('website', () => {
     const next = arr.map((w, i) => ({ ...w, order: i }))
     websites.value = next
     saveToLocalStorage()
+    bumpDataRevision()
   }
 
   const moveFavoriteBefore = (sourceId: string, targetId: string) => {
@@ -191,6 +204,7 @@ export const useWebsiteStore = defineStore('website', () => {
       w.isFavorite ? { ...w, favoriteOrder: orderMap.get(w.id) ?? w.favoriteOrder } : w
     )
     saveToLocalStorage()
+    bumpDataRevision()
   }
 
   const saveToLocalStorage = () => {
@@ -204,8 +218,8 @@ export const useWebsiteStore = defineStore('website', () => {
   const exportData = (): BackupPayload => {
     const data: BackupData = {
       websites: websites.value,
-      categories: JSON.parse(localStorage.getItem('categories') || '[]'),
-      tags: JSON.parse(localStorage.getItem('tags') || '[]'),
+      categories: [...categoryStore.categories],
+      tags: [...tagStore.tags],
       settings: settingsStore.settings
     }
 
@@ -274,6 +288,7 @@ export const useWebsiteStore = defineStore('website', () => {
         }
       })
       saveToLocalStorage()
+      bumpDataRevision()
     }
 
     if (data.categories) {
@@ -295,6 +310,7 @@ export const useWebsiteStore = defineStore('website', () => {
 
   return {
     websites,
+    dataRevision: readonly(dataRevision),
     searchFilters: readonly(searchFilters),
     sortField: readonly(sortField),
     sortOrder: readonly(sortOrder),

@@ -217,7 +217,9 @@ const bindingItems = computed(() => [
 const selectTab = (tab: AccountPanelTab, event?: MouseEvent) => {
   activeTab.value = tab
   const target = event?.currentTarget
-  if (target instanceof HTMLElement) {
+  const shouldCenterNavItem =
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+  if (shouldCenterNavItem && target instanceof HTMLElement) {
     target.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' })
   }
 }
