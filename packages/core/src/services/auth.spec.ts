@@ -100,4 +100,54 @@ describe('AuthService', () => {
       expect(result).toEqual(mockUser)
     })
   })
+
+  describe('updateNickname', () => {
+    it('should trim and update the nickname', async () => {
+      const mockUser = {
+        id: '1',
+        email: 'test@example.com',
+        nickname: 'Old name',
+        updated_at: 1
+      }
+      vi.spyOn(mockDb, 'first').mockResolvedValue(mockUser)
+
+      const result = await authService.updateNickname('1', '  New name  ')
+
+      expect(mockDb.execute).toHaveBeenCalledWith(
+        'UPDATE users SET nickname = ?, updated_at = ? WHERE id = ?',
+        ['New name', expect.any(Number), '1']
+      )
+      expect(result).toEqual(
+        expect.objectContaining({
+          nickname: 'New name',
+          updated_at: expect.any(Number)
+        })
+      )
+    })
+
+    it('should reject an empty nickname', async () => {
+      await expect(authService.updateNickname('1', '   ')).rejects.toThrow(
+        'Nickname must contain 1 to 30 characters'
+      )
+      expect(mockDb.first).not.toHaveBeenCalled()
+      expect(mockDb.execute).not.toHaveBeenCalled()
+    })
+
+    it('should reject a nickname longer than 30 characters', async () => {
+      await expect(authService.updateNickname('1', 'a'.repeat(31))).rejects.toThrow(
+        'Nickname must contain 1 to 30 characters'
+      )
+      expect(mockDb.first).not.toHaveBeenCalled()
+      expect(mockDb.execute).not.toHaveBeenCalled()
+    })
+
+    it('should return not found when the user does not exist', async () => {
+      vi.spyOn(mockDb, 'first').mockResolvedValue(null)
+
+      await expect(authService.updateNickname('missing', 'New name')).rejects.toThrow(
+        'User not found'
+      )
+      expect(mockDb.execute).not.toHaveBeenCalled()
+    })
+  })
 })

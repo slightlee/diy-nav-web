@@ -48,6 +48,52 @@
           <section class="account-card">
             <div class="account-card__header">
               <div>
+                <h4>个人资料</h4>
+                <p>管理公开展示的账号信息</p>
+              </div>
+            </div>
+            <form class="account-profile" @submit.prevent="handleNicknameSave">
+              <div class="account-profile__copy">
+                <label class="account-profile__label" for="account-nickname">昵称</label>
+                <span>用于界面展示，不作为登录凭证</span>
+              </div>
+              <div class="account-profile__editor">
+                <div class="account-profile__controls">
+                  <BaseInput
+                    id="account-nickname"
+                    v-model="nicknameDraft"
+                    size="sm"
+                    :maxlength="30"
+                    :show-char-count="false"
+                    placeholder="请输入昵称"
+                    :disabled="savingNickname"
+                    :state="nicknameError ? 'error' : 'default'"
+                    @input="nicknameError = ''"
+                  />
+                  <BaseButton
+                    class="account-profile__save"
+                    variant="primary"
+                    size="sm"
+                    html-type="submit"
+                    :loading="savingNickname"
+                    :disabled="!canSaveNickname"
+                  >
+                    保存
+                  </BaseButton>
+                </div>
+                <div class="account-profile__meta">
+                  <span :class="{ 'account-profile__error': nicknameError }">
+                    {{ nicknameError || '支持 1～30 个字符' }}
+                  </span>
+                  <span>{{ nicknameDraft.length }}/30</span>
+                </div>
+              </div>
+            </form>
+          </section>
+
+          <section class="account-card">
+            <div class="account-card__header">
+              <div>
                 <h4>登录方式</h4>
                 <p>绑定后可使用更多方式登录同一个账号</p>
               </div>
@@ -104,6 +150,8 @@ import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { AccountPanelTab } from '@/types'
 import { useAuthStore } from '@/stores/auth'
+import { useUIStore } from '@/stores/ui'
+import { BaseButton, BaseInput } from '@nav/ui'
 import DataManagementModal from '@/components/modals/DataManagementModal.vue'
 import AIConfigModal from '@/components/modals/AIConfigModal.vue'
 import SettingsModal from '@/components/modals/SettingsModal.vue'
@@ -123,8 +171,12 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const authStore = useAuthStore()
+const uiStore = useUIStore()
 const activeTab = ref<AccountPanelTab>(props.initialTab)
 const loggingOut = ref(false)
+const nicknameDraft = ref('')
+const nicknameError = ref('')
+const savingNickname = ref(false)
 
 const navItems: Array<{
   key: AccountPanelTab
@@ -170,12 +222,31 @@ watch(
   }
 )
 
+watch(
+  () => authStore.user?.nickname,
+  nickname => {
+    nicknameDraft.value = nickname || ''
+    nicknameError.value = ''
+  },
+  { immediate: true }
+)
+
 const activeItem = computed(
   () => navItems.find(item => item.key === activeTab.value) || navItems[0]
 )
 const displayName = computed(() => authStore.user?.nickname || authStore.user?.email || '当前用户')
 const displayEmail = computed(() => authStore.user?.email || '第三方账号登录')
 const userInitial = computed(() => displayName.value.trim().charAt(0).toUpperCase() || '?')
+const normalizedNickname = computed(() => nicknameDraft.value.trim())
+const canSaveNickname = computed(() => {
+  const nickname = normalizedNickname.value
+  return (
+    !savingNickname.value &&
+    nickname.length >= 1 &&
+    nickname.length <= 30 &&
+    nickname !== (authStore.user?.nickname || '')
+  )
+})
 const bindingItems = computed(() => [
   {
     key: 'email',
@@ -214,6 +285,21 @@ const selectTab = (tab: AccountPanelTab, event?: MouseEvent) => {
     typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
   if (shouldCenterNavItem && target instanceof HTMLElement) {
     target.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' })
+  }
+}
+
+const handleNicknameSave = async () => {
+  if (!canSaveNickname.value) return
+
+  savingNickname.value = true
+  nicknameError.value = ''
+  try {
+    await authStore.updateNickname(normalizedNickname.value)
+    uiStore.showToast('昵称已更新', 'success')
+  } catch {
+    nicknameError.value = '保存失败，请稍后重试'
+  } finally {
+    savingNickname.value = false
   }
 }
 
@@ -471,6 +557,68 @@ const handleLogout = async () => {
   }
 }
 
+.account-profile {
+  padding: 16px 20px 18px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.account-profile__copy {
+  min-width: 160px;
+
+  span {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+}
+
+.account-profile__label {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.account-profile__editor {
+  width: min(100%, 410px);
+  min-width: 0;
+}
+
+.account-profile__controls {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+
+  :deep(.base-input) {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.account-profile__save {
+  min-width: 68px;
+  flex: 0 0 auto;
+}
+
+.account-profile__meta {
+  margin-top: 5px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.account-profile__error {
+  color: var(--color-error);
+}
+
 .binding-list {
   display: flex;
   flex-direction: column;
@@ -705,6 +853,19 @@ const handleLogout = async () => {
   .account-danger {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .account-profile {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .account-profile__copy {
+    min-width: 0;
+  }
+
+  .account-profile__editor {
+    width: 100%;
   }
 
   .binding-row {

@@ -94,6 +94,30 @@ export class AuthService {
   }
 
   /**
+   * Update the profile fields managed by the user
+   */
+  async updateNickname(userId: string, nickname: string): Promise<User> {
+    const normalizedNickname = nickname.trim()
+    if (!normalizedNickname || normalizedNickname.length > 30) {
+      throw new AppError('Nickname must contain 1 to 30 characters', 'INVALID_NICKNAME', 400)
+    }
+
+    const user = await this.userRepo.findById(userId)
+    if (!user) {
+      throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    }
+
+    const updatedAt = Date.now()
+    await this.userRepo.updateNickname(userId, normalizedNickname, updatedAt)
+
+    return {
+      ...user,
+      nickname: normalizedNickname,
+      updated_at: updatedAt
+    }
+  }
+
+  /**
    * Find or create user by provider (OAuth)
    */
   async findOrCreateByProvider(

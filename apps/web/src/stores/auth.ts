@@ -88,6 +88,16 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function updateNickname(nickname: string) {
+    const res = await request.patch<{ user: User }>('/api/auth/profile', { nickname })
+
+    if (res.success && res.data) {
+      setCurrentUser(res.data.user)
+      return res.data.user
+    }
+    throw new Error(res.message || 'Failed to update nickname')
+  }
+
   async function logout() {
     try {
       await request.post('/api/auth/logout')
@@ -105,6 +115,7 @@ export const useAuthStore = defineStore('auth', () => {
     loginWithProvider,
     register,
     fetchUser,
+    updateNickname,
     logout
   }
 })

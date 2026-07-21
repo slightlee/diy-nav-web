@@ -1,7 +1,12 @@
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { AppError } from '@nav/core'
 
-import { registerSchema, loginSchema, providerLoginSchema } from '../schemas/auth.schema.js'
+import {
+  registerSchema,
+  loginSchema,
+  providerLoginSchema,
+  updateProfileSchema
+} from '../schemas/auth.schema.js'
 import { authService } from '../services.js'
 import { generateAccessToken } from '../lib/token.js'
 import { toUserDto } from '../lib/dto.js'
@@ -84,6 +89,24 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
         success: true,
         data: {
           ...toUserDto(user)
+        }
+      }
+    }
+  )
+
+  // Update profile
+  app.patch(
+    '/auth/profile',
+    {
+      onRequest: [app.authenticate],
+      schema: { body: updateProfileSchema }
+    },
+    async req => {
+      const user = await authService.updateNickname(req.user.sub, req.body.nickname)
+      return {
+        success: true,
+        data: {
+          user: toUserDto(user)
         }
       }
     }

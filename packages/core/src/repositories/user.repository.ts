@@ -31,6 +31,17 @@ export class UserRepository {
   }
 
   /**
+   * Update user nickname
+   */
+  async updateNickname(userId: string, nickname: string, updatedAt: number): Promise<void> {
+    await this.db.execute('UPDATE users SET nickname = ?, updated_at = ? WHERE id = ?', [
+      nickname,
+      updatedAt,
+      userId
+    ])
+  }
+
+  /**
    * Check if identity exists
    */
   async findIdentity(provider: string, providerUid: string): Promise<{ user_id: string } | null> {
