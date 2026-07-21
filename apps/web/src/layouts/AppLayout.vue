@@ -287,16 +287,14 @@ watch(cloudSync.isSyncing, isSyncing => {
 .modal-size-xl {
   max-width: 1180px;
   border-radius: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  box-shadow:
-    0 28px 80px rgba(15, 23, 42, 0.28),
-    0 0 0 1px rgba(15, 23, 42, 0.04);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-xl);
 }
 
 .modal-size-xl .modal-header {
   padding: 16px 22px;
-  border-bottom-color: rgba(148, 163, 184, 0.16);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.96)), #fff;
+  border-bottom-color: var(--color-border);
+  background: var(--bg-panel);
 }
 
 .modal-size-xl .modal-title {

@@ -293,20 +293,20 @@ defineExpose({ focus, blur, select, inputRef })
 .base-input__label {
   display: block;
   font-weight: $font-weight-medium;
-  color: $color-neutral-700;
+  color: var(--text-main, #{$color-neutral-700});
   margin-bottom: $spacing-xs;
   transition: color $transition-fast;
 }
 .base-input__label--required::after {
   content: ' *';
-  color: $color-error;
+  color: var(--color-error, #{$color-error});
 }
 .base-input__wrapper {
   position: relative;
   display: flex;
   align-items: stretch;
-  background-color: $color-neutral-100;
-  border: 1px solid $color-border;
+  background-color: var(--bg-tile, #{$color-neutral-100});
+  border: 1px solid var(--color-border, #{$color-border});
   border-radius: $border-radius-md;
   transition:
     border-color $transition-fast,
@@ -319,26 +319,26 @@ defineExpose({ focus, blur, select, inputRef })
   border-radius: $border-radius-md;
 }
 .base-input__wrapper--focused {
-  border-color: $color-primary;
-  box-shadow: 0 0 0 3px rgba($color-primary, 0.1);
+  border-color: var(--color-primary, #{$color-primary});
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb, #{$color-primary-rgb}), 0.1);
 }
 .base-input__wrapper--disabled {
-  background-color: $color-neutral-100;
-  border-color: $color-neutral-200;
+  background-color: var(--bg-tile, #{$color-neutral-100});
+  border-color: var(--color-neutral-200, #{$color-neutral-200});
   cursor: not-allowed;
 }
 .base-input__wrapper--readonly {
-  background-color: $color-neutral-100;
-  border-color: $color-neutral-200;
+  background-color: var(--bg-tile, #{$color-neutral-100});
+  border-color: var(--color-neutral-200, #{$color-neutral-200});
 }
 .base-input__wrapper--error {
-  border-color: $color-error;
+  border-color: var(--color-error, #{$color-error});
 }
 .base-input__wrapper--success {
-  border-color: $color-success;
+  border-color: var(--color-success, #{$color-success});
 }
 .base-input__wrapper--warning {
-  border-color: $color-warning;
+  border-color: var(--color-warning, #{$color-warning});
 }
 .base-input__inner {
   flex: 1;
@@ -346,7 +346,7 @@ defineExpose({ focus, blur, select, inputRef })
   border: none;
   outline: none;
   background: transparent;
-  color: $color-neutral-800;
+  color: var(--text-main, #{$color-neutral-800});
   font-family: $font-family-sans;
   padding: $spacing-sm $spacing-md;
   resize: vertical;
@@ -355,11 +355,11 @@ defineExpose({ focus, blur, select, inputRef })
     box-shadow $transition-fast;
 }
 .base-input__inner::placeholder {
-  color: $color-neutral-400;
+  color: var(--text-muted, #{$color-neutral-400});
 }
 .base-input__inner:disabled {
   cursor: not-allowed;
-  color: $color-neutral-400;
+  color: var(--text-muted, #{$color-neutral-400});
 }
 .base-input__inner:read-only {
   cursor: default;
@@ -377,7 +377,7 @@ defineExpose({ focus, blur, select, inputRef })
 }
 .base-input__icon {
   position: absolute;
-  color: $color-neutral-500;
+  color: var(--text-muted, #{$color-neutral-500});
   transition: color $transition-fast;
   pointer-events: none;
 }
@@ -409,42 +409,42 @@ defineExpose({ focus, blur, select, inputRef })
   z-index: 1;
 }
 .base-input__clear-btn {
-  color: $color-neutral-500;
+  color: var(--text-muted, #{$color-neutral-500});
   cursor: pointer;
   transition: color $transition-fast;
 }
 .base-input__clear-btn:hover {
-  color: $color-neutral-600;
+  color: var(--text-secondary, #{$color-neutral-600});
 }
 .base-input__password-toggle {
-  color: $color-neutral-500;
+  color: var(--text-muted, #{$color-neutral-500});
   cursor: pointer;
   transition: color $transition-fast;
 }
 .base-input__password-toggle:hover {
-  color: $color-neutral-600;
+  color: var(--text-secondary, #{$color-neutral-600});
 }
 .base-input__loading-icon {
-  color: $color-primary;
+  color: var(--color-primary, #{$color-primary});
 }
 .base-input__char-count {
   text-align: right;
   font-size: $font-size-xs;
-  color: $color-neutral-600;
+  color: var(--text-secondary, #{$color-neutral-600});
   margin-top: $spacing-xs;
   transition: color $transition-fast;
 }
 .base-input__char-count--error {
-  color: $color-error;
+  color: var(--color-error, #{$color-error});
 }
 .base-input__help-text {
   font-size: $font-size-sm;
-  color: $color-neutral-600;
+  color: var(--text-secondary, #{$color-neutral-600});
   margin-top: $spacing-xs;
   transition: color $transition-fast;
 }
 .base-input__help-text--error {
-  color: $color-error;
+  color: var(--color-error, #{$color-error});
 }
 @include mobile {
   .base-input__inner {

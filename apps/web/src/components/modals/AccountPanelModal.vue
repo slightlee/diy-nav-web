@@ -45,7 +45,7 @@
 
       <div class="content-body">
         <div v-if="activeTab === 'account'" class="account-section">
-          <section class="account-card account-card--primary">
+          <section class="account-card">
             <div class="account-card__header">
               <div>
                 <h4>登录方式</h4>
@@ -68,9 +68,6 @@
                     <div class="binding-desc">{{ item.description }}</div>
                   </div>
                 </div>
-                <button class="binding-action" type="button" disabled>
-                  {{ item.actionLabel }}
-                </button>
               </div>
             </div>
           </section>
@@ -185,32 +182,28 @@ const bindingItems = computed(() => [
     label: '邮箱登录',
     description: authStore.user?.email || '暂未绑定邮箱',
     icon: 'fas fa-envelope',
-    status: authStore.user?.email ? 'bound' : 'unbound',
-    actionLabel: authStore.user?.email ? '换绑' : '即将支持'
+    status: authStore.user?.email ? 'bound' : 'unbound'
   },
   {
     key: 'github',
     label: 'GitHub',
     description: '绑定后可使用 GitHub 快速登录',
     icon: 'fab fa-github',
-    status: 'unbound',
-    actionLabel: '即将支持'
+    status: 'unbound'
   },
   {
     key: 'google',
     label: 'Google',
     description: '绑定后可使用 Google 快速登录',
     icon: 'fab fa-google',
-    status: 'unbound',
-    actionLabel: '即将支持'
+    status: 'unbound'
   },
   {
     key: 'linuxdo',
     label: 'LinuxDo',
     description: '绑定后可使用 LinuxDo 快速登录',
     icon: 'fas fa-circle-nodes',
-    status: 'unbound',
-    actionLabel: '即将支持'
+    status: 'unbound'
   }
 ])
 
@@ -239,12 +232,23 @@ const handleLogout = async () => {
 
 <style scoped lang="scss">
 .account-panel {
+  --account-shell-bg:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 0.98)), var(--bg-panel);
+  --account-sidebar-bg:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.02), rgba(15, 23, 42, 0.045)), #f8fafc;
+  --account-header-bg:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.88), rgba(255, 255, 255, 0.95)), #fff;
+  --account-canvas-bg:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.68), rgba(255, 255, 255, 0.98)), #fff;
+  --account-surface-bg: rgba(255, 255, 255, 0.92);
+  --account-control-bg: var(--bg-tile);
+
   display: grid;
   grid-template-columns: 244px minmax(0, 1fr);
   height: min(720px, calc(90vh - 58px));
   overflow: hidden;
-  background:
-    linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(255, 255, 255, 0.98)), var(--bg-panel);
+  color: var(--text-main);
+  background: var(--account-shell-bg);
 }
 
 .account-panel__sidebar {
@@ -253,7 +257,7 @@ const handleLogout = async () => {
   gap: 18px;
   padding: 18px 14px;
   border-right: 1px solid rgba(148, 163, 184, 0.18);
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.02), rgba(15, 23, 42, 0.045)), #f8fafc;
+  background: var(--account-sidebar-bg);
 }
 
 .account-summary {
@@ -330,21 +334,19 @@ const handleLogout = async () => {
     color 0.16s ease;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.72);
+    background: var(--bg-tile);
     color: var(--text-main);
   }
 
   &.active {
-    background: #fff;
+    background: var(--bg-tile-hover);
     border-color: rgba(37, 99, 235, 0.16);
-    color: #0f172a;
-    box-shadow:
-      0 8px 18px rgba(15, 23, 42, 0.06),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+    color: var(--text-main);
+    box-shadow: var(--shadow-sm);
 
     .nav-item__icon {
       color: #2563eb;
-      background: #eff6ff;
+      background: var(--primary-soft);
       border-color: rgba(37, 99, 235, 0.16);
     }
   }
@@ -359,7 +361,7 @@ const handleLogout = async () => {
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.52);
+  background: var(--bg-tile);
   border: 1px solid rgba(148, 163, 184, 0.16);
   transition:
     color 0.16s ease,
@@ -391,14 +393,14 @@ const handleLogout = async () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #fff;
+  background: var(--account-shell-bg);
 }
 
 .content-header {
   min-height: 72px;
   padding: 0 30px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.16);
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.88), rgba(255, 255, 255, 0.95)), #fff;
+  background: var(--account-header-bg);
   display: flex;
   align-items: center;
 
@@ -427,7 +429,7 @@ const handleLogout = async () => {
   min-height: 0;
   overflow: auto;
   padding: 22px 30px 30px;
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.68), rgba(255, 255, 255, 0.98)), #fff;
+  background: var(--account-canvas-bg);
 }
 
 .account-section {
@@ -440,14 +442,9 @@ const handleLogout = async () => {
 .account-card {
   border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.92);
+  background: transparent;
   overflow: hidden;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.04);
-}
-
-.account-card--primary {
-  border-color: rgba(37, 99, 235, 0.12);
-  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.055);
+  box-shadow: none;
 }
 
 .account-card__header {
@@ -484,7 +481,7 @@ const handleLogout = async () => {
   padding: 12px 18px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 18px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.1);
 
@@ -509,12 +506,12 @@ const handleLogout = async () => {
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(148, 163, 184, 0.16);
-  background: var(--bg-tile);
+  background: var(--account-control-bg);
   color: var(--text-muted);
 
   &.bound {
     color: #2563eb;
-    background: #eff6ff;
+    background: var(--primary-soft);
     border-color: rgba(37, 99, 235, 0.18);
   }
 }
@@ -559,19 +556,6 @@ const handleLogout = async () => {
   white-space: nowrap;
 }
 
-.binding-action {
-  height: 30px;
-  min-width: 72px;
-  padding: 0 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: rgba(248, 250, 252, 0.92);
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: not-allowed;
-}
-
 .account-danger {
   display: flex;
   align-items: center;
@@ -580,7 +564,7 @@ const handleLogout = async () => {
   padding: 14px 16px;
   border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.68);
+  background: transparent;
 }
 
 .account-danger__title {
@@ -636,14 +620,23 @@ const handleLogout = async () => {
 :deep(.ai-config__section),
 :deep(.settings-section) {
   border-color: rgba(148, 163, 184, 0.16);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.04);
+  background: var(--account-surface-bg);
+  box-shadow: none;
 }
 
 :deep(.data-management-modal),
 :deep(.ai-config),
 :deep(.settings-content) {
   max-width: none;
+}
+
+:global(html[data-theme='dark'] .account-panel) {
+  --account-shell-bg: var(--bg-panel);
+  --account-sidebar-bg: var(--bg-panel);
+  --account-header-bg: var(--bg-panel);
+  --account-canvas-bg: var(--bg-panel);
+  --account-surface-bg: var(--bg-panel);
+  --account-control-bg: var(--bg-tile);
 }
 
 @media (max-width: 768px) {
@@ -722,10 +715,6 @@ const handleLogout = async () => {
 
   .binding-main {
     width: 100%;
-  }
-
-  .binding-action {
-    align-self: flex-start;
   }
 }
 </style>

@@ -164,7 +164,7 @@ onUnmounted(() => {
   background-color: rgba(0, 0, 0, 0.7);
 }
 .modal-container {
-  background-color: $color-white;
+  background-color: var(--bg-panel, #{$color-white});
   border-radius: $border-radius-xl;
   box-shadow: $shadow-xl;
   max-height: 90vh;
@@ -201,13 +201,13 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: $spacing-lg;
-  border-bottom: 1px solid $color-border;
+  border-bottom: 1px solid var(--color-border, #{$color-border});
   flex-shrink: 0;
 }
 .modal-title {
   font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
-  color: $color-neutral-800;
+  color: var(--text-main, #{$color-neutral-800});
   margin: 0;
   flex: 1;
 }
@@ -216,7 +216,7 @@ onUnmounted(() => {
   height: 32px;
   border: none;
   background: none;
-  color: $color-neutral-500;
+  color: var(--text-muted, #{$color-neutral-500});
   border-radius: $border-radius-sm;
   cursor: pointer;
   display: flex;
@@ -227,8 +227,8 @@ onUnmounted(() => {
     color $transition-fast;
 }
 .modal-close-btn:hover {
-  background-color: $color-neutral-100;
-  color: $color-neutral-700;
+  background-color: var(--bg-tile, #{$color-neutral-100});
+  color: var(--text-main, #{$color-neutral-700});
 }
 .modal-close-btn:focus {
   outline: 2px solid $color-primary;
@@ -245,7 +245,7 @@ onUnmounted(() => {
 }
 .modal-footer {
   padding: $spacing-lg;
-  border-top: 1px solid $color-border;
+  border-top: 1px solid var(--color-border, #{$color-border});
   display: flex;
   align-items: center;
   justify-content: flex-end;

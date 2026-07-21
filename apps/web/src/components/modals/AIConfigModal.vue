@@ -395,7 +395,7 @@ watch(
   padding: 20px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  background-color: var(--color-bg-primary);
+  background-color: var(--account-surface-bg, var(--bg-panel));
 }
 
 .section-header {
@@ -415,7 +415,7 @@ watch(
   flex-shrink: 0;
 
   &.blue {
-    background-color: #eff6ff;
+    background-color: var(--primary-soft);
     color: #3b82f6;
   }
 }
@@ -528,7 +528,7 @@ watch(
   padding: 14px 16px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  background-color: var(--color-bg-primary);
+  background-color: var(--account-control-bg, var(--bg-panel));
 }
 
 .provider-title {
@@ -621,7 +621,7 @@ watch(
   padding: 0 10px;
   font-size: 13px;
   color: var(--color-neutral-800);
-  background-color: var(--color-bg-primary);
+  background-color: var(--account-control-bg, var(--bg-tile));
 }
 
 .form-field--switch {

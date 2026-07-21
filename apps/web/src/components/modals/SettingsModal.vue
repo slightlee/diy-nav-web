@@ -67,7 +67,7 @@ watch(defaultHome, val => {
   padding: 12px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  background-color: var(--color-bg-primary);
+  background-color: var(--account-surface-bg, var(--bg-panel));
 }
 
 .section-header {
@@ -90,7 +90,7 @@ watch(defaultHome, val => {
   flex-shrink: 0;
 
   &.blue {
-    background-color: #eff6ff;
+    background-color: var(--primary-soft);
     color: #3b82f6;
   }
 }

@@ -698,7 +698,7 @@ onUnmounted(() => {
   padding: 0;
   border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 14px;
-  background: #fff;
+  background: var(--account-surface-bg, var(--bg-panel));
   overflow: hidden;
   box-shadow: none;
   contain: layout paint;
@@ -829,7 +829,7 @@ onUnmounted(() => {
   height: 28px;
   border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 8px;
-  background: #fff;
+  background: var(--account-control-bg, var(--bg-tile));
   color: var(--text-muted);
   cursor: pointer;
   display: inline-flex;
@@ -856,7 +856,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #fff;
+  background: var(--account-surface-bg, var(--bg-panel));
 }
 
 .backup-list__row {
@@ -1087,7 +1087,7 @@ input:checked + .slider::before {
   padding: 16px 18px;
   border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: 14px;
-  background: #fff;
+  background: var(--account-surface-bg, var(--bg-panel));
 }
 
 .danger-content {
@@ -1128,7 +1128,7 @@ input:checked + .slider::before {
   padding: 36px 20px;
   border: 1px dashed rgba(148, 163, 184, 0.24);
   border-radius: 14px;
-  background: rgba(248, 250, 252, 0.72);
+  background: var(--bg-tile);
 }
 
 .login-prompt__content {
