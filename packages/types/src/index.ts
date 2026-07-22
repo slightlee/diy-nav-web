@@ -50,6 +50,11 @@ export interface BackupData {
   settings?: Partial<UserSettings>
 }
 
+/**
+ * Cross-device sync intentionally excludes device preferences.
+ */
+export type SyncData = Pick<BackupData, 'websites' | 'categories' | 'tags'>
+
 export interface BackupMetadata {
   version: string
   createdAt: string
@@ -60,4 +65,9 @@ export interface BackupMetadata {
 export interface BackupPayload {
   meta: BackupMetadata
   data: BackupData
+}
+
+export interface SyncPayload {
+  meta: BackupMetadata
+  data: SyncData
 }

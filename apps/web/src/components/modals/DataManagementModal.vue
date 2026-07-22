@@ -3,53 +3,58 @@
     <section class="data-management-modal__section">
       <div class="section-heading">
         <div>
-          <h3 class="section-title">数据备份</h3>
-          <p class="section-description">保留当前导航数据，必要时可以恢复到历史状态</p>
+          <h3 class="section-title">云同步与备份</h3>
+          <p class="section-description">同一账号登录后自动对齐数据，并支持历史恢复与导入导出</p>
         </div>
       </div>
 
       <div v-if="authStore.isAuthenticated" class="settings-container">
-        <div class="backup-control-grid">
-          <div class="backup-control-card">
-            <div class="backup-control-card__copy">
-              <div class="backup-control-card__title-row">
-                <span class="setting-title">自动备份</span>
-                <span class="state-pill" :class="{ enabled: autoBackup }">
-                  {{ autoBackup ? '已开启' : '未开启' }}
-                </span>
-              </div>
-              <span class="setting-desc">定期自动备份数据到云端。</span>
+        <div class="sync-control-card">
+          <div class="backup-control-card__copy">
+            <div class="backup-control-card__title-row">
+              <span class="setting-title">云同步</span>
+              <span class="state-pill" :class="{ enabled: syncEnabled }">
+                {{ syncEnabled ? '已开启' : '未开启' }}
+              </span>
             </div>
-            <label class="switch">
-              <input v-model="autoBackup" type="checkbox" />
-              <span class="slider round" />
-            </label>
+            <span class="setting-desc">
+              开启后，同一账号在任意浏览器登录都会自动同步网站、分类和标签，并定期备份便于恢复。主题、默认首页等偏好仍仅保存在本机。
+            </span>
           </div>
+          <label class="switch" :class="{ 'is-busy': isTogglingSync }" title="开启或关闭云同步">
+            <input
+              type="checkbox"
+              :checked="syncEnabled"
+              :disabled="isTogglingSync"
+              @change="handleSyncToggle"
+            />
+            <span class="slider round" />
+          </label>
+        </div>
 
-          <div class="backup-control-card">
-            <div class="backup-control-card__copy">
-              <span class="setting-title">手动备份</span>
-              <span class="setting-desc">立即保存一份当前数据快照。</span>
-            </div>
-            <BaseButton
-              variant="primary"
-              shape="pill"
-              size="sm"
-              :loading="isCreating"
-              class="backup-btn"
-              @click="handleManualBackup"
-            >
-              立即备份
-            </BaseButton>
+        <div class="backup-control-card backup-control-card--solo">
+          <div class="backup-control-card__copy">
+            <span class="setting-title">手动备份</span>
+            <span class="setting-desc">立即保存一份当前数据快照到历史备份。</span>
           </div>
+          <BaseButton
+            variant="primary"
+            shape="pill"
+            size="sm"
+            :loading="isCreating"
+            class="backup-btn"
+            @click="handleManualBackup"
+          >
+            立即备份
+          </BaseButton>
         </div>
       </div>
       <div v-else class="login-prompt">
         <div class="login-prompt__content">
           <i class="fas fa-cloud-upload-alt login-prompt__icon" />
-          <h4 class="login-prompt__title">开启云端备份</h4>
+          <h4 class="login-prompt__title">登录后开启云同步</h4>
           <p class="login-prompt__desc">
-            登录后可将数据安全备份至云端，防止丢失，并支持多设备同步。
+            登录同一账号即可在各设备间自动同步导航数据，并支持历史备份与恢复。
           </p>
           <BaseButton variant="primary" shape="pill" size="md" @click="handleGoLogin">
             去登录
@@ -97,6 +102,22 @@
                 <span class="backup-list__time">{{ item.createdAtText }}</span>
                 <span class="backup-list__size">{{ item.sizeText }}</span>
               </div>
+            </div>
+            <div class="backup-list__stats" :title="item.statsTitle">
+              <span class="backup-list__stat">
+                <em>{{ item.websiteCountText }}</em>
+                网站
+              </span>
+              <span class="backup-list__stat-sep" aria-hidden="true">·</span>
+              <span class="backup-list__stat">
+                <em>{{ item.categoryCountText }}</em>
+                分类
+              </span>
+              <span class="backup-list__stat-sep" aria-hidden="true">·</span>
+              <span class="backup-list__stat">
+                <em>{{ item.tagCountText }}</em>
+                标签
+              </span>
             </div>
           </div>
           <div class="action-buttons">
@@ -200,6 +221,7 @@
           <li>所有分类</li>
           <li>所有标签</li>
           <li>所有设置</li>
+          <li v-if="syncEnabled">云同步将关闭，云端同步数据与历史备份会保留</li>
         </ul>
       </div>
       <template #footer>
@@ -261,7 +283,7 @@
           </div>
         </div>
         <p class="import-confirm__warning">
-          文件中包含的数据会覆盖当前对应内容，未包含的数据保持不变。
+          文件中包含的数据会覆盖当前对应内容，未包含的数据保持不变。不会自动新建备份；如需保留当前数据，请先手动备份。
         </p>
       </div>
       <template #footer>
@@ -338,7 +360,9 @@
         <p v-if="backupToRestore" class="danger-confirm__list">
           备份时间：{{ new Date(backupToRestore.created_at).toLocaleString() }}
           <br />
-          恢复后，当前的所有数据将被此备份覆盖。
+          恢复后，当前设备上的网站、分类、标签和设置会被这份备份覆盖。
+          <br />
+          不会自动新建备份；若还需要当前数据，请先点「立即备份」。
         </p>
       </div>
       <template #footer>
@@ -381,6 +405,7 @@ import { useTagStore } from '@/stores/tag'
 import { useAuthStore } from '@/stores/auth'
 import { BaseButton, BaseModal } from '@nav/ui'
 import { useBackup } from '@/composables/useBackup'
+import { useCloudSync } from '@/composables/useCloudSync'
 import { logger } from '@nav/logger'
 import type { BackupItem } from '@/api/backup'
 
@@ -393,16 +418,18 @@ const tagStore = useTagStore()
 const uiStore = useUIStore()
 const settingsStore = useSettingsStore()
 const authStore = useAuthStore()
+const {
+  isEnabled: syncEnabled,
+  isSyncing: syncOperating,
+  isTogglingSync,
+  refreshState: refreshSyncState,
+  setSyncEnabled
+} = useCloudSync()
 
 const handleGoLogin = () => {
   emit('close')
   router.push('/login')
 }
-
-const autoBackup = computed({
-  get: () => settingsStore.settings.autoBackup,
-  set: (v: boolean) => settingsStore.updateSettings({ autoBackup: v })
-})
 
 const fileInputRef = ref<HTMLInputElement>()
 const {
@@ -413,7 +440,6 @@ const {
   isDeleting,
   fetchBackups,
   createBackup: doCreateBackup,
-  createSafetyBackup,
   restoreBackup: doRestoreBackup,
   deleteBackup: doDeleteBackup
 } = useBackup()
@@ -421,9 +447,21 @@ const {
 // Load history on mount
 onMounted(() => {
   if (authStore.isAuthenticated) {
-    fetchBackups()
+    // Always hit the network when opening data management so the list matches server.
+    void fetchBackups()
+    void refreshSyncState().catch(error => {
+      logger.error({ err: error }, 'Failed to load sync state')
+    })
   }
 })
+
+const handleSyncToggle = async () => {
+  const next = !syncEnabled.value
+  const ok = await setSyncEnabled(next)
+  if (!ok) {
+    // Checkbox is controlled by syncEnabled; failed toggle leaves UI unchanged.
+  }
+}
 
 const formatSize = (bytes: number) => {
   if (bytes < 1024) return bytes + ' B'
@@ -431,12 +469,31 @@ const formatSize = (bytes: number) => {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
 }
 
+const formatCount = (value: number | null | undefined) =>
+  typeof value === 'number' && Number.isFinite(value) ? String(value) : '—'
+
 const formattedBackupHistory = computed(() =>
-  backupHistory.value.map(item => ({
-    ...item,
-    createdAtText: new Date(item.created_at).toLocaleString(),
-    sizeText: formatSize(item.size)
-  }))
+  backupHistory.value.map(item => {
+    const websiteCountText = formatCount(item.website_count)
+    const categoryCountText = formatCount(item.category_count)
+    const tagCountText = formatCount(item.tag_count)
+    const hasStats =
+      typeof item.website_count === 'number' ||
+      typeof item.category_count === 'number' ||
+      typeof item.tag_count === 'number'
+
+    return {
+      ...item,
+      createdAtText: new Date(item.created_at).toLocaleString(),
+      sizeText: formatSize(item.size),
+      websiteCountText,
+      categoryCountText,
+      tagCountText,
+      statsTitle: hasStats
+        ? `${websiteCountText} 个网站 · ${categoryCountText} 个分类 · ${tagCountText} 个标签`
+        : '旧备份未记录数量'
+    }
+  })
 )
 
 const exporting = ref(false)
@@ -462,7 +519,7 @@ const handleManualBackup = async () => {
 }
 
 const refreshBackups = () => {
-  fetchBackups({ force: true })
+  void fetchBackups()
 }
 
 const handleRestore = (item: BackupItem) => {
@@ -519,10 +576,7 @@ const confirmImportData = async () => {
   if (!pendingImportData) return
   importing.value = true
   try {
-    if (authStore.isAuthenticated) {
-      const backedUp = await createSafetyBackup()
-      if (!backedUp) return
-    }
+    // Import overwrites local data on purpose; do not silently create a cloud backup first.
     websiteStore.importData(pendingImportData)
     uiStore.showToast('数据导入成功', 'success')
     closeImportConfirm()
@@ -562,8 +616,14 @@ const closeClearConfirm = () => {
 const confirmClearData = async () => {
   if (countdown.value > 0) return
   if (clearing.value) return
+  if (syncOperating.value || isTogglingSync.value) {
+    uiStore.showToast('同步正在处理中，请稍后再试', 'warning')
+    return
+  }
   clearing.value = true
   try {
+    if (syncEnabled.value && !(await setSyncEnabled(false))) return
+
     localStorage.removeItem('websites')
     localStorage.removeItem('categories')
     localStorage.removeItem('tags')
@@ -743,6 +803,15 @@ onUnmounted(() => {
   border-bottom: 1px solid rgba(148, 163, 184, 0.1);
 }
 
+.sync-control-card {
+  min-height: 82px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
 .backup-control-card {
   min-width: 0;
   min-height: 78px;
@@ -758,6 +827,12 @@ onUnmounted(() => {
 
   &:last-child {
     border-right: 0;
+  }
+
+  &--solo {
+    width: 100%;
+    border-right: 0 !important;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
   }
 }
 
@@ -865,7 +940,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 16px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.1);
 
   &:last-child {
@@ -875,13 +950,44 @@ onUnmounted(() => {
 
 .backup-list__main {
   min-width: 0;
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
 }
 
 .backup-list__copy {
   min-width: 0;
+  flex: 0 1 auto;
+}
+
+.backup-list__stats {
+  min-width: 0;
+  flex: 1 1 160px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  padding: 0 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.backup-list__stat {
+  white-space: nowrap;
+
+  em {
+    font-style: normal;
+    font-weight: 650;
+    color: var(--text-main);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.backup-list__stat-sep {
+  color: rgba(148, 163, 184, 0.55);
 }
 
 .backup-list__title-row {
@@ -943,12 +1049,22 @@ onUnmounted(() => {
   width: 44px;
   height: 24px;
   flex-shrink: 0;
+
+  &.is-busy {
+    opacity: 0.65;
+    pointer-events: none;
+  }
 }
 
 .switch input {
   opacity: 0;
   width: 0;
   height: 0;
+}
+
+.switch input:disabled + .slider {
+  cursor: wait;
+  opacity: 0.85;
 }
 
 .slider {
@@ -1166,6 +1282,7 @@ input:checked + .slider::before {
   }
 
   .backup-control-card,
+  .sync-control-card,
   .action-card {
     flex-direction: column;
     align-items: flex-start;
@@ -1183,6 +1300,18 @@ input:checked + .slider::before {
   .backup-list__row {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .backup-list__main {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .backup-list__stats {
+    padding: 0;
+    flex: none;
   }
 
   .danger-zone {

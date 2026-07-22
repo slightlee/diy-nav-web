@@ -5,6 +5,7 @@
 export * from './backup.js'
 export * from './helpers.js'
 export * from './hash.js'
+export * from './sync.js'
 export const stableStringify = (obj: unknown): string => {
   // Handle primitives
   if (obj === null || typeof obj !== 'object') {

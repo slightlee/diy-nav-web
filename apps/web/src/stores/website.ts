@@ -148,9 +148,7 @@ export const useWebsiteStore = defineStore('website', () => {
   const incrementVisitCount = (id: string) => {
     const now = new Date()
     const next = websites.value.map(w =>
-      w.id === id
-        ? { ...w, visitCount: (w.visitCount ?? 0) + 1, lastVisited: now, updatedAt: now }
-        : w
+      w.id === id ? { ...w, visitCount: (w.visitCount ?? 0) + 1, lastVisited: now } : w
     )
     if (next !== websites.value) {
       websites.value = next
@@ -181,7 +179,8 @@ export const useWebsiteStore = defineStore('website', () => {
     const [moved] = arr.splice(sourceIndex, 1)
     const newTargetIndex = arr.findIndex(w => w.id === targetId)
     arr.splice(newTargetIndex, 0, moved)
-    const next = arr.map((w, i) => ({ ...w, order: i }))
+    const now = new Date()
+    const next = arr.map((w, i) => (w.order === i ? w : { ...w, order: i, updatedAt: now }))
     websites.value = next
     saveToLocalStorage()
     bumpDataRevision()
@@ -200,9 +199,12 @@ export const useWebsiteStore = defineStore('website', () => {
     ids.splice(from, 1)
     ids.splice(to, 0, sourceId)
     const orderMap = new Map<string, number>(ids.map((id, idx) => [id, idx]))
-    websites.value = websites.value.map(w =>
-      w.isFavorite ? { ...w, favoriteOrder: orderMap.get(w.id) ?? w.favoriteOrder } : w
-    )
+    const now = new Date()
+    websites.value = websites.value.map(w => {
+      if (!w.isFavorite) return w
+      const favoriteOrder = orderMap.get(w.id) ?? w.favoriteOrder
+      return favoriteOrder === w.favoriteOrder ? w : { ...w, favoriteOrder, updatedAt: now }
+    })
     saveToLocalStorage()
     bumpDataRevision()
   }

@@ -2,7 +2,7 @@ import type { FastifyBaseLogger } from 'fastify'
 
 import { createDatabaseClient } from '@nav/database'
 import { createStorageClientFromEnv, type R2Config } from '@nav/storage'
-import { BackupService, AuthService, AvatarService } from '@nav/core'
+import { BackupService, AuthService, AvatarService, SyncService } from '@nav/core'
 import { config, loadRawConfig } from '@nav/config'
 import { IconService, getProviders } from '@nav/icon-core'
 import { initAIProviderTable } from './lib/ai-provider-store.js'
@@ -41,6 +41,12 @@ export const backupService = new BackupService({
   backupRootDir: config.storage.paths.backups
 })
 
+export const syncService = new SyncService({
+  db: databaseClient,
+  storage: backupStorage,
+  backupService
+})
+
 export const avatarService = new AvatarService({
   storage: publicStorage,
   publicUrlBase: config.storage.publicBaseUrl,
@@ -68,10 +74,12 @@ export const iconService = new IconService(
 export const initServices = async (logger: FastifyBaseLogger): Promise<void> => {
   try {
     await backupService.initTable()
+    await syncService.initTable()
     await authService.initTable()
     await initAIProviderTable(databaseClient)
     logger.info('Services initialized')
   } catch (err) {
     logger.error({ err }, 'Failed to init services')
+    throw err
   }
 }

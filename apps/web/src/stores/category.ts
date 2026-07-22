@@ -74,9 +74,13 @@ export const useCategoryStore = defineStore('category', () => {
   }
 
   const reorderCategories = (newOrder: string[]) => {
+    const now = new Date()
     newOrder.forEach((categoryId, newIndex) => {
       const category = categories.value.find(c => c.id === categoryId)
-      if (category) category.order = newIndex
+      if (category && category.order !== newIndex) {
+        category.order = newIndex
+        category.updatedAt = now
+      }
     })
     saveToLocalStorage()
     bumpDataRevision()

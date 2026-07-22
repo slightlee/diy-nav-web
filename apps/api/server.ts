@@ -9,6 +9,7 @@ import { AppError } from '@nav/core'
 import { configs } from '@nav/logger'
 import iconRoutes from './src/routes/icon.js'
 import backupRoutes from './src/routes/backup.js'
+import syncRoutes from './src/routes/sync.route.js'
 import authRoutes from './src/routes/auth.route.js'
 import aiRoutes from './src/routes/ai.route.js'
 import {
@@ -128,6 +129,7 @@ app.get('/readyz', async () => ({ status: 'ready' }))
 // Register Routes
 await app.register(iconRoutes, { prefix: '/api' })
 await app.register(backupRoutes, { prefix: '/api' })
+await app.register(syncRoutes, { prefix: '/api' })
 await app.register(authProviderPlugin)
 
 // Register OAuth Strategies (DI)

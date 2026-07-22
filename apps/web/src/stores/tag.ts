@@ -75,9 +75,13 @@ export const useTagStore = defineStore('tag', () => {
   }
 
   const reorderTags = (newOrder: string[]) => {
+    const now = new Date()
     newOrder.forEach((tagId, newIndex) => {
       const tag = tags.value.find(t => t.id === tagId)
-      if (tag) tag.order = newIndex
+      if (tag && tag.order !== newIndex) {
+        tag.order = newIndex
+        tag.updatedAt = now
+      }
     })
     saveToLocalStorage()
     bumpDataRevision()

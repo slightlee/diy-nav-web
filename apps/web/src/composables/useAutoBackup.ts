@@ -5,7 +5,8 @@ import { useCategoryStore } from '@/stores/category'
 import { useTagStore } from '@/stores/tag'
 import { useUIStore } from '@/stores/ui'
 import { createBackup } from '@/api/backup'
-import { hasPendingSyncConflict } from '@/composables/useCloudSync'
+import { shouldBlockBackgroundDataOps } from '@/composables/useCloudSync'
+import { invalidateBackupCache } from '@/composables/useBackup'
 import { computeCanonicalHash } from '@/utils/hash'
 import { logger } from '@nav/logger'
 import { BACKUP_CONFIG } from '@/config'
@@ -97,12 +98,27 @@ export function useAutoBackup() {
       return
     }
 
-    if (uiStore.modalState.syncConflict || hasPendingSyncConflict()) {
-      logger.info('[AutoBackup] Sync conflict is pending, skipping automatic backup.')
+    // Never archive while sync is reconciling or a conflict is open — that produced
+    // tiny 700B "auto backups" of the local fork before the user chose how to merge.
+    if (
+      shouldBlockBackgroundDataOps() ||
+      uiStore.modalState.syncConflict ||
+      uiStore.modalState.syncRecovery
+    ) {
+      logger.info('[AutoBackup] Sync reconcile/conflict in progress, skipping automatic backup.')
       return
     }
 
     await runWithBackupLock(async () => {
+      if (
+        shouldBlockBackgroundDataOps() ||
+        uiStore.modalState.syncConflict ||
+        uiStore.modalState.syncRecovery
+      ) {
+        logger.info('[AutoBackup] Sync blocked after lock, skipping automatic backup.')
+        return
+      }
+
       const lastBackupTimeStr = localStorage.getItem('lastAutoBackupTime')
       const lastBackupTime = lastBackupTimeStr ? parseInt(lastBackupTimeStr, 10) : 0
       const now = Date.now()
@@ -153,8 +169,12 @@ export function useAutoBackup() {
           return
         }
 
-        if (uiStore.modalState.syncConflict || hasPendingSyncConflict()) {
-          logger.info('[AutoBackup] Sync conflict became pending, skipping automatic backup.')
+        if (
+          shouldBlockBackgroundDataOps() ||
+          uiStore.modalState.syncConflict ||
+          uiStore.modalState.syncRecovery
+        ) {
+          logger.info('[AutoBackup] Sync blocked before upload, skipping automatic backup.')
           return
         }
 
@@ -164,6 +184,7 @@ export function useAutoBackup() {
           logger.info('[AutoBackup] Backup successful')
           localStorage.setItem('lastAutoBackupTime', Date.now().toString())
           localStorage.setItem('lastAutoBackupHash', currentHash)
+          invalidateBackupCache()
         } else {
           logger.error({ err: res.message }, '[AutoBackup] Backup failed')
         }

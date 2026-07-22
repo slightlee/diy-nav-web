@@ -7,6 +7,9 @@ export interface BackupItem {
   type: 'AUTO' | 'MANUAL'
   size: number
   file_hash: string
+  website_count?: number | null
+  category_count?: number | null
+  tag_count?: number | null
   data?: BackupData
 }
 

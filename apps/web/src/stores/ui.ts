@@ -11,12 +11,14 @@ export const useUIStore = defineStore('ui', () => {
     settings: false,
     dataManagement: false,
     aiSettings: false,
-    syncConflict: false
+    syncConflict: false,
+    syncRecovery: false
   })
 
   const modalData = ref<Partial<ModalPayloads>>({})
   const toasts = ref<ToastMessage[]>([])
   const isLoading = ref(false)
+  const loadingMessage = ref('加载中…')
   const sidebarOpen = ref(false)
 
   const openModal = <K extends keyof ModalState>(modalName: K, data?: ModalPayloads[K]) => {
@@ -57,12 +59,13 @@ export const useUIStore = defineStore('ui', () => {
     if (index !== -1) toasts.value.splice(index, 1)
   }
 
-  const setLoading = (loading: boolean) => {
+  const setLoading = (loading: boolean, message = '加载中…') => {
     isLoading.value = loading
+    if (loading) loadingMessage.value = message
   }
 
-  const showLoading = (message?: string) => {
-    void message
+  const showLoading = (message = '加载中…') => {
+    loadingMessage.value = message
     isLoading.value = true
     return {
       close: () => {
@@ -80,6 +83,7 @@ export const useUIStore = defineStore('ui', () => {
     modalData,
     toasts,
     isLoading,
+    loadingMessage,
     sidebarOpen,
     openModal,
     closeModal,

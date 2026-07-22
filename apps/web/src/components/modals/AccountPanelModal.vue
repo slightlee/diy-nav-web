@@ -196,7 +196,7 @@ const navItems: Array<{
     key: 'data',
     label: '数据管理',
     navDesc: '备份导入',
-    description: '管理备份、恢复、导入导出和清除数据',
+    description: '云同步、历史备份、导入导出和清除数据',
     icon: 'fas fa-database'
   },
   {

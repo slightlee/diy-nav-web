@@ -5,10 +5,22 @@ import type {
   UserSettings,
   BackupData,
   BackupMetadata,
-  BackupPayload
+  BackupPayload,
+  SyncData,
+  SyncPayload
 } from '@nav/types'
 
-export type { Website, Category, Tag, UserSettings, BackupData, BackupMetadata, BackupPayload }
+export type {
+  Website,
+  Category,
+  Tag,
+  UserSettings,
+  BackupData,
+  BackupMetadata,
+  BackupPayload,
+  SyncData,
+  SyncPayload
+}
 
 export interface ToastMessage {
   id: string
@@ -26,6 +38,7 @@ export interface ModalState {
   dataManagement: boolean
   aiSettings: boolean
   syncConflict: boolean
+  syncRecovery: boolean
 }
 
 export type AccountPanelTab = 'account' | 'data' | 'ai' | 'settings'
@@ -47,7 +60,15 @@ export interface ModalPayloads {
   settings?: undefined
   dataManagement?: undefined
   aiSettings?: undefined
-  syncConflict?: { localCount: number; remoteCount: number; remoteDate: Date }
+  syncConflict?: {
+    localStats: { websites: number; categories: number; tags: number }
+    remoteStats: { websites: number; categories: number; tags: number }
+    remoteDate: Date
+  }
+  syncRecovery?: {
+    localStats: { websites: number; categories: number; tags: number }
+    failedAt: Date
+  }
 }
 
 export const ERROR_DUPLICATE_NAME = 'DUPLICATE_NAME'

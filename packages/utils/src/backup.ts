@@ -1,75 +1,64 @@
-import { Website, BackupData } from '@nav/types'
+import { Website, BackupData, SyncData, Category, Tag } from '@nav/types'
+import { normalizeSyncData } from './sync.js'
 
 /**
  * Supported input types for backup data cleaning
  */
 type BackupInput =
   | BackupData
+  | SyncData
   | Partial<Website>[]
   | { websites: Partial<Website>[] }
   | null
   | undefined
 
 /**
- * Clean data for semantic hashing.
- * Removes volatile fields (visitCount, lastVisited, etc.) from the data.
- * This ensures that the hash represents the structural content, not usage stats.
- *
- * @param data - Backup data in various formats (BackupData, Website[], or legacy format)
- * @returns Cleaned data with volatile fields removed
+ * Clean data for semantic hashing / backup content hash.
+ * For structured backup/sync data, uses {@link normalizeSyncData} so every field
+ * is always present (empty string / 0 / false / [] / null) — never omitted.
  */
 export function cleanDataForHash(data: BackupInput): BackupInput {
   if (!data) return data
 
-  // Legacy case: Array of websites
   if (Array.isArray(data)) {
-    return cleanWebsites(data)
+    // Legacy: website list only — still force a fixed subset of fields
+    return data.map(w => ({
+      id: w.id ?? '',
+      name: (w.name ?? '').trim(),
+      url: (w.url ?? '').trim(),
+      description: (w.description ?? '').trim(),
+      categoryId: w.categoryId ?? '',
+      tagIds: [...(w.tagIds || [])].map(String).sort(),
+      favicon: (w.favicon ?? '').trim(),
+      order: typeof w.order === 'number' ? w.order : 0,
+      isFavorite: !!w.isFavorite,
+      favoriteOrder: w.isFavorite && typeof w.favoriteOrder === 'number' ? w.favoriteOrder : null,
+      visitCount: 0,
+      lastVisited: undefined,
+      isOnline: true
+    })) as Partial<Website>[]
   }
 
-  // Proper BackupData object
   if (isBackupData(data)) {
-    // Optimization: Avoid JSON.parse(JSON.stringify) which is slow and memory intensive.
-    // We use Shallow Copy + Map to achieve the same result efficiently.
-    // Since cleanWebsites returns a NEW array with NEW objects, original websites are untouched.
+    const normalized = normalizeSyncData(data)
     return {
-      ...data,
-      websites: data.websites ? cleanWebsites(data.websites) : []
+      websites: normalized.websites as unknown as Partial<Website>[],
+      categories: normalized.categories as unknown as Partial<Category>[],
+      tags: normalized.tags as unknown as Partial<Tag>[],
+      ...(data.settings ? { settings: data.settings } : {})
     }
   }
 
-  // Allow partial legacy structures (object with websites property)
   if ('websites' in data && Array.isArray(data.websites)) {
     return {
       ...data,
-      websites: cleanWebsites(data.websites)
+      websites: cleanDataForHash(data.websites) as Partial<Website>[]
     }
   }
 
   return data
 }
 
-/**
- * Clean individual websites by removing volatile fields
- * @param websites - Array of website objects (partial or complete)
- * @returns Array of cleaned website objects
- */
-function cleanWebsites(websites: Partial<Website>[]): Partial<Website>[] {
-  return websites.map(w => ({
-    ...w,
-    // Explicitly clone array to detach from Vue Proxy for Worker compatibility
-    tagIds: w.tagIds ? [...w.tagIds] : [],
-    visitCount: 0,
-    lastVisited: undefined,
-    updatedAt: undefined,
-    isOnline: true
-  }))
-}
-
-/**
- * Type guard to check if data is a valid BackupData object
- * @param data - Unknown data to check
- * @returns True if data is BackupData with valid structure
- */
 function isBackupData(data: unknown): data is BackupData {
   return (
     typeof data === 'object' &&
