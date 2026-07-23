@@ -238,15 +238,18 @@ export const useWebsiteStore = defineStore('website', () => {
     // We only backup if critical data changes:
     // 1. Websites list (order, content) - excluding stats
     // 2. Categories / Tags
-    // Use shared utility from @nav/core for consistency with server
-    const cleanWebsites = cleanDataForHash(websites.value) as Website[]
+    // Use the same normalization as the server so timestamps and derived counts
+    // cannot trigger backups when the actual synchronized data is unchanged.
+    const normalized = cleanDataForHash({
+      websites: [...toRaw(websites.value)],
+      categories: [...toRaw(categoryStore.categories)],
+      tags: [...toRaw(tagStore.tags)]
+    }) as BackupData
 
-    // Use toRaw to unwrap proxies for Worker compatibility (avoids DataCloneError)
-    // Faster and more consistent than reading from localStorage
     return {
-      websites: cleanWebsites,
-      categories: toRaw(categoryStore.categories),
-      tags: toRaw(tagStore.tags)
+      websites: normalized.websites,
+      categories: normalized.categories,
+      tags: normalized.tags
     }
   }
 

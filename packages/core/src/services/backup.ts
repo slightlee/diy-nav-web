@@ -132,24 +132,43 @@ export class BackupService {
 
     const { websiteCount, categoryCount, tagCount } = this.extractCounts(data)
 
-    await this.db.execute(
-      `INSERT INTO data_backups (
+    const insertSql =
+      type === 'AUTO'
+        ? `INSERT INTO data_backups (
          user_id, name, type, storage_key, file_hash, size, created_at,
          website_count, category_count, tag_count
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        userId,
-        name,
-        type,
-        storageKey,
-        fileHash,
-        size,
-        timestamp,
-        websiteCount,
-        categoryCount,
-        tagCount
-      ]
-    )
+       )
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       WHERE NOT EXISTS (
+         SELECT 1 FROM data_backups WHERE user_id = ? AND type = ? AND file_hash = ?
+       )`
+        : `INSERT INTO data_backups (
+         user_id, name, type, storage_key, file_hash, size, created_at,
+         website_count, category_count, tag_count
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    const insertParams = [
+      userId,
+      name,
+      type,
+      storageKey,
+      fileHash,
+      size,
+      timestamp,
+      websiteCount,
+      categoryCount,
+      tagCount,
+      ...(type === 'AUTO' ? [userId, type, fileHash] : [])
+    ]
+    const insertResult = await this.db.execute(insertSql, insertParams)
+    if (type === 'AUTO' && insertResult.changes === 0) {
+      try {
+        await this.storage.delete(storageKey)
+      } catch (error) {
+        this.logger.error({ err: error, storageKey }, 'Failed to remove duplicate backup object')
+      }
+      this.logger.info({ userId, fileHash }, 'Skipped concurrent auto backup: content unchanged')
+      return null
+    }
 
     // Cleanup old backups
     await this.cleanupOldBackups(userId, type)

@@ -408,6 +408,18 @@ export function useCloudSync() {
         }
 
         const local = exportSyncPayload()
+        const localHash = await computePayloadHash(local)
+
+        // The state endpoint already carries the canonical cloud hash. Avoid
+        // downloading the full snapshot when this device is already in sync.
+        // A pending conflict still requires the frozen remote snapshot to
+        // resolve the user's decision safely.
+        if (state.currentHash && localHash === state.currentHash && !hasPendingSyncConflict()) {
+          setBaseHash(state.currentHash)
+          clearConflictPending()
+          return
+        }
+
         let remote: SyncPayload | null = null
         if (state.currentHash) {
           try {
@@ -441,7 +453,6 @@ export function useCloudSync() {
         // Same counts + same business fields must NOT open a conflict modal.
         if (await tryResolveEqualContent(local, remote, state)) return
 
-        const localHash = await computePayloadHash(local)
         const baseHash = getBaseHash()
 
         // While a previous conflict is still pending, never auto pull (would wipe local deletes).

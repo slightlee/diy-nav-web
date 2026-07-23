@@ -77,6 +77,22 @@ describe('BackupService', () => {
       expect(mockStorage.upload).not.toHaveBeenCalled()
     })
 
+    it('should skip a concurrent auto backup with the same semantic hash', async () => {
+      const userId = 'user1'
+      const data = { foo: 'bar' }
+      vi.spyOn(mockDb, 'first').mockResolvedValue(null)
+      vi.spyOn(mockDb, 'execute').mockImplementation(async sql => {
+        if (sql.includes('INSERT INTO data_backups')) return { changes: 0 }
+        return {}
+      })
+
+      const result = await backupService.createBackup(userId, data, 'AUTO')
+
+      expect(result).toBeNull()
+      expect(mockStorage.upload).toHaveBeenCalled()
+      expect(mockStorage.delete).toHaveBeenCalled()
+    })
+
     it('should cleanup old backups if limit exceeded', async () => {
       const userId = 'user1'
       const data = { foo: 'bar' }
