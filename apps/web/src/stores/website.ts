@@ -11,7 +11,6 @@ import type {
   Tag
 } from '@/types'
 import { generateId } from '@/utils/helpers'
-import { useSettingsStore } from './settings'
 import { useCategoryStore } from './category'
 import { useTagStore } from './tag'
 import { cleanDataForHash } from '@nav/utils'
@@ -22,7 +21,6 @@ export const useWebsiteStore = defineStore('website', () => {
   const sortField = ref<SortField>('order')
   const sortOrder = ref<SortOrder>('asc')
   const dataRevision = ref(0)
-  const settingsStore = useSettingsStore()
   const categoryStore = useCategoryStore()
   const tagStore = useTagStore()
 
@@ -221,8 +219,7 @@ export const useWebsiteStore = defineStore('website', () => {
     const data: BackupData = {
       websites: websites.value,
       categories: [...categoryStore.categories],
-      tags: [...tagStore.tags],
-      settings: settingsStore.settings
+      tags: [...tagStore.tags]
     }
 
     return {
@@ -240,7 +237,7 @@ export const useWebsiteStore = defineStore('website', () => {
   const getHashData = () => {
     // We only backup if critical data changes:
     // 1. Websites list (order, content) - excluding stats
-    // 2. Categories / Tags / Settings
+    // 2. Categories / Tags
     // Use shared utility from @nav/core for consistency with server
     const cleanWebsites = cleanDataForHash(websites.value) as Website[]
 
@@ -249,8 +246,7 @@ export const useWebsiteStore = defineStore('website', () => {
     return {
       websites: cleanWebsites,
       categories: toRaw(categoryStore.categories),
-      tags: toRaw(tagStore.tags),
-      settings: toRaw(settingsStore.settings)
+      tags: toRaw(tagStore.tags)
     }
   }
 
@@ -301,9 +297,8 @@ export const useWebsiteStore = defineStore('website', () => {
       tagStore.overwriteTags(data.tags as Partial<Tag>[])
     }
 
-    if (data.settings) {
-      settingsStore.updateSettings(data.settings)
-    }
+    // Legacy backup payloads may still contain settings, but account settings
+    // are now managed by the user preferences API and must not be restored here.
   }
 
   const overwriteWebsites = (data: Partial<Website>[]) => {

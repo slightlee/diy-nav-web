@@ -26,14 +26,14 @@ request.onUnauthorized(() => {
   router.push('/login')
 })
 
-// 应用启动时通过 httpOnly Cookie 验证会话并刷新用户信息
-const authStore = useAuthStore()
-void authStore.fetchUser()
-
 const settingsStore = useSettingsStore()
 const websiteStore = useWebsiteStore()
 const categoryStore = useCategoryStore()
 const tagStore = useTagStore()
+
+// 应用启动时通过 httpOnly Cookie 验证会话并刷新用户信息
+const authStore = useAuthStore()
+void authStore.fetchUser().then(() => settingsStore.loadRemotePreferences(authStore.user?.id))
 
 settingsStore.loadSettings()
 websiteStore.initializeData()

@@ -36,13 +36,7 @@
     </aside>
 
     <section class="account-panel__content">
-      <header class="content-header">
-        <div class="content-title-group">
-          <h3>{{ activeItem.label }}</h3>
-          <p>{{ activeItem.description }}</p>
-        </div>
-      </header>
-
+      <!-- 左侧已有菜单标签，右侧不再重复大标题/副标题 -->
       <div class="content-body">
         <div v-if="activeTab === 'account'" class="account-section">
           <section class="account-card">
@@ -231,9 +225,6 @@ watch(
   { immediate: true }
 )
 
-const activeItem = computed(
-  () => navItems.find(item => item.key === activeTab.value) || navItems[0]
-)
 const displayName = computed(() => authStore.user?.nickname || authStore.user?.email || '当前用户')
 const displayEmail = computed(() => authStore.user?.email || '第三方账号登录')
 const userInitial = computed(() => displayName.value.trim().charAt(0).toUpperCase() || '?')
@@ -480,34 +471,6 @@ const handleLogout = async () => {
   flex-direction: column;
   overflow: hidden;
   background: var(--account-shell-bg);
-}
-
-.content-header {
-  min-height: 72px;
-  padding: 0 30px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
-  background: var(--account-header-bg);
-  display: flex;
-  align-items: center;
-
-  h3 {
-    margin: 0;
-    color: var(--text-main);
-    font-size: 20px;
-    font-weight: 740;
-    letter-spacing: 0;
-  }
-
-  p {
-    margin: 2px 0 0;
-    color: var(--text-secondary);
-    font-size: 13px;
-    line-height: 1.5;
-  }
-}
-
-.content-title-group {
-  min-width: 0;
 }
 
 .content-body {
@@ -766,7 +729,7 @@ const handleLogout = async () => {
 
 :deep(.data-management-modal__section),
 :deep(.ai-config__section),
-:deep(.settings-section) {
+:deep(.prefs-card) {
   border-color: rgba(148, 163, 184, 0.16);
   background: var(--account-surface-bg);
   box-shadow: none;
@@ -774,7 +737,7 @@ const handleLogout = async () => {
 
 :deep(.data-management-modal),
 :deep(.ai-config),
-:deep(.settings-content) {
+:deep(.prefs) {
   max-width: none;
 }
 
@@ -835,19 +798,8 @@ const handleLogout = async () => {
     display: none;
   }
 
-  .content-header,
   .content-body {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-
-  .content-header {
-    min-height: 76px;
-    padding-top: 0;
-  }
-
-  .content-body {
-    padding-top: 18px;
+    padding: 18px 16px 24px;
   }
 
   .account-danger {

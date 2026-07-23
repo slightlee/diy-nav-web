@@ -2,7 +2,13 @@ import type { FastifyBaseLogger } from 'fastify'
 
 import { createDatabaseClient } from '@nav/database'
 import { createStorageClientFromEnv, type R2Config } from '@nav/storage'
-import { BackupService, AuthService, AvatarService, SyncService } from '@nav/core'
+import {
+  BackupService,
+  AuthService,
+  AvatarService,
+  PreferencesService,
+  SyncService
+} from '@nav/core'
 import { config, loadRawConfig } from '@nav/config'
 import { IconService, getProviders } from '@nav/icon-core'
 import { initAIProviderTable } from './lib/ai-provider-store.js'
@@ -58,6 +64,8 @@ export const authService = new AuthService({
   avatarService
 })
 
+export const preferencesService = new PreferencesService(databaseClient)
+
 // --- Icon Services ---
 const iconConfig = loadRawConfig()
 const providers = getProviders(iconConfig)
@@ -76,6 +84,7 @@ export const initServices = async (logger: FastifyBaseLogger): Promise<void> => 
     await backupService.initTable()
     await syncService.initTable()
     await authService.initTable()
+    await preferencesService.initTable()
     await initAIProviderTable(databaseClient)
     logger.info('Services initialized')
   } catch (err) {

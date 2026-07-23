@@ -41,12 +41,27 @@ export interface UserSettings {
   theme: 'light' | 'dark' | 'auto'
   autoBackup: boolean
   defaultHome?: 'home' | 'all'
+  /** 顶部导航显示名称（建议 ≤6 字，与顶栏展示一致） */
+  navTitle?: string
+  /**
+   * 顶部导航图标：
+   * - http(s)/data/相对路径 → 图片
+   * - 其它短字符 → 文字徽标回退（历史兼容）
+   */
+  navIcon?: string
+}
+
+export interface UserPreferences {
+  navTitle: string
+  navIcon: string
+  defaultHome: 'home' | 'all'
 }
 
 export interface BackupData {
   websites: Partial<Website>[]
   categories: Partial<Category>[]
   tags: Partial<Tag>[]
+  /** @deprecated Kept only to parse legacy backup files; not exported or restored. */
   settings?: Partial<UserSettings>
 }
 

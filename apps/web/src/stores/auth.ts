@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { request } from '@/utils/http'
+import { useSettingsStore } from '@/stores/settings'
 
 export interface User {
   id: string
@@ -39,6 +40,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     if (res.success && res.data) {
       setCurrentUser(res.data.user)
+      void useSettingsStore().loadRemotePreferences(res.data.user.id)
       return true
     }
     throw new Error(res.message || 'Login failed')
@@ -55,6 +57,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (res.success && res.data) {
       isNewRegistration.value = !!res.data.isNewUser
       setCurrentUser(res.data.user)
+      void useSettingsStore().loadRemotePreferences(res.data.user.id)
       return true
     }
     throw new Error(res.message || 'OAuth Login failed')

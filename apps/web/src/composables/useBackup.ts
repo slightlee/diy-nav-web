@@ -44,8 +44,7 @@ export function useBackup() {
   const fetchBackups = async (options: FetchBackupsOptions = {}) => {
     // Default to network fetch. Cache is only used when explicitly requested
     // (e.g. optimistic paint) — opening data management must not show stale rows.
-    const useCache = options.force === false && backupCache
-    if (useCache) {
+    if (options.force === false && backupCache) {
       backups.value = backupCache
       return
     }

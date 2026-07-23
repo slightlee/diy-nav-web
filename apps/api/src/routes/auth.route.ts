@@ -5,9 +5,10 @@ import {
   registerSchema,
   loginSchema,
   providerLoginSchema,
+  updatePreferencesSchema,
   updateProfileSchema
 } from '../schemas/auth.schema.js'
-import { authService } from '../services.js'
+import { authService, preferencesService } from '../services.js'
 import { generateAccessToken } from '../lib/token.js'
 import { toUserDto } from '../lib/dto.js'
 import { clearAuthCookie, setAuthCookie } from '../lib/auth-cookie.js'
@@ -108,6 +109,27 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
         data: {
           user: toUserDto(user)
         }
+      }
+    }
+  )
+
+  app.get('/auth/preferences', { onRequest: [app.authenticate] }, async req => {
+    return {
+      success: true,
+      data: await preferencesService.get(req.user.sub)
+    }
+  })
+
+  app.patch(
+    '/auth/preferences',
+    {
+      onRequest: [app.authenticate],
+      schema: { body: updatePreferencesSchema }
+    },
+    async req => {
+      return {
+        success: true,
+        data: await preferencesService.update(req.user.sub, req.body)
       }
     }
   )

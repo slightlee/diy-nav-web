@@ -628,6 +628,7 @@ const confirmClearData = async () => {
     localStorage.removeItem('categories')
     localStorage.removeItem('tags')
     localStorage.removeItem('userSettings')
+    settingsStore.clearPreferencesCache(authStore.user?.id)
 
     websiteStore.initializeData()
     categoryStore.initializeData()

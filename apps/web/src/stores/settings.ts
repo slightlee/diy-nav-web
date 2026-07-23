@@ -1,28 +1,77 @@
 import { defineStore } from 'pinia'
-import { readonly, ref } from 'vue'
-import type { UserSettings } from '@/types'
+import { readonly, ref, watch } from 'vue'
+import type { UserPreferences, UserSettings } from '@nav/types'
+import { getPreferences, updatePreferences } from '@/api/preferences'
 
-const DEFAULT_SETTINGS: UserSettings = {
+/** 顶栏名称最多 6 个字素（中文/字母/emoji 各计 1） */
+export const NAV_TITLE_MAX = 6
+
+export const DEFAULT_SETTINGS: UserSettings = {
   theme: 'auto',
   autoBackup: true,
-  defaultHome: 'home'
+  defaultHome: 'home',
+  navTitle: 'DIY 导航',
+  navIcon: 'D'
+}
+
+const USER_PREFERENCES_CACHE_PREFIX = 'userPreferences:'
+
+export function clampNavTitle(value: string): string {
+  return Array.from(value.trim()).slice(0, NAV_TITLE_MAX).join('')
+}
+
+function normalizeSettings(raw: Partial<UserSettings> | null | undefined): UserSettings {
+  const theme = raw?.theme
+  const validTheme =
+    theme === 'light' || theme === 'dark' || theme === 'auto' ? theme : DEFAULT_SETTINGS.theme
+  const home = raw?.defaultHome
+  const validHome = home === 'home' || home === 'all' ? home : DEFAULT_SETTINGS.defaultHome
+
+  const title =
+    typeof raw?.navTitle === 'string' && raw.navTitle.trim()
+      ? clampNavTitle(raw.navTitle)
+      : DEFAULT_SETTINGS.navTitle
+
+  const icon =
+    typeof raw?.navIcon === 'string' && raw.navIcon.trim()
+      ? raw.navIcon.trim().slice(0, 512)
+      : DEFAULT_SETTINGS.navIcon
+
+  return {
+    theme: validTheme,
+    autoBackup: typeof raw?.autoBackup === 'boolean' ? raw.autoBackup : DEFAULT_SETTINGS.autoBackup,
+    defaultHome: validHome,
+    navTitle: title,
+    navIcon: icon
+  }
+}
+
+export function isNavIconUrl(value: string): boolean {
+  return /^(https?:\/\/|data:image\/|\/)/i.test(value.trim())
+}
+
+export function isNavIconFa(value: string): boolean {
+  const v = value.trim()
+  return /^(fa[srlbd]?|fa)\s+fa-[\w-]+/i.test(v) || /^fa-[\w-]+(\s+fa-[\w-]+)*$/i.test(v)
 }
 
 export const useSettingsStore = defineStore('settings', () => {
   const settings = ref<UserSettings>({ ...DEFAULT_SETTINGS })
   let mql: MediaQueryList | null = null
   let mqlHandler: ((e: MediaQueryListEvent) => void) | null = null
+  let remoteLoadPromise: Promise<void> | null = null
+  let remoteLoadUserId: string | null = null
+
+  const applyDocumentTitle = () => {
+    if (typeof document === 'undefined') return
+    document.title = settings.value.navTitle || DEFAULT_SETTINGS.navTitle || 'DIY 导航'
+  }
 
   const loadSettings = () => {
     const stored = localStorage.getItem('userSettings')
     if (stored) {
       try {
-        const parsed = JSON.parse(stored)
-        settings.value = {
-          theme: parsed.theme ?? DEFAULT_SETTINGS.theme,
-          autoBackup: parsed.autoBackup ?? DEFAULT_SETTINGS.autoBackup,
-          defaultHome: parsed.defaultHome ?? DEFAULT_SETTINGS.defaultHome
-        }
+        settings.value = normalizeSettings(JSON.parse(stored))
       } catch {
         settings.value = { ...DEFAULT_SETTINGS }
       }
@@ -30,29 +79,125 @@ export const useSettingsStore = defineStore('settings', () => {
       settings.value = { ...DEFAULT_SETTINGS }
     }
     applyTheme()
+    applyDocumentTitle()
   }
 
   const updateSettings = (updates: Partial<UserSettings>) => {
-    settings.value = { ...settings.value, ...updates }
+    settings.value = normalizeSettings({ ...settings.value, ...updates })
     saveToLocalStorage()
     applyTheme()
+    applyDocumentTitle()
   }
 
   const resetSettings = () => {
     settings.value = { ...DEFAULT_SETTINGS }
     saveToLocalStorage()
     applyTheme()
+    applyDocumentTitle()
   }
 
   const setTheme = (theme: UserSettings['theme']) => {
-    settings.value.theme = theme
-    saveToLocalStorage()
-    applyTheme()
+    updateSettings({ theme })
   }
 
   const setDefaultHome = (home: NonNullable<UserSettings['defaultHome']>) => {
-    settings.value.defaultHome = home
-    saveToLocalStorage()
+    updateSettings({ defaultHome: home })
+  }
+
+  const setNavBrand = (payload: { navTitle?: string; navIcon?: string }) => {
+    updateSettings(payload)
+  }
+
+  const currentPreferences = (): UserPreferences => ({
+    navTitle: settings.value.navTitle || DEFAULT_SETTINGS.navTitle || 'DIY 导航',
+    navIcon: settings.value.navIcon || DEFAULT_SETTINGS.navIcon || 'D',
+    defaultHome: settings.value.defaultHome === 'all' ? 'all' : 'home'
+  })
+
+  const getPreferencesCacheKey = (userId: string) => `${USER_PREFERENCES_CACHE_PREFIX}${userId}`
+
+  const readCachedPreferences = (userId: string): UserPreferences | null => {
+    try {
+      // 清空 userSettings 后视为本地设置缓存已失效，允许重新从服务端恢复。
+      if (!localStorage.getItem('userSettings')) return null
+      const raw = localStorage.getItem(getPreferencesCacheKey(userId))
+      if (!raw) return null
+      const parsed = JSON.parse(raw) as Partial<UserPreferences>
+      if (
+        typeof parsed.navTitle !== 'string' ||
+        typeof parsed.navIcon !== 'string' ||
+        (parsed.defaultHome !== 'home' && parsed.defaultHome !== 'all')
+      ) {
+        return null
+      }
+      return {
+        navTitle: parsed.navTitle,
+        navIcon: parsed.navIcon,
+        defaultHome: parsed.defaultHome
+      }
+    } catch {
+      return null
+    }
+  }
+
+  const cachePreferences = (userId: string, preferences: UserPreferences) => {
+    localStorage.setItem(getPreferencesCacheKey(userId), JSON.stringify(preferences))
+  }
+
+  const saveRemotePreferences = async (userId?: string) => {
+    if (!userId) return
+    const preferences = currentPreferences()
+    try {
+      const res = await updatePreferences(preferences)
+      if (res.success) cachePreferences(userId, preferences)
+    } catch {
+      // 本地设置仍然有效，服务端失败时等待下次登录或用户修改后重试。
+    }
+  }
+
+  const loadRemotePreferences = (userId?: string): Promise<void> => {
+    if (!userId) return Promise.resolve()
+
+    const cached = readCachedPreferences(userId)
+    // 先用缓存完成首屏展示，但不能因此跳过服务端校验，否则其他设备的修改会过期。
+    if (cached) updateSettings(cached)
+
+    if (remoteLoadPromise) {
+      if (remoteLoadUserId === userId) return remoteLoadPromise
+      return remoteLoadPromise.then(() => loadRemotePreferences(userId))
+    }
+
+    remoteLoadUserId = userId
+    remoteLoadPromise = (async () => {
+      try {
+        const res = await getPreferences()
+        if (!res.success || !res.data) return
+
+        if (res.data.initialized) {
+          const preferences: UserPreferences = {
+            navTitle: res.data.navTitle,
+            navIcon: res.data.navIcon,
+            defaultHome: res.data.defaultHome
+          }
+          updateSettings(preferences)
+          cachePreferences(userId, preferences)
+        } else {
+          // 首次迁移保留当前设备已有的品牌配置，不用默认值覆盖用户设置。
+          await saveRemotePreferences(userId)
+        }
+      } catch {
+        // 未登录或网络暂不可用时继续使用本地缓存。
+      } finally {
+        remoteLoadPromise = null
+        remoteLoadUserId = null
+      }
+    })()
+
+    return remoteLoadPromise
+  }
+
+  const clearPreferencesCache = (userId?: string) => {
+    if (userId) localStorage.removeItem(getPreferencesCacheKey(userId))
   }
 
   const applyTheme = () => {
@@ -83,14 +228,10 @@ export const useSettingsStore = defineStore('settings', () => {
 
   const importSettings = (data: string) => {
     try {
-      const imported = JSON.parse(data)
-      settings.value = {
-        theme: imported.theme ?? DEFAULT_SETTINGS.theme,
-        autoBackup: imported.autoBackup ?? DEFAULT_SETTINGS.autoBackup,
-        defaultHome: imported.defaultHome ?? DEFAULT_SETTINGS.defaultHome
-      }
+      settings.value = normalizeSettings(JSON.parse(data))
       saveToLocalStorage()
       applyTheme()
+      applyDocumentTitle()
       return true
     } catch {
       return false
@@ -115,13 +256,11 @@ export const useSettingsStore = defineStore('settings', () => {
       if (backup.categories) localStorage.setItem('categories', backup.categories)
       if (backup.tags) localStorage.setItem('tags', backup.tags)
       if (backup.settings) {
-        const parsed = JSON.parse(backup.settings)
-        settings.value = {
-          theme: parsed.theme ?? DEFAULT_SETTINGS.theme,
-          autoBackup: parsed.autoBackup ?? DEFAULT_SETTINGS.autoBackup,
-          defaultHome: parsed.defaultHome ?? DEFAULT_SETTINGS.defaultHome
-        }
+        const parsed =
+          typeof backup.settings === 'string' ? JSON.parse(backup.settings) : backup.settings
+        settings.value = normalizeSettings(parsed)
         applyTheme()
+        applyDocumentTitle()
       }
       saveToLocalStorage()
       return true
@@ -130,6 +269,12 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
+  // Keep tab title in sync if settings mutated elsewhere
+  watch(
+    () => settings.value.navTitle,
+    () => applyDocumentTitle()
+  )
+
   return {
     settings: readonly(settings),
     loadSettings,
@@ -137,6 +282,10 @@ export const useSettingsStore = defineStore('settings', () => {
     resetSettings,
     setTheme,
     setDefaultHome,
+    setNavBrand,
+    saveRemotePreferences,
+    loadRemotePreferences,
+    clearPreferencesCache,
     exportSettings,
     importSettings,
     backupData,
