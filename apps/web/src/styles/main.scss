@@ -13,7 +13,7 @@
 
 body {
   font-family: var(--font-family);
-  background-color: var(--color-neutral-50);
+  background-color: var(--bg-body);
   color: var(--color-neutral-800);
   line-height: 1.6;
   min-height: 100vh;
@@ -22,12 +22,13 @@ body {
   text-rendering: optimizeLegibility;
 }
 html {
+  background-color: var(--bg-body);
   // Firefox 滚动条样式
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
 }
 
-[data-theme='dark'] html {
+html[data-theme='dark'] {
   scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
 
@@ -75,6 +76,7 @@ html {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: var(--bg-body);
 }
 
 // 主题变量支持
@@ -259,10 +261,33 @@ html {
   color: var(--color-white);
 }
 
-// 焦点轮廓样式
-:focus-visible {
+// 只给可交互元素显示键盘焦点，避免 body/html 获得焦点时在整个视口绘制轮廓。
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+[tabindex]:not([tabindex='-1']):focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+html:focus,
+body:focus,
+#app:focus,
+html:focus-visible,
+body:focus-visible,
+#app:focus-visible {
+  outline: none !important;
+}
+
+html,
+body,
+#app,
+.app-container {
+  outline: none !important;
+  border: none !important;
 }
 
 // 减少动画偏好
