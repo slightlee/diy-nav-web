@@ -43,14 +43,14 @@ defineProps({
   width: 100%;
   height: 100%;
   border-radius: 18px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   color: #fff;
   font-size: 32px;
   font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 12px 24px rgba(var(--color-primary-rgb), 0.3);
   text-decoration: none;
   transition:
     transform 0.2s ease,
@@ -60,7 +60,7 @@ defineProps({
 /* Hover effect only if it's a link */
 a.logo:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 20px rgba(37, 99, 235, 0.45);
+  box-shadow: 0 12px 20px rgba(var(--color-primary-rgb), 0.45);
 }
 
 .logo-pulse {
@@ -68,7 +68,7 @@ a.logo:hover {
   width: 100%;
   height: 100%;
   border-radius: 18px;
-  background: rgba(37, 99, 235, 0.4);
+  background: rgba(var(--color-primary-rgb), 0.4);
   z-index: 1;
   animation: pulse 2s infinite;
 }

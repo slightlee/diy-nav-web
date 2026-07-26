@@ -245,7 +245,7 @@ const goToAll = () => {
     border: 1px solid var(--color-primary);
 
     &:hover {
-      background: rgba(59, 130, 246, 0.05);
+      background: color-mix(in srgb, var(--color-primary) 5%, transparent);
     }
   }
 }

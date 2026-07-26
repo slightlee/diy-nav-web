@@ -237,9 +237,9 @@ defineEmits<{
   }
 
   &.active {
-    background-color: rgba(37, 99, 235, 0.1);
-    color: var(--color-primary);
-    border-color: var(--color-primary);
+    background-color: color-mix(in srgb, var(--color-primary) 9%, var(--bg-tile));
+    color: var(--color-primary-dark);
+    border-color: color-mix(in srgb, var(--color-primary) 42%, var(--border-tile));
   }
 }
 
@@ -271,9 +271,9 @@ defineEmits<{
   }
 
   &.active {
-    background-color: var(--color-primary);
-    color: var(--color-white);
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+    background-color: var(--primary-soft);
+    color: var(--color-primary-dark);
+    font-weight: 650;
   }
 }
 
@@ -349,7 +349,7 @@ defineEmits<{
   &:hover {
     border-color: var(--color-primary);
     color: var(--color-primary);
-    background-color: rgba(37, 99, 235, 0.05);
+    background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
   }
 }
 </style>

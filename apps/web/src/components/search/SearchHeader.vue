@@ -58,7 +58,7 @@ defineEmits<{
   }
 
   &.base-input__wrapper--focused {
-    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.15);
+    box-shadow: 0 8px 30px rgba(var(--color-primary-rgb), 0.16);
     border-color: var(--color-primary);
   }
 }
@@ -72,17 +72,19 @@ defineEmits<{
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 
   &.base-input__wrapper--focused {
-    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.25);
+    box-shadow: 0 8px 30px rgba(var(--color-primary-rgb), 0.24);
   }
 }
 
 .search-button {
-  background: var(--color-primary);
+  background: transparent;
   border: none;
-  color: white;
+  color: var(--color-primary);
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
   padding: 0;
   display: flex;
   align-items: center;
@@ -95,12 +97,12 @@ defineEmits<{
   margin-right: 6px;
 
   &:hover {
-    opacity: 0.9;
-    transform: scale(1.05);
+    background: var(--primary-soft);
+    color: var(--color-primary-dark);
   }
 
   &:active {
-    transform: scale(0.95);
+    background: color-mix(in srgb, var(--color-primary) 14%, transparent);
   }
 }
 </style>

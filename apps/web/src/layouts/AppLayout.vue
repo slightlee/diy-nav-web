@@ -12,6 +12,7 @@
       v-if="uiStore.modalState.addSite"
       :is-open="uiStore.modalState.addSite"
       :title="addSiteTitle"
+      modal-class="website-form-modal"
       @close="closeAddSite"
     >
       <AddSiteModal
@@ -173,6 +174,16 @@ watch(
   border-radius: 999px;
 }
 
+.website-form-modal .modal-header,
+.website-form-modal .modal-body {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.website-form-modal {
+  border: 1px solid var(--color-border);
+}
+
 .modal-overlay:has(.modal-size-xl) {
   backdrop-filter: none;
 }
@@ -181,6 +192,12 @@ watch(
   .modal-size-xl {
     border-radius: 0;
     border: 0;
+  }
+
+  .website-form-modal .modal-header,
+  .website-form-modal .modal-body {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 }
 </style>

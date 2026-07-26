@@ -92,7 +92,7 @@ const getTagName = (id: string) => {
   font-weight: 500;
 
   &.category-pill {
-    background-color: rgba(37, 99, 235, 0.1);
+    background-color: var(--primary-soft);
     color: var(--color-primary);
   }
 

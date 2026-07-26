@@ -162,8 +162,8 @@ const formatDate = (date: Date) => {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 3px solid rgba(59, 130, 246, 0.18);
-  border-top-color: var(--color-primary, #3b82f6);
+  border: 3px solid rgba(var(--color-primary-rgb), 0.18);
+  border-top-color: var(--color-primary);
   animation: conflict-spin 0.75s linear infinite;
 }
 
@@ -247,8 +247,8 @@ const formatDate = (date: Date) => {
   background: var(--bg-tile, var(--bg-card, #fff));
 
   &.cloud {
-    border-color: color-mix(in srgb, var(--color-primary, #3b82f6) 35%, transparent);
-    background: color-mix(in srgb, var(--color-primary, #3b82f6) 6%, transparent);
+    border-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
+    background: color-mix(in srgb, var(--color-primary) 6%, transparent);
   }
 
   .label {
@@ -328,7 +328,7 @@ const formatDate = (date: Date) => {
   }
 
   .btn-use-cloud {
-    background: var(--color-primary, #3b82f6);
+    background: var(--color-primary);
     color: #fff;
     border: none;
 
@@ -353,12 +353,12 @@ const formatDate = (date: Date) => {
   }
 
   .btn-merge {
-    background: color-mix(in srgb, var(--color-primary, #3b82f6) 8%, transparent);
-    color: var(--color-primary, #3b82f6);
-    border: 1px solid color-mix(in srgb, var(--color-primary, #3b82f6) 45%, transparent);
+    background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+    color: var(--color-primary);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 45%, transparent);
 
     &:hover:not(:disabled) {
-      background: color-mix(in srgb, var(--color-primary, #3b82f6) 14%, transparent);
+      background: color-mix(in srgb, var(--color-primary) 14%, transparent);
     }
   }
 }

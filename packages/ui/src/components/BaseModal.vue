@@ -11,7 +11,7 @@
         <div
           ref="modalRef"
           class="modal-container"
-          :class="[`modal-size-${size}`, { 'modal-fullscreen': fullscreen }]"
+          :class="[`modal-size-${size}`, modalClass, { 'modal-fullscreen': fullscreen }]"
           role="dialog"
           :aria-modal="true"
           :aria-labelledby="titleId"
@@ -48,6 +48,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 export interface Props {
   isOpen: boolean
   title?: string
+  modalClass?: string
   size?: 'sm' | 'md' | 'lg' | 'xl'
   fullscreen?: boolean
   showCloseButton?: boolean

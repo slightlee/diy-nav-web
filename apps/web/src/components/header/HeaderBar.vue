@@ -169,7 +169,7 @@ const onThemeHover = (hover: boolean) => {
     Surface #ffffff  (--bg-panel)
     Ink     #1f2933  (--text-main)
     Mute    #6b7280  (--text-secondary)
-    Signal  #3b82f6  (--color-primary) — brand mark + active tab only
+    Signal  var(--color-primary) — fallback mark + active tab only
 
   Signature: active tab ink flush to the rail edge (bookmark tab feel).
   Anti-pattern avoided: solid blue marketing CTA, pill login, nested gray chips.

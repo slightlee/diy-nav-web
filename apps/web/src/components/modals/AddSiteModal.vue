@@ -1,195 +1,208 @@
 <template>
   <div class="add-site-modal">
     <form class="add-site-modal__form" @submit.prevent="handleSubmit">
-      <div class="add-site-modal__form-group">
-        <BaseInput
-          ref="nameInputRef"
-          v-model="formData.name"
-          label="网站名称"
-          placeholder="请输入网站名称"
-          required
-          :error-message="errors.name"
-          @blur="validateField('name')"
-        />
-      </div>
-
-      <div class="add-site-modal__form-group">
-        <BaseInput
-          v-model="formData.url"
-          label="网站地址"
-          type="url"
-          placeholder="https://example.com"
-          required
-          :error-message="errors.url"
-          @blur="handleUrlBlur"
-          @input="handleUrlInput"
-        />
-      </div>
-
-      <div class="add-site-modal__form-group">
-        <div class="description-header">
-          <label class="add-site-modal__label">网站描述</label>
-          <button
-            v-if="isAIAvailable"
-            type="button"
-            class="ai-generate-btn"
-            :disabled="!formData.url || !formData.name || aiGenerating"
-            @click="handleAIGenerate"
-          >
-            <i :class="aiGenerating ? 'fas fa-spinner fa-spin' : 'fas fa-wand-magic-sparkles'" />
-            {{ aiGenerating ? '生成中...' : 'AI 生成' }}
-          </button>
-        </div>
-        <BaseInput
-          v-model="formData.description"
-          type="textarea"
-          placeholder="简单描述这个网站的用途..."
-          :maxlength="100"
-          show-char-count
-          :rows="2"
-          autosize
-        />
-      </div>
-
-      <div v-if="!props.contextCategoryId" class="add-site-modal__form-group">
-        <label class="add-site-modal__label add-site-modal__label--required">分类</label>
-        <div ref="categorySelectRef" class="category-select">
-          <button
-            ref="categoryTriggerRef"
-            type="button"
-            class="category-select__trigger"
-            :class="{
-              'category-select__trigger--open': categorySelectOpen,
-              'category-select__trigger--error': errors.categoryId
-            }"
-            aria-haspopup="listbox"
-            aria-controls="add-site-category-options"
-            :aria-expanded="categorySelectOpen"
-            :aria-invalid="Boolean(errors.categoryId)"
-            aria-required="true"
-            @click="toggleCategorySelect"
-            @keydown="handleCategoryTriggerKeydown"
-          >
-            <span
-              class="category-select__value"
-              :class="{ 'category-select__value--placeholder': !selectedCategory }"
-            >
-              {{ selectedCategory?.name || '请选择分类' }}
-            </span>
-            <i
-              class="fas fa-chevron-down category-select__chevron"
-              :class="{ 'category-select__chevron--open': categorySelectOpen }"
-              aria-hidden="true"
+      <section class="form-section form-section--basic">
+        <div class="form-grid">
+          <div class="add-site-modal__form-group">
+            <BaseInput
+              ref="nameInputRef"
+              v-model="formData.name"
+              label="网站名称"
+              placeholder="请输入网站名称"
+              required
+              :error-message="errors.name"
+              @blur="validateField('name')"
             />
-          </button>
+          </div>
 
-          <Transition name="category-select-menu">
-            <div
-              v-if="categorySelectOpen"
-              id="add-site-category-options"
-              class="category-select__menu"
-              role="listbox"
-              aria-label="选择分类"
-              @keydown="handleCategoryOptionKeydown"
+          <div class="add-site-modal__form-group">
+            <BaseInput
+              v-model="formData.url"
+              label="网站地址"
+              type="url"
+              placeholder="https://example.com"
+              required
+              :error-message="errors.url"
+              @blur="handleUrlBlur"
+              @input="handleUrlInput"
+            />
+          </div>
+        </div>
+
+        <div class="add-site-modal__form-group description-group">
+          <div class="description-header">
+            <label class="add-site-modal__label">网站描述</label>
+          </div>
+          <BaseInput
+            v-model="formData.description"
+            type="textarea"
+            placeholder="简单描述这个网站的用途..."
+            :maxlength="100"
+            :show-char-count="false"
+            :rows="2"
+            autosize
+          />
+          <div class="description-meta">
+            <button
+              v-if="isAIAvailable"
+              type="button"
+              class="ai-generate-btn"
+              :disabled="!formData.url || !formData.name || aiGenerating"
+              @click="handleAIGenerate"
             >
+              <i :class="aiGenerating ? 'fas fa-spinner fa-spin' : 'fas fa-wand-magic-sparkles'" />
+              {{ aiGenerating ? '生成中...' : 'AI 生成' }}
+            </button>
+            <span class="description-count">{{ formData.description.length }}/100</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="form-section form-section--organize">
+        <div class="organize-grid">
+          <div v-if="!props.contextCategoryId" class="add-site-modal__form-group">
+            <label class="add-site-modal__label add-site-modal__label--required">分类</label>
+            <div ref="categorySelectRef" class="category-select">
               <button
-                v-for="(category, index) in categories"
-                :key="category.id"
+                ref="categoryTriggerRef"
                 type="button"
-                class="category-select__option"
+                class="category-select__trigger"
                 :class="{
-                  'category-select__option--selected': category.id === formData.categoryId
+                  'category-select__trigger--open': categorySelectOpen,
+                  'category-select__trigger--error': errors.categoryId
                 }"
-                role="option"
-                :aria-selected="category.id === formData.categoryId"
-                :tabindex="activeCategoryIndex === index ? 0 : -1"
-                @click="selectCategory(category.id)"
+                aria-haspopup="listbox"
+                aria-controls="add-site-category-options"
+                :aria-expanded="categorySelectOpen"
+                :aria-invalid="Boolean(errors.categoryId)"
+                aria-required="true"
+                @click="toggleCategorySelect"
+                @keydown="handleCategoryTriggerKeydown"
               >
-                <span>{{ category.name }}</span>
+                <span
+                  class="category-select__value"
+                  :class="{ 'category-select__value--placeholder': !selectedCategory }"
+                >
+                  {{ selectedCategory?.name || '请选择分类' }}
+                </span>
                 <i
-                  v-if="category.id === formData.categoryId"
-                  class="fas fa-check"
+                  class="fas fa-chevron-down category-select__chevron"
+                  :class="{ 'category-select__chevron--open': categorySelectOpen }"
                   aria-hidden="true"
                 />
               </button>
-              <p v-if="categories.length === 0" class="category-select__empty">暂无分类</p>
+
+              <Transition name="category-select-menu">
+                <div
+                  v-if="categorySelectOpen"
+                  id="add-site-category-options"
+                  class="category-select__menu"
+                  role="listbox"
+                  aria-label="选择分类"
+                  @keydown="handleCategoryOptionKeydown"
+                >
+                  <button
+                    v-for="(category, index) in categories"
+                    :key="category.id"
+                    type="button"
+                    class="category-select__option"
+                    :class="{
+                      'category-select__option--selected': category.id === formData.categoryId
+                    }"
+                    role="option"
+                    :aria-selected="category.id === formData.categoryId"
+                    :tabindex="activeCategoryIndex === index ? 0 : -1"
+                    @click="selectCategory(category.id)"
+                  >
+                    <span>{{ category.name }}</span>
+                    <i
+                      v-if="category.id === formData.categoryId"
+                      class="fas fa-check"
+                      aria-hidden="true"
+                    />
+                  </button>
+                  <p v-if="categories.length === 0" class="category-select__empty">暂无分类</p>
+                </div>
+              </Transition>
             </div>
-          </Transition>
-        </div>
-        <p v-if="errors.categoryId" class="add-site-modal__error">
-          {{ errors.categoryId }}
-        </p>
-      </div>
+            <p v-if="errors.categoryId" class="add-site-modal__error">
+              {{ errors.categoryId }}
+            </p>
+          </div>
 
-      <div class="add-site-modal__form-group">
-        <label class="add-site-modal__label">标签</label>
-        <div class="tag-selector">
-          <button
-            v-for="tag in tags"
-            :key="tag.id"
-            type="button"
-            class="tag-selector__item"
-            :class="{ 'tag-selector__item--active': formData.tagIds.includes(tag.id) }"
-            @click="toggleTag(tag.id)"
-          >
-            {{ tag.name }}
-          </button>
-        </div>
-      </div>
-
-      <div class="add-site-modal__form-group">
-        <label class="add-site-modal__label">网站图标</label>
-        <div class="favicon-section">
-          <div class="favicon-main">
-            <!-- Left: Preview -->
-            <div class="favicon-preview-box">
-              <div v-if="faviconLoading" class="favicon-preview-loading">
-                <i class="fas fa-spinner fa-spin" />
-              </div>
-              <img
-                v-else-if="finalFaviconUrl"
-                :src="finalFaviconUrl"
-                class="favicon-preview-img"
-                alt="Favicon"
-              />
-              <div v-else class="favicon-preview-letter" :style="{ backgroundColor: '#111827' }">
-                {{ letterFaviconChar }}
-              </div>
-            </div>
-
-            <!-- Right: Controls -->
-            <div class="favicon-buttons">
+          <div class="add-site-modal__form-group organize-grid__tags">
+            <label class="add-site-modal__label">标签</label>
+            <div class="tag-selector">
               <button
+                v-for="tag in tags"
+                :key="tag.id"
                 type="button"
-                class="favicon-btn favicon-btn--api"
-                :class="{ 'favicon-btn--active': faviconSource === 'api' }"
-                :disabled="faviconLoading || !formData.url.trim()"
-                @click="handleFaviconSourceChange('api')"
+                class="tag-selector__item"
+                :class="{ 'tag-selector__item--active': formData.tagIds.includes(tag.id) }"
+                @click="toggleTag(tag.id)"
               >
-                <i class="fas fa-search" />
-                <span>自动获取图标</span>
-              </button>
-
-              <button
-                type="button"
-                class="favicon-btn favicon-btn--default"
-                :class="{ 'favicon-btn--active': faviconSource === 'default' }"
-                :disabled="faviconLoading"
-                @click="handleFaviconSourceChange('default')"
-              >
-                <i class="fas fa-rotate-right" />
-                <span>使用默认图标</span>
+                {{ tag.name }}
               </button>
             </div>
           </div>
+        </div>
+      </section>
 
-          <div class="favicon-info">
-            <div class="favicon-help-text">
-              输入网址后自动获取图标(优先使用缓存),点击"自动获取图标"按钮可强制刷新最新图标。
+      <section class="form-section form-section--favicon">
+        <div class="add-site-modal__form-group">
+          <label class="add-site-modal__label">网站图标</label>
+          <div class="favicon-section">
+            <div class="favicon-main">
+              <!-- Left: Preview -->
+              <div class="favicon-preview-box">
+                <div v-if="faviconLoading" class="favicon-preview-loading">
+                  <i class="fas fa-spinner fa-spin" />
+                </div>
+                <img
+                  v-else-if="finalFaviconUrl"
+                  :src="finalFaviconUrl"
+                  class="favicon-preview-img"
+                  alt="Favicon"
+                />
+                <div v-else class="favicon-preview-default" aria-label="默认网站图标">
+                  <i class="fas fa-globe" aria-hidden="true" />
+                </div>
+              </div>
+
+              <!-- Right: Controls -->
+              <div class="favicon-buttons">
+                <button
+                  type="button"
+                  class="favicon-btn favicon-btn--api"
+                  :class="{ 'favicon-btn--active': faviconSource === 'api' }"
+                  :disabled="faviconLoading || !formData.url.trim()"
+                  @click="handleFaviconSourceChange('api')"
+                >
+                  <i class="fas fa-search" />
+                  <span>自动获取图标</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="favicon-btn favicon-btn--default"
+                  :class="{ 'favicon-btn--active': faviconSource === 'default' }"
+                  :disabled="faviconLoading"
+                  @click="handleFaviconSourceChange('default')"
+                >
+                  <i class="fas fa-rotate-right" />
+                  <span>使用默认图标</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="favicon-info">
+              <div class="favicon-help-text">
+                输入网址后自动获取图标，点击“自动获取图标”可强制刷新。
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       <div class="add-site-modal__actions">
         <BaseButton
@@ -207,7 +220,6 @@
           html-type="submit"
           class="modal-action-btn"
         >
-          <i class="fas fa-save" />
           {{ '保存修改' }}
         </BaseButton>
       </div>
@@ -447,17 +459,6 @@ const handleClose = () => {
 
 const faviconSource = ref<'default' | 'api'>('default')
 
-const letterFaviconChar = computed(() => {
-  const n = formData.value.name?.trim()
-  if (n && n.length > 0) return n[0].toUpperCase()
-  try {
-    const u = new URL(formatUrl(formData.value.url))
-    return u.hostname[0].toUpperCase()
-  } catch {
-    return 'W'
-  }
-})
-
 const finalFaviconUrl = computed(() => {
   if (faviconSource.value === 'api' && apiFaviconUrl.value) {
     return apiFaviconUrl.value
@@ -624,51 +625,112 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
 
 .add-site-modal {
   width: 100%;
-  max-width: 640px;
+  max-width: 680px;
 }
 
 .add-site-modal__form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
+}
+
+.form-section {
+  padding: 2px 0;
+  margin-bottom: 12px;
+
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.organize-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .add-site-modal__form-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+}
+
+:deep(.base-input__label) {
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+:deep(.base-input__wrapper) {
+  min-height: 40px;
+  border-radius: 10px;
+  background-color: var(--bg-tile);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
+}
+
+:deep(.base-input__wrapper--focused) {
+  background-color: var(--bg-panel);
+}
+
+:deep(.base-input__inner) {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+:deep(.base-input__textarea) {
+  min-height: 72px;
+  line-height: 1.55;
 }
 
 .description-header {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+}
+
+.description-group {
+  margin-top: 12px;
+}
+
+.description-meta {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  min-height: 24px;
 }
 
 .ai-generate-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  border-radius: 9999px;
+  min-height: 24px;
+  padding: 0 6px;
+  border: none;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: #fff;
-  border: none;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+  background: transparent;
+  color: var(--color-primary-dark);
+  box-shadow: none;
 
   i {
     font-size: 11px;
   }
 
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
-    transform: translateY(-1px);
+    background: var(--primary-soft);
   }
 
   &:disabled {
@@ -678,9 +740,16 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
   }
 }
 
+.description-count {
+  font-size: 12px;
+  line-height: 1;
+  color: var(--text-muted);
+}
+
 .add-site-modal__label {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--text-main);
 }
 
@@ -705,7 +774,9 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
   border-radius: $border-radius-md;
   background-color: var(--bg-tile);
   color: var(--text-main);
-  font: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
   text-align: left;
   cursor: pointer;
   transition:
@@ -833,13 +904,19 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
 .tag-selector {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 7px;
+}
+
+.organize-grid__tags {
+  gap: 6px;
 }
 
 .tag-selector__item {
-  padding: 4px 12px;
+  min-height: 30px;
+  padding: 0 11px;
   border-radius: 9999px;
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.5;
   background-color: var(--bg-tile);
   color: var(--text-secondary);
   border: 1px solid transparent;
@@ -853,29 +930,33 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
 }
 
 .tag-selector__item--active {
-  background-color: rgba(59, 130, 246, 0.1);
-  color: #2563eb;
-  border-color: rgba(59, 130, 246, 0.2);
+  background-color: var(--primary-soft);
+  color: var(--color-primary-dark);
+  border-color: transparent;
   font-weight: 600;
 }
 
 .favicon-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg-tile) 72%, transparent);
 }
 
 .favicon-main {
   display: flex;
   gap: 12px;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .favicon-preview-box {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
@@ -887,25 +968,18 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
   background-color: var(--bg-tile);
 }
 
-.favicon-preview-letter {
+.favicon-preview-default {
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  font-size: 20px;
-  font-weight: 700;
-  font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+  color: var(--color-primary);
+  background: var(--primary-soft);
+
+  i {
+    font-size: 19px;
+  }
 }
 
 .favicon-preview-loading {
@@ -921,13 +995,14 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
 
 .favicon-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
 .favicon-info {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .favicon-source-text {
@@ -963,6 +1038,7 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
 
 .favicon-help-text {
   font-size: 12px;
+  line-height: 1.5;
   color: var(--text-muted);
 }
 
@@ -970,13 +1046,13 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px;
-  border-radius: 9999px;
+  padding: 6px 8px;
+  border-radius: 10px;
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
-  border: 1px solid var(--border-tile);
-  background-color: var(--bg-panel);
+  border: 1px solid transparent;
+  background-color: transparent;
   color: var(--text-secondary);
   font-weight: 500;
   min-height: 36px;
@@ -987,7 +1063,6 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
 
   &:hover:not(:disabled) {
     background-color: var(--bg-tile-hover);
-    border-color: var(--border-tile-hover);
   }
 
   &:disabled {
@@ -1004,26 +1079,13 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
 }
 
 .favicon-btn--active {
-  &.favicon-btn--api {
-    background-color: #3b82f6;
-    border-color: #3b82f6;
-    color: #fff;
+  background-color: var(--primary-soft);
+  border-color: transparent;
+  color: var(--color-primary-dark);
+  box-shadow: none;
 
-    &:hover {
-      background-color: #2563eb;
-      border-color: #2563eb;
-    }
-  }
-
-  &.favicon-btn--default {
-    background-color: var(--bg-panel);
-    border-color: #3b82f6;
-    color: #3b82f6;
-    box-shadow: 0 0 0 1px #3b82f6;
-
-    &:hover {
-      background-color: rgba(59, 130, 246, 0.05);
-    }
+  &:hover {
+    background-color: color-mix(in srgb, var(--color-primary) 13%, var(--bg-panel));
   }
 }
 
@@ -1031,9 +1093,8 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  margin-top: 12px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-border);
+  margin-top: 0;
+  padding-top: 2px;
 }
 
 .cancel-btn {
@@ -1052,7 +1113,27 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
   font-size: 14px !important;
 }
 
+:deep(.modal-action-btn.base-button--disabled) {
+  opacity: 1;
+  background: var(--bg-tile) !important;
+  border-color: var(--border-tile) !important;
+  color: var(--text-muted) !important;
+}
+
 @include mobile {
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .organize-grid {
+    gap: 16px;
+  }
+
+  .form-section {
+    margin-bottom: 20px;
+  }
+
   .category-select__trigger {
     min-height: 44px;
   }
@@ -1064,6 +1145,11 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
 
   .favicon-btn {
     justify-content: center;
+  }
+
+  .favicon-main {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 </style>

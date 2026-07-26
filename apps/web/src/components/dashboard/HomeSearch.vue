@@ -3,9 +3,11 @@
     <div class="search-wrapper" :class="{ focused: isFocused }">
       <div class="engine-selector" @click="toggleEngineMenu">
         <div class="current-engine">
-          <span class="engine-icon" :style="{ backgroundColor: currentEngine.color }">
-            {{ currentEngine.icon }}
-          </span>
+          <img
+            :src="currentEngine.iconUrl"
+            :alt="`${currentEngine.name} 图标`"
+            class="engine-icon"
+          />
           <span class="engine-name">{{ currentEngine.name }}</span>
           <i class="fas fa-chevron-down arrow-icon" />
         </div>
@@ -17,9 +19,7 @@
             class="engine-option"
             @click.stop="selectEngine(engine)"
           >
-            <span class="engine-icon sm" :style="{ backgroundColor: engine.color }">
-              {{ engine.icon }}
-            </span>
+            <img :src="engine.iconUrl" :alt="`${engine.name} 图标`" class="engine-icon sm" />
             <span>{{ engine.name }}</span>
           </div>
         </div>
@@ -50,26 +50,33 @@ import { ref, computed } from 'vue'
 interface SearchEngine {
   key: string
   name: string
-  icon: string
-  color: string
+  iconUrl: string
   url: string
 }
 
 const engines: SearchEngine[] = [
-  { key: 'baidu', name: '百度', icon: 'B', color: '#2932e1', url: 'https://www.baidu.com/s?wd=' },
+  {
+    key: 'baidu',
+    name: '百度',
+    iconUrl: '/icons/search-engines/baidu.svg',
+    url: 'https://www.baidu.com/s?wd='
+  },
   {
     key: 'google',
     name: 'Google',
-    icon: 'G',
-    color: '#4285f4',
+    iconUrl: '/icons/search-engines/google.svg',
     url: 'https://www.google.com/search?q='
   },
-  { key: 'bing', name: 'Bing', icon: 'b', color: '#00809d', url: 'https://www.bing.com/search?q=' },
+  {
+    key: 'bing',
+    name: 'Bing',
+    iconUrl: '/icons/search-engines/bing.svg',
+    url: 'https://www.bing.com/search?q='
+  },
   {
     key: 'github',
     name: 'GitHub',
-    icon: 'gh',
-    color: '#24292e',
+    iconUrl: '/icons/search-engines/github.svg',
     url: 'https://github.com/search?q='
   }
 ]
@@ -137,7 +144,7 @@ const handleSearch = () => {
 
   &.focused {
     border-color: var(--color-primary);
-    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.15);
+    box-shadow: 0 8px 30px rgba(var(--color-primary-rgb), 0.16);
   }
 }
 
@@ -166,17 +173,15 @@ const handleSearch = () => {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  font-size: 14px;
+  flex: 0 0 auto;
+  object-fit: contain;
 
   &.sm {
     width: 24px;
     height: 24px;
-    font-size: 12px;
   }
 }
 
@@ -239,23 +244,25 @@ const handleSearch = () => {
   height: 40px;
   border-radius: 50%;
   border: none;
-  background: var(--color-primary);
-  color: white;
+  background: transparent;
+  color: var(--color-primary);
   font-size: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
   margin-right: 6px;
 
   &:hover {
-    opacity: 0.9;
-    transform: scale(1.05);
+    background: var(--primary-soft);
+    color: var(--color-primary-dark);
   }
 
   &:active {
-    transform: scale(0.95);
+    background: color-mix(in srgb, var(--color-primary) 14%, transparent);
   }
 }
 
@@ -275,7 +282,7 @@ const handleSearch = () => {
     background: var(--bg-tile);
 
     &.focused {
-      box-shadow: 0 8px 30px rgba(37, 99, 235, 0.25);
+      box-shadow: 0 8px 30px rgba(var(--color-primary-rgb), 0.24);
     }
   }
 

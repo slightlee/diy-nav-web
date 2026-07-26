@@ -283,7 +283,7 @@ const onFavoriteToggle = (websiteId: string) => {
 
   &:hover {
     border-color: var(--color-primary);
-    background-color: rgba(37, 99, 235, 0.02);
+    background-color: color-mix(in srgb, var(--color-primary) 2%, transparent);
 
     .add-icon {
       background-color: var(--color-primary);
@@ -381,7 +381,7 @@ const onFavoriteToggle = (websiteId: string) => {
     font-size: 12px;
 
     &.active {
-      background-color: rgba(37, 99, 235, 0.1);
+      background-color: var(--primary-soft);
       color: var(--color-primary);
       border-color: var(--color-primary);
       box-shadow: none;

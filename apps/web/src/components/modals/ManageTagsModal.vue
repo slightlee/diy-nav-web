@@ -315,7 +315,7 @@ const confirmDeleteTag = () => {
   &:hover {
     border-color: var(--color-primary);
     color: var(--color-primary);
-    background-color: rgba(37, 99, 235, 0.02);
+    background-color: color-mix(in srgb, var(--color-primary) 2%, transparent);
   }
 }
 

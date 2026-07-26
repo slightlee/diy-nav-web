@@ -1,9 +1,9 @@
 <template>
-  <div class="empty-state" :class="[`size-${size}`]">
+  <div class="empty-state" :class="[`size-${size}`, `type-${type}`]">
     <div class="empty-icon-wrapper">
       <slot name="icon">
-        <div class="default-icon-bg">
-          <i class="fas fa-inbox" />
+        <div class="default-icon-bg" aria-hidden="true">
+          <i :class="iconClass" />
         </div>
       </slot>
     </div>
@@ -40,6 +40,20 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const hint = computed(() => props.hint ?? '')
+const iconClass = computed(() => {
+  switch (props.type) {
+    case 'no-websites':
+      return 'fas fa-compass'
+    case 'no-tags':
+      return 'fas fa-tags'
+    case 'no-categories':
+      return 'fas fa-folder-open'
+    case 'no-results':
+      return 'fas fa-search'
+    default:
+      return 'fas fa-inbox'
+  }
+})
 const message = computed(() => {
   if (props.message) return props.message
   const t = (props.type || '').toLowerCase()
@@ -58,34 +72,34 @@ const message = computed(() => {
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: $spacing-2xl;
-  padding: $spacing-2xl * 2 $spacing-2xl;
+  gap: $spacing-xl;
+  padding: 56px $spacing-2xl 48px;
   color: $color-neutral-600;
   text-align: center;
   max-width: 600px;
   margin: 0 auto;
 
   &.size-small {
-    gap: $spacing-xl;
-    padding: $spacing-2xl $spacing-xl;
+    gap: $spacing-lg;
+    padding: 44px $spacing-xl 36px;
 
     .default-icon-bg {
-      width: 80px;
-      height: 80px;
-      border-radius: $border-radius-2xl;
-      font-size: 32px;
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      font-size: 24px;
 
       &::after {
-        border-radius: $border-radius-lg;
+        border-radius: 14px;
       }
     }
 
     .empty-title {
-      font-size: $font-size-lg;
+      font-size: 20px;
     }
 
     .empty-desc {
-      font-size: $font-size-sm;
+      font-size: 15px;
     }
   }
 }
@@ -97,16 +111,16 @@ const message = computed(() => {
 }
 
 .default-icon-bg {
-  width: 120px;
-  height: 120px;
-  border-radius: 40px;
-  background: linear-gradient(135deg, #e0e7ff 0%, $color-neutral-100 100%);
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  background: var(--primary-soft, #eef3ff);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 48px;
-  color: #818cf8;
-  box-shadow: $shadow-lg;
+  font-size: 30px;
+  color: var(--color-primary, $color-primary);
+  box-shadow: none;
   position: relative;
 
   &::after {
@@ -114,8 +128,8 @@ const message = computed(() => {
     position: absolute;
     width: 80%;
     height: 80%;
-    background: rgba($color-white, 0.5);
-    border-radius: 30px;
+    background: rgba($color-white, 0.42);
+    border-radius: 16px;
     top: 50%;
     left: 50%;
     transform: translate(-30%, -30%);
@@ -131,32 +145,37 @@ const message = computed(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-xl;
+  gap: $spacing-lg;
 }
 
 .empty-title {
-  font-size: $font-size-xl;
+  font-size: 22px;
   font-weight: $font-weight-bold;
   color: $color-neutral-800;
   margin: 0;
 }
 
 .empty-desc {
-  font-size: $font-size-base;
+  font-size: 15px;
   color: $color-neutral-600;
   line-height: $line-height-relaxed;
-  max-width: 480px;
+  max-width: 520px;
   margin: 0;
 }
 
 .empty-actions {
-  margin-top: $spacing-xl;
-  margin-bottom: $spacing-xl;
+  margin-top: $spacing-md;
 }
 
 .empty-hint {
   font-size: $font-size-sm;
   color: $color-neutral-500;
-  margin-top: $spacing-xl;
+  margin: $spacing-md 0 0;
+  padding-top: $spacing-lg;
+  border-top: 1px solid var(--border-tile, $color-border);
+}
+
+.type-no-websites .empty-hint {
+  color: var(--text-muted, $color-neutral-500);
 }
 </style>

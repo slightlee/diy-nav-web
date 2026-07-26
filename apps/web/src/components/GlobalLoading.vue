@@ -52,8 +52,8 @@ const uiStore = useUIStore()
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 3px solid rgba(59, 130, 246, 0.2);
-  border-top-color: var(--color-primary, #3b82f6);
+  border: 3px solid rgba(var(--color-primary-rgb), 0.2);
+  border-top-color: var(--color-primary);
   animation: global-loading-spin 0.75s linear infinite;
 }
 

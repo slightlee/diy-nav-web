@@ -591,7 +591,7 @@ const handleRegister = async () => {
 .input-wrap:focus-within {
   border-color: var(--color-primary);
   background: var(--bg-tile-hover);
-  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 0 0 1px rgba(var(--color-primary-rgb), 0.35);
 }
 
 .input-icon {
@@ -645,7 +645,7 @@ input::placeholder {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  box-shadow: 0 20px 36px rgba(37, 99, 235, 0.45);
+  box-shadow: 0 20px 36px rgba(var(--color-primary-rgb), 0.45);
   transition: all var(--transition-fast);
 }
 

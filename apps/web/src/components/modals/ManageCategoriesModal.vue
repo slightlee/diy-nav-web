@@ -302,7 +302,7 @@ const onDrop = (e: DragEvent, targetCategory: Category) => {
 
   &.is-editing {
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.1);
     cursor: default;
   }
 }
@@ -424,7 +424,7 @@ const onDrop = (e: DragEvent, targetCategory: Category) => {
   &:hover {
     border-color: var(--color-primary);
     color: var(--color-primary);
-    background-color: rgba(37, 99, 235, 0.02);
+    background-color: color-mix(in srgb, var(--color-primary) 2%, transparent);
   }
 }
 

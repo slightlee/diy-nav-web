@@ -82,6 +82,7 @@ html[data-theme='dark'] {
 // 主题变量支持
 :root {
   --color-primary: #{$color-primary};
+  --color-primary-light: #{$color-primary-light};
   --color-primary-dark: #{$color-primary-dark};
   --color-primary-rgb: #{$color-primary-rgb};
   --color-secondary: #{$color-secondary};
@@ -142,11 +143,11 @@ html[data-theme='dark'] {
   --bg-tile: #f9fafb;
   --bg-tile-hover: #fff;
   --border-tile: #f3f4f6;
-  --border-tile-hover: #e0e7ff;
+  --border-tile-hover: #d4e0ff;
   --text-main: #1f2933;
   --text-secondary: #6b7280;
   --text-muted: #9ca3af;
-  --primary-soft: #e6f0ff;
+  --primary-soft: #eef3ff;
 
   // AI Assistant specific
   --ai-panel-bg: rgba(255, 255, 255, 0.95);
@@ -225,7 +226,7 @@ html[data-theme='dark'] {
   --text-main: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-muted: #64748b;
-  --primary-soft: #0b1120;
+  --primary-soft: #101b35;
   --bg-panel: #060a12;
   --bg-tile: #0f172a;
   --bg-tile-hover: #1e293b;
