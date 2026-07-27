@@ -180,9 +180,9 @@ const onThemeHover = (hover: boolean) => {
   --rail-pad: 20px;
   --hit: 32px;
 
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 100;
+  flex: 0 0 var(--rail-h);
   height: var(--rail-h);
   background: var(--bg-panel);
   /* Hairline only — drop shadow is reserved for content cards */

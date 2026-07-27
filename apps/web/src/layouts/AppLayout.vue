@@ -124,16 +124,25 @@ watch(
 @use '@/styles/mixins' as *;
 
 .app-container {
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-body);
+  overflow: hidden;
 }
 
 .main-content {
   flex: 1;
+  min-height: 0;
   width: 100%;
+  overflow: hidden auto;
   padding: var(--spacing-xl) 0;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
 }
 
 .container {
