@@ -40,6 +40,8 @@ export interface Tag {
 export interface UserSettings {
   theme: 'light' | 'dark' | 'auto'
   autoBackup: boolean
+  /** 是否播放 AI 助手贴边燕子动效 */
+  aiAnimationEnabled?: boolean
   defaultHome?: 'home' | 'all'
   /** 顶部导航显示名称（建议 ≤6 字，与顶栏展示一致） */
   navTitle?: string
@@ -55,6 +57,7 @@ export interface UserPreferences {
   navTitle: string
   navIcon: string
   defaultHome: 'home' | 'all'
+  aiAnimationEnabled: boolean
 }
 
 export interface BackupData {

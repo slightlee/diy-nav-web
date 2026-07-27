@@ -110,6 +110,26 @@
             </button>
           </div>
         </div>
+
+        <div class="rule" role="separator" />
+
+        <div class="preference-row">
+          <div class="launch__copy">
+            <div class="launch__title">燕子飞行动效</div>
+            <div class="launch__hint">控制打开和关闭面板时的飞行动画</div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            class="switch"
+            :class="{ 'is-on': aiAnimationEnabled }"
+            :aria-checked="aiAnimationEnabled"
+            @click="toggleAIAnimation"
+          >
+            <span class="switch__thumb" />
+            <span class="sr-only">{{ aiAnimationEnabled ? '已开启' : '已关闭' }}</span>
+          </button>
+        </div>
       </div>
     </section>
   </div>
@@ -134,6 +154,7 @@ const titleMax = NAV_TITLE_MAX
 const current = store.settings.defaultHome
 const validDefault = (['home', 'all'].includes(current || '') ? current : 'home') as 'home' | 'all'
 const defaultHome = ref<'home' | 'all'>(validDefault)
+const aiAnimationEnabled = ref(store.settings.aiAnimationEnabled !== false)
 
 const rawTitle = store.settings.navTitle || DEFAULT_SETTINGS.navTitle || 'DIY 导航'
 const navTitleDraft = ref(clampNavTitle(rawTitle))
@@ -195,6 +216,12 @@ watch(defaultHome, val => {
     if (authStore.isAuthenticated) void store.saveRemotePreferences(authStore.user?.id)
   }
 })
+
+const toggleAIAnimation = () => {
+  aiAnimationEnabled.value = !aiAnimationEnabled.value
+  store.updateSettings({ aiAnimationEnabled: aiAnimationEnabled.value })
+  if (authStore.isAuthenticated) void store.saveRemotePreferences(authStore.user?.id)
+}
 
 watch(urlIconDraft, () => {
   urlPreviewBroken.value = false
@@ -430,6 +457,66 @@ onUnmounted(() => {
   color: var(--text-muted);
   font-size: 12px;
   line-height: 1.3;
+}
+
+.preference-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 38px;
+  height: 22px;
+  padding: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bg-tile);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &.is-on {
+    background: var(--color-primary);
+    box-shadow: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(var(--color-primary-rgb), 0.45);
+    outline-offset: 2px;
+  }
+}
+
+.switch__thumb {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+  transform: translateX(0);
+  transition: transform 0.2s ease;
+
+  .switch.is-on & {
+    transform: translateX(16px);
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 .seg {

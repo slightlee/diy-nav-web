@@ -24,7 +24,8 @@ export const updatePreferencesSchema = z.object({
     )
     .optional(),
   navIcon: z.string().trim().max(512).optional(),
-  defaultHome: z.enum(['home', 'all']).optional()
+  defaultHome: z.enum(['home', 'all']).optional(),
+  aiAnimationEnabled: z.boolean().optional()
 })
 
 export const providerLoginSchema = {

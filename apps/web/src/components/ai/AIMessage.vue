@@ -23,7 +23,13 @@ const userAvatar = computed(() => authStore.user?.avatar_url)
         alt="用户头像"
         class="avatar-img"
       />
-      <i v-else :class="role === 'user' ? 'fas fa-user' : 'fas fa-robot'" />
+      <img
+        v-else-if="role === 'assistant'"
+        src="/icons/ai-panel-swallow.png"
+        alt="AI 助手"
+        class="avatar-img"
+      />
+      <i v-else class="fas fa-user" />
     </div>
     <div class="bubble">
       <div class="content" v-html="content.replace(/\n/g, '<br>')" />
@@ -66,9 +72,9 @@ const userAvatar = computed(() => authStore.user?.avatar_url)
 }
 
 .ai-message.user .avatar {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  background: var(--bg-tile);
+  border: 1px solid var(--border-tile);
+  color: var(--text-secondary);
   overflow: hidden;
 }
 
@@ -82,6 +88,7 @@ const userAvatar = computed(() => authStore.user?.avatar_url)
   background: var(--ai-avatar-assistant-bg);
   color: var(--ai-avatar-assistant-color);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
 }
 
 .bubble {
@@ -94,10 +101,10 @@ const userAvatar = computed(() => authStore.user?.avatar_url)
 }
 
 .ai-message.user .bubble {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
-  color: white;
+  background: var(--primary-soft);
+  color: var(--text-main);
   border-bottom-right-radius: 6px;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  border: 1px solid var(--border-tile-hover);
 }
 
 .ai-message.assistant .bubble {

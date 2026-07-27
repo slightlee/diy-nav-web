@@ -8,13 +8,22 @@ import AIMessage from './AIMessage.vue'
 
 const emit = defineEmits<{
   close: []
-  minimize: []
 }>()
 
 const aiStore = useAIStore()
 const inputText = ref('')
+const inputRef = ref<HTMLTextAreaElement | null>(null)
 const messagesContainer = ref<HTMLElement | null>(null)
 const isLoading = ref(false)
+
+const resizeInput = () => {
+  const input = inputRef.value
+  if (!input) return
+
+  input.style.height = 'auto'
+  const contentHeight = input.value ? input.scrollHeight : 40
+  input.style.height = `${Math.min(contentHeight, 104)}px`
+}
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -29,6 +38,7 @@ const sendMessage = async () => {
   if (!text || isLoading.value) return
 
   inputText.value = ''
+  nextTick(resizeInput)
   aiStore.addMessage({ role: 'user', content: text })
   scrollToBottom()
 
@@ -50,6 +60,7 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 onMounted(() => {
   scrollToBottom()
+  resizeInput()
 })
 </script>
 
@@ -59,7 +70,7 @@ onMounted(() => {
     <div class="panel-header">
       <div class="header-left">
         <div class="ai-avatar">
-          <i class="fas fa-robot" />
+          <img class="ai-mark" src="/icons/ai-panel-swallow.png" alt="" />
         </div>
         <div class="header-title">
           <span class="title">AI 助手</span>
@@ -67,7 +78,7 @@ onMounted(() => {
         </div>
       </div>
       <div class="header-actions">
-        <button class="icon-btn close-btn" title="关闭" @click="emit('close')">
+        <button class="icon-btn close-btn" aria-label="关闭" @click="emit('close')">
           <i class="fas fa-times" />
         </button>
       </div>
@@ -76,9 +87,6 @@ onMounted(() => {
     <!-- Messages -->
     <div ref="messagesContainer" class="messages-container">
       <div v-if="aiStore.messages.length === 0" class="empty-state">
-        <div class="empty-icon">
-          <i class="fas fa-comments" />
-        </div>
         <h3>你好！我是 AI 助手 👋</h3>
         <p>我可以帮你管理网站导航、添加分类标签</p>
         <div class="quick-actions">
@@ -112,10 +120,12 @@ onMounted(() => {
     <!-- Input -->
     <div class="input-container">
       <textarea
+        ref="inputRef"
         v-model="inputText"
         placeholder="输入消息..."
         rows="1"
         :disabled="isLoading"
+        @input="resizeInput"
         @keydown="handleKeydown"
       />
       <button class="send-btn" :disabled="!inputText.trim() || isLoading" @click="sendMessage">
@@ -134,7 +144,7 @@ onMounted(() => {
   height: 520px;
   background: var(--ai-panel-bg);
   backdrop-filter: blur(20px);
-  border-radius: 20px;
+  border-radius: 24px;
   box-shadow: var(--ai-panel-shadow);
   border: 1px solid var(--ai-panel-border);
   display: flex;
@@ -146,26 +156,33 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
-  color: white;
+  padding: 10px 18px;
+  background: var(--ai-header-bg);
+  color: var(--ai-header-text);
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .ai-avatar {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.2);
+  width: 36px;
+  height: 36px;
+  background: var(--ai-empty-icon-bg);
+  border: 1px solid var(--ai-panel-border);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
+}
+
+.ai-avatar .ai-mark {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
 }
 
 .header-title {
@@ -175,12 +192,12 @@ onMounted(() => {
 
 .header-title .title {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .header-title .subtitle {
   font-size: 11px;
-  opacity: 0.8;
+  color: var(--ai-header-muted);
 }
 
 .header-actions {
@@ -189,9 +206,9 @@ onMounted(() => {
 }
 
 .icon-btn {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--ai-header-action-bg);
   border: none;
-  color: white;
+  color: var(--ai-header-action-color);
   width: 32px;
   height: 32px;
   border-radius: 8px;
@@ -203,18 +220,24 @@ onMounted(() => {
 }
 
 .icon-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--ai-header-action-hover);
   transform: scale(1.05);
 }
 
+.close-btn {
+  background: transparent;
+}
+
 .close-btn:hover {
-  background: rgba(239, 68, 68, 0.8);
+  background: transparent;
+  color: var(--ai-header-text);
+  transform: none;
 }
 
 .messages-container {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 18px 18px 12px;
   min-height: 220px;
   max-height: 340px;
   background: transparent;
@@ -222,31 +245,18 @@ onMounted(() => {
 
 .empty-state {
   text-align: center;
-  padding: 24px 16px;
-}
-
-.empty-icon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 16px;
-  background: var(--ai-empty-icon-bg);
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  color: #3b82f6;
+  padding: 66px 14px 10px;
 }
 
 .empty-state h3 {
-  margin: 0 0 8px 0;
+  margin: 0 0 6px;
   font-size: 16px;
   font-weight: 600;
   color: var(--text-main);
 }
 
 .empty-state p {
-  margin: 0 0 20px 0;
+  margin: 0 0 18px;
   font-size: 13px;
   color: var(--text-secondary);
 }
@@ -262,7 +272,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
+  padding: 9px 14px;
   font-size: 12px;
   background: var(--ai-quick-btn-bg);
   border: 1px solid var(--ai-quick-btn-border);
@@ -274,8 +284,8 @@ onMounted(() => {
 
 .quick-btn:hover {
   background: var(--bg-tile-hover);
-  border-color: #8b5cf6;
-  color: #3b82f6;
+  border-color: var(--color-primary-light);
+  color: var(--color-primary);
   transform: translateY(-1px);
 }
 
@@ -294,7 +304,7 @@ onMounted(() => {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: var(--ai-send-bg);
   animation: bounce 1.4s infinite ease-in-out both;
 }
 
@@ -322,21 +332,37 @@ onMounted(() => {
 .input-container {
   display: flex;
   gap: 10px;
-  padding: 16px 20px;
-  background: var(--ai-panel-bg);
-  border-top: 1px solid var(--border-tile);
+  align-items: flex-end;
+  margin: 0 18px 16px;
+  padding: 8px 8px 8px 15px;
+  background: var(--ai-input-bg);
+  border: 1px solid var(--ai-input-border);
+  border-radius: 18px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.input-container:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
 }
 
 .input-container textarea {
   flex: 1;
-  border: 1px solid var(--ai-input-border);
+  min-width: 0;
+  border: none;
   border-radius: 12px;
-  padding: 12px 16px;
+  padding: 6px 0;
   resize: none;
   font-size: 14px;
-  background: var(--ai-input-bg);
+  line-height: 1.5;
+  min-height: 40px;
+  max-height: 104px;
+  overflow-y: auto;
+  background: transparent;
   color: var(--text-main);
-  transition: all 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .input-container textarea::placeholder {
@@ -345,49 +371,43 @@ onMounted(() => {
 
 .input-container textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .send-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
   border: none;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
-  color: white;
+  background: transparent;
+  color: var(--color-primary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 16px;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .send-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-  box-shadow: none;
 }
 
 .send-btn:not(:disabled):hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+  background: var(--primary-soft);
 }
 
 .send-btn:not(:disabled):active {
-  transform: scale(0.98);
+  background: var(--bg-tile-hover);
 }
 
 // Dark mode overrides using global selector
 :global([data-theme='dark']) {
   .messages-container {
     background: transparent;
-  }
-
-  .empty-icon {
-    background: linear-gradient(135deg, #2d2d3a 0%, #3d3d4f 100%);
   }
 
   .quick-btn:hover {

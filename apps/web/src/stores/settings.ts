@@ -9,6 +9,7 @@ export const NAV_TITLE_MAX = 6
 export const DEFAULT_SETTINGS: UserSettings = {
   theme: 'auto',
   autoBackup: true,
+  aiAnimationEnabled: true,
   defaultHome: 'home',
   navTitle: 'DIY 导航',
   navIcon: 'D'
@@ -40,6 +41,10 @@ function normalizeSettings(raw: Partial<UserSettings> | null | undefined): UserS
   return {
     theme: validTheme,
     autoBackup: typeof raw?.autoBackup === 'boolean' ? raw.autoBackup : DEFAULT_SETTINGS.autoBackup,
+    aiAnimationEnabled:
+      typeof raw?.aiAnimationEnabled === 'boolean'
+        ? raw.aiAnimationEnabled
+        : DEFAULT_SETTINGS.aiAnimationEnabled,
     defaultHome: validHome,
     navTitle: title,
     navIcon: icon
@@ -111,7 +116,8 @@ export const useSettingsStore = defineStore('settings', () => {
   const currentPreferences = (): UserPreferences => ({
     navTitle: settings.value.navTitle || DEFAULT_SETTINGS.navTitle || 'DIY 导航',
     navIcon: settings.value.navIcon || DEFAULT_SETTINGS.navIcon || 'D',
-    defaultHome: settings.value.defaultHome === 'all' ? 'all' : 'home'
+    defaultHome: settings.value.defaultHome === 'all' ? 'all' : 'home',
+    aiAnimationEnabled: settings.value.aiAnimationEnabled !== false
   })
 
   const getPreferencesCacheKey = (userId: string) => `${USER_PREFERENCES_CACHE_PREFIX}${userId}`
@@ -126,14 +132,16 @@ export const useSettingsStore = defineStore('settings', () => {
       if (
         typeof parsed.navTitle !== 'string' ||
         typeof parsed.navIcon !== 'string' ||
-        (parsed.defaultHome !== 'home' && parsed.defaultHome !== 'all')
+        (parsed.defaultHome !== 'home' && parsed.defaultHome !== 'all') ||
+        typeof parsed.aiAnimationEnabled !== 'boolean'
       ) {
         return null
       }
       return {
         navTitle: parsed.navTitle,
         navIcon: parsed.navIcon,
-        defaultHome: parsed.defaultHome
+        defaultHome: parsed.defaultHome,
+        aiAnimationEnabled: parsed.aiAnimationEnabled
       }
     } catch {
       return null
@@ -177,7 +185,8 @@ export const useSettingsStore = defineStore('settings', () => {
           const preferences: UserPreferences = {
             navTitle: res.data.navTitle,
             navIcon: res.data.navIcon,
-            defaultHome: res.data.defaultHome
+            defaultHome: res.data.defaultHome,
+            aiAnimationEnabled: res.data.aiAnimationEnabled !== false
           }
           updateSettings(preferences)
           cachePreferences(userId, preferences)

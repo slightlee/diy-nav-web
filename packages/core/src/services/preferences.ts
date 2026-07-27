@@ -10,6 +10,7 @@ interface PreferencesPayload {
   navTitle: string
   navIcon: string
   defaultHome: DefaultHome
+  aiAnimationEnabled: boolean
 }
 
 export interface UserPreferencesResult extends PreferencesPayload {
@@ -20,7 +21,8 @@ export interface UserPreferencesResult extends PreferencesPayload {
 const DEFAULT_PREFERENCES: PreferencesPayload = {
   navTitle: 'DIY 导航',
   navIcon: 'D',
-  defaultHome: 'home'
+  defaultHome: 'home',
+  aiAnimationEnabled: true
 }
 
 const normalizeTitle = (value: unknown) => {
@@ -36,10 +38,13 @@ const normalizeIcon = (value: unknown) => {
 const normalizeHome = (value: unknown): DefaultHome =>
   value === 'all' || value === 'home' ? value : DEFAULT_PREFERENCES.defaultHome
 
+const normalizeAnimation = (value: unknown) => value !== false && value !== 0
+
 const toResult = (record: UserPreferencesRecord | null): UserPreferencesResult => ({
   navTitle: record?.nav_title || DEFAULT_PREFERENCES.navTitle,
   navIcon: record?.nav_icon || DEFAULT_PREFERENCES.navIcon,
   defaultHome: normalizeHome(record?.default_home),
+  aiAnimationEnabled: normalizeAnimation(record?.ai_animation_enabled),
   initialized: !!record,
   updatedAt: record?.updated_at || 0
 })
@@ -66,7 +71,8 @@ export class PreferencesService {
       const preferences = {
         navTitle: normalizeTitle(input.navTitle),
         navIcon: normalizeIcon(input.navIcon),
-        defaultHome: normalizeHome(input.defaultHome)
+        defaultHome: normalizeHome(input.defaultHome),
+        aiAnimationEnabled: normalizeAnimation(input.aiAnimationEnabled)
       }
       return toResult(await this.preferencesRepo.upsert(userId, preferences, Date.now()))
     }
@@ -74,7 +80,10 @@ export class PreferencesService {
     const preferences = {
       navTitle: normalizeTitle(input.navTitle ?? current.nav_title),
       navIcon: normalizeIcon(input.navIcon ?? current.nav_icon),
-      defaultHome: normalizeHome(input.defaultHome ?? current.default_home)
+      defaultHome: normalizeHome(input.defaultHome ?? current.default_home),
+      aiAnimationEnabled: normalizeAnimation(
+        input.aiAnimationEnabled ?? current.ai_animation_enabled
+      )
     }
     return toResult(await this.preferencesRepo.upsert(userId, preferences, Date.now()))
   }

@@ -150,7 +150,14 @@ html[data-theme='dark'] {
   --primary-soft: #eef3ff;
 
   // AI Assistant specific
-  --ai-panel-bg: rgba(255, 255, 255, 0.95);
+  --ai-header-bg: #ffffff;
+  --ai-header-text: #253047;
+  --ai-header-muted: #8b96a8;
+  --ai-header-action-bg: #f2f5fa;
+  --ai-header-action-color: #738099;
+  --ai-header-action-hover: #e9eef7;
+  --ai-send-bg: var(--color-primary);
+  --ai-panel-bg: #f7f8fa;
   --ai-panel-border: rgba(255, 255, 255, 0.5);
   --ai-panel-shadow: 0 24px 48px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.08);
   --ai-input-bg: #fff;
@@ -160,7 +167,7 @@ html[data-theme='dark'] {
   --ai-avatar-assistant-bg: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
   --ai-avatar-assistant-color: #6b7280;
   --ai-empty-icon-bg: linear-gradient(135deg, #f0f0ff 0%, #e8e4ff 100%);
-  --ai-quick-btn-bg: #fff;
+  --ai-quick-btn-bg: #f7f8fa;
   --ai-quick-btn-border: #e5e7eb;
   --ai-quick-btn-color: #4b5563;
 
@@ -235,19 +242,26 @@ html[data-theme='dark'] {
   --bg-body: #020617;
 
   // AI Assistant specific (dark mode)
-  --ai-panel-bg: rgba(30, 30, 40, 0.95);
-  --ai-panel-border: rgba(255, 255, 255, 0.1);
-  --ai-panel-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
-  --ai-input-bg: #2d2d3a;
-  --ai-input-border: #404050;
-  --ai-bubble-assistant-bg: #2d2d3a;
-  --ai-bubble-assistant-border: rgba(255, 255, 255, 0.05);
-  --ai-avatar-assistant-bg: linear-gradient(135deg, #3d3d4f 0%, #2d2d3a 100%);
-  --ai-avatar-assistant-color: #d1d5db;
-  --ai-empty-icon-bg: linear-gradient(135deg, #2d2d3a 0%, #3d3d4f 100%);
-  --ai-quick-btn-bg: #2d2d3a;
-  --ai-quick-btn-border: #404050;
-  --ai-quick-btn-color: #d1d5db;
+  --ai-header-bg: #0b1220;
+  --ai-header-text: #f1f5fb;
+  --ai-header-muted: #9eabc0;
+  --ai-header-action-bg: var(--bg-tile);
+  --ai-header-action-color: #b9c5d8;
+  --ai-header-action-hover: var(--bg-tile-hover);
+  --ai-send-bg: var(--color-primary);
+  --ai-panel-bg: #020617;
+  --ai-panel-border: var(--color-border);
+  --ai-panel-shadow: 0 24px 48px rgba(0, 0, 0, 0.55), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --ai-input-bg: var(--bg-tile);
+  --ai-input-border: var(--color-border);
+  --ai-bubble-assistant-bg: var(--bg-tile);
+  --ai-bubble-assistant-border: var(--border-tile);
+  --ai-avatar-assistant-bg: var(--bg-tile);
+  --ai-avatar-assistant-color: #b8c4d8;
+  --ai-empty-icon-bg: var(--primary-soft);
+  --ai-quick-btn-bg: var(--bg-tile);
+  --ai-quick-btn-border: var(--border-tile);
+  --ai-quick-btn-color: #b8c4d8;
 }
 
 // 暗色主题类
