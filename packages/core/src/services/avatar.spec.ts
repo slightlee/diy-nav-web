@@ -7,20 +7,13 @@ const mockR2 = {
   upload: vi.fn()
 } as unknown as R2Client
 
-// Mock @dicebear/avatars and sprites
-vi.mock('@dicebear/avatars', () => ({
-  createAvatar: vi.fn().mockReturnValue('<svg>avatar</svg>')
-}))
-
-vi.mock('@dicebear/avatars-avataaars-sprites', () => ({}))
-
 describe('AvatarService', () => {
   let avatarService: AvatarService
 
   beforeEach(() => {
     vi.clearAllMocks()
     avatarService = new AvatarService({
-      r2: mockR2,
+      storage: mockR2,
       publicUrlBase: 'https://cdn.example.com'
     })
   })
@@ -32,7 +25,7 @@ describe('AvatarService', () => {
 
     expect(mockR2.upload).toHaveBeenCalledWith(
       expect.stringContaining('avatars/avatar_'),
-      '<svg>avatar</svg>',
+      expect.stringContaining('<svg'),
       'image/svg+xml'
     )
     expect(result).toContain('https://cdn.example.com/avatars/avatar_')
@@ -40,7 +33,7 @@ describe('AvatarService', () => {
 
   it('should throw error if publicUrlBase is missing', async () => {
     const serviceWithoutUrl = new AvatarService({
-      r2: mockR2
+      storage: mockR2
     })
 
     await expect(serviceWithoutUrl.generateAndUpload('user1')).rejects.toThrow(

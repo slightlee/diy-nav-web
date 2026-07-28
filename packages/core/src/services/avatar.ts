@@ -1,5 +1,5 @@
-import { createAvatar } from '@dicebear/avatars'
-import * as avataaars from '@dicebear/avatars-avataaars-sprites'
+import { createAvatar } from '@dicebear/core'
+import * as adventurerNeutral from '@dicebear/adventurer-neutral'
 import type { StorageClient } from '@nav/storage'
 
 export interface AvatarConfig {
@@ -29,7 +29,7 @@ export class AvatarService {
     try {
       // Use userId base64 prefix as seed for deterministic avatar generation
       const seed = Buffer.from(userId).toString('base64').slice(0, 12)
-      const svg = createAvatar(avataaars, { seed, size: 128 })
+      const svg = createAvatar(adventurerNeutral, { seed, size: 128 }).toString()
 
       const filename = `avatar_${seed}.svg`
       const key = `${this.pathPrefix}/${filename}`
