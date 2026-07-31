@@ -2,6 +2,14 @@ import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import type { Plugin } from 'vite'
 import { resolve } from 'path'
+import { NAVIGATION_BRAND_CONFIG } from '@nav/config/brand'
+
+const navigationBrandPlugin: Plugin = {
+  name: 'navigation-brand-config',
+  transformIndexHtml(html) {
+    return html.replace('__NAVIGATION_DEFAULT_TITLE__', NAVIGATION_BRAND_CONFIG.defaultTitle)
+  }
+}
 
 export default defineConfig(({ mode }) => {
   const envDir = resolve(__dirname, '../../')
@@ -10,7 +18,7 @@ export default defineConfig(({ mode }) => {
   return {
     envDir,
     base: process.env.VITE_BASE ?? '/',
-    plugins: [vue() as Plugin],
+    plugins: [navigationBrandPlugin, vue() as Plugin],
     resolve: {
       alias: {
         '@': resolve(__dirname, 'src')

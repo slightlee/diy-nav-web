@@ -13,14 +13,26 @@
       v-if="websiteDeleteConfirmOpen"
       :is-open="websiteDeleteConfirmOpen"
       title="删除网站"
+      size="sm"
       @close="closeWebsiteDeleteConfirm"
     >
-      <div class="app-layout__confirm-content"><p>确定要删除该网站吗？此操作不可恢复。</p></div>
+      <div class="delete-confirm-content">
+        <p class="delete-confirm-text">确定要删除该网站吗？</p>
+        <p class="delete-confirm-warning">
+          <i class="fas fa-info-circle" aria-hidden="true" />
+          <span>删除后无法恢复，请确认是否继续。</span>
+        </p>
+      </div>
       <template #footer>
-        <div class="app-layout__confirm-actions">
-          <BaseButton variant="secondary" @click="closeWebsiteDeleteConfirm">取消</BaseButton>
-          <BaseButton variant="danger" :loading="deletingWebsite" @click="confirmDeleteWebsite">
-            <i class="fas fa-trash" />
+        <div class="delete-confirm-actions">
+          <BaseButton variant="ghost" size="sm" @click="closeWebsiteDeleteConfirm">取消</BaseButton>
+          <BaseButton
+            variant="danger-outline"
+            size="sm"
+            class="delete-confirm-btn"
+            :loading="deletingWebsite"
+            @click="confirmDeleteWebsite"
+          >
             删除
           </BaseButton>
         </div>
@@ -89,14 +101,54 @@ const confirmDeleteWebsite = async () => {
 <style scoped lang="scss">
 @use '@/styles/variables' as *;
 
-.app-layout__confirm-content {
-  padding: var(--spacing-md) 0;
-  color: var(--color-neutral-600);
+.delete-confirm-content {
+  display: grid;
+  gap: 14px;
 }
 
-.app-layout__confirm-actions {
+.delete-confirm-text {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.delete-confirm-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-error) 7%, var(--bg-panel));
+  color: color-mix(in srgb, var(--color-error) 72%, var(--text-main));
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.delete-confirm-warning i {
+  flex: 0 0 auto;
+}
+
+.delete-confirm-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--spacing-md);
+  gap: 12px;
+  width: 100%;
+}
+
+:deep(.delete-confirm-btn) {
+  background-color: transparent !important;
+  border-color: color-mix(in srgb, var(--color-error) 28%, var(--border-tile));
+  color: color-mix(in srgb, var(--color-error) 82%, var(--text-main));
+  box-shadow: none;
+}
+
+:deep(.delete-confirm-btn:hover:not(.base-button--disabled):not(.base-button--loading)) {
+  background-color: color-mix(in srgb, var(--color-error) 7%, transparent) !important;
+  border-color: color-mix(in srgb, var(--color-error) 42%, var(--border-tile));
+  color: var(--color-error);
+  box-shadow: none;
+  transform: none;
 }
 </style>

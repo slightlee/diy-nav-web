@@ -43,7 +43,7 @@ export interface UserSettings {
   /** 是否播放 AI 助手贴边燕子动效 */
   aiAnimationEnabled?: boolean
   defaultHome?: 'home' | 'all'
-  /** 顶部导航显示名称（建议 ≤6 字，与顶栏展示一致） */
+  /** 顶部导航名称；显示宽度由各界面自行控制。 */
   navTitle?: string
   /**
    * 顶部导航图标：

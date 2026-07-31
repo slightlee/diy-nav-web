@@ -24,7 +24,7 @@ export interface Props {
   colors?: string[]
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   colors: () => ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#6B7280']
 })
 
@@ -42,22 +42,25 @@ const emit = defineEmits<{
   gap: $spacing-xs;
 
   &__item {
-    width: 20px;
-    height: 20px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     border: 1px solid $color-border;
     cursor: pointer;
     padding: 0;
-    transition: box-shadow $transition-fast;
+    transition:
+      transform $transition-fast,
+      box-shadow $transition-fast;
 
     &--active {
-      box-shadow: 0 0 0 2px $color-primary;
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.9);
+      transform: scale(1.06);
     }
   }
 
   &__input {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     padding: 0;
     border: none;
     background: none;
@@ -69,7 +72,7 @@ const emit = defineEmits<{
 
     &::-webkit-color-swatch {
       border: 1px solid $color-border;
-      border-radius: $border-radius-sm;
+      border-radius: $border-radius-md;
     }
   }
 }

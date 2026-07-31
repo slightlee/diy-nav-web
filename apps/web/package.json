@@ -10,6 +10,7 @@
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
+    "@nav/config": "workspace:^",
     "@nav/icon-core": "workspace:^",
     "@nav/logger": "workspace:^",
     "@nav/types": "workspace:^",

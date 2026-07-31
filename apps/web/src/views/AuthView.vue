@@ -2,7 +2,10 @@
   <AuthLayout>
     <!-- Logo -->
     <div class="logo-container">
-      <BrandLogo link="/" title="返回首页">D</BrandLogo>
+      <BrandLogo link="/" title="返回首页">
+        {{ NAVIGATION_BRAND_CONFIG.defaultIcon }}
+      </BrandLogo>
+      <span class="auth-brand-name">{{ NAVIGATION_BRAND_CONFIG.defaultTitle }}</span>
     </div>
 
     <!-- Login/Register Views -->
@@ -266,6 +269,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { NAVIGATION_BRAND_CONFIG } from '@nav/config/brand'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 
@@ -517,8 +521,42 @@ const handleRegister = async () => {
 
 .logo-container {
   display: flex;
+  align-items: center;
   justify-content: center;
-  margin-bottom: var(--spacing-2xl);
+  gap: var(--spacing-md);
+  margin-bottom: 28px;
+}
+
+.logo-container :deep(.logo-wrapper) {
+  width: 52px;
+  height: 52px;
+}
+
+.logo-container :deep(.logo) {
+  border-radius: 15px;
+  background: var(--primary-soft);
+  color: var(--color-primary);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.08em;
+  box-shadow: none;
+}
+
+.logo-container :deep(a.logo:hover) {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--primary-soft) 88%, var(--color-primary) 12%);
+  box-shadow: 0 6px 14px rgba(var(--color-primary-rgb), 0.12);
+}
+
+.logo-container :deep(.logo-pulse) {
+  display: none;
+}
+
+.auth-brand-name {
+  color: var(--text-main);
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.02em;
 }
 
 /* 登录 / 注册视图容器 */
@@ -543,7 +581,7 @@ const handleRegister = async () => {
 
 .header {
   text-align: center;
-  margin-bottom: var(--spacing-2xl);
+  margin-bottom: 28px;
 }
 
 .header-title {
@@ -560,13 +598,13 @@ const handleRegister = async () => {
 }
 
 .form-group {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 20px;
 }
 
 .form-label {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 10px;
   color: var(--text-main);
   display: inline-flex;
   align-items: center;
@@ -578,8 +616,8 @@ const handleRegister = async () => {
 }
 
 .input-wrap {
-  height: 48px;
-  border-radius: var(--radius-pill);
+  height: 52px;
+  border-radius: 14px;
   border: 1px solid var(--color-border);
   background: var(--bg-tile);
   padding: 0 var(--spacing-lg);
@@ -635,17 +673,17 @@ input::placeholder {
 }
 
 .btn-primary {
-  margin-top: var(--spacing-xl);
+  margin-top: 24px;
   width: 100%;
-  height: 50px;
-  border-radius: var(--radius-pill);
+  height: 52px;
+  border-radius: 14px;
   border: none;
   background: var(--color-primary);
   color: var(--color-white);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  box-shadow: 0 20px 36px rgba(var(--color-primary-rgb), 0.45);
+  box-shadow: 0 10px 22px rgba(var(--color-primary-rgb), 0.18);
   transition: all var(--transition-fast);
 }
 
@@ -672,7 +710,7 @@ input::placeholder {
 .divider {
   display: flex;
   align-items: center;
-  margin: var(--spacing-2xl) 0 var(--spacing-xl);
+  margin: 28px 0 20px;
   font-size: var(--font-size-xs);
   color: var(--text-muted);
 }
@@ -693,13 +731,13 @@ input::placeholder {
 .social-row {
   display: flex;
   justify-content: center;
-  gap: var(--spacing-lg);
+  gap: 12px;
 }
 
 .social-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-pill);
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
   border: 1px solid var(--color-border);
   background: var(--bg-tile);
   display: flex;
@@ -721,7 +759,7 @@ input::placeholder {
 }
 
 .switch-row {
-  margin-top: var(--spacing-xl);
+  margin-top: 24px;
   text-align: center;
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
@@ -735,7 +773,7 @@ input::placeholder {
 }
 
 .legal {
-  margin-top: var(--spacing-lg);
+  margin-top: 16px;
   text-align: center;
   font-size: var(--font-size-xs);
   color: var(--text-muted);

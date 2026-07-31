@@ -18,12 +18,9 @@
                 <div class="empty-icon-wrapper">
                   <i class="fas fa-history" />
                 </div>
-                <h3 class="empty-title">暂无最近使用</h3>
-                <p class="empty-desc">
-                  在 DIY
-                  导航中打开的网站，都会自动记录在这里，方便你下一次直接从首页快速回到常用站点。
-                </p>
-                <div class="empty-actions">
+                <h3 class="empty-title">还没有访问记录</h3>
+                <p class="empty-desc">打开网站后，会自动出现在这里。</p>
+                <div v-if="totalSites > 0" class="empty-actions">
                   <button class="empty-btn outline" @click="goToAll">浏览全部网站</button>
                 </div>
               </div>
@@ -47,17 +44,10 @@
                 <div class="empty-icon-wrapper">
                   <i class="fas fa-star" />
                 </div>
-                <h3 class="empty-title">暂无常用网站</h3>
-                <p class="empty-desc">
-                  在「全部」页面给网站打上星标，即可将它们固定为「常用」，优先展示在首页右侧。
-                </p>
-                <div class="empty-actions">
+                <h3 class="empty-title">还没有常用网站</h3>
+                <p class="empty-desc">给网站点亮星标，它就会固定在首页。</p>
+                <div v-if="totalSites > 0" class="empty-actions">
                   <button class="empty-btn outline" @click="goToAll">去全部页面标记常用</button>
-                </div>
-                <div class="empty-examples">
-                  <span class="example-label">示例：</span>
-                  <span class="example-pill">GitHub</span>
-                  <span class="example-pill">Google</span>
                 </div>
               </div>
             </template>
@@ -90,7 +80,7 @@ import { useWebsiteStats } from '@/composables/useWebsiteStats'
 
 import { useRouter } from 'vue-router'
 
-const { favoriteTotal } = useWebsiteStats()
+const { totalSites, favoriteTotal } = useWebsiteStats()
 const recentPageCount = ref(0)
 const categorySelectOpen = ref(false)
 const tagSelectOpen = ref(false)
@@ -128,10 +118,15 @@ const goToAll = () => {
   border: 1px solid var(--border-tile);
   border-radius: var(--radius-card);
   padding: var(--spacing-2xl);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-sm);
   transition:
     background-color var(--transition-slow),
     box-shadow var(--transition-slow);
+}
+
+.section-content {
+  display: flex;
+  flex: 1;
 }
 
 .section-title-row {
@@ -185,53 +180,51 @@ const goToAll = () => {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: var(--spacing-xl);
-  max-width: 400px;
+  padding: 24px;
+  max-width: 300px;
   margin: 0 auto;
 }
 
 .empty-icon-wrapper {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, #e0e7ff 0%, var(--color-neutral-100) 100%);
-  border-radius: var(--radius-xl);
+  width: 52px;
+  height: 52px;
+  background: var(--primary-soft);
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: var(--spacing-xl);
-  box-shadow: var(--shadow-sm);
+  margin-bottom: 16px;
 
   i {
-    font-size: var(--font-size-xl);
+    font-size: 19px;
     color: var(--color-primary);
   }
 }
 
 .empty-title {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--text-main);
-  margin: 0 0 var(--spacing-md) 0;
+  margin: 0 0 7px;
 }
 
 .empty-desc {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
   line-height: var(--line-height-relaxed);
-  margin: 0 0 var(--spacing-2xl) 0;
+  margin: 0 0 16px;
 }
 
 .empty-actions {
   display: flex;
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-2xl);
+  gap: var(--spacing-md);
 }
 
 .empty-btn {
-  height: 36px;
-  padding: 0 var(--spacing-xl);
+  height: 32px;
+  padding: 0 14px;
   border-radius: var(--radius-pill);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
   display: flex;
@@ -248,24 +241,5 @@ const goToAll = () => {
       background: color-mix(in srgb, var(--color-primary) 5%, transparent);
     }
   }
-}
-
-.empty-examples {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  font-size: var(--font-size-xs);
-}
-
-.example-label {
-  color: var(--text-muted);
-}
-
-.example-pill {
-  padding: var(--spacing-xs) var(--spacing-md);
-  background: var(--bg-tile);
-  border: 1px solid var(--border-tile);
-  border-radius: var(--radius-pill);
-  color: var(--text-secondary);
 }
 </style>

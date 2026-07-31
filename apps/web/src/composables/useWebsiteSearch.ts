@@ -1,5 +1,5 @@
 import { ref, computed, watch, unref, type Ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useWebsiteStore } from '@/stores/website'
 import { useTagStore } from '@/stores/tag'
 import { useCategoryStore } from '@/stores/category'
@@ -24,6 +24,7 @@ export function useWebsiteSearch(fixedViewSource: MaybeRef<FixedViewType>) {
   const categoryStore = useCategoryStore()
   const tagStore = useTagStore()
   const route = useRoute()
+  const router = useRouter()
 
   const searchKeyword = ref('')
   const selectedTags = ref<string[]>([])
@@ -177,6 +178,25 @@ export function useWebsiteSearch(fixedViewSource: MaybeRef<FixedViewType>) {
       syncFiltersFromRoute()
     },
     { immediate: true }
+  )
+
+  // 分类被删除后，清理当前筛选和 URL 参数，避免界面显示失效的分类 ID。
+  watch(
+    () => categoryStore.categories.map(category => category.id),
+    categoryIds => {
+      const selectedId = selectedCategory.value
+      if (selectedId === 'all' || categoryIds.includes(selectedId)) return
+
+      selectedCategory.value = 'all'
+      if (route.query.category) {
+        void router.replace({
+          query: {
+            ...route.query,
+            category: undefined
+          }
+        })
+      }
+    }
   )
 
   // Watch fixedView changes to re-sync with route (handles navigation between views)

@@ -1,4 +1,9 @@
 import type { DatabaseClient } from '@nav/database'
+import {
+  NAVIGATION_BRAND_CONFIG,
+  resolveNavigationIcon,
+  resolveNavigationTitle
+} from '@nav/config/brand'
 import type { UserSettings } from '@nav/types'
 import {
   UserPreferencesRepository,
@@ -19,20 +24,10 @@ export interface UserPreferencesResult extends PreferencesPayload {
 }
 
 const DEFAULT_PREFERENCES: PreferencesPayload = {
-  navTitle: 'DIY 导航',
-  navIcon: 'D',
+  navTitle: NAVIGATION_BRAND_CONFIG.defaultTitle,
+  navIcon: NAVIGATION_BRAND_CONFIG.defaultIcon,
   defaultHome: 'home',
   aiAnimationEnabled: true
-}
-
-const normalizeTitle = (value: unknown) => {
-  const title = typeof value === 'string' ? Array.from(value.trim()).slice(0, 6).join('') : ''
-  return title || DEFAULT_PREFERENCES.navTitle
-}
-
-const normalizeIcon = (value: unknown) => {
-  const icon = typeof value === 'string' ? value.trim().slice(0, 512) : ''
-  return icon || DEFAULT_PREFERENCES.navIcon
 }
 
 const normalizeHome = (value: unknown): DefaultHome =>
@@ -41,8 +36,8 @@ const normalizeHome = (value: unknown): DefaultHome =>
 const normalizeAnimation = (value: unknown) => value !== false && value !== 0
 
 const toResult = (record: UserPreferencesRecord | null): UserPreferencesResult => ({
-  navTitle: record?.nav_title || DEFAULT_PREFERENCES.navTitle,
-  navIcon: record?.nav_icon || DEFAULT_PREFERENCES.navIcon,
+  navTitle: resolveNavigationTitle(record?.nav_title),
+  navIcon: resolveNavigationIcon(record?.nav_icon),
   defaultHome: normalizeHome(record?.default_home),
   aiAnimationEnabled: normalizeAnimation(record?.ai_animation_enabled),
   initialized: !!record,
@@ -69,8 +64,8 @@ export class PreferencesService {
     if (!current) {
       // The user may have created local settings before the first authenticated request.
       const preferences = {
-        navTitle: normalizeTitle(input.navTitle),
-        navIcon: normalizeIcon(input.navIcon),
+        navTitle: resolveNavigationTitle(input.navTitle),
+        navIcon: resolveNavigationIcon(input.navIcon),
         defaultHome: normalizeHome(input.defaultHome),
         aiAnimationEnabled: normalizeAnimation(input.aiAnimationEnabled)
       }
@@ -78,8 +73,8 @@ export class PreferencesService {
     }
 
     const preferences = {
-      navTitle: normalizeTitle(input.navTitle ?? current.nav_title),
-      navIcon: normalizeIcon(input.navIcon ?? current.nav_icon),
+      navTitle: resolveNavigationTitle(input.navTitle ?? current.nav_title),
+      navIcon: resolveNavigationIcon(input.navIcon ?? current.nav_icon),
       defaultHome: normalizeHome(input.defaultHome ?? current.default_home),
       aiAnimationEnabled: normalizeAnimation(
         input.aiAnimationEnabled ?? current.ai_animation_enabled

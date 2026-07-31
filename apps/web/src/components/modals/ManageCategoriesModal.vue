@@ -17,11 +17,8 @@
             :key="category.id"
             class="category-item"
             :class="{ 'is-editing': editingId === category.id }"
-            draggable="true"
-            @dragstart="onDragStart($event, category)"
             @dragover="onDragOver"
             @drop="onDrop($event, category)"
-            @dragend="onDragEnd"
           >
             <!-- Inline Edit Mode -->
             <div v-if="editingId === category.id" class="category-item__edit">
@@ -51,7 +48,14 @@
 
             <!-- View Mode -->
             <div v-else class="category-item__content">
-              <div class="category-item__drag-handle">
+              <div
+                class="category-item__drag-handle"
+                draggable="true"
+                aria-label="拖拽排序"
+                title="拖拽排序"
+                @dragstart="onDragStart($event, category)"
+                @dragend="onDragEnd"
+              >
                 <i class="fas fa-grip-vertical" />
               </div>
               <div class="category-item__icon">
@@ -114,15 +118,24 @@
       size="sm"
       @close="showDeleteModal = false"
     >
-      <p class="delete-confirm-text">
-        确定要删除分类“{{ categoryToDelete?.name }}”吗？
-        <br />
-        <span class="text-danger">该分类下的网站将被移至“未分类”。</span>
-      </p>
+      <div class="delete-confirm-content">
+        <p class="delete-confirm-text">确定要删除分类“{{ categoryToDelete?.name }}”吗？</p>
+        <p class="delete-confirm-warning">
+          <i class="fas fa-info-circle" aria-hidden="true" />
+          <span>该分类下的网站将被移至“未分类”，删除后无法恢复。</span>
+        </p>
+      </div>
       <template #footer>
         <div class="modal-footer-actions">
-          <BaseButton variant="ghost" @click="showDeleteModal = false">取消</BaseButton>
-          <BaseButton variant="danger" @click="handleDeleteCategory">删除</BaseButton>
+          <BaseButton variant="ghost" size="sm" @click="showDeleteModal = false">取消</BaseButton>
+          <BaseButton
+            variant="danger-outline"
+            size="sm"
+            class="delete-confirm-btn"
+            @click="handleDeleteCategory"
+          >
+            删除
+          </BaseButton>
         </div>
       </template>
     </BaseModal>
@@ -259,31 +272,31 @@ const onDrop = (e: DragEvent, targetCategory: Category) => {
 .modal-content-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 12px;
 }
 
 .category-list-container {
   max-height: 400px;
   overflow-y: auto;
-  padding: 4px;
+  padding: 2px;
 }
 
 .category-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .category-item {
   background-color: var(--bg-panel);
   border: 1px solid var(--border-tile);
   border-radius: 12px;
-  padding: 12px 16px;
+  padding: 9px 12px;
   transition:
     background-color 0.2s,
     box-shadow 0.2s,
     transform 0.2s;
-  cursor: grab;
+  cursor: default;
 
   &:hover {
     border-color: var(--border-tile-hover);
@@ -301,30 +314,40 @@ const onDrop = (e: DragEvent, targetCategory: Category) => {
   }
 
   &.is-editing {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.1);
+    border-color: transparent;
+    background-color: var(--bg-tile);
+    box-shadow: none;
     cursor: default;
+
+    &:hover {
+      border-color: transparent;
+      box-shadow: none;
+      transform: none;
+    }
   }
 }
 
 .category-item__content {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .category-item__drag-handle {
-  color: var(--border-tile);
+  width: 20px;
+  flex: 0 0 20px;
+  color: var(--text-muted);
   cursor: grab;
-  padding: 4px;
+  padding: 2px;
+  opacity: 0.5;
   transition: color 0.2s;
 }
 
 .category-item__icon {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
-  background-color: var(--bg-tile);
+  background-color: var(--primary-soft);
   color: var(--color-primary);
   display: flex;
   align-items: center;
@@ -336,14 +359,13 @@ const onDrop = (e: DragEvent, targetCategory: Category) => {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .category-item__name {
   font-weight: 600;
   color: var(--text-main);
   font-size: 15px;
-  flex: 1;
 }
 
 .category-item__count {
@@ -402,16 +424,17 @@ const onDrop = (e: DragEvent, targetCategory: Category) => {
 }
 
 .add-category-section {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .add-category-btn {
   width: 100%;
-  padding: 12px;
-  border: 1px dashed var(--border-tile);
-  border-radius: 12px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 10px;
   background-color: transparent;
-  color: var(--color-primary);
+  color: var(--text-secondary);
   font-weight: 500;
   cursor: pointer;
   display: flex;
@@ -419,12 +442,9 @@ const onDrop = (e: DragEvent, targetCategory: Category) => {
   justify-content: center;
   gap: 8px;
   transition: all 0.2s;
-  border-color: var(--color-primary);
-
   &:hover {
-    border-color: var(--color-primary);
     color: var(--color-primary);
-    background-color: color-mix(in srgb, var(--color-primary) 2%, transparent);
+    background-color: var(--primary-soft);
   }
 }
 
@@ -444,6 +464,14 @@ const onDrop = (e: DragEvent, targetCategory: Category) => {
   flex: 1;
 }
 
+/* 编辑时只保留输入内容，不用蓝色边框重复强调状态。 */
+:deep(.category-input .base-input__wrapper),
+:deep(.category-input .base-input__wrapper--focused) {
+  border-color: var(--border-tile);
+  box-shadow: none;
+  background-color: var(--bg-panel);
+}
+
 .form-actions {
   display: flex;
   gap: 8px;
@@ -451,13 +479,31 @@ const onDrop = (e: DragEvent, targetCategory: Category) => {
 
 .delete-confirm-text {
   color: var(--text-main);
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0;
 }
 
-.text-danger {
-  color: var(--color-error);
+.delete-confirm-content {
+  display: grid;
+  gap: 14px;
+}
+
+.delete-confirm-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-error) 7%, var(--bg-panel));
+  color: color-mix(in srgb, var(--color-error) 72%, var(--text-main));
   font-size: 13px;
+  line-height: 1.5;
+}
+
+.delete-confirm-warning i {
+  flex: 0 0 auto;
 }
 
 .modal-footer-actions {
@@ -465,6 +511,21 @@ const onDrop = (e: DragEvent, targetCategory: Category) => {
   justify-content: flex-end;
   gap: 12px;
   width: 100%;
+}
+
+:deep(.delete-confirm-btn) {
+  background-color: transparent !important;
+  border-color: color-mix(in srgb, var(--color-error) 28%, var(--border-tile));
+  color: color-mix(in srgb, var(--color-error) 82%, var(--text-main));
+  box-shadow: none;
+}
+
+:deep(.delete-confirm-btn:hover:not(.base-button--disabled):not(.base-button--loading)) {
+  background-color: color-mix(in srgb, var(--color-error) 7%, transparent) !important;
+  border-color: color-mix(in srgb, var(--color-error) 42%, var(--border-tile));
+  color: var(--color-error);
+  box-shadow: none;
+  transform: none;
 }
 
 .edit-row {

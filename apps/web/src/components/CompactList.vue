@@ -38,7 +38,7 @@
         </button>
       </div>
     </div>
-    <Teleport v-if="isMounted && pagerTarget && allList.length > 0" :to="pagerTarget">
+    <Teleport v-if="isMounted && pagerTarget && totalPages > 1" :to="pagerTarget">
       <div class="pager-portal-content">
         <button
           class="pager-btn"
@@ -184,6 +184,8 @@ const goNext = () => {
 
   --pager-h: 32px;
   --tile-h: clamp(88px, 9vh, 104px);
+  --grid-h: calc(3 * var(--tile-h) + 2 * var(--spacing-lg));
+  --panel-canvas-h: calc(var(--grid-h) + var(--pager-h) + var(--spacing-md));
 }
 
 .compact-list__empty {
@@ -191,7 +193,7 @@ const goNext = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 300px;
+  min-height: var(--panel-canvas-h);
 }
 
 .tiles {
@@ -200,8 +202,7 @@ const goNext = () => {
   grid-template-rows: repeat(3, var(--tile-h));
   gap: var(--spacing-lg);
   place-content: start start;
-  height: calc(3 * var(--tile-h) + 2 * var(--spacing-lg));
-  padding-bottom: 0;
+  min-height: var(--grid-h);
   margin-bottom: calc(var(--pager-h) + var(--spacing-md));
 }
 

@@ -43,7 +43,7 @@ const hint = computed(() => props.hint ?? '')
 const iconClass = computed(() => {
   switch (props.type) {
     case 'no-websites':
-      return 'fas fa-compass'
+      return 'fas fa-globe'
     case 'no-tags':
       return 'fas fa-tags'
     case 'no-categories':
@@ -86,12 +86,8 @@ const message = computed(() => {
     .default-icon-bg {
       width: 56px;
       height: 56px;
-      border-radius: 18px;
+      border-radius: 16px;
       font-size: 24px;
-
-      &::after {
-        border-radius: 14px;
-      }
     }
 
     .empty-title {
@@ -113,7 +109,7 @@ const message = computed(() => {
 .default-icon-bg {
   width: 72px;
   height: 72px;
-  border-radius: 22px;
+  border-radius: 20px;
   background: var(--primary-soft, #eef3ff);
   display: flex;
   align-items: center;
@@ -121,24 +117,6 @@ const message = computed(() => {
   font-size: 30px;
   color: var(--color-primary, $color-primary);
   box-shadow: none;
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    width: 80%;
-    height: 80%;
-    background: rgba($color-white, 0.42);
-    border-radius: 16px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-30%, -30%);
-  }
-
-  i {
-    position: relative;
-    z-index: 1;
-  }
 }
 
 .empty-content {

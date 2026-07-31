@@ -10,18 +10,26 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./brand": {
+      "types": "./dist/brand.d.ts",
+      "import": "./dist/brand.js",
+      "require": "./dist/brand.cjs"
     }
   },
   "scripts": {
     "build": "tsup",
-    "dev": "tsup --watch"
+    "dev": "tsup --watch",
+    "test": "vitest"
   },
   "dependencies": {
     "dotenv": "^16.6.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@types/node": "^20.11.19",
     "tsup": "^8.3.5",
-    "typescript": "~5.7.2"
+    "typescript": "~5.7.2",
+    "vitest": "^4.0.15"
   }
 }

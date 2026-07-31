@@ -1,13 +1,5 @@
 <template>
-  <div
-    class="tag-item"
-    :class="{ 'is-dragging': isDragging }"
-    draggable="true"
-    @dragstart="onDragStart"
-    @dragover.prevent
-    @drop="onDrop"
-    @dragend="onDragEnd"
-  >
+  <div class="tag-item" :class="{ 'is-dragging': isDragging }" @dragover.prevent @drop="onDrop">
     <div v-if="editing" class="edit-row">
       <BaseInput
         v-model="name"
@@ -28,7 +20,14 @@
       </div>
     </div>
     <div v-else class="view-row">
-      <div class="drag-handle">
+      <div
+        class="drag-handle"
+        draggable="true"
+        aria-label="拖拽排序"
+        title="拖拽排序"
+        @dragstart="onDragStart"
+        @dragend="onDragEnd"
+      >
         <i class="fas fa-grip-vertical" />
       </div>
       <span class="color-dot" :style="{ backgroundColor: tag.color }" />
@@ -98,12 +97,12 @@ const onDrop = () => {
   background-color: var(--bg-panel);
   border: 1px solid var(--border-tile);
   border-radius: 12px;
-  padding: 12px 16px;
+  padding: 9px 12px;
   transition:
     background-color 0.2s,
     box-shadow 0.2s,
     transform 0.2s;
-  cursor: grab;
+  cursor: default;
 
   &:hover {
     border-color: var(--border-tile-hover);
@@ -128,20 +127,23 @@ const onDrop = () => {
 .view-row,
 .edit-row {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
 }
 
 .drag-handle {
-  color: var(--border-tile);
+  width: 20px;
+  flex: 0 0 20px;
+  color: var(--text-muted);
   cursor: grab;
-  padding: 4px;
+  padding: 2px;
+  opacity: 0.5;
   transition: color 0.2s;
 }
 
 .color-dot {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
@@ -150,7 +152,6 @@ const onDrop = () => {
   font-weight: 600;
   color: var(--text-main);
   font-size: 15px;
-  flex: 1;
 }
 
 .count {
@@ -165,6 +166,7 @@ const onDrop = () => {
 .item-actions {
   display: flex;
   gap: 4px;
+  margin-left: auto;
   opacity: 0;
   transition: opacity 0.2s;
 }
@@ -211,5 +213,10 @@ const onDrop = () => {
 
 .tag-input {
   flex: 1;
+}
+
+:deep(.tag-input .base-input__wrapper--focused) {
+  border-color: var(--border-tile);
+  box-shadow: none;
 }
 </style>

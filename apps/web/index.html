@@ -4,16 +4,16 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="%BASE_URL%vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DIY 导航</title>
+    <title>__NAVIGATION_DEFAULT_TITLE__</title>
     <script>
       try {
-        const stored = localStorage.getItem('userSettings')
-        const title = stored ? JSON.parse(stored)?.navTitle : ''
-        if (typeof title === 'string' && title.trim()) {
-          document.title = Array.from(title.trim()).slice(0, 6).join('')
+        const cachedSettings = localStorage.getItem('userSettings')
+        const cachedTitle = cachedSettings ? JSON.parse(cachedSettings)?.navTitle : null
+        if (typeof cachedTitle === 'string' && cachedTitle.trim()) {
+          document.title = cachedTitle.trim()
         }
       } catch {
-        // 页面脚本稍后会继续使用默认标题初始化。
+        // 本地缓存不可用时保留构建阶段注入的默认标题。
       }
     </script>
     <link

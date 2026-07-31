@@ -121,7 +121,47 @@
                       aria-hidden="true"
                     />
                   </button>
-                  <p v-if="categories.length === 0" class="category-select__empty">暂无分类</p>
+                  <div v-if="categories.length === 0" class="category-select__empty">
+                    <span v-if="!categoryCreating">还没有分类</span>
+                    <div v-else class="category-select__create">
+                      <input
+                        ref="categoryCreateInputRef"
+                        v-model="categoryCreateName"
+                        class="category-select__create-input"
+                        type="text"
+                        maxlength="30"
+                        placeholder="输入分类名称"
+                        aria-label="分类名称"
+                        @keydown.enter.prevent="createCategory"
+                      />
+                      <div class="category-select__create-actions">
+                        <button
+                          type="button"
+                          class="category-select__create-btn category-select__create-btn--primary"
+                          :disabled="!categoryCreateName.trim()"
+                          @click.stop="createCategory"
+                        >
+                          确定
+                        </button>
+                        <button
+                          type="button"
+                          class="category-select__create-btn"
+                          @click.stop="cancelCategoryCreate"
+                        >
+                          取消
+                        </button>
+                      </div>
+                    </div>
+                    <button
+                      v-if="!categoryCreating"
+                      type="button"
+                      class="category-select__create-link"
+                      @click.stop="startCategoryCreate"
+                    >
+                      <i class="fas fa-plus" aria-hidden="true" />
+                      创建分类
+                    </button>
+                  </div>
                 </div>
               </Transition>
             </div>
@@ -220,7 +260,7 @@
           html-type="submit"
           class="modal-action-btn"
         >
-          {{ '保存修改' }}
+          {{ isEditMode ? '保存修改' : '添加网站' }}
         </BaseButton>
       </div>
     </form>
@@ -248,6 +288,7 @@ interface Props {
 interface Emits {
   (e: 'close'): void
   (e: 'success', website: Website): void
+  (e: 'dirtyChange', dirty: boolean): void
 }
 
 const props = defineProps<Props>()
@@ -298,6 +339,9 @@ const errors = ref<Record<string, string>>({})
 const submitting = ref(false)
 const categorySelectOpen = ref(false)
 const activeCategoryIndex = ref(-1)
+const categoryCreating = ref(false)
+const categoryCreateName = ref('')
+const categoryCreateInputRef = ref<HTMLInputElement | null>(null)
 const categorySelectRef = ref<HTMLElement | null>(null)
 const categoryTriggerRef = ref<HTMLButtonElement | null>(null)
 
@@ -443,6 +487,8 @@ const handleSubmit = async () => {
 
     uiStore.showToast(isEditMode.value ? '网站修改成功' : '网站添加成功', 'success')
 
+    initialFormSnapshot.value = serializeFormState()
+    emit('dirtyChange', false)
     emit('success', savedWebsite)
     handleClose()
   } catch {
@@ -458,6 +504,8 @@ const handleClose = () => {
 }
 
 const faviconSource = ref<'default' | 'api'>('default')
+const initialFormSnapshot = ref('')
+const formInitialized = ref(false)
 
 const finalFaviconUrl = computed(() => {
   if (faviconSource.value === 'api' && apiFaviconUrl.value) {
@@ -466,8 +514,24 @@ const finalFaviconUrl = computed(() => {
   return null
 })
 
+const serializeFormState = () =>
+  JSON.stringify({
+    ...formData.value,
+    tagIds: [...formData.value.tagIds],
+    faviconSource: faviconSource.value,
+    apiFaviconUrl: apiFaviconUrl.value
+  })
+
+const isFormDirty = computed(() => {
+  return formInitialized.value && serializeFormState() !== initialFormSnapshot.value
+})
+
+watch(isFormDirty, dirty => emit('dirtyChange', dirty))
+
 // 初始化表单数据
 const initializeForm = () => {
+  formInitialized.value = false
+
   if (props.website) {
     formData.value = {
       name: props.website.name,
@@ -497,6 +561,9 @@ const initializeForm = () => {
   }
 
   errors.value = {}
+  initialFormSnapshot.value = serializeFormState()
+  formInitialized.value = true
+  emit('dirtyChange', false)
 }
 
 watch(() => props.website, initializeForm, { immediate: true })
@@ -562,6 +629,40 @@ const selectCategory = (categoryId: string) => {
   formData.value.categoryId = categoryId
   delete errors.value.categoryId
   closeCategorySelect(true)
+}
+
+const startCategoryCreate = async () => {
+  categoryCreating.value = true
+  categoryCreateName.value = ''
+  await nextTick()
+  categoryCreateInputRef.value?.focus()
+}
+
+const cancelCategoryCreate = () => {
+  categoryCreating.value = false
+  categoryCreateName.value = ''
+}
+
+const createCategory = () => {
+  const name = categoryCreateName.value.trim()
+  if (!name) return
+
+  try {
+    const category = categoryStore.addCategory({
+      name,
+      icon: 'fas fa-folder'
+    })
+    formData.value.categoryId = category.id
+    delete errors.value.categoryId
+    cancelCategoryCreate()
+    closeCategorySelect(true)
+  } catch (error) {
+    if (error instanceof Error && error.message === 'DUPLICATE_NAME') {
+      uiStore.showToast('分类名称已存在', 'warning')
+      return
+    }
+    uiStore.showToast('分类创建失败，请重试', 'error')
+  }
 }
 
 const handleCategoryTriggerKeydown = (event: KeyboardEvent) => {
@@ -875,10 +976,89 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
 }
 
 .category-select__empty {
+  min-height: 72px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   margin: 0;
-  padding: $spacing-md;
   color: var(--text-muted);
   text-align: center;
+}
+
+.category-select__create-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  border: none;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-primary-dark);
+  }
+}
+
+.category-select__create {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-select__create-input {
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: $border-radius-sm;
+  background: var(--bg-tile);
+  color: var(--text-main);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+
+  &:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.12);
+  }
+}
+
+.category-select__create-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.category-select__create-btn {
+  padding: 4px 10px;
+  border: none;
+  border-radius: $border-radius-sm;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--bg-tile-hover);
+    color: var(--text-main);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.category-select__create-btn--primary {
+  color: var(--color-primary);
 }
 
 .category-select-menu-enter-active,

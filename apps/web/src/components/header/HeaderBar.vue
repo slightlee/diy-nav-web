@@ -3,10 +3,17 @@
     <div class="rail__inner">
       <div class="rail__start">
         <router-link class="brand" to="/home" :aria-label="`${navTitle}首页`">
-          <span class="brand__mark" :class="{ 'brand__mark--image': iconIsUrl }" aria-hidden="true">
+          <span
+            class="brand__mark"
+            :class="{
+              'brand__mark--image': iconIsUrl,
+              'brand__mark--default': isDefaultBrand
+            }"
+            aria-hidden="true"
+          >
             <img v-if="iconIsUrl" :src="navIcon" class="brand__img" alt="" />
             <i v-else-if="iconIsFa" :class="navIcon" />
-            <span v-else>{{ iconLetter }}</span>
+            <span v-else>{{ iconText }}</span>
           </span>
           <span class="brand__word">{{ navTitle }}</span>
         </router-link>
@@ -111,7 +118,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useSettingsStore, DEFAULT_SETTINGS, isNavIconUrl, isNavIconFa } from '@/stores/settings'
+import { NAVIGATION_BRAND_CONFIG } from '@nav/config/brand'
+import { useSettingsStore, isNavIconUrl, isNavIconFa } from '@/stores/settings'
 import { useAuthStore } from '@/stores/auth'
 
 const emit = defineEmits(['addSite', 'openAccountPanel'])
@@ -120,16 +128,23 @@ const settingsStore = useSettingsStore()
 const authStore = useAuthStore()
 
 const navTitle = computed(
-  () => settingsStore.settings.navTitle || DEFAULT_SETTINGS.navTitle || 'DIY 导航'
+  () => settingsStore.settings.navTitle || NAVIGATION_BRAND_CONFIG.defaultTitle
 )
-const navIcon = computed(() => settingsStore.settings.navIcon || DEFAULT_SETTINGS.navIcon || 'D')
+const navIcon = computed(
+  () => settingsStore.settings.navIcon || NAVIGATION_BRAND_CONFIG.defaultIcon
+)
 const iconIsUrl = computed(() => isNavIconUrl(navIcon.value))
 const iconIsFa = computed(() => isNavIconFa(navIcon.value))
-const iconLetter = computed(() => {
+const iconText = computed(() => {
   const t = navIcon.value.trim()
-  if (!t) return 'D'
-  return Array.from(t)[0] || 'D'
+  if (!t) return NAVIGATION_BRAND_CONFIG.defaultIcon
+  return Array.from(t).slice(0, 2).join('') || NAVIGATION_BRAND_CONFIG.defaultIcon
 })
+const isDefaultBrand = computed(
+  () =>
+    navTitle.value === NAVIGATION_BRAND_CONFIG.defaultTitle &&
+    navIcon.value === NAVIGATION_BRAND_CONFIG.defaultIcon
+)
 
 const currentTheme = computed(() => settingsStore.settings.theme)
 const themeToggleTitle = computed(
@@ -159,7 +174,7 @@ const onThemeHover = (hover: boolean) => {
 
 <style scoped lang="scss">
 /*
-  DIY 导航 · Bookmark Rail
+  导航品牌栏
   ────────────────────────
   Subject: personal startpage / link desk
   Job of header: orient + rare utilities — never compete with the site grid
@@ -233,8 +248,8 @@ const onThemeHover = (hover: boolean) => {
   border-radius: 8px;
   display: grid;
   place-items: center;
-  background: var(--color-primary);
-  color: #fff;
+  background: var(--primary-soft);
+  color: var(--color-primary);
   font-size: 14px;
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -251,6 +266,15 @@ const onThemeHover = (hover: boolean) => {
     border: none;
     box-shadow: none;
     color: inherit;
+  }
+
+  /* 默认品牌保留更明确的文字比例，避免占位字母徽标过于抢眼。 */
+  &--default {
+    background: var(--primary-soft);
+    color: var(--color-primary);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: -0.08em;
   }
 }
 

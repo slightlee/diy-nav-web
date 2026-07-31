@@ -47,12 +47,12 @@ const hasActiveFilters = computed(() => {
 
 const getCategoryName = (id: string) => {
   const cat = props.categories.find(c => c.id === id)
-  return cat ? cat.name : id
+  return cat ? cat.name : '分类已失效'
 }
 
 const getTagName = (id: string) => {
   const tag = props.tags.find(t => t.id === id)
-  return tag ? tag.name : id
+  return tag ? tag.name : '标签已失效'
 }
 </script>
 

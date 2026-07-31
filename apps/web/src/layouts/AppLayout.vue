@@ -13,13 +13,45 @@
       :is-open="uiStore.modalState.addSite"
       :title="addSiteTitle"
       modal-class="website-form-modal"
-      @close="closeAddSite"
+      @close="requestCloseAddSite"
     >
       <AddSiteModal
         :website="uiStore.getModalData('addSite')?.website"
         :context-category-id="uiStore.getModalData('addSite')?.categoryId"
-        @close="closeAddSite"
+        @close="requestCloseAddSite"
+        @dirty-change="addSiteDirty = $event"
       />
+    </BaseModal>
+
+    <BaseModal
+      :is-open="discardAddSiteConfirmOpen"
+      title="放弃未保存内容？"
+      size="sm"
+      modal-class="discard-add-site-modal"
+      @close="discardAddSiteConfirmOpen = false"
+    >
+      <div class="discard-confirm-content">
+        <p>当前填写的内容还没有保存。</p>
+        <p class="discard-confirm-warning">
+          <i class="fas fa-info-circle" aria-hidden="true" />
+          <span>关闭后，这些内容将不会保留。</span>
+        </p>
+      </div>
+      <template #footer>
+        <div class="discard-confirm-actions">
+          <BaseButton variant="ghost" size="sm" @click="discardAddSiteConfirmOpen = false">
+            继续编辑
+          </BaseButton>
+          <BaseButton
+            variant="neutral-outline"
+            size="sm"
+            class="discard-confirm-btn"
+            @click="confirmDiscardAddSite"
+          >
+            放弃并关闭
+          </BaseButton>
+        </div>
+      </template>
     </BaseModal>
 
     <BaseModal
@@ -58,9 +90,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useUIStore } from '@/stores/ui'
-import { BaseModal } from '@nav/ui'
+import { BaseButton, BaseModal } from '@nav/ui'
 import HeaderBar from '@/components/header/HeaderBar.vue'
 import AddSiteModal from '@/components/modals/AddSiteModal.vue'
 import ManageCategoriesModal from '@/components/modals/ManageCategoriesModal.vue'
@@ -70,6 +102,8 @@ import ToastContainer from '@/components/toast/ToastContainer.vue'
 import type { AccountPanelTab } from '@/types'
 
 const uiStore = useUIStore()
+const addSiteDirty = ref(false)
+const discardAddSiteConfirmOpen = ref(false)
 
 const addSiteTitle = computed(() => {
   return uiStore.getModalData('addSite')?.website ? '编辑网站' : '添加网站'
@@ -80,7 +114,21 @@ const handleAddSite = () => {
 }
 
 const closeAddSite = () => {
+  addSiteDirty.value = false
+  discardAddSiteConfirmOpen.value = false
   uiStore.closeModal('addSite')
+}
+
+const requestCloseAddSite = () => {
+  if (addSiteDirty.value) {
+    discardAddSiteConfirmOpen.value = true
+    return
+  }
+  closeAddSite()
+}
+
+const confirmDiscardAddSite = () => {
+  closeAddSite()
 }
 
 const openAccountPanel = (tab: AccountPanelTab = 'account') => {
@@ -151,6 +199,55 @@ watch(
   margin: 0 auto;
   padding: 0 var(--spacing-md);
 }
+
+.discard-confirm-content {
+  display: grid;
+  gap: 14px;
+}
+
+.discard-confirm-content p {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.discard-confirm-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg-tile);
+  color: var(--text-secondary) !important;
+  font-size: 13px !important;
+}
+
+.discard-confirm-warning i {
+  flex: 0 0 auto;
+}
+
+.discard-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 100%;
+}
+
+.discard-confirm-btn {
+  background-color: transparent !important;
+  border-color: var(--border-tile);
+  color: var(--text-secondary);
+  box-shadow: none;
+}
+
+.discard-confirm-btn:hover:not(.base-button--disabled):not(.base-button--loading) {
+  background-color: var(--bg-tile-hover) !important;
+  border-color: var(--border-tile-hover);
+  color: var(--text-main);
+  box-shadow: none;
+  transform: none;
+}
 </style>
 
 <style lang="scss">
@@ -195,6 +292,11 @@ watch(
 
 .modal-overlay:has(.modal-size-xl) {
   backdrop-filter: none;
+}
+
+/* 未保存确认层必须覆盖在添加/编辑网站弹窗之上。 */
+.modal-overlay:has(.discard-add-site-modal) {
+  z-index: calc(var(--z-index-modal, 1000) + 1);
 }
 
 @media (max-width: 768px) {

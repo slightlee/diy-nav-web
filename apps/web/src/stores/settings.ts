@@ -1,25 +1,23 @@
 import { defineStore } from 'pinia'
 import { readonly, ref, watch } from 'vue'
+import {
+  NAVIGATION_BRAND_CONFIG,
+  resolveNavigationIcon,
+  resolveNavigationTitle
+} from '@nav/config/brand'
 import type { UserPreferences, UserSettings } from '@nav/types'
 import { getPreferences, updatePreferences } from '@/api/preferences'
-
-/** 顶栏名称最多 6 个字素（中文/字母/emoji 各计 1） */
-export const NAV_TITLE_MAX = 6
 
 export const DEFAULT_SETTINGS: UserSettings = {
   theme: 'auto',
   autoBackup: true,
   aiAnimationEnabled: true,
   defaultHome: 'home',
-  navTitle: 'DIY 导航',
-  navIcon: 'D'
+  navTitle: NAVIGATION_BRAND_CONFIG.defaultTitle,
+  navIcon: NAVIGATION_BRAND_CONFIG.defaultIcon
 }
 
 const USER_PREFERENCES_CACHE_PREFIX = 'userPreferences:'
-
-export function clampNavTitle(value: string): string {
-  return Array.from(value.trim()).slice(0, NAV_TITLE_MAX).join('')
-}
 
 function normalizeSettings(raw: Partial<UserSettings> | null | undefined): UserSettings {
   const theme = raw?.theme
@@ -27,16 +25,6 @@ function normalizeSettings(raw: Partial<UserSettings> | null | undefined): UserS
     theme === 'light' || theme === 'dark' || theme === 'auto' ? theme : DEFAULT_SETTINGS.theme
   const home = raw?.defaultHome
   const validHome = home === 'home' || home === 'all' ? home : DEFAULT_SETTINGS.defaultHome
-
-  const title =
-    typeof raw?.navTitle === 'string' && raw.navTitle.trim()
-      ? clampNavTitle(raw.navTitle)
-      : DEFAULT_SETTINGS.navTitle
-
-  const icon =
-    typeof raw?.navIcon === 'string' && raw.navIcon.trim()
-      ? raw.navIcon.trim().slice(0, 512)
-      : DEFAULT_SETTINGS.navIcon
 
   return {
     theme: validTheme,
@@ -46,8 +34,8 @@ function normalizeSettings(raw: Partial<UserSettings> | null | undefined): UserS
         ? raw.aiAnimationEnabled
         : DEFAULT_SETTINGS.aiAnimationEnabled,
     defaultHome: validHome,
-    navTitle: title,
-    navIcon: icon
+    navTitle: resolveNavigationTitle(raw?.navTitle),
+    navIcon: resolveNavigationIcon(raw?.navIcon)
   }
 }
 
@@ -69,7 +57,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   const applyDocumentTitle = () => {
     if (typeof document === 'undefined') return
-    document.title = settings.value.navTitle || DEFAULT_SETTINGS.navTitle || 'DIY 导航'
+    document.title = settings.value.navTitle || NAVIGATION_BRAND_CONFIG.defaultTitle
   }
 
   const loadSettings = () => {
@@ -114,8 +102,8 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   const currentPreferences = (): UserPreferences => ({
-    navTitle: settings.value.navTitle || DEFAULT_SETTINGS.navTitle || 'DIY 导航',
-    navIcon: settings.value.navIcon || DEFAULT_SETTINGS.navIcon || 'D',
+    navTitle: settings.value.navTitle || NAVIGATION_BRAND_CONFIG.defaultTitle,
+    navIcon: settings.value.navIcon || NAVIGATION_BRAND_CONFIG.defaultIcon,
     defaultHome: settings.value.defaultHome === 'all' ? 'all' : 'home',
     aiAnimationEnabled: settings.value.aiAnimationEnabled !== false
   })

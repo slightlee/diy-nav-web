@@ -166,6 +166,7 @@ onUnmounted(() => {
 }
 .modal-container {
   background-color: var(--bg-panel, #{$color-white});
+  border: 1px solid var(--color-border, #{$color-border});
   border-radius: $border-radius-xl;
   box-shadow: $shadow-xl;
   max-height: 90vh;
@@ -283,6 +284,9 @@ onUnmounted(() => {
     height: 100vh;
     max-height: 100vh;
     border-radius: 0;
+  }
+  .modal-container {
+    border: 0;
   }
   .modal-header,
   .modal-body,

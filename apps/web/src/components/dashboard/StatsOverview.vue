@@ -2,25 +2,41 @@
   <section class="bottom-card">
     <div class="bottom-card__header"><h3 class="bottom-card__title">概览</h3></div>
     <div class="stats-grid">
-      <div class="stat-pill">
+      <div class="stat-item">
         <div class="stat-icon"><i class="fas fa-layer-group" /></div>
-        <span class="stat-name">网站总数</span>
-        <span class="stat-value">{{ totalSites }}</span>
+        <div class="stat-copy">
+          <span class="stat-name">网站总数</span>
+          <strong class="stat-value" :class="{ 'is-zero': totalSites === 0 }">
+            {{ totalSites }}
+          </strong>
+        </div>
       </div>
-      <div class="stat-pill">
+      <div class="stat-item">
         <div class="stat-icon"><i class="fas fa-star" /></div>
-        <span class="stat-name">常用数量</span>
-        <span class="stat-value">{{ favoriteTotal }}</span>
+        <div class="stat-copy">
+          <span class="stat-name">常用数量</span>
+          <strong class="stat-value" :class="{ 'is-zero': favoriteTotal === 0 }">
+            {{ favoriteTotal }}
+          </strong>
+        </div>
       </div>
-      <div class="stat-pill">
+      <div class="stat-item">
         <div class="stat-icon"><i class="fas fa-plus-circle" /></div>
-        <span class="stat-name">最近7天新增</span>
-        <span class="stat-value">{{ recentAdded7d }}</span>
+        <div class="stat-copy">
+          <span class="stat-name">最近 7 天新增</span>
+          <strong class="stat-value" :class="{ 'is-zero': recentAdded7d === 0 }">
+            {{ recentAdded7d }}
+          </strong>
+        </div>
       </div>
-      <div class="stat-pill">
+      <div class="stat-item">
         <div class="stat-icon"><i class="fas fa-clock" /></div>
-        <span class="stat-name">今日访问</span>
-        <span class="stat-value">{{ todayVisited }}</span>
+        <div class="stat-copy">
+          <span class="stat-name">今日访问</span>
+          <strong class="stat-value" :class="{ 'is-zero': todayVisited === 0 }">
+            {{ todayVisited }}
+          </strong>
+        </div>
       </div>
     </div>
     <div v-if="totalSites === 0" class="stats-suggestion">
@@ -42,17 +58,19 @@ const { totalSites, favoriteTotal, recentAdded7d, todayVisited } = useWebsiteSta
 
 <style scoped lang="scss">
 .bottom-card {
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--border-tile);
   border-radius: 18px;
   background: var(--bg-panel);
-  padding: 18px 18px 16px;
-  box-shadow: var(--shadow-card);
+  padding: 14px 16px 13px;
+  box-shadow: var(--shadow-sm);
 }
 .bottom-card__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 .bottom-card__title {
   margin: 0;
@@ -72,26 +90,22 @@ const { totalSites, favoriteTotal, recentAdded7d, todayVisited } = useWebsiteSta
   display: inline-block;
 }
 .stats-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 16px;
 }
-.stat-pill {
-  height: 32px;
-  padding: 0 12px;
-  border-radius: var(--radius-pill);
-  background: var(--bg-tile);
-  border: 1px solid var(--border-tile);
-  display: inline-flex;
+.stat-item {
+  min-width: 0;
+  min-height: 30px;
+  display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
-  color: var(--text-secondary);
 }
 .stat-icon {
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border-radius: 8px;
   background: var(--primary-soft);
   display: flex;
   align-items: center;
@@ -99,16 +113,32 @@ const { totalSites, favoriteTotal, recentAdded7d, todayVisited } = useWebsiteSta
   font-size: 11px;
   color: var(--color-primary);
 }
+.stat-copy {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 8px;
+  flex: 1;
+}
 .stat-name {
   color: var(--text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .stat-value {
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: var(--bg-tile-hover);
-  font-weight: 500;
-  color: var(--text-main);
-  border: 1px solid var(--border-tile-hover);
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 650;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-value.is-zero {
+  color: var(--text-muted);
+  font-weight: 600;
 }
 
 .stats-suggestion {

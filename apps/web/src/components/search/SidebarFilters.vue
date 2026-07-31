@@ -10,12 +10,7 @@
       </div>
 
       <div v-if="tags.length === 0" class="sidebar-empty-state">
-        <p class="empty-desc-text">添加网站并打上标签后，你可以在这里按标签快速筛选。</p>
-        <div class="tag-list disabled">
-          <span class="tag-pill example">示例：GitHub</span>
-          <span class="tag-pill example">示例：云服务</span>
-          <span class="tag-pill example">示例：AI</span>
-        </div>
+        <p class="empty-desc-text">添加网站后，可用标签快速筛选。</p>
         <button class="create-first-btn" @click="$emit('manageTags')">创建第一个标签</button>
       </div>
 
@@ -42,18 +37,11 @@
       </div>
 
       <div v-if="categories.length === 0" class="sidebar-empty-state">
-        <p class="empty-desc-text">
-          为网站创建分类后，你可以在这里切换查看「云服务商」「在线工具」「博客论坛」等分组。
-        </p>
+        <p class="empty-desc-text">创建分类后，可在这里切换查看不同分组。</p>
         <div class="category-list">
           <button class="category-item active" @click="$emit('selectCategory', 'all')">
             <span class="category-name">全部 (0)</span>
           </button>
-        </div>
-        <div class="tag-list disabled">
-          <span class="tag-pill example">示例：云服务商</span>
-          <span class="tag-pill example">示例：在线工具</span>
-          <span class="tag-pill example">示例：博客论坛</span>
         </div>
         <button class="create-first-btn" @click="$emit('manageCategories')">创建第一个分类</button>
       </div>

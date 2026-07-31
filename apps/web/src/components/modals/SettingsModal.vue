@@ -36,7 +36,6 @@
               v-model="navTitleDraft"
               class="input"
               type="text"
-              :maxlength="titleMax"
               placeholder="例如：一点导航"
               spellcheck="false"
               @input="onTitleInput"
@@ -138,39 +137,38 @@
 <script setup lang="ts">
 import { ref, watch, computed, onUnmounted } from 'vue'
 import {
-  useSettingsStore,
-  DEFAULT_SETTINGS,
-  NAV_TITLE_MAX,
-  clampNavTitle,
-  isNavIconUrl,
-  isNavIconFa
-} from '@/stores/settings'
+  NAVIGATION_BRAND_CONFIG,
+  clampNavigationTitle,
+  countNavigationTitle
+} from '@nav/config/brand'
+import { useSettingsStore, isNavIconUrl, isNavIconFa } from '@/stores/settings'
 import { useAuthStore } from '@/stores/auth'
 
 const store = useSettingsStore()
 const authStore = useAuthStore()
-const titleMax = NAV_TITLE_MAX
+const titleMax = NAVIGATION_BRAND_CONFIG.titleMaxLength
 
 const current = store.settings.defaultHome
 const validDefault = (['home', 'all'].includes(current || '') ? current : 'home') as 'home' | 'all'
 const defaultHome = ref<'home' | 'all'>(validDefault)
 const aiAnimationEnabled = ref(store.settings.aiAnimationEnabled !== false)
 
-const rawTitle = store.settings.navTitle || DEFAULT_SETTINGS.navTitle || 'DIY 导航'
-const navTitleDraft = ref(clampNavTitle(rawTitle))
+const rawTitle = store.settings.navTitle || NAVIGATION_BRAND_CONFIG.defaultTitle
+const navTitleDraft = ref(clampNavigationTitle(rawTitle))
 
 const savedIcon = (store.settings.navIcon || '').trim()
 const urlIconDraft = ref(isNavIconUrl(savedIcon) ? savedIcon : '')
 const urlPreviewBroken = ref(false)
 
-const titleLen = computed(() => Array.from(navTitleDraft.value).length)
+const titleLen = computed(() => countNavigationTitle(navTitleDraft.value))
 const urlIsReady = computed(() => isNavIconUrl(urlIconDraft.value))
 const hasImagePreview = computed(() => urlIsReady.value && !urlPreviewBroken.value)
 
 const fallbackLetter = computed(() => {
   const title = navTitleDraft.value.trim()
-  if (title) return Array.from(title)[0]!.toUpperCase()
-  return 'D'
+  const [firstCharacter] = Array.from(title)
+  if (firstCharacter) return firstCharacter.toUpperCase()
+  return NAVIGATION_BRAND_CONFIG.defaultIcon
 })
 
 const urlHelpText = computed(() => {
@@ -182,17 +180,19 @@ const urlHelpText = computed(() => {
 })
 
 const onTitleInput = () => {
-  const next = clampNavTitle(navTitleDraft.value)
+  const next = clampNavigationTitle(navTitleDraft.value)
   if (next !== navTitleDraft.value) navTitleDraft.value = next
 }
 
 const commitBrand = () => {
-  const title = clampNavTitle(navTitleDraft.value) || DEFAULT_SETTINGS.navTitle || 'DIY 导航'
+  const title = clampNavigationTitle(navTitleDraft.value) || NAVIGATION_BRAND_CONFIG.defaultTitle
   const url = urlIconDraft.value.trim()
 
   if (!url) {
     const savedIcon = (store.settings.navIcon || '').trim()
-    const icon = isNavIconFa(savedIcon) ? savedIcon : Array.from(title)[0] || 'D'
+    const icon = isNavIconFa(savedIcon)
+      ? savedIcon
+      : Array.from(title)[0] || NAVIGATION_BRAND_CONFIG.defaultIcon
     store.setNavBrand({ navTitle: title, navIcon: icon })
   } else if (isNavIconUrl(url)) {
     store.setNavBrand({ navTitle: title, navIcon: url })

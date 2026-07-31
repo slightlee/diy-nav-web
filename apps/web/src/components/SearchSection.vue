@@ -89,7 +89,10 @@
               </div>
             </template>
 
-            <template v-if="filteredWebsites.length > 0" #add-card>
+            <template
+              v-if="filteredWebsites.length > 0 || websiteStore.websites.length === 0"
+              #add-card
+            >
               <div class="add-card" @click="onAddSite">
                 <div class="add-card-content">
                   <div class="add-icon">
@@ -103,21 +106,13 @@
         </div>
 
         <EmptyState
-          v-if="filteredWebsites.length === 0 && !searchKeyword"
-          type="no-websites"
-          message="暂时还没有网站"
-          description="点击下方按钮，添加你的第一个网站。之后你可以在「全部」中按标签、分类和关键字进行筛选和搜索。"
-          hint="小提示：建议为常用网站设置分类和标签，后续管理和查找会更轻松。"
-          :show-action-button="true"
+          v-if="filteredWebsites.length === 0 && !searchKeyword && websiteStore.websites.length > 0"
+          type="no-results"
+          message="当前筛选下没有网站"
+          description="试试调整分类或标签筛选条件。"
+          :show-action-button="false"
           size="small"
-        >
-          <template #action>
-            <BaseButton variant="primary" size="md" shape="pill" @click="onAddSite">
-              <i class="fas fa-plus" />
-              添加第一个网站
-            </BaseButton>
-          </template>
-        </EmptyState>
+        />
       </main>
     </div>
   </div>
@@ -410,4 +405,3 @@ const onFavoriteToggle = (websiteId: string) => {
   }
 }
 </style>
-```

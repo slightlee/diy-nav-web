@@ -20,6 +20,7 @@
   "dependencies": {
     "@dicebear/adventurer-neutral": "^9.4.2",
     "@dicebear/core": "^9.4.3",
+    "@nav/config": "workspace:^",
     "@nav/database": "workspace:^",
     "@nav/logger": "workspace:^",
     "@nav/storage": "workspace:^",
