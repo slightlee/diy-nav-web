@@ -3,6 +3,7 @@ import { AuthService } from './auth.js'
 import type { DatabaseClient } from '@nav/database'
 import { AvatarService } from './avatar.js'
 import bcrypt from 'bcryptjs'
+import type { Logger } from '@nav/logger'
 
 // Mock dependencies
 const mockDb = {
@@ -22,7 +23,7 @@ const mockLogger = {
   error: vi.fn(),
   warn: vi.fn(),
   debug: vi.fn()
-} as any
+} as unknown as Logger
 
 describe('AuthService', () => {
   let authService: AuthService
@@ -148,6 +149,172 @@ describe('AuthService', () => {
         'User not found'
       )
       expect(mockDb.execute).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('provider identities', () => {
+    it('does not auto-link an existing email when a provider identity is new', async () => {
+      vi.spyOn(mockDb, 'first').mockResolvedValueOnce(null)
+      vi.spyOn(mockAvatarService, 'generateAndUpload').mockResolvedValue('http://avatar.url')
+
+      const result = await authService.findOrCreateByProvider('github', 'github-1', {
+        email: 'existing@example.com',
+        nickname: 'GitHub user'
+      })
+
+      expect(result.isNewUser).toBe(true)
+      expect(result.user.email).toBeNull()
+      expect(result.user.password_hash).toBeNull()
+      expect(mockDb.first).toHaveBeenCalledTimes(1)
+      expect(mockDb.batch).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            params: expect.arrayContaining([null, null])
+          })
+        ])
+      )
+    })
+
+    it('rejects binding a provider identity used by another account', async () => {
+      vi.spyOn(mockDb, 'first')
+        .mockResolvedValueOnce({ id: 'current-user' })
+        .mockResolvedValueOnce({ user_id: 'other-user' })
+
+      await expect(
+        authService.bindProviderIdentity('current-user', 'github', 'github-1', {})
+      ).rejects.toMatchObject({ code: 'PROVIDER_ACCOUNT_IN_USE', statusCode: 409 })
+      expect(mockDb.execute).not.toHaveBeenCalled()
+    })
+
+    it('treats binding the current identity as idempotent', async () => {
+      vi.spyOn(mockDb, 'first')
+        .mockResolvedValueOnce({ id: 'current-user' })
+        .mockResolvedValueOnce({ user_id: 'current-user' })
+
+      await authService.bindProviderIdentity('current-user', 'github', 'github-1', {})
+
+      expect(mockDb.execute).not.toHaveBeenCalled()
+    })
+
+    it('rejects a second identity from the same provider', async () => {
+      vi.spyOn(mockDb, 'first')
+        .mockResolvedValueOnce({ id: 'current-user' })
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          user_id: 'current-user',
+          provider: 'github',
+          provider_uid: 'github-old'
+        })
+
+      await expect(
+        authService.bindProviderIdentity('current-user', 'github', 'github-new', {})
+      ).rejects.toMatchObject({ code: 'PROVIDER_ALREADY_BOUND', statusCode: 409 })
+      expect(mockDb.execute).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('login method unbinding', () => {
+    it('marks bound methods as removable only when another login method exists', async () => {
+      vi.spyOn(mockDb, 'first').mockResolvedValueOnce({
+        id: 'current-user',
+        email: 'user@example.com'
+      })
+      vi.spyOn(mockDb, 'all').mockResolvedValueOnce([
+        {
+          user_id: 'current-user',
+          provider: 'google',
+          provider_uid: 'google-1',
+          created_at: 100
+        }
+      ])
+
+      await expect(authService.getLoginMethods('current-user')).resolves.toEqual({
+        email: {
+          bound: true,
+          address: 'user@example.com',
+          canUnbind: true
+        },
+        providers: [{ provider: 'google', boundAt: 100, canUnbind: true }]
+      })
+    })
+
+    it('protects the only login method in the returned state', async () => {
+      vi.spyOn(mockDb, 'first').mockResolvedValueOnce({
+        id: 'current-user',
+        email: 'user@example.com'
+      })
+      vi.spyOn(mockDb, 'all').mockResolvedValueOnce([])
+
+      const methods = await authService.getLoginMethods('current-user')
+
+      expect(methods.email.canUnbind).toBe(false)
+    })
+
+    it('unbinds email credentials when another method remains', async () => {
+      const currentUser = { id: 'current-user', email: 'user@example.com' }
+      const updatedUser = {
+        ...currentUser,
+        email: null,
+        password_hash: null,
+        email_verified_at: null
+      }
+      vi.spyOn(mockDb, 'first')
+        .mockResolvedValueOnce(currentUser)
+        .mockResolvedValueOnce(updatedUser)
+      vi.spyOn(mockDb, 'execute').mockResolvedValueOnce({ changes: 1 })
+
+      await expect(authService.unbindEmailLogin('current-user')).resolves.toEqual(updatedUser)
+      expect(mockDb.execute).toHaveBeenCalledWith(
+        expect.stringMatching(/SET email = NULL, password_hash = NULL[\s\S]+AND EXISTS/),
+        [expect.any(Number), 'current-user', 'current-user']
+      )
+    })
+
+    it('rejects unbinding the last email login method', async () => {
+      vi.spyOn(mockDb, 'first').mockResolvedValueOnce({
+        id: 'current-user',
+        email: 'user@example.com'
+      })
+      vi.spyOn(mockDb, 'execute').mockResolvedValueOnce({ changes: 0 })
+
+      await expect(authService.unbindEmailLogin('current-user')).rejects.toMatchObject({
+        code: 'LAST_LOGIN_METHOD',
+        statusCode: 409
+      })
+    })
+
+    it('unbinds a provider identity when another method remains', async () => {
+      vi.spyOn(mockDb, 'first')
+        .mockResolvedValueOnce({ id: 'current-user', email: 'user@example.com' })
+        .mockResolvedValueOnce({
+          user_id: 'current-user',
+          provider: 'google',
+          provider_uid: 'google-1'
+        })
+      vi.spyOn(mockDb, 'execute').mockResolvedValueOnce({ changes: 1 })
+
+      await expect(
+        authService.unbindProviderIdentity('current-user', 'google')
+      ).resolves.toBeUndefined()
+      expect(mockDb.execute).toHaveBeenCalledWith(
+        expect.stringMatching(/DELETE FROM user_identities[\s\S]+other\.provider <> \?/),
+        ['current-user', 'google', 'current-user', 'current-user', 'google']
+      )
+    })
+
+    it('rejects unbinding the last provider login method', async () => {
+      vi.spyOn(mockDb, 'first')
+        .mockResolvedValueOnce({ id: 'current-user', email: null })
+        .mockResolvedValueOnce({
+          user_id: 'current-user',
+          provider: 'google',
+          provider_uid: 'google-1'
+        })
+      vi.spyOn(mockDb, 'execute').mockResolvedValueOnce({ changes: 0 })
+
+      await expect(
+        authService.unbindProviderIdentity('current-user', 'google')
+      ).rejects.toMatchObject({ code: 'LAST_LOGIN_METHOD', statusCode: 409 })
     })
   })
 })

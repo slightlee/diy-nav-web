@@ -1,6 +1,15 @@
 import type { DatabaseClient } from '@nav/database'
 import { User } from '../services/auth.js'
 
+export interface UserIdentityRecord {
+  user_id: string
+  provider: string
+  provider_uid: string
+  profile_data: string | null
+  created_at: number
+  last_used_at: number | null
+}
+
 export class UserRepository {
   constructor(private readonly db: DatabaseClient) {}
 
@@ -49,6 +58,85 @@ export class UserRepository {
       'SELECT user_id FROM user_identities WHERE provider = ? AND provider_uid = ?',
       [provider, providerUid]
     )
+  }
+
+  async findIdentityByUserAndProvider(
+    userId: string,
+    provider: string
+  ): Promise<UserIdentityRecord | null> {
+    return this.db.first<UserIdentityRecord>(
+      `SELECT user_id, provider, provider_uid, profile_data, created_at, last_used_at
+       FROM user_identities WHERE user_id = ? AND provider = ?`,
+      [userId, provider]
+    )
+  }
+
+  async listIdentities(userId: string): Promise<UserIdentityRecord[]> {
+    return this.db.all<UserIdentityRecord>(
+      `SELECT user_id, provider, provider_uid, profile_data, created_at, last_used_at
+       FROM user_identities WHERE user_id = ? ORDER BY created_at ASC`,
+      [userId]
+    )
+  }
+
+  async updateIdentityLastUsed(
+    provider: string,
+    providerUid: string,
+    usedAt: number
+  ): Promise<void> {
+    await this.db.execute(
+      'UPDATE user_identities SET last_used_at = ? WHERE provider = ? AND provider_uid = ?',
+      [usedAt, provider, providerUid]
+    )
+  }
+
+  async bindEmailLogin(
+    userId: string,
+    email: string,
+    passwordHash: string,
+    verifiedAt: number
+  ): Promise<void> {
+    const result = await this.db.execute(
+      `UPDATE users
+       SET email = ?, password_hash = ?, email_verified_at = ?, updated_at = ?
+       WHERE id = ? AND email IS NULL`,
+      [email, passwordHash, verifiedAt, verifiedAt, userId]
+    )
+
+    if (result.changes === 0) {
+      throw new Error('Email login could not be bound to the user')
+    }
+  }
+
+  async unbindEmailLogin(userId: string, updatedAt: number): Promise<boolean> {
+    const result = await this.db.execute(
+      `UPDATE users
+       SET email = NULL, password_hash = NULL, email_verified_at = NULL, updated_at = ?
+       WHERE id = ?
+         AND email IS NOT NULL
+         AND EXISTS (
+           SELECT 1 FROM user_identities WHERE user_id = ?
+         )`,
+      [updatedAt, userId, userId]
+    )
+    return result.changes > 0
+  }
+
+  async removeIdentity(userId: string, provider: string): Promise<boolean> {
+    const result = await this.db.execute(
+      `DELETE FROM user_identities
+       WHERE user_id = ?
+         AND provider = ?
+         AND (
+           EXISTS (SELECT 1 FROM users WHERE id = ? AND email IS NOT NULL)
+           OR EXISTS (
+             SELECT 1 FROM user_identities AS other
+             WHERE other.user_id = ? AND other.provider <> ?
+           )
+         )`,
+      [userId, provider, userId, userId, provider]
+    )
+    return result.changes > 0
   }
 
   /**
@@ -103,6 +191,7 @@ export class UserRepository {
         id TEXT PRIMARY KEY,
         email TEXT UNIQUE,
         password_hash TEXT,
+        email_verified_at INTEGER,
         nickname TEXT,
         avatar_url TEXT,
         role TEXT DEFAULT 'USER',
@@ -114,6 +203,14 @@ export class UserRepository {
         deleted_at INTEGER
       );
     `)
+
+    const userColumns = await this.db.all<{ name: string }>('PRAGMA table_info(users)')
+    if (!userColumns.some(column => column.name === 'email_verified_at')) {
+      await this.db.execute('ALTER TABLE users ADD COLUMN email_verified_at INTEGER')
+      await this.db.execute(
+        'UPDATE users SET email_verified_at = created_at WHERE email IS NOT NULL AND email_verified_at IS NULL'
+      )
+    }
 
     // Create user_identities table
     await this.db.execute(`
@@ -128,15 +225,20 @@ export class UserRepository {
         UNIQUE(provider, provider_uid)
       );
     `)
+
+    await this.db.execute(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_user_identities_user_provider ON user_identities(user_id, provider)'
+    )
   }
 
   private prepareCreateUserStmt(user: User): { sql: string; params: unknown[] } {
     return {
-      sql: `INSERT INTO users (id, email, password_hash, nickname, avatar_url, role, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      sql: `INSERT INTO users (id, email, password_hash, email_verified_at, nickname, avatar_url, role, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       params: [
         user.id,
         user.email,
         user.password_hash,
+        user.email_verified_at,
         user.nickname,
         user.avatar_url,
         user.role,

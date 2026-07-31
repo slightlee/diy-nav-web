@@ -4,11 +4,17 @@ import { AppError } from '@nav/core'
 import {
   registerSchema,
   loginSchema,
+  completeEmailBindingSchema,
   providerLoginSchema,
+  providerBindingIntentSchema,
+  providerBindingSchema,
+  providerUnbindingSchema,
+  requestEmailBindingSchema,
   updatePreferencesSchema,
-  updateProfileSchema
+  updateProfileSchema,
+  verifyEmailBindingSchema
 } from '../schemas/auth.schema.js'
-import { authService, preferencesService } from '../services.js'
+import { authService, emailBindingService, preferencesService } from '../services.js'
 import { generateAccessToken } from '../lib/token.js'
 import { toUserDto } from '../lib/dto.js'
 import { clearAuthCookie, setAuthCookie } from '../lib/auth-cookie.js'
@@ -113,6 +119,80 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
     }
   )
 
+  app.get('/auth/login-methods', { onRequest: [app.authenticate] }, async req => {
+    return {
+      success: true,
+      data: {
+        ...(await authService.getLoginMethods(req.user.sub)),
+        availableProviders: app.authProviderFactory.getProviderNames()
+      }
+    }
+  })
+
+  app.delete(
+    '/auth/login-methods/email',
+    {
+      onRequest: [app.authenticate],
+      config: { rateLimit: { max: 10, timeWindow: '15 minutes' } }
+    },
+    async (req, reply) => {
+      const user = await authService.unbindEmailLogin(req.user.sub)
+      setAuthCookie(reply, generateAccessToken(app, user))
+      return { success: true, data: { user: toUserDto(user) } }
+    }
+  )
+
+  app.delete(
+    '/auth/login-methods/:provider',
+    {
+      onRequest: [app.authenticate],
+      schema: providerUnbindingSchema,
+      config: { rateLimit: { max: 10, timeWindow: '15 minutes' } }
+    },
+    async req => {
+      await authService.unbindProviderIdentity(req.user.sub, req.params.provider)
+      return { success: true }
+    }
+  )
+
+  app.post(
+    '/auth/email-bindings',
+    {
+      onRequest: [app.authenticate],
+      schema: { body: requestEmailBindingSchema },
+      config: { rateLimit: { max: 5, timeWindow: '15 minutes' } }
+    },
+    async req => ({
+      success: true,
+      data: await emailBindingService.requestBinding(req.user.sub, req.body.email)
+    })
+  )
+
+  app.get(
+    '/auth/email-bindings/verify',
+    {
+      schema: { querystring: verifyEmailBindingSchema },
+      config: { rateLimit: { max: 20, timeWindow: '1 minute' } }
+    },
+    async req => ({
+      success: true,
+      data: await emailBindingService.validateToken(req.query.token)
+    })
+  )
+
+  app.post(
+    '/auth/email-bindings/complete',
+    {
+      schema: { body: completeEmailBindingSchema },
+      config: { rateLimit: { max: 10, timeWindow: '15 minutes' } }
+    },
+    async (req, reply) => {
+      const user = await emailBindingService.completeBinding(req.body.token, req.body.password)
+      setAuthCookie(reply, generateAccessToken(app, user))
+      return { success: true, data: { user: toUserDto(user) } }
+    }
+  )
+
   app.get('/auth/preferences', { onRequest: [app.authenticate] }, async req => {
     return {
       success: true,
@@ -177,6 +257,66 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
           isNewUser
         }
       }
+    }
+  )
+
+  app.post(
+    '/auth/:provider/bind-intent',
+    {
+      onRequest: [app.authenticate],
+      schema: providerBindingIntentSchema,
+      config: { rateLimit: { max: 10, timeWindow: '15 minutes' } }
+    },
+    async req => {
+      const { provider } = req.params
+      if (!app.authProviderFactory.getProviderNames().includes(provider)) {
+        throw new AppError('OAuth provider is unavailable', 'OAUTH_PROVIDER_UNAVAILABLE', 503)
+      }
+      const state = app.jwt.sign(
+        {
+          sub: req.user.sub,
+          email: req.user.email,
+          role: req.user.role,
+          purpose: 'bind',
+          provider
+        },
+        { expiresIn: '10m' }
+      )
+      return { success: true, data: { state } }
+    }
+  )
+
+  app.post(
+    '/auth/:provider/bind',
+    {
+      onRequest: [app.authenticate],
+      schema: providerBindingSchema,
+      config: { rateLimit: { max: 10, timeWindow: '15 minutes' } }
+    },
+    async req => {
+      const { provider: providerName } = req.params
+      const intent = app.jwt.verify<{
+        sub: string
+        purpose?: string
+        provider?: string
+      }>(req.body.state)
+      if (
+        intent.sub !== req.user.sub ||
+        intent.purpose !== 'bind' ||
+        intent.provider !== providerName
+      ) {
+        throw new AppError('OAuth binding request is invalid', 'OAUTH_BINDING_INVALID', 400)
+      }
+
+      const provider = app.authProviderFactory.getProvider(providerName)
+      const tokenData = await provider.exchangeToken(req.body.code)
+      const userData = await provider.getUserInfo(tokenData.access_token)
+      await authService.bindProviderIdentity(req.user.sub, provider.name, userData.id, {
+        email: userData.email,
+        nickname: userData.name,
+        avatar_url: userData.avatar_url
+      })
+      return { success: true }
     }
   )
 }

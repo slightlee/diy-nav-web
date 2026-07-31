@@ -90,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { BaseButton, BaseModal } from '@nav/ui'
 import HeaderBar from '@/components/header/HeaderBar.vue'
@@ -138,6 +138,12 @@ const openAccountPanel = (tab: AccountPanelTab = 'account') => {
 const closeAccountPanel = () => {
   uiStore.closeModal('accountPanel')
 }
+
+onMounted(() => {
+  if (sessionStorage.getItem('open_account_panel') !== 'true') return
+  sessionStorage.removeItem('open_account_panel')
+  openAccountPanel('account')
+})
 
 watch(
   () => uiStore.modalState.settings,

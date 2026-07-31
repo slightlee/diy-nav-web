@@ -19,6 +19,9 @@ export const serverSchema = z.object({
 // ============================================
 export const authSchema = z.object({
   JWT_SECRET: z.string().default('dev-secret-do-not-use-in-prod'),
+  WEB_APP_URL: z.string().url().default('http://127.0.0.1:3000'),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
   // Linux.do
   LINUX_DO_CLIENT_ID: z.string().optional(),
   LINUX_DO_CLIENT_SECRET: z.string().optional(),
@@ -116,6 +119,14 @@ export const configSchema = z
   .merge(backupSchema)
   .merge(logSchema)
   .superRefine((data, ctx) => {
+    if (Boolean(data.SMTP_USER) !== Boolean(data.SMTP_PASSWORD)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'SMTP_USER and SMTP_PASSWORD must be configured together',
+        path: ['SMTP_USER']
+      })
+    }
+
     // ============================================
     // 生产环境安全检查
     // ============================================

@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { request } from '@/utils/http'
 import { useSettingsStore } from '@/stores/settings'
+import type { OAuthProvider } from '@/utils/oauth'
 
 export interface User {
   id: string
@@ -9,6 +10,21 @@ export interface User {
   nickname: string | null
   avatar_url: string | null
   role: 'USER' | 'ADMIN'
+}
+
+export interface LoginMethods {
+  email: { bound: boolean; address: string | null; canUnbind: boolean }
+  providers: Array<{ provider: OAuthProvider; boundAt: number; canUnbind: boolean }>
+  availableProviders: OAuthProvider[]
+}
+
+export class AuthRequestError extends Error {
+  constructor(
+    message: string,
+    readonly code?: string
+  ) {
+    super(message)
+  }
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -30,6 +46,16 @@ export const useAuthStore = defineStore('auth', () => {
     isNewRegistration.value = false
     localStorage.removeItem('auth_token')
     localStorage.removeItem('auth_user')
+  }
+
+  function requireData<T>(response: {
+    success: boolean
+    data?: T
+    message?: string
+    code?: string
+  }): T {
+    if (response.success && response.data !== undefined) return response.data
+    throw new AuthRequestError(response.message || '请求失败', response.code)
   }
 
   async function login(email: string, password: string) {
@@ -61,6 +87,65 @@ export const useAuthStore = defineStore('auth', () => {
       return true
     }
     throw new Error(res.message || 'OAuth Login failed')
+  }
+
+  async function fetchLoginMethods(): Promise<LoginMethods> {
+    const response = await request.get<LoginMethods>('/api/auth/login-methods')
+    return requireData(response)
+  }
+
+  async function requestEmailBinding(email: string): Promise<{
+    expiresAt: number
+    verificationUrl?: string
+  }> {
+    const response = await request.post<{ expiresAt: number; verificationUrl?: string }>(
+      '/api/auth/email-bindings',
+      { email }
+    )
+    return requireData(response)
+  }
+
+  async function validateEmailBinding(token: string): Promise<{ email: string }> {
+    const response = await request.get<{ email: string }>('/api/auth/email-bindings/verify', {
+      token
+    })
+    return requireData(response)
+  }
+
+  async function completeEmailBinding(token: string, password: string): Promise<User> {
+    const response = await request.post<{ user: User }>('/api/auth/email-bindings/complete', {
+      token,
+      password
+    })
+    const data = requireData(response)
+    setCurrentUser(data.user)
+    void useSettingsStore().loadRemotePreferences(data.user.id)
+    return data.user
+  }
+
+  async function createProviderBindingIntent(provider: OAuthProvider): Promise<string> {
+    const response = await request.post<{ state: string }>(`/api/auth/${provider}/bind-intent`)
+    return requireData(response).state
+  }
+
+  async function bindProvider(provider: OAuthProvider, code: string, state: string): Promise<void> {
+    const response = await request.post(`/api/auth/${provider}/bind`, { code, state })
+    if (!response.success) {
+      throw new AuthRequestError(response.message || '第三方账号绑定失败', response.code)
+    }
+  }
+
+  async function unbindEmailLogin(): Promise<void> {
+    const response = await request.delete<{ user: User }>('/api/auth/login-methods/email')
+    const data = requireData(response)
+    setCurrentUser(data.user)
+  }
+
+  async function unbindProvider(provider: OAuthProvider): Promise<void> {
+    const response = await request.delete(`/api/auth/login-methods/${provider}`)
+    if (!response.success) {
+      throw new AuthRequestError(response.message || '第三方账号解绑失败', response.code)
+    }
   }
 
   async function register(email: string, password: string) {
@@ -116,6 +201,14 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     login,
     loginWithProvider,
+    fetchLoginMethods,
+    requestEmailBinding,
+    validateEmailBinding,
+    completeEmailBinding,
+    createProviderBindingIntent,
+    bindProvider,
+    unbindEmailLogin,
+    unbindProvider,
     register,
     fetchUser,
     updateNickname,

@@ -99,6 +99,11 @@ export function getConfig() {
     },
     auth: {
       jwtSecret: raw.JWT_SECRET,
+      webAppUrl: raw.WEB_APP_URL,
+      smtp: {
+        user: raw.SMTP_USER,
+        password: raw.SMTP_PASSWORD
+      },
       linuxDo: {
         clientId: raw.LINUX_DO_CLIENT_ID,
         clientSecret: raw.LINUX_DO_CLIENT_SECRET,

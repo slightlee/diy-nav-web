@@ -29,11 +29,42 @@ export const updatePreferencesSchema = z.object({
   aiAnimationEnabled: z.boolean().optional()
 })
 
+export const authProviderSchema = z.enum(['github', 'google', 'linuxdo'])
+
 export const providerLoginSchema = {
   params: z.object({
-    provider: z.string()
+    provider: authProviderSchema
   }),
   body: z.object({
     code: z.string()
   })
 }
+
+export const providerBindingIntentSchema = {
+  params: z.object({ provider: authProviderSchema })
+}
+
+export const providerBindingSchema = {
+  params: z.object({ provider: authProviderSchema }),
+  body: z.object({
+    code: z.string().min(1),
+    state: z.string().min(1)
+  })
+}
+
+export const providerUnbindingSchema = {
+  params: z.object({ provider: authProviderSchema })
+}
+
+export const requestEmailBindingSchema = z.object({
+  email: z.string().trim().email()
+})
+
+export const verifyEmailBindingSchema = z.object({
+  token: z.string().min(20)
+})
+
+export const completeEmailBindingSchema = z.object({
+  token: z.string().min(20),
+  password: z.string().min(8).max(128)
+})

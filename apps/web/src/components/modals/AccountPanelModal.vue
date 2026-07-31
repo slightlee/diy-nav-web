@@ -92,24 +92,7 @@
                 <p>绑定后可使用更多方式登录同一个账号</p>
               </div>
             </div>
-            <div class="binding-list">
-              <div v-for="item in bindingItems" :key="item.key" class="binding-row">
-                <div class="binding-main">
-                  <span class="binding-icon" :class="item.status">
-                    <i :class="item.icon" />
-                  </span>
-                  <div class="binding-copy">
-                    <div class="binding-title-row">
-                      <span class="binding-title">{{ item.label }}</span>
-                      <span class="binding-badge" :class="item.status">
-                        {{ item.status === 'bound' ? '已绑定' : '未绑定' }}
-                      </span>
-                    </div>
-                    <div class="binding-desc">{{ item.description }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <LoginMethodsSection />
           </section>
 
           <div class="account-danger">
@@ -149,6 +132,7 @@ import { BaseButton, BaseInput } from '@nav/ui'
 import DataManagementModal from '@/components/modals/DataManagementModal.vue'
 import AIConfigModal from '@/components/modals/AIConfigModal.vue'
 import SettingsModal from '@/components/modals/SettingsModal.vue'
+import LoginMethodsSection from '@/components/account/LoginMethodsSection.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -238,37 +222,6 @@ const canSaveNickname = computed(() => {
     nickname !== (authStore.user?.nickname || '')
   )
 })
-const bindingItems = computed(() => [
-  {
-    key: 'email',
-    label: '邮箱登录',
-    description: authStore.user?.email || '暂未绑定邮箱',
-    icon: 'fas fa-envelope',
-    status: authStore.user?.email ? 'bound' : 'unbound'
-  },
-  {
-    key: 'github',
-    label: 'GitHub',
-    description: '绑定后可使用 GitHub 快速登录',
-    icon: 'fab fa-github',
-    status: 'unbound'
-  },
-  {
-    key: 'google',
-    label: 'Google',
-    description: '绑定后可使用 Google 快速登录',
-    icon: 'fab fa-google',
-    status: 'unbound'
-  },
-  {
-    key: 'linuxdo',
-    label: 'LinuxDo',
-    description: '绑定后可使用 LinuxDo 快速登录',
-    icon: 'fas fa-circle-nodes',
-    status: 'unbound'
-  }
-])
-
 const selectTab = (tab: AccountPanelTab, event?: MouseEvent) => {
   activeTab.value = tab
   const target = event?.currentTarget
@@ -582,91 +535,6 @@ const handleLogout = async () => {
   color: var(--color-error);
 }
 
-.binding-list {
-  display: flex;
-  flex-direction: column;
-}
-
-.binding-row {
-  min-height: 68px;
-  padding: 12px 18px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 18px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-
-  &:last-child {
-    border-bottom: 0;
-  }
-}
-
-.binding-main {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.binding-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  background: var(--account-control-bg);
-  color: var(--text-muted);
-
-  &.bound {
-    color: var(--color-primary-dark);
-    background: var(--primary-soft);
-    border-color: color-mix(in srgb, var(--color-primary) 18%, transparent);
-  }
-}
-
-.binding-copy {
-  min-width: 0;
-}
-
-.binding-title-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.binding-title {
-  color: var(--text-main);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.binding-badge {
-  padding: 2px 7px;
-  border-radius: 999px;
-  color: var(--text-muted);
-  background: rgba(148, 163, 184, 0.1);
-  font-size: 11px;
-  font-weight: 700;
-
-  &.bound {
-    color: #047857;
-    background: rgba(16, 185, 129, 0.1);
-  }
-}
-
-.binding-desc {
-  margin-top: 3px;
-  color: var(--text-secondary);
-  font-size: 12px;
-  line-height: 1.35;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .account-danger {
   display: flex;
   align-items: center;
@@ -703,13 +571,13 @@ const handleLogout = async () => {
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #dc2626;
+  color: var(--color-error);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: var(--font-weight-normal);
   line-height: 1;
   cursor: pointer;
   transition:
@@ -717,8 +585,8 @@ const handleLogout = async () => {
     color 0.16s ease;
 
   &:hover:not(:disabled) {
-    background: rgba(220, 38, 38, 0.07);
-    color: #b91c1c;
+    background: rgba(var(--color-error-rgb), 0.07);
+    color: var(--color-error);
   }
 
   &:disabled {
@@ -817,16 +685,6 @@ const handleLogout = async () => {
   }
 
   .account-profile__editor {
-    width: 100%;
-  }
-
-  .binding-row {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .binding-main {
     width: 100%;
   }
 }

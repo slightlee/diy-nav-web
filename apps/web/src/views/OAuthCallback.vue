@@ -6,8 +6,8 @@
         <BrandLogo :pulsing="true" />
       </div>
 
-      <h2 class="status-title">正在验证身份...</h2>
-      <p class="status-desc">请稍候，我们正在建立安全连接</p>
+      <h2 class="status-title">{{ statusTitle }}</h2>
+      <p class="status-desc">{{ statusDescription }}</p>
 
       <!-- Progress Bar -->
       <div class="progress-bar">
@@ -33,19 +33,20 @@
           />
         </svg>
       </div>
-      <h2 class="status-title text-error">验证失败</h2>
+      <h2 class="status-title text-error">{{ errorTitle }}</h2>
       <p class="status-desc">{{ errorState }}</p>
-      <button class="btn-retry" @click="retryLogin">返回登录页</button>
+      <button class="btn-retry" @click="leaveErrorState">{{ errorActionLabel }}</button>
     </div>
   </AuthLayout>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { AuthRequestError, useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import { AuthLayout, BrandLogo } from '@nav/ui'
+import type { OAuthMode, OAuthProvider } from '@/utils/oauth'
 
 const router = useRouter()
 const route = useRoute()
@@ -53,15 +54,28 @@ const authStore = useAuthStore()
 const uiStore = useUIStore()
 
 const errorState = ref<string | null>(null)
+const oauthProvider = ref((localStorage.getItem('oauth_provider') || 'linuxdo') as OAuthProvider)
+const oauthMode = ref((localStorage.getItem('oauth_mode') || 'login') as OAuthMode)
+
+const providerLabel = computed(() => {
+  if (oauthProvider.value === 'github') return 'GitHub'
+  if (oauthProvider.value === 'google') return 'Google'
+  return 'LinuxDo'
+})
+const isBinding = computed(() => oauthMode.value === 'bind')
+const statusTitle = computed(() =>
+  isBinding.value ? `正在绑定 ${providerLabel.value}…` : '正在登录…'
+)
+const statusDescription = computed(() =>
+  isBinding.value ? '正在确认授权账号，请稍候' : '正在确认账号信息，请稍候'
+)
+const errorTitle = computed(() => (isBinding.value ? '绑定失败' : '登录失败'))
+const errorActionLabel = computed(() => (isBinding.value ? '返回账号设置' : '返回登录页'))
 
 onMounted(async () => {
   const code = route.query.code as string
   const state = route.query.state as string
   const storedState = localStorage.getItem('oauth_state')
-  const storedProvider = localStorage.getItem('oauth_provider') || 'linuxdo'
-
-  // Artificial delay for smoother UX
-  await new Promise(resolve => setTimeout(resolve, 800))
 
   // Security: Validate CSRF State
   if (!state || state !== storedState) {
@@ -71,6 +85,7 @@ onMounted(async () => {
 
   localStorage.removeItem('oauth_state')
   localStorage.removeItem('oauth_provider')
+  localStorage.removeItem('oauth_mode')
 
   if (!code) {
     errorState.value = '授权回调异常: 未能获取授权码'
@@ -78,18 +93,33 @@ onMounted(async () => {
   }
 
   try {
-    await authStore.loginWithProvider(storedProvider, code)
-
-    uiStore.showToast('欢迎回来', 'success')
-    router.replace('/')
+    if (isBinding.value) {
+      await authStore.bindProvider(oauthProvider.value, code, state)
+      sessionStorage.setItem('open_account_panel', 'true')
+      uiStore.showToast('第三方账号绑定成功', 'success')
+      router.replace('/home')
+    } else {
+      await authStore.loginWithProvider(oauthProvider.value, code)
+      uiStore.showToast('欢迎回来', 'success')
+      router.replace('/')
+    }
   } catch (error: unknown) {
     const err = error as Error
-    console.error('OAuth Error:', err)
-    errorState.value = err.message || '登录验证失败，请重试'
+    if (error instanceof AuthRequestError && error.code === 'PROVIDER_ACCOUNT_IN_USE') {
+      errorState.value = `该 ${providerLabel.value} 账号已被使用，无法绑定。请更换账号或直接使用 ${providerLabel.value} 登录。`
+    } else {
+      errorState.value =
+        err.message || (isBinding.value ? '账号绑定失败，请重试' : '身份验证失败，请重试')
+    }
   }
 })
 
-const retryLogin = () => {
+const leaveErrorState = () => {
+  if (isBinding.value) {
+    sessionStorage.setItem('open_account_panel', 'true')
+    router.replace('/home')
+    return
+  }
   router.replace('/login')
 }
 </script>

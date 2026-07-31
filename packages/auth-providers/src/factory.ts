@@ -16,6 +16,10 @@ export class AuthProviderFactory {
     }
     return provider
   }
+
+  getProviderNames(): string[] {
+    return Array.from(this.providers.keys())
+  }
 }
 
 declare module 'fastify' {

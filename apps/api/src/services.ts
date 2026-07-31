@@ -6,12 +6,16 @@ import {
   BackupService,
   AuthService,
   AvatarService,
+  EmailBindingService,
   PreferencesService,
   SyncService
 } from '@nav/core'
 import { config, loadRawConfig } from '@nav/config'
+import { NAVIGATION_BRAND_CONFIG } from '@nav/config/brand'
 import { IconService, getProviders } from '@nav/icon-core'
 import { initAIProviderTable } from './lib/ai-provider-store.js'
+import { SmtpVerificationEmailSender } from './lib/verification-email.js'
+import { logger } from '@nav/logger'
 
 // --- Database Client ---
 export const databaseClient = createDatabaseClient({
@@ -64,6 +68,21 @@ export const authService = new AuthService({
   avatarService
 })
 
+const verificationEmailSender = new SmtpVerificationEmailSender({
+  user: config.auth.smtp.user,
+  password: config.auth.smtp.password,
+  fromName: NAVIGATION_BRAND_CONFIG.defaultTitle,
+  environment: config.server.env,
+  logger
+})
+
+export const emailBindingService = new EmailBindingService({
+  db: databaseClient,
+  sender: verificationEmailSender,
+  webAppUrl: config.auth.webAppUrl,
+  exposeVerificationUrl: config.server.env !== 'production'
+})
+
 export const preferencesService = new PreferencesService(databaseClient)
 
 // --- Icon Services ---
@@ -84,6 +103,7 @@ export const initServices = async (logger: FastifyBaseLogger): Promise<void> => 
     await backupService.initTable()
     await syncService.initTable()
     await authService.initTable()
+    await emailBindingService.initTable()
     await preferencesService.initTable()
     await initAIProviderTable(databaseClient)
     logger.info('Services initialized')

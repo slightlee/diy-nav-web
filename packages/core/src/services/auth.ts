@@ -9,7 +9,8 @@ import { logger as defaultLogger, type Logger } from '@nav/logger'
 export interface User {
   id: string
   email: string | null
-  password_hash: string
+  password_hash: string | null
+  email_verified_at: number | null
   nickname: string | null
   avatar_url: string | null
   role: 'USER' | 'ADMIN'
@@ -54,15 +55,17 @@ export class AuthService {
    * Register a new user
    */
   async register(email: string, password: string): Promise<User> {
-    const existing = await this.userRepo.findByEmail(email)
+    const normalizedEmail = email.trim().toLowerCase()
+    const existing = await this.userRepo.findByEmail(normalizedEmail)
     if (existing) {
       throw new AppError('User already exists', 'USER_EXISTS', 409)
     }
 
     const passwordHash = await bcrypt.hash(password, 10)
     return this.persistUser({
-      email,
-      passwordHash
+      email: normalizedEmail,
+      passwordHash,
+      emailVerifiedAt: Date.now()
     })
   }
 
@@ -70,7 +73,7 @@ export class AuthService {
    * Validate user credentials
    */
   async validateUser(email: string, password: string): Promise<User | null> {
-    const user = await this.userRepo.findByEmail(email)
+    const user = await this.userRepo.findByEmail(email.trim().toLowerCase())
     if (!user || !user.password_hash) return null
 
     const isValid = await bcrypt.compare(password, user.password_hash)
@@ -130,45 +133,118 @@ export class AuthService {
 
     if (identity) {
       const user = await this.getUserById(identity.user_id)
-      if (user) return { user, isNewUser: false }
+      if (user) {
+        await this.userRepo.updateIdentityLastUsed(provider, providerUid, Date.now())
+        return { user, isNewUser: false }
+      }
     }
 
-    // 2. If not found, try to find user by email (auto-link)
-    // We only use the email for matching existing accounts, but we DO NOT use it for creating new ones if matching fails.
-    let user: User | null = null
-    if (rawData.email) {
-      user = await this.userRepo.findByEmail(rawData.email)
+    // Provider email is profile data, not proof that an existing local account
+    // should be linked. Only an explicit authenticated binding flow may link it.
+    const newUser = await this.prepareUserObject({
+      email: null,
+      passwordHash: null,
+      emailVerifiedAt: null,
+      nickname: rawData.nickname,
+      avatarUrl: rawData.avatar_url
+    })
+
+    await this.userRepo.atomicCreateUserAndIdentity(newUser, {
+      provider,
+      providerUid,
+      profileData: rawData
+    })
+
+    return { user: newUser, isNewUser: true }
+  }
+
+  async getLoginMethods(userId: string): Promise<{
+    email: { bound: boolean; address: string | null; canUnbind: boolean }
+    providers: Array<{ provider: string; boundAt: number; canUnbind: boolean }>
+  }> {
+    const user = await this.userRepo.findById(userId)
+    if (!user) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    const identities = await this.userRepo.listIdentities(userId)
+    const loginMethodCount = (user.email ? 1 : 0) + identities.length
+    return {
+      email: {
+        bound: !!user.email,
+        address: user.email,
+        canUnbind: !!user.email && loginMethodCount > 1
+      },
+      providers: identities.map(identity => ({
+        provider: identity.provider,
+        boundAt: identity.created_at,
+        canUnbind: loginMethodCount > 1
+      }))
+    }
+  }
+
+  async unbindEmailLogin(userId: string): Promise<User> {
+    const user = await this.userRepo.findById(userId)
+    if (!user) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    if (!user.email) return user
+
+    const removed = await this.userRepo.unbindEmailLogin(userId, Date.now())
+    if (!removed) {
+      throw new AppError('At least one login method must remain bound', 'LAST_LOGIN_METHOD', 409)
     }
 
-    // 3. If User not found, create new user AND identity atomically
-    if (!user) {
-      // For OAuth users, we generate a random password
-      const randomPwd = uuidv4()
-      const passwordHash = await bcrypt.hash(randomPwd, 10)
+    const updated = await this.userRepo.findById(userId)
+    if (!updated) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    return updated
+  }
 
-      // Prepare User Object (Business Logic)
-      const newUser = await this.prepareUserObject({
-        email: null, // Custom Rule: Don't use provider email
-        passwordHash,
-        nickname: rawData.nickname,
-        avatarUrl: rawData.avatar_url
-      })
+  async unbindProviderIdentity(userId: string, provider: string): Promise<void> {
+    const user = await this.userRepo.findById(userId)
+    if (!user) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
 
-      // Execute Atomic Transaction
-      await this.userRepo.atomicCreateUserAndIdentity(newUser, {
-        provider,
-        providerUid,
-        profileData: rawData
-      })
+    const identity = await this.userRepo.findIdentityByUserAndProvider(userId, provider)
+    if (!identity) return
 
-      return { user: newUser, isNewUser: true }
+    const removed = await this.userRepo.removeIdentity(userId, provider)
+    if (!removed) {
+      throw new AppError('At least one login method must remain bound', 'LAST_LOGIN_METHOD', 409)
+    }
+  }
+
+  async bindProviderIdentity(
+    userId: string,
+    provider: string,
+    providerUid: string,
+    rawData: { email?: string; nickname?: string; avatar_url?: string }
+  ): Promise<void> {
+    const user = await this.userRepo.findById(userId)
+    if (!user) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+
+    const existingIdentity = await this.userRepo.findIdentity(provider, providerUid)
+    if (existingIdentity) {
+      if (existingIdentity.user_id === userId) return
+      throw new AppError('This provider account is already in use', 'PROVIDER_ACCOUNT_IN_USE', 409)
     }
 
-    // 4. If User existed (via email match), just link identity
-    // Reuse repo method for single identity creation
-    await this.userRepo.createIdentity(user.id, provider, providerUid, rawData)
+    const existingProvider = await this.userRepo.findIdentityByUserAndProvider(userId, provider)
+    if (existingProvider) {
+      throw new AppError(
+        'Current account already has this provider bound',
+        'PROVIDER_ALREADY_BOUND',
+        409
+      )
+    }
 
-    return { user, isNewUser: false }
+    try {
+      await this.userRepo.createIdentity(userId, provider, providerUid, rawData)
+    } catch (error) {
+      const occupied = await this.userRepo.findIdentity(provider, providerUid)
+      if (occupied && occupied.user_id !== userId) {
+        throw new AppError(
+          'This provider account is already in use',
+          'PROVIDER_ACCOUNT_IN_USE',
+          409
+        )
+      }
+      throw error
+    }
   }
 
   /**
@@ -176,7 +252,8 @@ export class AuthService {
    */
   private async persistUser(props: {
     email: string | null
-    passwordHash: string
+    passwordHash: string | null
+    emailVerifiedAt: number | null
     nickname?: string
     avatarUrl?: string
   }): Promise<User> {
@@ -190,7 +267,8 @@ export class AuthService {
    */
   private async prepareUserObject(props: {
     email: string | null
-    passwordHash: string
+    passwordHash: string | null
+    emailVerifiedAt: number | null
     nickname?: string
     avatarUrl?: string
   }): Promise<User> {
@@ -218,6 +296,7 @@ export class AuthService {
       id,
       email: props.email,
       password_hash: props.passwordHash,
+      email_verified_at: props.emailVerifiedAt,
       nickname,
       avatar_url: avatarUrl,
       role: 'USER',

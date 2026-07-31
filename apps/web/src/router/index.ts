@@ -51,8 +51,14 @@ const router = createRouter({
     },
     {
       path: '/oauth2/callback',
+      alias: '/oauth/callback',
       name: 'oauth2-callback',
       component: () => import('@/views/OAuthCallback.vue')
+    },
+    {
+      path: '/email-binding/verify',
+      name: 'email-binding-verify',
+      component: () => import('@/views/EmailBindingView.vue')
     },
     {
       path: '/login',

@@ -274,6 +274,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 
 import { isValidEmail, isValidPassword } from '@/utils/validators'
+import { createOAuthLoginState, startOAuth, type OAuthProvider } from '@/utils/oauth'
 import { AuthLayout, BrandLogo } from '@nav/ui'
 
 const router = useRouter()
@@ -309,93 +310,17 @@ const registerErrors = reactive({
   confirmPassword: ''
 })
 
-const handleLinuxDoLogin = () => {
-  const clientId = import.meta.env.VITE_LINUX_DO_CLIENT_ID
-  const redirectUri = import.meta.env.VITE_LINUX_DO_REDIRECT_URI
-
-  if (!clientId || !redirectUri) {
-    uiStore.showToast('配置缺失: 无法启动登录', 'error')
-    return
+const handleOAuthLogin = (provider: OAuthProvider) => {
+  try {
+    startOAuth(provider, createOAuthLoginState(), 'login')
+  } catch (error) {
+    uiStore.showToast(error instanceof Error ? error.message : '无法启动第三方登录', 'error')
   }
-
-  // Security: Generate random state for CSRF protection
-  const array = new Uint32Array(4)
-  window.crypto.getRandomValues(array)
-  const state = Array.from(array)
-    .map(n => n.toString(16).padStart(8, '0'))
-    .join('')
-
-  // Store state for validation on callback
-  localStorage.setItem('oauth_state', state)
-
-  const params = new URLSearchParams({
-    client_id: clientId,
-    response_type: 'code',
-    redirect_uri: redirectUri,
-    state
-  })
-
-  window.location.href = `https://connect.linux.do/oauth2/authorize?${params.toString()}`
 }
 
-const handleGitHubLogin = () => {
-  const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID
-  const redirectUri = import.meta.env.VITE_GITHUB_REDIRECT_URI
-
-  if (!clientId) {
-    uiStore.showToast('GitHub 登录配置缺失', 'error')
-    return
-  }
-
-  const array = new Uint32Array(4)
-  window.crypto.getRandomValues(array)
-  const state = Array.from(array)
-    .map(n => n.toString(16).padStart(8, '0'))
-    .join('')
-
-  localStorage.setItem('oauth_state', state)
-  localStorage.setItem('oauth_provider', 'github')
-
-  const params = new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: redirectUri || `${window.location.origin}/oauth/callback`,
-    scope: 'read:user user:email',
-    state
-  })
-
-  window.location.href = `https://github.com/login/oauth/authorize?${params.toString()}`
-}
-
-const handleGoogleLogin = () => {
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
-  const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI
-
-  if (!clientId || !redirectUri) {
-    uiStore.showToast('Google 登录配置缺失', 'error')
-    return
-  }
-
-  const array = new Uint32Array(4)
-  window.crypto.getRandomValues(array)
-  const state = Array.from(array)
-    .map(n => n.toString(16).padStart(8, '0'))
-    .join('')
-
-  localStorage.setItem('oauth_state', state)
-  localStorage.setItem('oauth_provider', 'google')
-
-  const params = new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: redirectUri,
-    response_type: 'code',
-    scope: 'openid email profile',
-    state,
-    access_type: 'offline',
-    prompt: 'consent'
-  })
-
-  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
-}
+const handleLinuxDoLogin = () => handleOAuthLogin('linuxdo')
+const handleGitHubLogin = () => handleOAuthLogin('github')
+const handleGoogleLogin = () => handleOAuthLogin('google')
 
 onMounted(async () => {
   const path = route.path
