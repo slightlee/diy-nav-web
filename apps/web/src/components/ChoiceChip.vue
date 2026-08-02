@@ -38,6 +38,8 @@ const emit = defineEmits<{
 
 <style scoped lang="scss">
 .choice-chip {
+  max-width: 100%;
+  flex: 0 0 auto;
   min-height: 32px;
   padding: 0 11px;
   display: inline-flex;

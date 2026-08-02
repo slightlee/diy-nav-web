@@ -471,6 +471,8 @@ onUnmounted(() => {
   flex-shrink: 0;
   width: 38px;
   height: 22px;
+  min-width: 38px;
+  min-height: 22px;
   padding: 2px;
   border: 0;
   border-radius: 999px;
@@ -569,6 +571,15 @@ onUnmounted(() => {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  /* 轨道保持紧凑，透明区域负责满足移动端触控尺寸。 */
+  .switch::before {
+    position: absolute;
+    inset: -11px -3px;
+    content: '';
   }
 }
 </style>

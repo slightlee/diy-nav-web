@@ -361,24 +361,23 @@ const onFavoriteToggle = (websiteId: string) => {
     }
   }
 
-  :deep(.tag-pill) {
+  :deep(.choice-chip) {
     white-space: nowrap;
-    flex-shrink: 0;
+    flex: 0 0 auto;
   }
 
   :deep(.category-item) {
     white-space: nowrap;
     flex-shrink: 0;
     background-color: var(--bg-tile);
-    border: 1px solid var(--border-tile);
-    border-radius: 999px;
-    padding: 4px 12px;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 6px 12px;
     font-size: 12px;
 
     &.active {
       background-color: var(--primary-soft);
-      color: var(--color-primary);
-      border-color: var(--color-primary);
+      color: var(--color-primary-dark);
       box-shadow: none;
     }
   }
