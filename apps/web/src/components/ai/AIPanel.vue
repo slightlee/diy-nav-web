@@ -3,6 +3,7 @@
  * AI Chat Panel Component
  */
 import { ref, nextTick, onMounted } from 'vue'
+import { BaseButton } from '@nav/ui'
 import { useAIStore } from '@/stores/ai'
 import AIMessage from './AIMessage.vue'
 
@@ -78,9 +79,14 @@ onMounted(() => {
         </div>
       </div>
       <div class="header-actions">
-        <button class="icon-btn close-btn" aria-label="关闭" @click="emit('close')">
-          <i class="fas fa-times" />
-        </button>
+        <BaseButton
+          variant="neutral-ghost"
+          size="sm"
+          icon="fas fa-times"
+          title="关闭"
+          aria-label="关闭 AI 助手"
+          @click="emit('close')"
+        />
       </div>
     </div>
 
@@ -90,18 +96,30 @@ onMounted(() => {
         <h3>你好！我是 AI 助手 👋</h3>
         <p>我可以帮你管理网站导航、添加分类标签</p>
         <div class="quick-actions">
-          <button class="quick-btn" @click="inputText = '帮我添加一个网站'">
-            <i class="fas fa-plus" />
+          <BaseButton
+            variant="secondary"
+            size="sm"
+            icon="fas fa-plus"
+            @click="inputText = '帮我添加一个网站'"
+          >
             添加网站
-          </button>
-          <button class="quick-btn" @click="inputText = '查看我的备份'">
-            <i class="fas fa-cloud" />
+          </BaseButton>
+          <BaseButton
+            variant="secondary"
+            size="sm"
+            icon="fas fa-cloud"
+            @click="inputText = '查看我的备份'"
+          >
             查看备份
-          </button>
-          <button class="quick-btn" @click="inputText = '列出所有分类'">
-            <i class="fas fa-folder" />
+          </BaseButton>
+          <BaseButton
+            variant="secondary"
+            size="sm"
+            icon="fas fa-folder"
+            @click="inputText = '列出所有分类'"
+          >
             查看分类
-          </button>
+          </BaseButton>
         </div>
       </div>
       <AIMessage
@@ -128,9 +146,15 @@ onMounted(() => {
         @input="resizeInput"
         @keydown="handleKeydown"
       />
-      <button class="send-btn" :disabled="!inputText.trim() || isLoading" @click="sendMessage">
-        <i class="fas fa-paper-plane" />
-      </button>
+      <BaseButton
+        variant="ghost"
+        size="sm"
+        icon="fas fa-paper-plane"
+        title="发送"
+        aria-label="发送消息"
+        :disabled="!inputText.trim() || isLoading"
+        @click="sendMessage"
+      />
     </div>
   </div>
 </template>
@@ -205,35 +229,6 @@ onMounted(() => {
   gap: 6px;
 }
 
-.icon-btn {
-  background: var(--ai-header-action-bg);
-  border: none;
-  color: var(--ai-header-action-color);
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.icon-btn:hover {
-  background: var(--ai-header-action-hover);
-  transform: scale(1.05);
-}
-
-.close-btn {
-  background: transparent;
-}
-
-.close-btn:hover {
-  background: transparent;
-  color: var(--ai-header-text);
-  transform: none;
-}
-
 .messages-container {
   flex: 1;
   overflow-y: auto;
@@ -266,31 +261,6 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
-}
-
-.quick-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 14px;
-  font-size: 12px;
-  background: var(--ai-quick-btn-bg);
-  border: 1px solid var(--ai-quick-btn-border);
-  border-radius: 20px;
-  color: var(--ai-quick-btn-color);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.quick-btn:hover {
-  background: var(--bg-tile-hover);
-  border-color: var(--color-primary-light);
-  color: var(--color-primary);
-  transform: translateY(-1px);
-}
-
-.quick-btn i {
-  font-size: 10px;
 }
 
 .loading-indicator {
@@ -373,46 +343,10 @@ onMounted(() => {
   outline: none;
 }
 
-.send-btn {
-  flex: 0 0 40px;
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
-  border: none;
-  background: transparent;
-  color: var(--color-primary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
-}
-
-.send-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.send-btn:not(:disabled):hover {
-  background: var(--primary-soft);
-}
-
-.send-btn:not(:disabled):active {
-  background: var(--bg-tile-hover);
-}
-
 // Dark mode overrides using global selector
 :global([data-theme='dark']) {
   .messages-container {
     background: transparent;
-  }
-
-  .quick-btn:hover {
-    background: #3d3d4f;
-    color: #a78bfa;
   }
 }
 </style>

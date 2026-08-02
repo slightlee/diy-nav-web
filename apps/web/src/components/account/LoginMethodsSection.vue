@@ -7,7 +7,7 @@
 
     <div v-else-if="loadError" class="login-methods__error">
       <span>{{ loadError }}</span>
-      <button type="button" @click="loadLoginMethods">重新加载</button>
+      <BaseButton variant="ghost" size="xs" @click="loadLoginMethods">重新加载</BaseButton>
     </div>
 
     <template v-else>
@@ -30,8 +30,8 @@
 
           <BaseButton
             v-if="item.bound && item.canUnbind"
-            class="login-method__action login-method__action--unbind"
-            variant="ghost"
+            class="login-method__action"
+            variant="danger-ghost"
             size="xs"
             @click="openUnbindConfirm(item)"
           >
@@ -40,7 +40,7 @@
           <span v-else-if="item.bound" class="login-method__required">唯一登录方式</span>
           <BaseButton
             v-else
-            class="login-method__action login-method__action--bind"
+            class="login-method__action"
             variant="ghost"
             size="xs"
             :disabled="!item.available"
@@ -119,22 +119,10 @@
     </div>
     <template #footer>
       <div class="unbind-confirm__actions">
-        <BaseButton
-          class="unbind-confirm__cancel"
-          variant="ghost"
-          size="sm"
-          :disabled="unbinding"
-          @click="closeUnbindConfirm"
-        >
+        <BaseButton variant="ghost" size="sm" :disabled="unbinding" @click="closeUnbindConfirm">
           取消
         </BaseButton>
-        <BaseButton
-          class="unbind-confirm__submit"
-          variant="danger"
-          size="sm"
-          :loading="unbinding"
-          @click="confirmUnbind"
-        >
+        <BaseButton variant="danger" size="sm" :loading="unbinding" @click="confirmUnbind">
           确认解绑
         </BaseButton>
       </div>
@@ -339,14 +327,6 @@ onMounted(loadLoginMethods)
   font-size: 13px;
 }
 
-.login-methods__error button {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--color-primary);
-  cursor: pointer;
-}
-
 .login-method {
   padding: 0 18px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.1);
@@ -442,34 +422,8 @@ onMounted(loadLoginMethods)
   min-width: 48px;
   min-height: 30px;
   padding: 0 var(--spacing-sm);
-  border: 0;
-  border-radius: var(--radius-sm);
-  box-shadow: none;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-normal);
-
-  &:hover:not(.base-button--disabled):not(.base-button--loading) {
-    box-shadow: none;
-    transform: none;
-  }
-}
-
-:deep(.login-method__action--bind) {
-  color: var(--color-primary);
-
-  &:hover:not(.base-button--disabled):not(.base-button--loading) {
-    background: color-mix(in srgb, var(--color-primary) 8%, transparent);
-    color: var(--color-primary-dark);
-  }
-}
-
-:deep(.login-method__action--unbind) {
-  color: var(--color-error);
-
-  &:hover:not(.base-button--disabled):not(.base-button--loading) {
-    background: color-mix(in srgb, var(--color-error) 7%, transparent);
-    color: var(--color-error);
-  }
 }
 
 .unbind-confirm {
@@ -526,27 +480,6 @@ onMounted(loadLoginMethods)
   justify-content: flex-end;
   gap: var(--spacing-md);
   width: 100%;
-}
-
-:deep(.unbind-confirm__cancel) {
-  color: var(--text-secondary);
-  font-weight: var(--font-weight-normal);
-
-  &:hover:not(.base-button--disabled):not(.base-button--loading) {
-    background: var(--bg-tile);
-    color: var(--text-main);
-    transform: none;
-  }
-}
-
-:deep(.unbind-confirm__submit) {
-  box-shadow: none;
-  font-weight: var(--font-weight-normal);
-
-  &:hover:not(.base-button--disabled):not(.base-button--loading) {
-    box-shadow: none;
-    transform: none;
-  }
 }
 
 .email-binding {

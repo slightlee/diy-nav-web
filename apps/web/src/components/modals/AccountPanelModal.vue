@@ -101,15 +101,14 @@
               <div class="account-danger__desc">退出后，本机仍保留当前浏览器中的本地导航数据。</div>
             </div>
             <div class="account-actions">
-              <button
-                type="button"
-                class="logout-button"
-                :disabled="loggingOut"
+              <BaseButton
+                variant="danger-ghost"
+                size="sm"
+                :loading="loggingOut"
                 @click="handleLogout"
               >
-                <i v-if="loggingOut" class="fas fa-spinner fa-spin" />
                 退出登录
-              </button>
+              </BaseButton>
             </div>
           </div>
         </div>
@@ -563,36 +562,6 @@ const handleLogout = async () => {
   display: flex;
   justify-content: flex-end;
   flex-shrink: 0;
-}
-
-.logout-button {
-  height: 32px;
-  padding: 0 10px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--color-error);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: var(--font-weight-normal);
-  line-height: 1;
-  cursor: pointer;
-  transition:
-    background-color 0.16s ease,
-    color 0.16s ease;
-
-  &:hover:not(:disabled) {
-    background: rgba(var(--color-error-rgb), 0.07);
-    color: var(--color-error);
-  }
-
-  &:disabled {
-    cursor: wait;
-    opacity: 0.7;
-  }
 }
 
 :deep(.data-management-modal__section),

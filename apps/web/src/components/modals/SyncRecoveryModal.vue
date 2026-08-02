@@ -15,18 +15,26 @@
     <p class="time">异常同步记录：{{ formatDate(failedAt) }}</p>
 
     <div class="actions">
-      <button class="repair-button" :disabled="loading" @click="emit('repair')">
+      <BaseButton block variant="primary" size="md" :loading="loading" @click="emit('repair')">
         {{ loading ? '处理中…' : '使用本地数据修复云端' }}
-      </button>
-      <button class="disable-button" :disabled="loading" @click="emit('disable')">
+      </BaseButton>
+      <BaseButton
+        block
+        variant="danger-ghost"
+        size="md"
+        :loading="loading"
+        @click="emit('disable')"
+      >
         {{ loading ? '处理中…' : '关闭云同步' }}
-      </button>
+      </BaseButton>
     </div>
     <p class="hint">修复只会重建已丢失的云端同步文件，不会修改当前设备的数据。</p>
   </div>
 </template>
 
 <script setup lang="ts">
+import { BaseButton } from '@nav/ui'
+
 defineProps<{
   localStats: { websites: number; categories: number; tags: number }
   failedAt: Date
@@ -110,30 +118,6 @@ h3 {
 .actions {
   display: grid;
   gap: 10px;
-}
-
-button {
-  min-height: 42px;
-  border-radius: 10px;
-  font-weight: 650;
-  cursor: pointer;
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-}
-
-.repair-button {
-  border: 0;
-  background: var(--color-primary);
-  color: #fff;
-}
-
-.disable-button {
-  border: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--text-main);
 }
 
 .hint {

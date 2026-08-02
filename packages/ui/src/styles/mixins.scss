@@ -40,37 +40,20 @@
   align-items: center;
   justify-content: center;
   padding: $spacing-sm $spacing-md;
-  border: 2px solid transparent;
+  border: 1px solid transparent;
   border-radius: $border-radius-md;
   font-family: $font-family-sans;
   font-size: $font-size-base;
-  font-weight: $font-weight-medium;
+  font-weight: $font-weight-normal;
   color: $color-neutral;
   background-color: $color-neutral-50;
   cursor: pointer;
   text-decoration: none;
-  transition: all $transition-normal;
   outline: none;
-
-  &:focus {
-    outline: 2px solid $color-primary;
-    outline-offset: 2px;
-  }
-
-  &:hover {
-    background-color: $color-primary;
-    color: $color-white;
-    transform: translateY(-2px);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
 
   &:disabled {
     opacity: $opacity-disabled;
     cursor: not-allowed;
-    transform: none;
   }
 }
 

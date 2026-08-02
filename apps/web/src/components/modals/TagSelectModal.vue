@@ -11,19 +11,15 @@
         <template #prefix><i class="fas fa-search" style="color: var(--text-muted)" /></template>
       </BaseInput>
       <div class="select-grid">
-        <button
+        <ChoiceChip
           v-for="t in filteredTags"
           :key="t.id"
-          class="chip"
-          type="button"
+          :label="t.name"
+          :count="tagUsageMap[t.id] || 0"
+          :color="t.color"
           :aria-label="`筛选标签：${t.name}`"
-          :title="t.name"
           @click="handleSelect(t.id)"
-        >
-          <span class="chip-dot" :style="{ backgroundColor: t.color }" />
-          <span class="chip-name">{{ t.name }}</span>
-          <span class="chip-count">{{ tagUsageMap[t.id] || 0 }}</span>
-        </button>
+        />
       </div>
     </div>
   </BaseModal>
@@ -38,10 +34,11 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { BaseModal, BaseInput } from '@nav/ui'
+import ChoiceChip from '@/components/ChoiceChip.vue'
 import { useTagStore } from '@/stores/tag'
 import { useWebsiteStats } from '@/composables/useWebsiteStats'
 
-const props = defineProps<{
+defineProps<{
   isOpen: boolean
 }>()
 
@@ -89,44 +86,5 @@ const handleSelect = (tagId: string) => {
   gap: 8px;
   max-height: 400px;
   overflow-y: auto;
-}
-
-.chip {
-  height: 32px;
-  padding: 0 12px;
-  border-radius: var(--radius-pill);
-  background: var(--bg-tile);
-  border: 1px solid var(--border-tile);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  transition: all 0.2s;
-
-  &:hover {
-    background: var(--bg-hover);
-    border-color: var(--color-primary-light);
-    color: var(--color-primary);
-  }
-}
-
-.chip-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.chip-name {
-  font-weight: 500;
-}
-
-.chip-count {
-  background: var(--bg-body);
-  padding: 2px 6px;
-  border-radius: 999px;
-  font-size: 11px;
-  color: var(--text-muted);
 }
 </style>

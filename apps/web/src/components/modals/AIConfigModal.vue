@@ -18,7 +18,7 @@
           <p class="login-prompt__desc">登录后可配置 AI 服务并在多设备同步使用。</p>
           <BaseButton
             variant="primary"
-            shape="pill"
+            shape="rounded"
             size="md"
             class="ai-action-btn"
             @click="handleGoLogin"
@@ -33,8 +33,8 @@
           <div class="provider-list__header">
             <h4 class="provider-list__title">已配置提供商</h4>
             <BaseButton
-              variant="outline"
-              shape="pill"
+              variant="ghost"
+              shape="rounded"
               size="sm"
               :loading="aiStore.isLoading"
               class="ai-action-btn"
@@ -75,36 +75,30 @@
                 </div>
               </div>
               <div class="provider-actions">
-                <button
-                  class="action-link"
-                  type="button"
-                  :disabled="editingId === provider.id && loadingDetail"
+                <BaseButton
+                  variant="ghost"
+                  size="xs"
+                  :loading="editingId === provider.id && loadingDetail"
                   @click="handleEdit(provider.id)"
                 >
-                  <i
-                    v-if="editingId === provider.id && loadingDetail"
-                    class="fas fa-spinner fa-spin"
-                  />
-                  <span v-else>编辑</span>
-                </button>
-                <button
-                  class="action-link"
-                  type="button"
-                  :disabled="testingIds[provider.id] === true"
+                  编辑
+                </BaseButton>
+                <BaseButton
+                  variant="ghost"
+                  size="xs"
+                  :loading="testingIds[provider.id] === true"
                   @click="handleTest(provider.id)"
                 >
-                  <i v-if="testingIds[provider.id] === true" class="fas fa-spinner fa-spin" />
-                  <span v-else>测试</span>
-                </button>
-                <button
-                  class="action-link action-link--danger"
-                  type="button"
-                  :disabled="removingIds[provider.id] === true"
+                  测试
+                </BaseButton>
+                <BaseButton
+                  variant="danger-ghost"
+                  size="xs"
+                  :loading="removingIds[provider.id] === true"
                   @click="handleRemove(provider.id)"
                 >
-                  <i v-if="removingIds[provider.id] === true" class="fas fa-spinner fa-spin" />
-                  <span v-else>删除</span>
-                </button>
+                  删除
+                </BaseButton>
               </div>
             </div>
           </div>
@@ -167,7 +161,7 @@
           <div class="form-actions">
             <BaseButton
               variant="primary"
-              shape="pill"
+              shape="rounded"
               size="sm"
               :loading="submitting"
               class="ai-action-btn"
@@ -177,8 +171,8 @@
             </BaseButton>
             <BaseButton
               v-if="editingId"
-              variant="outline"
-              shape="pill"
+              variant="ghost"
+              shape="rounded"
               size="sm"
               class="ai-action-btn"
               @click="cancelEdit"
@@ -653,38 +647,6 @@ watch(
 .ai-action-btn :deep(.button-text) {
   width: 100%;
   text-align: center;
-}
-
-.action-link {
-  background: none;
-  border: none;
-  color: var(--color-primary);
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition:
-    opacity 0.2s ease,
-    color 0.2s ease;
-}
-
-.action-link:hover {
-  opacity: 0.85;
-}
-
-.action-link:disabled {
-  opacity: var(--opacity-disabled);
-  cursor: not-allowed;
-}
-
-.action-link--danger {
-  color: var(--color-neutral-400);
-}
-
-.action-link--danger:hover {
-  color: var(--color-danger);
 }
 
 .switch {

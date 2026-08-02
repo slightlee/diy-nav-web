@@ -39,7 +39,7 @@
           </div>
           <BaseButton
             variant="primary"
-            shape="pill"
+            shape="rounded"
             size="sm"
             :loading="isCreating"
             class="backup-btn"
@@ -56,7 +56,7 @@
           <p class="login-prompt__desc">
             登录同一账号即可在各设备间自动同步导航数据，并支持历史备份与恢复。
           </p>
-          <BaseButton variant="primary" shape="pill" size="md" @click="handleGoLogin">
+          <BaseButton variant="primary" shape="rounded" size="md" @click="handleGoLogin">
             去登录
           </BaseButton>
         </div>
@@ -74,15 +74,15 @@
         </div>
         <div class="history-actions">
           <span v-if="!loading" class="history-count">{{ backupHistory.length }} 条记录</span>
-          <button
-            type="button"
-            class="history-refresh"
-            :disabled="loading"
+          <BaseButton
+            variant="neutral-ghost"
+            size="sm"
+            icon="fas fa-sync-alt"
+            :loading="loading"
             title="刷新备份列表"
+            aria-label="刷新备份列表"
             @click="refreshBackups"
-          >
-            <i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }" />
-          </button>
+          />
         </div>
       </div>
 
@@ -121,8 +121,10 @@
             </div>
           </div>
           <div class="action-buttons">
-            <button class="restore-link" @click="handleRestore(item)">恢复</button>
-            <button class="delete-link" @click="handleDelete(item)">删除</button>
+            <BaseButton variant="ghost" size="xs" @click="handleRestore(item)">恢复</BaseButton>
+            <BaseButton variant="danger-ghost" size="xs" @click="handleDelete(item)">
+              删除
+            </BaseButton>
           </div>
         </div>
       </div>
@@ -153,11 +155,11 @@
               @change="handleFileImport"
             />
             <BaseButton
-              variant="outline"
-              shape="pill"
+              variant="ghost"
+              shape="rounded"
               size="sm"
               :loading="false"
-              class="action-btn outline-blue"
+              class="action-btn"
               @click="triggerFileImport"
             >
               导入数据
@@ -172,11 +174,11 @@
           </div>
           <div class="action-card__action">
             <BaseButton
-              variant="outline"
-              shape="pill"
+              variant="ghost"
+              shape="rounded"
               size="sm"
               :loading="exporting"
-              class="action-btn outline-blue"
+              class="action-btn"
               @click="handleExport"
             >
               导出数据
@@ -194,10 +196,10 @@
         </div>
       </div>
       <BaseButton
-        variant="danger-outline"
-        shape="pill"
+        variant="danger-ghost"
+        shape="rounded"
         size="sm"
-        class="danger-btn"
+        class="action-btn danger-btn"
         @click="openClearConfirm"
       >
         清除所有数据
@@ -227,9 +229,9 @@
       <template #footer>
         <div class="danger-confirm__actions">
           <BaseButton
-            variant="secondary"
+            variant="ghost"
             size="sm"
-            shape="pill"
+            shape="rounded"
             class="confirm-btn"
             @click="closeClearConfirm"
           >
@@ -238,7 +240,7 @@
           <BaseButton
             variant="danger"
             size="sm"
-            shape="pill"
+            shape="rounded"
             class="confirm-btn"
             :disabled="countdown > 0 || clearing"
             :loading="clearing"
@@ -288,8 +290,8 @@
       </div>
       <template #footer>
         <div class="import-confirm__actions">
-          <BaseButton variant="secondary" @click="closeImportConfirm">取消</BaseButton>
-          <BaseButton variant="primary" :loading="importing" @click="confirmImportData">
+          <BaseButton variant="ghost" size="sm" @click="closeImportConfirm">取消</BaseButton>
+          <BaseButton variant="primary" size="sm" :loading="importing" @click="confirmImportData">
             <i class="fas fa-download" />
             导入
           </BaseButton>
@@ -320,9 +322,9 @@
       <template #footer>
         <div class="danger-confirm__actions">
           <BaseButton
-            variant="secondary"
+            variant="ghost"
             size="sm"
-            shape="pill"
+            shape="rounded"
             class="confirm-btn"
             @click="closeDeleteConfirm"
           >
@@ -331,7 +333,7 @@
           <BaseButton
             variant="danger"
             size="sm"
-            shape="pill"
+            shape="rounded"
             class="confirm-btn"
             :loading="isDeleting"
             @click="confirmDelete"
@@ -368,9 +370,9 @@
       <template #footer>
         <div class="danger-confirm__actions">
           <BaseButton
-            variant="secondary"
+            variant="ghost"
             size="sm"
-            shape="pill"
+            shape="rounded"
             class="confirm-btn"
             @click="closeRestoreConfirm"
           >
@@ -379,7 +381,7 @@
           <BaseButton
             variant="primary"
             size="sm"
-            shape="pill"
+            shape="rounded"
             class="confirm-btn"
             :loading="isRestoring"
             @click="confirmRestore"
@@ -900,34 +902,6 @@ onUnmounted(() => {
   font-size: 12px;
 }
 
-.history-refresh {
-  width: 28px;
-  height: 28px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 8px;
-  background: var(--account-control-bg, var(--bg-tile));
-  color: var(--text-muted);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    border-color 0.16s ease,
-    color 0.16s ease,
-    background-color 0.16s ease;
-
-  &:hover:not(:disabled) {
-    border-color: rgba(var(--color-primary-rgb), 0.28);
-    color: var(--color-primary);
-    background: rgba(var(--color-primary-rgb), 0.05);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-}
-
 .backup-list {
   display: flex;
   flex-direction: column;
@@ -1158,35 +1132,12 @@ input:checked + .slider::before {
   white-space: nowrap;
 }
 
-.restore-link,
-.delete-link {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  transition:
-    background-color 0.16s ease,
-    color 0.16s ease;
+.action-btn {
+  font-weight: var(--font-weight-normal);
 }
 
-.restore-link {
-  color: var(--color-primary);
-
-  &:hover {
-    background: rgba(var(--color-primary-rgb), 0.08);
-  }
-}
-
-.delete-link {
-  color: var(--text-muted);
-
-  &:hover {
-    color: var(--color-error);
-    background: rgba(var(--color-error-rgb), 0.07);
-  }
+.backup-btn {
+  font-weight: var(--font-weight-medium);
 }
 
 .action-buttons {
@@ -1409,6 +1360,6 @@ input:checked + .slider::before {
 }
 
 .confirm-btn {
-  min-width: 100px;
+  min-width: 92px;
 }
 </style>

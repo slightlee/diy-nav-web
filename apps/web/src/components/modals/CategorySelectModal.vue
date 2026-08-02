@@ -11,18 +11,14 @@
         <template #prefix><i class="fas fa-search" style="color: var(--text-muted)" /></template>
       </BaseInput>
       <div class="select-grid">
-        <button
+        <ChoiceChip
           v-for="c in filteredCategories"
           :key="c.id"
-          class="chip"
-          type="button"
+          :label="c.name"
+          :count="categoryCountMap[c.id] || 0"
           :aria-label="`筛选分类：${c.name}`"
-          :title="c.name"
           @click="handleSelect(c.id)"
-        >
-          <span class="chip-name">{{ c.name }}</span>
-          <span class="chip-count">{{ categoryCountMap[c.id] || 0 }}</span>
-        </button>
+        />
       </div>
     </div>
   </BaseModal>
@@ -37,10 +33,11 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { BaseModal, BaseInput } from '@nav/ui'
+import ChoiceChip from '@/components/ChoiceChip.vue'
 import { useCategoryStore } from '@/stores/category'
 import { useWebsiteStats } from '@/composables/useWebsiteStats'
 
-const props = defineProps<{
+defineProps<{
   isOpen: boolean
 }>()
 
@@ -88,38 +85,5 @@ const handleSelect = (categoryId: string) => {
   gap: 8px;
   max-height: 400px;
   overflow-y: auto;
-}
-
-.chip {
-  height: 32px;
-  padding: 0 12px;
-  border-radius: var(--radius-pill);
-  background: var(--bg-tile);
-  border: 1px solid var(--border-tile);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  transition: all 0.2s;
-
-  &:hover {
-    background: var(--bg-hover);
-    border-color: var(--color-primary-light);
-    color: var(--color-primary);
-  }
-}
-
-.chip-name {
-  font-weight: 500;
-}
-
-.chip-count {
-  background: var(--bg-body);
-  padding: 2px 6px;
-  border-radius: 999px;
-  font-size: 11px;
-  color: var(--text-muted);
 }
 </style>

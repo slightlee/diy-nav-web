@@ -36,12 +36,23 @@
                   @keyup.enter="handleUpdateCategory"
                 />
                 <div class="action-buttons">
-                  <button class="action-btn save-btn" title="保存" @click="handleUpdateCategory">
-                    <i class="fas fa-check" />
-                  </button>
-                  <button class="action-btn cancel-btn" title="取消" @click="cancelEdit">
-                    <i class="fas fa-times" />
-                  </button>
+                  <BaseButton
+                    variant="ghost"
+                    size="sm"
+                    icon="fas fa-check"
+                    title="保存"
+                    aria-label="保存分类"
+                    :disabled="!editingForm.name.trim()"
+                    @click="handleUpdateCategory"
+                  />
+                  <BaseButton
+                    variant="ghost"
+                    size="sm"
+                    icon="fas fa-times"
+                    title="取消"
+                    aria-label="取消编辑分类"
+                    @click="cancelEdit"
+                  />
                 </div>
               </div>
             </div>
@@ -66,12 +77,22 @@
                 <span class="category-item__count">{{ getCategoryCount(category.id) }}</span>
               </div>
               <div class="category-item__actions">
-                <button class="action-btn edit-btn" title="编辑" @click="startEdit(category)">
-                  <i class="fas fa-pencil-alt" />
-                </button>
-                <button class="action-btn delete-btn" title="删除" @click="confirmDelete(category)">
-                  <i class="fas fa-trash-alt" />
-                </button>
+                <BaseButton
+                  variant="ghost"
+                  size="sm"
+                  icon="fas fa-pencil-alt"
+                  title="编辑"
+                  :aria-label="`编辑分类 ${category.name}`"
+                  @click="startEdit(category)"
+                />
+                <BaseButton
+                  variant="danger-ghost"
+                  size="sm"
+                  icon="fas fa-trash-alt"
+                  title="删除"
+                  :aria-label="`删除分类 ${category.name}`"
+                  @click="confirmDelete(category)"
+                />
               </div>
             </div>
           </div>
@@ -80,10 +101,16 @@
 
       <!-- Add Category Button (Bottom) -->
       <div class="add-category-section">
-        <button v-if="!isAdding" class="add-category-btn" @click="isAdding = true">
-          <i class="fas fa-plus" />
-          <span>添加分类</span>
-        </button>
+        <BaseButton
+          v-if="!isAdding"
+          block
+          variant="ghost"
+          size="md"
+          icon="fas fa-plus"
+          @click="isAdding = true"
+        >
+          添加分类
+        </BaseButton>
 
         <div v-else class="add-category-form">
           <div class="form-row">
@@ -128,14 +155,7 @@
       <template #footer>
         <div class="modal-footer-actions">
           <BaseButton variant="ghost" size="sm" @click="showDeleteModal = false">取消</BaseButton>
-          <BaseButton
-            variant="danger-outline"
-            size="sm"
-            class="delete-confirm-btn"
-            @click="handleDeleteCategory"
-          >
-            删除
-          </BaseButton>
+          <BaseButton variant="danger" size="sm" @click="handleDeleteCategory">删除</BaseButton>
         </div>
       </template>
     </BaseModal>
@@ -386,66 +406,14 @@ const onDrop = (e: DragEvent, targetCategory: Category) => {
   .category-item:hover & {
     opacity: 1;
   }
-}
 
-.action-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: none;
-  background-color: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: var(--bg-tile);
-    color: var(--text-main);
-  }
-
-  &.delete-btn:hover {
-    background-color: rgba(239, 68, 68, 0.1);
-    color: var(--color-error);
-  }
-
-  &.save-btn {
-    color: var(--color-success);
-    &:hover {
-      background-color: rgba(16, 185, 129, 0.1);
-    }
-  }
-
-  &.cancel-btn:hover {
-    color: var(--text-main);
+  .category-item:focus-within & {
+    opacity: 1;
   }
 }
 
 .add-category-section {
   margin-top: 4px;
-}
-
-.add-category-btn {
-  width: 100%;
-  min-height: 44px;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 10px;
-  background-color: transparent;
-  color: var(--text-secondary);
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.2s;
-  &:hover {
-    color: var(--color-primary);
-    background-color: var(--primary-soft);
-  }
 }
 
 .add-category-form {
@@ -511,21 +479,6 @@ const onDrop = (e: DragEvent, targetCategory: Category) => {
   justify-content: flex-end;
   gap: 12px;
   width: 100%;
-}
-
-:deep(.delete-confirm-btn) {
-  background-color: transparent !important;
-  border-color: color-mix(in srgb, var(--color-error) 28%, var(--border-tile));
-  color: color-mix(in srgb, var(--color-error) 82%, var(--text-main));
-  box-shadow: none;
-}
-
-:deep(.delete-confirm-btn:hover:not(.base-button--disabled):not(.base-button--loading)) {
-  background-color: color-mix(in srgb, var(--color-error) 7%, transparent) !important;
-  border-color: color-mix(in srgb, var(--color-error) 42%, var(--border-tile));
-  color: var(--color-error);
-  box-shadow: none;
-  transform: none;
 }
 
 .edit-row {

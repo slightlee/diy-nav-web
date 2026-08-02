@@ -16,7 +16,7 @@
       <template v-else-if="viewState === 'error'">
         <h1>验证链接不可用</h1>
         <p>{{ errorMessage }}</p>
-        <BaseButton variant="neutral-outline" @click="router.replace('/home')">返回首页</BaseButton>
+        <BaseButton variant="secondary" @click="router.replace('/home')">返回首页</BaseButton>
       </template>
 
       <template v-else-if="viewState === 'success'">

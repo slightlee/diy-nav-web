@@ -27,9 +27,8 @@
         <div class="delete-confirm-actions">
           <BaseButton variant="ghost" size="sm" @click="closeWebsiteDeleteConfirm">取消</BaseButton>
           <BaseButton
-            variant="danger-outline"
+            variant="danger"
             size="sm"
-            class="delete-confirm-btn"
             :loading="deletingWebsite"
             @click="confirmDeleteWebsite"
           >
@@ -135,20 +134,5 @@ const confirmDeleteWebsite = async () => {
   justify-content: flex-end;
   gap: 12px;
   width: 100%;
-}
-
-:deep(.delete-confirm-btn) {
-  background-color: transparent !important;
-  border-color: color-mix(in srgb, var(--color-error) 28%, var(--border-tile));
-  color: color-mix(in srgb, var(--color-error) 82%, var(--text-main));
-  box-shadow: none;
-}
-
-:deep(.delete-confirm-btn:hover:not(.base-button--disabled):not(.base-button--loading)) {
-  background-color: color-mix(in srgb, var(--color-error) 7%, transparent) !important;
-  border-color: color-mix(in srgb, var(--color-error) 42%, var(--border-tile));
-  color: var(--color-error);
-  box-shadow: none;
-  transform: none;
 }
 </style>

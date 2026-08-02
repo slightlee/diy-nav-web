@@ -21,7 +21,7 @@
                 <h3 class="empty-title">还没有访问记录</h3>
                 <p class="empty-desc">打开网站后，会自动出现在这里。</p>
                 <div v-if="totalSites > 0" class="empty-actions">
-                  <button class="empty-btn outline" @click="goToAll">浏览全部网站</button>
+                  <BaseButton variant="ghost" size="sm" @click="goToAll">浏览全部网站</BaseButton>
                 </div>
               </div>
             </template>
@@ -47,7 +47,9 @@
                 <h3 class="empty-title">还没有常用网站</h3>
                 <p class="empty-desc">给网站点亮星标，它就会固定在首页。</p>
                 <div v-if="totalSites > 0" class="empty-actions">
-                  <button class="empty-btn outline" @click="goToAll">去全部页面标记常用</button>
+                  <BaseButton variant="ghost" size="sm" @click="goToAll">
+                    去全部页面标记常用
+                  </BaseButton>
                 </div>
               </div>
             </template>
@@ -77,6 +79,7 @@ import QuickTagFilter from '@/components/dashboard/QuickTagFilter.vue'
 import CategorySelectModal from '@/components/modals/CategorySelectModal.vue'
 import TagSelectModal from '@/components/modals/TagSelectModal.vue'
 import { useWebsiteStats } from '@/composables/useWebsiteStats'
+import { BaseButton } from '@nav/ui'
 
 import { useRouter } from 'vue-router'
 
@@ -218,28 +221,5 @@ const goToAll = () => {
 .empty-actions {
   display: flex;
   gap: var(--spacing-md);
-}
-
-.empty-btn {
-  height: 32px;
-  padding: 0 14px;
-  border-radius: var(--radius-pill);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  transition: all var(--transition-fast);
-
-  &.outline {
-    background: transparent;
-    color: var(--color-primary);
-    border: 1px solid var(--color-primary);
-
-    &:hover {
-      background: color-mix(in srgb, var(--color-primary) 5%, transparent);
-    }
-  }
 }
 </style>

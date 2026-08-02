@@ -5,7 +5,12 @@
       <template v-if="selectedCategory !== 'all'">
         <div class="selected-pill category-pill">
           <span>分类: {{ getCategoryName(selectedCategory) }}</span>
-          <button class="remove-btn" @click="$emit('selectCategory', 'all')">
+          <button
+            class="remove-btn"
+            type="button"
+            :aria-label="`移除分类筛选 ${getCategoryName(selectedCategory)}`"
+            @click="$emit('selectCategory', 'all')"
+          >
             <i class="fas fa-times" />
           </button>
         </div>
@@ -13,12 +18,19 @@
       <template v-for="tagId in selectedTags" :key="tagId">
         <div class="selected-pill tag-pill">
           <span>标签: {{ getTagName(tagId) }}</span>
-          <button class="remove-btn" @click="$emit('toggleTag', tagId)">
+          <button
+            class="remove-btn"
+            type="button"
+            :aria-label="`移除标签筛选 ${getTagName(tagId)}`"
+            @click="$emit('toggleTag', tagId)"
+          >
             <i class="fas fa-times" />
           </button>
         </div>
       </template>
-      <button v-if="hasActiveFilters" class="clear-all-btn" @click="$emit('clearAll')">清空</button>
+      <BaseButton v-if="hasActiveFilters" variant="ghost" size="xs" @click="$emit('clearAll')">
+        清空
+      </BaseButton>
     </div>
     <span v-if="!hasActiveFilters" class="no-filters-text">未选择筛选条件，显示全部网站</span>
   </div>
@@ -26,6 +38,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { BaseButton } from '@nav/ui'
 import type { Tag, Category } from '@/types'
 
 const props = defineProps<{
@@ -103,34 +116,27 @@ const getTagName = (id: string) => {
 }
 
 .remove-btn {
+  width: 20px;
+  height: 20px;
   border: none;
   background: none;
   padding: 0;
-  min-height: 0;
-  min-width: 0;
   cursor: pointer;
   color: inherit;
   opacity: 0.6;
   display: flex;
   align-items: center;
+  justify-content: center;
+  border-radius: 4px;
 
   &:hover {
     opacity: 1;
+    background: color-mix(in srgb, currentcolor 8%, transparent);
   }
-}
 
-.clear-all-btn {
-  border: none;
-  background: none;
-  color: var(--color-primary);
-  font-size: 13px;
-  cursor: pointer;
-  min-height: 0;
-  min-width: 0;
-  padding: 4px 8px;
-
-  &:hover {
-    text-decoration: underline;
+  &:focus-visible {
+    outline: 2px solid currentcolor;
+    outline-offset: 1px;
   }
 }
 

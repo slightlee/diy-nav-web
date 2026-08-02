@@ -43,16 +43,19 @@
             autosize
           />
           <div class="description-meta">
-            <button
+            <BaseButton
               v-if="isAIAvailable"
-              type="button"
+              variant="ghost"
+              size="xs"
+              html-type="button"
+              icon="fas fa-wand-magic-sparkles"
               class="ai-generate-btn"
               :disabled="!formData.url || !formData.name || aiGenerating"
+              :loading="aiGenerating"
               @click="handleAIGenerate"
             >
-              <i :class="aiGenerating ? 'fas fa-spinner fa-spin' : 'fas fa-wand-magic-sparkles'" />
               {{ aiGenerating ? '生成中...' : 'AI 生成' }}
-            </button>
+            </BaseButton>
             <span class="description-count">{{ formData.description.length }}/100</span>
           </div>
         </div>
@@ -135,32 +138,35 @@
                         @keydown.enter.prevent="createCategory"
                       />
                       <div class="category-select__create-actions">
-                        <button
-                          type="button"
-                          class="category-select__create-btn category-select__create-btn--primary"
+                        <BaseButton
+                          variant="primary"
+                          size="xs"
+                          html-type="button"
                           :disabled="!categoryCreateName.trim()"
                           @click.stop="createCategory"
                         >
                           确定
-                        </button>
-                        <button
-                          type="button"
-                          class="category-select__create-btn"
+                        </BaseButton>
+                        <BaseButton
+                          variant="ghost"
+                          size="xs"
+                          html-type="button"
                           @click.stop="cancelCategoryCreate"
                         >
                           取消
-                        </button>
+                        </BaseButton>
                       </div>
                     </div>
-                    <button
+                    <BaseButton
                       v-if="!categoryCreating"
-                      type="button"
-                      class="category-select__create-link"
+                      variant="ghost"
+                      size="xs"
+                      html-type="button"
+                      icon="fas fa-plus"
                       @click.stop="startCategoryCreate"
                     >
-                      <i class="fas fa-plus" aria-hidden="true" />
                       创建分类
-                    </button>
+                    </BaseButton>
                   </div>
                 </div>
               </Transition>
@@ -211,27 +217,33 @@
 
               <!-- Right: Controls -->
               <div class="favicon-buttons">
-                <button
-                  type="button"
-                  class="favicon-btn favicon-btn--api"
+                <BaseButton
+                  variant="ghost"
+                  size="xs"
+                  html-type="button"
+                  icon="fas fa-search"
+                  class="favicon-btn"
                   :class="{ 'favicon-btn--active': faviconSource === 'api' }"
+                  :aria-pressed="faviconSource === 'api'"
                   :disabled="faviconLoading || !formData.url.trim()"
                   @click="handleFaviconSourceChange('api')"
                 >
-                  <i class="fas fa-search" />
-                  <span>自动获取图标</span>
-                </button>
+                  自动获取图标
+                </BaseButton>
 
-                <button
-                  type="button"
-                  class="favicon-btn favicon-btn--default"
+                <BaseButton
+                  variant="ghost"
+                  size="xs"
+                  html-type="button"
+                  icon="fas fa-rotate-right"
+                  class="favicon-btn"
                   :class="{ 'favicon-btn--active': faviconSource === 'default' }"
+                  :aria-pressed="faviconSource === 'default'"
                   :disabled="faviconLoading"
                   @click="handleFaviconSourceChange('default')"
                 >
-                  <i class="fas fa-rotate-right" />
-                  <span>使用默认图标</span>
-                </button>
+                  使用默认图标
+                </BaseButton>
               </div>
             </div>
 
@@ -245,20 +257,15 @@
       </section>
 
       <div class="add-site-modal__actions">
-        <BaseButton
-          variant="ghost"
-          html-type="button"
-          class="cancel-btn modal-action-btn"
-          @click="handleClose"
-        >
+        <BaseButton variant="ghost" size="sm" html-type="button" @click="handleClose">
           取消
         </BaseButton>
         <BaseButton
           variant="primary"
+          size="sm"
           :loading="submitting"
           :disabled="!isFormValid"
           html-type="submit"
-          class="modal-action-btn"
         >
           {{ isEditMode ? '保存修改' : '添加网站' }}
         </BaseButton>
@@ -811,34 +818,7 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
 }
 
 .ai-generate-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 24px;
-  padding: 0 6px;
-  border: none;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: transparent;
-  color: var(--color-primary-dark);
-  box-shadow: none;
-
-  i {
-    font-size: 11px;
-  }
-
-  &:hover:not(:disabled) {
-    background: var(--primary-soft);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-  }
+  margin-left: -6px;
 }
 
 .description-count {
@@ -988,23 +968,6 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
   text-align: center;
 }
 
-.category-select__create-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 4px;
-  border: none;
-  background: transparent;
-  color: var(--color-primary);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-
-  &:hover {
-    color: var(--color-primary-dark);
-  }
-}
-
 .category-select__create {
   width: 100%;
   display: flex;
@@ -1034,31 +997,6 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
   display: flex;
   flex-shrink: 0;
   gap: 8px;
-}
-
-.category-select__create-btn {
-  padding: 4px 10px;
-  border: none;
-  border-radius: $border-radius-sm;
-  background: transparent;
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: var(--bg-tile-hover);
-    color: var(--text-main);
-  }
-
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-}
-
-.category-select__create-btn--primary {
-  color: var(--color-primary);
 }
 
 .category-select-menu-enter-active,
@@ -1176,7 +1114,7 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
 .favicon-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: $spacing-sm;
 }
 
 .favicon-info {
@@ -1222,35 +1160,6 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
   color: var(--text-muted);
 }
 
-.favicon-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
-  border-radius: 10px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid transparent;
-  background-color: transparent;
-  color: var(--text-secondary);
-  font-weight: 500;
-  min-height: 36px;
-
-  i {
-    font-size: 14px;
-  }
-
-  &:hover:not(:disabled) {
-    background-color: var(--bg-tile-hover);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
 .default-icon-symbol {
   font-family: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   font-weight: 700;
@@ -1259,13 +1168,11 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
 }
 
 .favicon-btn--active {
-  background-color: var(--primary-soft);
-  border-color: transparent;
-  color: var(--color-primary-dark);
-  box-shadow: none;
+  background-color: color-mix(in srgb, var(--color-primary) 7%, transparent) !important;
+  color: var(--color-primary-dark) !important;
 
   &:hover {
-    background-color: color-mix(in srgb, var(--color-primary) 13%, var(--bg-panel));
+    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent) !important;
   }
 }
 
@@ -1275,29 +1182,6 @@ const handleFaviconSourceChange = async (source: 'api' | 'default') => {
   justify-content: flex-end;
   margin-top: 0;
   padding-top: 2px;
-}
-
-.cancel-btn {
-  color: var(--text-secondary) !important;
-
-  &:hover {
-    background-color: var(--bg-tile-hover) !important;
-    color: var(--text-main) !important;
-  }
-}
-
-.modal-action-btn {
-  height: 36px !important;
-  min-height: 36px !important;
-  padding: 0 16px !important;
-  font-size: 14px !important;
-}
-
-:deep(.modal-action-btn.base-button--disabled) {
-  opacity: 1;
-  background: var(--bg-tile) !important;
-  border-color: var(--border-tile) !important;
-  color: var(--text-muted) !important;
 }
 
 @include mobile {

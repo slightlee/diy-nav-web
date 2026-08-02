@@ -39,15 +39,10 @@
       </div>
       <template #footer>
         <div class="discard-confirm-actions">
-          <BaseButton variant="ghost" size="sm" @click="discardAddSiteConfirmOpen = false">
+          <BaseButton variant="primary" size="sm" @click="discardAddSiteConfirmOpen = false">
             继续编辑
           </BaseButton>
-          <BaseButton
-            variant="neutral-outline"
-            size="sm"
-            class="discard-confirm-btn"
-            @click="confirmDiscardAddSite"
-          >
+          <BaseButton variant="danger-ghost" size="sm" @click="confirmDiscardAddSite">
             放弃并关闭
           </BaseButton>
         </div>
@@ -238,21 +233,6 @@ watch(
   justify-content: flex-end;
   gap: 12px;
   width: 100%;
-}
-
-.discard-confirm-btn {
-  background-color: transparent !important;
-  border-color: var(--border-tile);
-  color: var(--text-secondary);
-  box-shadow: none;
-}
-
-.discard-confirm-btn:hover:not(.base-button--disabled):not(.base-button--loading) {
-  background-color: var(--bg-tile-hover) !important;
-  border-color: var(--border-tile-hover);
-  color: var(--text-main);
-  box-shadow: none;
-  transform: none;
 }
 </style>
 

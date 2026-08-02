@@ -11,12 +11,24 @@
       />
       <ColorPicker v-model="color" />
       <div class="action-buttons">
-        <button class="action-btn save-btn" title="保存" @click="onSave">
-          <i class="fas fa-check" />
-        </button>
-        <button class="action-btn cancel-btn" title="取消" @click="$emit('cancel')">
-          <i class="fas fa-times" />
-        </button>
+        <BaseButton
+          variant="ghost"
+          size="sm"
+          icon="fas fa-check"
+          title="保存"
+          aria-label="保存标签"
+          :disabled="!name.trim()"
+          :loading="updating"
+          @click="onSave"
+        />
+        <BaseButton
+          variant="ghost"
+          size="sm"
+          icon="fas fa-times"
+          title="取消"
+          aria-label="取消编辑标签"
+          @click="$emit('cancel')"
+        />
       </div>
     </div>
     <div v-else class="view-row">
@@ -34,12 +46,22 @@
       <span class="name">{{ tag.name }}</span>
       <span class="count">{{ usageCount }}</span>
       <div class="item-actions">
-        <button class="action-btn edit-btn" title="编辑" @click="$emit('edit')">
-          <i class="fas fa-pencil-alt" />
-        </button>
-        <button class="action-btn delete-btn" title="删除" @click="$emit('delete')">
-          <i class="fas fa-trash-alt" />
-        </button>
+        <BaseButton
+          variant="ghost"
+          size="sm"
+          icon="fas fa-pencil-alt"
+          title="编辑"
+          :aria-label="`编辑标签 ${tag.name}`"
+          @click="$emit('edit')"
+        />
+        <BaseButton
+          variant="danger-ghost"
+          size="sm"
+          icon="fas fa-trash-alt"
+          title="删除"
+          :aria-label="`删除标签 ${tag.name}`"
+          @click="$emit('delete')"
+        />
       </div>
     </div>
   </div>
@@ -47,7 +69,7 @@
 
 <script setup lang="ts">
 import { ref, watchEffect } from 'vue'
-import { BaseInput, ColorPicker } from '@nav/ui'
+import { BaseButton, BaseInput, ColorPicker } from '@nav/ui'
 import type { Tag } from '@/types'
 
 const props = defineProps<{ tag: Tag; editing: boolean; usageCount: number; updating: boolean }>()
@@ -169,46 +191,15 @@ const onDrop = () => {
   margin-left: auto;
   opacity: 0;
   transition: opacity 0.2s;
+
+  .tag-item:focus-within & {
+    opacity: 1;
+  }
 }
 
 .action-buttons {
   display: flex;
   gap: 4px;
-}
-
-.action-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: none;
-  background-color: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: var(--bg-tile);
-    color: var(--text-main);
-  }
-
-  &.delete-btn:hover {
-    background-color: rgba(239, 68, 68, 0.1);
-    color: var(--color-error);
-  }
-
-  &.save-btn {
-    color: var(--color-success);
-    &:hover {
-      background-color: rgba(16, 185, 129, 0.1);
-    }
-  }
-
-  &.cancel-btn:hover {
-    color: var(--text-main);
-  }
 }
 
 .tag-input {

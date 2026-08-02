@@ -1,29 +1,40 @@
 <template>
-  <button
+  <BaseButton
+    variant="neutral-ghost"
+    size="sm"
+    icon="fas fa-star"
     class="website-card__action-btn website-card__action-btn--favorite"
     :class="[{ 'is-active': props.website.isFavorite }]"
     :title="props.website.isFavorite ? `取消常用` : `添加到常用`"
+    :aria-label="
+      props.website.isFavorite
+        ? `取消常用 ${props.website.name}`
+        : `添加到常用 ${props.website.name}`
+    "
     @click.stop="emit('favoriteToggle', props.website.id)"
-  >
-    <i class="fas fa-star" />
-  </button>
-  <button
+  />
+  <BaseButton
+    variant="neutral-ghost"
+    size="sm"
+    icon="fas fa-edit"
     class="website-card__action-btn website-card__action-btn--edit"
     :title="`编辑 ${props.website.name}`"
+    :aria-label="`编辑 ${props.website.name}`"
     @click.stop="emit('edit', props.website)"
-  >
-    <i class="fas fa-edit" />
-  </button>
-  <button
+  />
+  <BaseButton
+    variant="danger-ghost"
+    size="sm"
+    icon="fas fa-trash"
     class="website-card__action-btn website-card__action-btn--delete"
     :title="`删除 ${props.website.name}`"
+    :aria-label="`删除 ${props.website.name}`"
     @click.stop="emit('delete', props.website.id)"
-  >
-    <i class="fas fa-trash" />
-  </button>
+  />
 </template>
 
 <script setup lang="ts">
+import { BaseButton } from '@nav/ui'
 import type { Website } from '@/types'
 
 interface Props {
@@ -47,39 +58,11 @@ defineOptions({ name: 'WebsiteCardActions' })
 @use '@/styles/variables' as *;
 
 .website-card__action-btn {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition:
-    background-color 0.2s,
-    transform 0.2s;
-  padding: 0;
-  font-size: 12px;
-
-  &:hover {
-    background-color: var(--bg-tile);
-    color: var(--text-main);
-    border-color: var(--border-tile);
-  }
+  font-size: var(--font-size-xs);
 
   &--favorite {
     &.is-active {
       color: var(--color-warning);
-    }
-  }
-
-  &--delete {
-    &:hover {
-      color: var(--color-danger);
-      background-color: rgba(239, 68, 68, 0.1);
-      border-color: rgba(239, 68, 68, 0.2);
     }
   }
 }

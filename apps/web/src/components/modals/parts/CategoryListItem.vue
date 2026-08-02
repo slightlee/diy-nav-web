@@ -12,10 +12,10 @@
       </button>
       <IconPicker v-model="editIcon" :compact="true" mode="popover" />
       <BaseInput v-model="name" placeholder="分类名称" size="md" shape="rounded" />
-      <BaseButton variant="primary" size="sm" shape="pill" :loading="updating" @click="onSave">
+      <BaseButton variant="primary" size="sm" shape="rounded" :loading="updating" @click="onSave">
         保存
       </BaseButton>
-      <BaseButton variant="neutral-outline" size="sm" shape="pill" @click="$emit('cancel')">
+      <BaseButton variant="ghost" size="sm" shape="rounded" @click="$emit('cancel')">
         取消
       </BaseButton>
     </div>
@@ -27,9 +27,9 @@
       <span class="name">{{ category.name }}</span>
       <span class="count" title="网站数量">{{ websiteCount }}</span>
       <BaseButton
-        variant="neutral-outline"
+        variant="ghost"
         size="sm"
-        shape="pill"
+        shape="rounded"
         class="action-btn"
         title="编辑"
         aria-label="编辑"
@@ -38,9 +38,9 @@
         编辑
       </BaseButton>
       <BaseButton
-        variant="danger-outline"
+        variant="danger-ghost"
         size="sm"
-        shape="pill"
+        shape="rounded"
         class="action-btn"
         title="删除"
         aria-label="删除"

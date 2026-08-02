@@ -304,13 +304,13 @@ const formatDate = (date: Date) => {
     width: 100%;
     min-height: 44px;
     padding: 11px 14px;
-    border-radius: 10px;
-    font-weight: 600;
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-medium);
     font-size: 14px;
     cursor: pointer;
     transition:
-      filter 0.15s ease,
       background 0.15s ease,
+      color 0.15s ease,
       opacity 0.15s ease;
     display: flex;
     align-items: center;
@@ -333,7 +333,7 @@ const formatDate = (date: Date) => {
     border: none;
 
     &:hover:not(:disabled) {
-      filter: brightness(1.06);
+      background: var(--color-primary-dark);
     }
 
     .btn-icon {
@@ -344,18 +344,19 @@ const formatDate = (date: Date) => {
 
   .btn-keep-local {
     background: transparent;
-    border: 1px solid var(--border-color, rgba(148, 163, 184, 0.35));
-    color: var(--text-main);
+    border: 1px solid transparent;
+    color: var(--text-secondary);
 
     &:hover:not(:disabled) {
       background: var(--bg-hover, rgba(148, 163, 184, 0.1));
+      color: var(--text-main);
     }
   }
 
   .btn-merge {
     background: color-mix(in srgb, var(--color-primary) 8%, transparent);
     color: var(--color-primary);
-    border: 1px solid color-mix(in srgb, var(--color-primary) 45%, transparent);
+    border: 1px solid transparent;
 
     &:hover:not(:disabled) {
       background: color-mix(in srgb, var(--color-primary) 14%, transparent);

@@ -33,10 +33,16 @@
 
       <!-- 添加新标签 (Bottom) -->
       <div class="add-tag-section">
-        <button v-if="!adding" class="add-tag-btn" @click="adding = true">
-          <i class="fas fa-plus" />
-          <span>添加标签</span>
-        </button>
+        <BaseButton
+          v-if="!adding"
+          block
+          variant="ghost"
+          size="md"
+          icon="fas fa-plus"
+          @click="adding = true"
+        >
+          添加标签
+        </BaseButton>
 
         <div v-else class="add-tag-form">
           <div class="form-row">
@@ -84,13 +90,7 @@
       <template #footer>
         <div class="modal-footer-actions">
           <BaseButton variant="ghost" size="sm" @click="closeDeleteConfirm">取消</BaseButton>
-          <BaseButton
-            variant="danger-outline"
-            size="sm"
-            class="delete-confirm-btn"
-            :loading="deleting"
-            @click="confirmDeleteTag"
-          >
+          <BaseButton variant="danger" size="sm" :loading="deleting" @click="confirmDeleteTag">
             删除
           </BaseButton>
         </div>
@@ -343,27 +343,6 @@ const confirmDeleteTag = () => {
   margin-top: 4px;
 }
 
-.add-tag-btn {
-  width: 100%;
-  min-height: 44px;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 10px;
-  background-color: transparent;
-  color: var(--text-secondary);
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.2s;
-  &:hover {
-    color: var(--color-primary);
-    background-color: var(--primary-soft);
-  }
-}
-
 .add-tag-form {
   background-color: var(--bg-tile);
   border-radius: 12px;
@@ -384,19 +363,6 @@ const confirmDeleteTag = () => {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-:deep(.tag-submit-btn),
-:deep(.tag-cancel-btn) {
-  min-height: 36px;
-  border-radius: 10px;
-  box-shadow: none;
-}
-
-:deep(.tag-submit-btn:focus-visible),
-:deep(.tag-cancel-btn:focus-visible) {
-  outline: none;
-  box-shadow: none;
 }
 
 .delete-confirm-text {
@@ -433,21 +399,6 @@ const confirmDeleteTag = () => {
   justify-content: flex-end;
   gap: 12px;
   width: 100%;
-}
-
-:deep(.delete-confirm-btn) {
-  background-color: transparent !important;
-  border-color: color-mix(in srgb, var(--color-error) 28%, var(--border-tile));
-  color: color-mix(in srgb, var(--color-error) 82%, var(--text-main));
-  box-shadow: none;
-}
-
-:deep(.delete-confirm-btn:hover:not(.base-button--disabled):not(.base-button--loading)) {
-  background-color: color-mix(in srgb, var(--color-error) 7%, transparent) !important;
-  border-color: color-mix(in srgb, var(--color-error) 42%, var(--border-tile));
-  color: var(--color-error);
-  box-shadow: none;
-  transform: none;
 }
 
 /* List Transitions */

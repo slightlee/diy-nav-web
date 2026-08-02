@@ -80,6 +80,52 @@ describe('SyncService', () => {
     })
   })
 
+  it('updates an existing sync switch without replacing its snapshot pointers', async () => {
+    vi.spyOn(mockDb, 'execute').mockResolvedValue({ changes: 1 })
+    vi.spyOn(mockDb, 'first').mockResolvedValue({
+      user_id: 'user-1',
+      enabled: 0,
+      current_hash: 'remote-hash',
+      current_storage_key: 'remote.json',
+      updated_at: 1
+    })
+
+    await expect(service.setEnabled('user-1', false)).resolves.toMatchObject({
+      enabled: false,
+      currentHash: 'remote-hash'
+    })
+
+    expect(mockDb.execute).toHaveBeenCalledOnce()
+    expect(mockDb.execute).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE user_sync_state SET enabled = ?'),
+      [0, expect.any(Number), 'user-1']
+    )
+  })
+
+  it('creates a sync switch record using only schema-stable fields', async () => {
+    vi.spyOn(mockDb, 'execute')
+      .mockResolvedValueOnce({ changes: 0 })
+      .mockResolvedValueOnce({ changes: 1 })
+    vi.spyOn(mockDb, 'first').mockResolvedValue({
+      user_id: 'user-1',
+      enabled: 1,
+      current_hash: null,
+      current_storage_key: null,
+      updated_at: 1
+    })
+
+    await expect(service.setEnabled('user-1', true)).resolves.toMatchObject({
+      enabled: true,
+      currentHash: null
+    })
+
+    expect(mockDb.execute).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('INSERT INTO user_sync_state (user_id, enabled, updated_at)'),
+      ['user-1', 1, expect.any(Number)]
+    )
+  })
+
   it('returns an operational conflict when the current snapshot object is unavailable', async () => {
     vi.spyOn(mockDb, 'first').mockResolvedValue({
       user_id: 'user-1',

@@ -40,7 +40,7 @@
             <BaseButton
               variant="ghost"
               size="sm"
-              shape="pill"
+              shape="rounded"
               class="action-btn"
               @click="clearSearch"
             >

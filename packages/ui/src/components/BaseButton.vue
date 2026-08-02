@@ -32,6 +32,8 @@ export interface Props {
     | 'neutral-outline'
     | 'danger-outline'
     | 'ghost'
+    | 'neutral-ghost'
+    | 'danger-ghost'
     | 'danger'
     | 'success'
     | 'warning'
@@ -124,7 +126,9 @@ const handleKeydown = (event: KeyboardEvent) => {
   if (props.disabled || props.loading) {
     return
   }
-  if (event.key === ' ' || event.key === 'Enter') {
+
+  // button 与链接的 Enter 激活由浏览器处理；仅为链接补齐空格键按钮语义。
+  if (props.tag !== 'button' && event.key === ' ') {
     event.preventDefault()
     emit('click', event)
   }
@@ -160,10 +164,7 @@ defineExpose({
   transition:
     background-color $transition-fast,
     border-color $transition-fast,
-    color $transition-fast,
-    transform $transition-fast,
-    box-shadow $transition-fast;
-  will-change: transform;
+    color $transition-fast;
 
   &:focus-visible {
     @include focus-visible;
@@ -188,11 +189,6 @@ defineExpose({
   &--block {
     width: 100%;
     display: flex;
-  }
-
-  &--icon-only {
-    padding: $spacing-sm;
-    min-width: auto;
   }
 
   &--shadow {
@@ -224,29 +220,36 @@ defineExpose({
   }
 
   &--xs {
-    padding: $spacing-xs $spacing-sm;
+    padding: 0 $spacing-md;
     font-size: $font-size-xs;
     min-height: 24px;
   }
   &--sm {
-    padding: $spacing-xs $spacing-sm;
+    padding: 0 $spacing-lg;
     font-size: $font-size-sm;
     min-height: 32px;
   }
   &--md {
-    padding: $spacing-sm $spacing-md;
+    padding: 0 $spacing-xl;
     font-size: $font-size-base;
     min-height: 40px;
   }
   &--lg {
-    padding: $spacing-md $spacing-lg;
+    padding: 0 $spacing-2xl;
     font-size: $font-size-lg;
     min-height: 48px;
   }
   &--xl {
-    padding: $spacing-lg $spacing-xl;
+    padding: 0 $spacing-2xl;
     font-size: $font-size-xl;
     min-height: 56px;
+  }
+
+  // 纯图标按钮沿用对应尺寸的高度，避免横向内边距把按钮撑成长方形。
+  &--icon-only {
+    width: auto;
+    padding: 0;
+    aspect-ratio: 1;
   }
 
   #{&}--xs#{&}--icon-only {
@@ -276,88 +279,105 @@ defineExpose({
   }
 
   &--primary {
-    background-color: $color-primary;
-    color: $color-white;
-    border-color: $color-primary;
+    background-color: var(--color-primary, #{$color-primary});
+    color: var(--color-white, #{$color-white});
+    border-color: var(--color-primary, #{$color-primary});
+    font-weight: $font-weight-medium;
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
-      background-color: $color-primary-dark;
-      border-color: $color-primary-dark;
-      transform: translateY(-1px);
-      box-shadow: $shadow-md;
-    }
-    &:active {
-      transform: translateY(0);
+      background-color: var(--color-primary-dark, #{$color-primary-dark});
+      border-color: var(--color-primary-dark, #{$color-primary-dark});
     }
   }
 
   &--secondary {
-    background-color: $color-neutral-100;
-    color: $color-neutral-800;
-    border-color: $color-neutral-200;
+    background-color: var(--bg-tile, #{$color-neutral-100});
+    color: var(--text-main, #{$color-neutral-800});
+    border-color: transparent;
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
-      background-color: $color-neutral-200;
-      color: $color-neutral-900;
-      transform: translateY(-1px);
-      box-shadow: $shadow-sm;
+      background-color: var(--bg-tile-hover, #{$color-neutral-200});
+      color: var(--text-main, #{$color-neutral-900});
     }
   }
 
   &--outline {
     background-color: transparent;
-    color: $color-primary;
-    border-color: $color-primary;
+    color: var(--color-primary, #{$color-primary});
+    border-color: var(--color-primary, #{$color-primary});
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
-      background-color: $color-primary;
-      color: $color-white;
-      transform: translateY(-1px);
-      box-shadow: $shadow-sm;
+      background-color: var(--color-primary, #{$color-primary});
+      color: var(--color-white, #{$color-white});
     }
   }
 
   &--neutral-outline {
     background-color: transparent;
-    color: $color-neutral-700;
-    border-color: $color-neutral-300;
+    color: var(--text-secondary, #{$color-neutral-700});
+    border-color: var(--color-border, #{$color-neutral-300});
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
-      background-color: $color-neutral-100;
-      color: $color-neutral-900;
-      transform: translateY(-1px);
-      box-shadow: $shadow-sm;
+      background-color: var(--bg-tile, #{$color-neutral-100});
+      color: var(--text-main, #{$color-neutral-900});
     }
   }
 
   &--danger-outline {
     background-color: transparent;
-    color: $color-error;
-    border-color: $color-error;
+    color: var(--color-error, #{$color-error});
+    border-color: var(--color-error, #{$color-error});
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
-      background-color: rgba($color-error, 0.06);
-      color: $color-error;
-      transform: translateY(-1px);
-      box-shadow: $shadow-sm;
+      background-color: color-mix(in srgb, var(--color-error, #{$color-error}) 6%, transparent);
+      color: var(--color-error, #{$color-error});
     }
   }
 
   &--ghost {
     background-color: transparent;
-    color: $color-primary;
+    color: var(--color-primary, #{$color-primary});
     border-color: transparent;
+    font-weight: $font-weight-normal;
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
-      background-color: rgba($color-primary, 0.1);
-      color: $color-primary-dark;
-      transform: translateY(-1px);
+      background-color: color-mix(
+        in srgb,
+        var(--color-primary, #{$color-primary}) 10%,
+        transparent
+      );
+      color: var(--color-primary-dark, #{$color-primary-dark});
+    }
+  }
+
+  &--neutral-ghost {
+    background-color: transparent;
+    color: var(--text-secondary, #{$color-neutral-700});
+    border-color: transparent;
+    font-weight: $font-weight-normal;
+    &:hover:not(.base-button--disabled):not(.base-button--loading) {
+      background-color: var(--bg-tile, #{$color-neutral-100});
+      color: var(--text-main, #{$color-neutral-900});
+    }
+  }
+
+  &--danger-ghost {
+    background-color: transparent;
+    color: var(--color-error, #{$color-error});
+    border-color: transparent;
+    font-weight: $font-weight-normal;
+    &:hover:not(.base-button--disabled):not(.base-button--loading) {
+      background-color: color-mix(in srgb, var(--color-error, #{$color-error}) 7%, transparent);
+      color: var(--color-error, #{$color-error});
     }
   }
 
   &--danger {
-    background-color: $color-error;
-    color: $color-white;
-    border-color: $color-error;
+    background-color: var(--color-error, #{$color-error});
+    color: var(--color-white, #{$color-white});
+    border-color: var(--color-error, #{$color-error});
+    font-weight: $font-weight-medium;
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
-      background-color: color.adjust($color-error, $lightness: -10%);
-      border-color: color.adjust($color-error, $lightness: -10%);
-      transform: translateY(-1px);
-      box-shadow: $shadow-md;
+      background-color: color-mix(
+        in srgb,
+        var(--color-error, #{$color-error}) 88%,
+        #{$color-black}
+      );
+      border-color: color-mix(in srgb, var(--color-error, #{$color-error}) 88%, #{$color-black});
     }
   }
 
@@ -368,8 +388,6 @@ defineExpose({
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
       background-color: color.adjust($color-success, $lightness: -10%);
       border-color: color.adjust($color-success, $lightness: -10%);
-      transform: translateY(-1px);
-      box-shadow: $shadow-md;
     }
   }
 
@@ -380,8 +398,6 @@ defineExpose({
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
       background-color: color.adjust($color-warning, $lightness: -10%);
       border-color: color.adjust($color-warning, $lightness: -10%);
-      transform: translateY(-1px);
-      box-shadow: $shadow-md;
     }
   }
 
@@ -392,8 +408,6 @@ defineExpose({
     &:hover:not(.base-button--disabled):not(.base-button--loading) {
       background-color: color.adjust($color-info, $lightness: -10%);
       border-color: color.adjust($color-info, $lightness: -10%);
-      transform: translateY(-1px);
-      box-shadow: $shadow-md;
     }
   }
 }
@@ -403,10 +417,10 @@ defineExpose({
   transition: transform $transition-fast;
 }
 .base-button__icon--left {
-  margin-right: $spacing-xs;
+  order: 0;
 }
 .base-button__icon--right {
-  margin-left: $spacing-xs;
+  order: 2;
 }
 
 .button-loading-icon {
@@ -422,7 +436,11 @@ defineExpose({
 }
 
 .button-text {
-  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -443,7 +461,9 @@ defineExpose({
   .base-button {
     border-width: 2px;
   }
-  .base-button--ghost {
+  .base-button--ghost,
+  .base-button--neutral-ghost,
+  .base-button--danger-ghost {
     border-color: currentcolor;
   }
 }

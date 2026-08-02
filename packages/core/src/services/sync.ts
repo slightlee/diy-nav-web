@@ -89,12 +89,24 @@ export class SyncService {
 
   async setEnabled(userId: string, enabled: boolean): Promise<SyncState> {
     const now = Date.now()
-    await this.db.execute(
-      `INSERT INTO user_sync_state (user_id, enabled, current_hash, current_storage_key, updated_at)
-       VALUES (?, ?, NULL, NULL, ?)
-       ON CONFLICT(user_id) DO UPDATE SET enabled = excluded.enabled`,
-      [userId, enabled ? 1 : 0, now]
+    const enabledValue = enabled ? 1 : 0
+    const updateResult = await this.db.execute(
+      `UPDATE user_sync_state SET enabled = ?, updated_at = ? WHERE user_id = ?`,
+      [enabledValue, now, userId]
     )
+
+    if ((updateResult.changes ?? 0) === 0) {
+      // Only write fields shared by fresh and legacy schemas. Historical pointer
+      // columns keep their defaults, while existing rows retain their snapshots.
+      await this.db.execute(
+        `INSERT INTO user_sync_state (user_id, enabled, updated_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT(user_id) DO UPDATE SET
+           enabled = excluded.enabled,
+           updated_at = excluded.updated_at`,
+        [userId, enabledValue, now]
+      )
+    }
     return this.getState(userId)
   }
 

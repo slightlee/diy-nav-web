@@ -4,26 +4,39 @@
     <div class="filter-group">
       <div class="filter-header">
         <label class="filter-label">标签</label>
-        <button class="manage-btn" @click="$emit('manageTags')">
-          <i class="fas fa-pencil-alt" />
-        </button>
+        <BaseButton
+          variant="neutral-ghost"
+          size="xs"
+          icon="fas fa-pencil-alt"
+          title="管理标签"
+          aria-label="管理标签"
+          @click="$emit('manageTags')"
+        />
       </div>
 
       <div v-if="tags.length === 0" class="sidebar-empty-state">
         <p class="empty-desc-text">添加网站后，可用标签快速筛选。</p>
-        <button class="create-first-btn" @click="$emit('manageTags')">创建第一个标签</button>
+        <BaseButton
+          class="create-first-btn"
+          variant="neutral-ghost"
+          size="xs"
+          icon="fas fa-plus"
+          @click="$emit('manageTags')"
+        >
+          创建第一个标签
+        </BaseButton>
       </div>
 
       <div v-else class="tag-list">
-        <button
+        <ChoiceChip
           v-for="tag in tags"
           :key="tag.id"
-          class="tag-pill"
-          :class="{ active: selectedTags.includes(tag.id) }"
+          :label="tag.name"
+          :color="tag.color"
+          :active="selectedTags.includes(tag.id)"
+          :aria-label="`筛选标签：${tag.name}`"
           @click="$emit('toggleTag', tag.id)"
-        >
-          {{ tag.name }}
-        </button>
+        />
       </div>
     </div>
 
@@ -31,9 +44,14 @@
     <div class="filter-group">
       <div class="filter-header">
         <label class="filter-label">分类</label>
-        <button class="manage-btn" @click="$emit('manageCategories')">
-          <i class="fas fa-pencil-alt" />
-        </button>
+        <BaseButton
+          variant="ghost"
+          size="xs"
+          icon="fas fa-pencil-alt"
+          title="管理分类"
+          aria-label="管理分类"
+          @click="$emit('manageCategories')"
+        />
       </div>
 
       <div v-if="categories.length === 0" class="sidebar-empty-state">
@@ -43,7 +61,15 @@
             <span class="category-name">全部 (0)</span>
           </button>
         </div>
-        <button class="create-first-btn" @click="$emit('manageCategories')">创建第一个分类</button>
+        <BaseButton
+          class="create-first-btn"
+          variant="ghost"
+          size="xs"
+          icon="fas fa-plus"
+          @click="$emit('manageCategories')"
+        >
+          创建第一个分类
+        </BaseButton>
       </div>
 
       <div v-else class="category-list">
@@ -69,6 +95,8 @@
 </template>
 
 <script setup lang="ts">
+import { BaseButton } from '@nav/ui'
+import ChoiceChip from '@/components/ChoiceChip.vue'
 import type { Tag, Category } from '@/types'
 
 defineProps<{
@@ -183,52 +211,10 @@ defineEmits<{
   color: var(--text-main);
 }
 
-.manage-btn {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 13px;
-  padding: 4px;
-  min-height: 0;
-  min-width: 0;
-  border-radius: 4px;
-  transition: all 0.2s;
-
-  &:hover {
-    color: var(--color-primary);
-    background-color: var(--bg-tile-hover);
-  }
-}
-
 .tag-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.tag-pill {
-  padding: 4px 12px;
-  min-height: 0;
-  min-width: 0;
-  border-radius: 999px;
-  font-size: 12px;
-  border: 1px solid var(--border-tile);
-  background-color: var(--bg-tile);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-  }
-
-  &.active {
-    background-color: color-mix(in srgb, var(--color-primary) 9%, var(--bg-tile));
-    color: var(--color-primary-dark);
-    border-color: color-mix(in srgb, var(--color-primary) 42%, var(--border-tile));
-  }
 }
 
 .category-list {
@@ -263,6 +249,11 @@ defineEmits<{
     color: var(--color-primary-dark);
     font-weight: 650;
   }
+
+  &:focus-visible {
+    outline: 2px solid rgba(var(--color-primary-rgb), 0.4);
+    outline-offset: 2px;
+  }
 }
 
 .sidebar-empty-state {
@@ -279,65 +270,8 @@ defineEmits<{
   margin: 0;
 }
 
-.tag-list.disabled {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 2px;
-}
-
-.tag-pill.example {
-  background-color: var(--bg-body);
-  border: 1px solid var(--border-tile);
-  color: var(--text-muted);
-  cursor: default;
-  opacity: 0.6;
-  padding: 4px 12px;
-  font-size: 12px;
-
-  &:hover {
-    border-color: var(--border-tile);
-    color: var(--text-muted);
-  }
-}
-
-.category-item.example {
-  cursor: default;
-  opacity: 0.5;
-  padding: 8px 10px;
-  font-size: 13px;
-
-  &:hover {
-    background-color: transparent;
-    color: var(--text-secondary);
-  }
-
-  .category-name {
-    font-weight: 400;
-  }
-}
-
 .create-first-btn {
   margin-top: 4px;
-  padding: 6px 16px;
-  min-height: 0;
-  min-width: 0;
-  border: 1px dashed var(--border-tile);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
   width: fit-content;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-    background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
-  }
 }
 </style>

@@ -35,7 +35,9 @@
       </div>
       <h2 class="status-title text-error">{{ errorTitle }}</h2>
       <p class="status-desc">{{ errorState }}</p>
-      <button class="btn-retry" @click="leaveErrorState">{{ errorActionLabel }}</button>
+      <BaseButton variant="secondary" size="md" class="btn-retry" @click="leaveErrorState">
+        {{ errorActionLabel }}
+      </BaseButton>
     </div>
   </AuthLayout>
 </template>
@@ -45,7 +47,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { AuthRequestError, useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
-import { AuthLayout, BrandLogo } from '@nav/ui'
+import { AuthLayout, BaseButton, BrandLogo } from '@nav/ui'
 import type { OAuthMode, OAuthProvider } from '@/utils/oauth'
 
 const router = useRouter()
@@ -163,21 +165,6 @@ const leaveErrorState = () => {
 
 .btn-retry {
   margin-top: var(--spacing-md);
-  padding: var(--spacing-md) var(--spacing-2xl);
-  background: var(--color-white);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  color: var(--color-neutral-700);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.btn-retry:hover {
-  background: var(--color-neutral-50);
-  border-color: var(--color-neutral-300);
-  color: var(--color-neutral-900);
 }
 
 .status-title {
