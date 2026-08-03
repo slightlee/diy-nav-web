@@ -46,6 +46,64 @@
                 <p>管理公开展示的账号信息</p>
               </div>
             </div>
+            <div class="account-avatar-editor">
+              <div class="account-avatar-editor__preview">
+                <img
+                  v-if="authStore.user?.avatar_url"
+                  :src="authStore.user.avatar_url"
+                  class="account-avatar-editor__image"
+                  alt="当前头像"
+                />
+                <div v-else class="account-avatar-editor__image account-summary__avatar--fallback">
+                  {{ userInitial }}
+                </div>
+                <div>
+                  <div class="account-profile__label">头像</div>
+                  <span>从头像库中选择一个用于账号展示的头像</span>
+                </div>
+              </div>
+              <BaseButton
+                variant="neutral-ghost"
+                size="sm"
+                :loading="loadingAvatarOptions"
+                @click="toggleAvatarPicker"
+              >
+                更换头像
+              </BaseButton>
+            </div>
+            <div v-if="avatarPickerOpen" class="avatar-picker">
+              <div v-if="loadingAvatarOptions" class="avatar-picker__state">加载头像中...</div>
+              <div v-else class="avatar-picker__grid">
+                <button
+                  v-for="option in avatarOptions"
+                  :key="option.key"
+                  type="button"
+                  class="avatar-picker__option"
+                  :class="{ 'is-selected': selectedAvatarKey === option.key }"
+                  :aria-label="`选择${option.label}头像`"
+                  :aria-pressed="selectedAvatarKey === option.key"
+                  @click="selectedAvatarKey = option.key"
+                >
+                  <img :src="option.preview" :alt="option.label" />
+                </button>
+              </div>
+              <div v-if="avatarError" class="avatar-picker__error">{{ avatarError }}</div>
+              <div class="avatar-picker__actions">
+                <BaseButton variant="neutral-ghost" size="xs" @click="closeAvatarPicker">
+                  取消
+                </BaseButton>
+                <BaseButton
+                  variant="ghost"
+                  size="xs"
+                  class="avatar-picker__save"
+                  :loading="savingAvatar"
+                  :disabled="!selectedAvatarKey"
+                  @click="handleAvatarSave"
+                >
+                  保存头像
+                </BaseButton>
+              </div>
+            </div>
             <form class="account-profile" @submit.prevent="handleNicknameSave">
               <div class="account-profile__copy">
                 <label class="account-profile__label" for="account-nickname">昵称</label>
@@ -125,7 +183,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { AccountPanelTab } from '@/types'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore, type AvatarOption } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import { BaseButton, BaseInput } from '@nav/ui'
 import DataManagementModal from '@/components/modals/DataManagementModal.vue'
@@ -154,6 +212,12 @@ const loggingOut = ref(false)
 const nicknameDraft = ref('')
 const nicknameError = ref('')
 const savingNickname = ref(false)
+const avatarPickerOpen = ref(false)
+const loadingAvatarOptions = ref(false)
+const savingAvatar = ref(false)
+const avatarOptions = ref<AvatarOption[]>([])
+const selectedAvatarKey = ref('')
+const avatarError = ref('')
 
 const navItems: Array<{
   key: AccountPanelTab
@@ -243,6 +307,48 @@ const handleNicknameSave = async () => {
     nicknameError.value = '保存失败，请稍后重试'
   } finally {
     savingNickname.value = false
+  }
+}
+
+const toggleAvatarPicker = async () => {
+  if (avatarPickerOpen.value) {
+    closeAvatarPicker()
+    return
+  }
+
+  avatarPickerOpen.value = true
+  avatarError.value = ''
+  selectedAvatarKey.value = ''
+  if (avatarOptions.value.length) return
+
+  loadingAvatarOptions.value = true
+  try {
+    avatarOptions.value = await authStore.getAvatarOptions()
+  } catch {
+    avatarError.value = '头像加载失败，请稍后重试'
+  } finally {
+    loadingAvatarOptions.value = false
+  }
+}
+
+const closeAvatarPicker = () => {
+  avatarPickerOpen.value = false
+  selectedAvatarKey.value = ''
+  avatarError.value = ''
+}
+
+const handleAvatarSave = async () => {
+  if (!selectedAvatarKey.value || savingAvatar.value) return
+  savingAvatar.value = true
+  avatarError.value = ''
+  try {
+    await authStore.updateAvatar(selectedAvatarKey.value)
+    closeAvatarPicker()
+    uiStore.showToast('头像已更新', 'success')
+  } catch {
+    avatarError.value = '头像保存失败，请稍后重试'
+  } finally {
+    savingAvatar.value = false
   }
 }
 
@@ -472,6 +578,109 @@ const handleLogout = async () => {
   }
 }
 
+.account-avatar-editor {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 20px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.account-avatar-editor__preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+
+  span {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+}
+
+.account-avatar-editor__image {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--bg-tile);
+}
+
+.avatar-picker {
+  padding: 12px 20px 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  background: color-mix(in srgb, var(--bg-tile) 45%, transparent);
+}
+
+.avatar-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(6, 64px);
+  gap: 8px;
+}
+
+.avatar-picker__option {
+  width: 64px;
+  height: 64px;
+  padding: 3px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: var(--bg-panel);
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    transform 0.16s ease;
+
+  &:hover {
+    background: var(--primary-soft);
+    transform: translateY(-1px);
+  }
+
+  &.is-selected {
+    border-color: var(--color-primary);
+    background: var(--primary-soft);
+  }
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+  }
+}
+
+.avatar-picker__state,
+.avatar-picker__error {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.avatar-picker__error {
+  margin-top: 8px;
+  color: var(--color-error);
+}
+
+.avatar-picker__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+
+  :deep(button) {
+    min-width: 72px;
+  }
+}
+
+.avatar-picker__save {
+  font-weight: 650;
+}
+
 .account-profile {
   padding: 16px 20px 18px;
   display: flex;
@@ -642,6 +851,29 @@ const handleLogout = async () => {
   .account-danger {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .account-avatar-editor {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .avatar-picker__grid {
+    grid-template-columns: repeat(4, 56px);
+    gap: 8px;
+  }
+
+  .avatar-picker__option {
+    width: 56px;
+    height: 56px;
+  }
+
+  .avatar-picker__actions {
+    justify-content: stretch;
+
+    :deep(button) {
+      flex: 1;
+    }
   }
 
   .account-profile {

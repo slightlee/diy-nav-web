@@ -14,7 +14,8 @@ const mockDb = {
 } as unknown as DatabaseClient
 
 const mockAvatarService = {
-  generateAndUpload: vi.fn()
+  getAvatarUrl: vi.fn(() => 'http://avatar.url'),
+  isValidKey: vi.fn(() => true)
 } as unknown as AvatarService
 
 // Mock logger
@@ -49,19 +50,21 @@ describe('AuthService', () => {
     it('should create user successfully', async () => {
       vi.spyOn(mockDb, 'first').mockResolvedValueOnce(null) // Check existing
 
-      vi.spyOn(mockAvatarService, 'generateAndUpload').mockResolvedValue('http://avatar.url')
+      vi.spyOn(mockAvatarService, 'getAvatarUrl').mockReturnValue('http://avatar.url')
 
       const user = await authService.register('test@example.com', 'password')
 
       expect(mockDb.execute).toHaveBeenCalled()
-      expect(mockAvatarService.generateAndUpload).toHaveBeenCalled()
+      expect(mockAvatarService.getAvatarUrl).toHaveBeenCalled()
       expect(user).toBeDefined()
     })
 
     it('should continue registration if avatar generation fails', async () => {
       vi.spyOn(mockDb, 'first').mockResolvedValueOnce(null)
 
-      vi.spyOn(mockAvatarService, 'generateAndUpload').mockRejectedValue(new Error('Avatar failed'))
+      vi.spyOn(mockAvatarService, 'getAvatarUrl').mockImplementation(() => {
+        throw new Error('Avatar failed')
+      })
 
       await authService.register('test@example.com', 'password')
 
@@ -71,7 +74,7 @@ describe('AuthService', () => {
           err: expect.any(Error),
           userId: expect.any(String)
         }),
-        'Failed to generate avatar during creation'
+        'Failed to assign avatar during creation'
       )
     })
   })
@@ -155,7 +158,7 @@ describe('AuthService', () => {
   describe('provider identities', () => {
     it('does not auto-link an existing email when a provider identity is new', async () => {
       vi.spyOn(mockDb, 'first').mockResolvedValueOnce(null)
-      vi.spyOn(mockAvatarService, 'generateAndUpload').mockResolvedValue('http://avatar.url')
+      vi.spyOn(mockAvatarService, 'getAvatarUrl').mockReturnValue('http://avatar.url')
 
       const result = await authService.findOrCreateByProvider('github', 'github-1', {
         email: 'existing@example.com',

@@ -114,8 +114,8 @@
 
         <div class="preference-row">
           <div class="launch__copy">
-            <div class="launch__title">燕子飞行动效</div>
-            <div class="launch__hint">控制打开和关闭面板时的飞行动画</div>
+            <div class="launch__title">小鸟飞行动效</div>
+            <div class="launch__hint">控制打开和关闭面板时的小鸟动画</div>
           </div>
           <button
             type="button"

@@ -16,7 +16,6 @@
           :key="t.id"
           :label="t.name"
           :count="tagUsageMap[t.id] || 0"
-          :color="t.color"
           :aria-label="`筛选标签：${t.name}`"
           @click="handleSelect(t.id)"
         />

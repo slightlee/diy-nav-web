@@ -8,7 +8,6 @@
     :title="label"
     @click="emit('click')"
   >
-    <span v-if="color" class="choice-chip__dot" :style="{ backgroundColor: color }" />
     <span class="choice-chip__label">{{ label }}</span>
     <span v-if="count !== undefined" class="choice-chip__count">{{ count }}</span>
   </button>
@@ -19,13 +18,11 @@ withDefaults(
   defineProps<{
     label: string
     count?: number
-    color?: string
     active?: boolean
     ariaLabel?: string
   }>(),
   {
     count: undefined,
-    color: undefined,
     active: false,
     ariaLabel: undefined
   }
@@ -44,7 +41,6 @@ const emit = defineEmits<{
   padding: 0 11px;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
   border: none;
   border-radius: var(--radius-md);
   background: var(--bg-tile);
@@ -72,13 +68,6 @@ const emit = defineEmits<{
   color: var(--color-primary-dark);
 }
 
-.choice-chip__dot {
-  width: 7px;
-  height: 7px;
-  flex: 0 0 7px;
-  border-radius: 50%;
-}
-
 .choice-chip__label {
   min-width: 0;
   overflow: hidden;
@@ -88,6 +77,7 @@ const emit = defineEmits<{
 }
 
 .choice-chip__count {
+  margin-left: 7px;
   color: var(--text-muted);
   font-size: var(--font-size-xs);
 }

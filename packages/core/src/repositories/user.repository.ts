@@ -50,6 +50,14 @@ export class UserRepository {
     ])
   }
 
+  async updateAvatar(userId: string, avatarUrl: string, updatedAt: number): Promise<void> {
+    await this.db.execute('UPDATE users SET avatar_url = ?, updated_at = ? WHERE id = ?', [
+      avatarUrl,
+      updatedAt,
+      userId
+    ])
+  }
+
   /**
    * Check if identity exists
    */

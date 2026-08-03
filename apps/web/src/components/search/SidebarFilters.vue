@@ -32,7 +32,6 @@
           v-for="tag in tags"
           :key="tag.id"
           :label="tag.name"
-          :color="tag.color"
           :active="selectedTags.includes(tag.id)"
           :aria-label="`筛选标签：${tag.name}`"
           @click="$emit('toggleTag', tag.id)"

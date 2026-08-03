@@ -2,13 +2,8 @@
   <div class="ai-config">
     <div class="ai-config__section">
       <div class="section-header">
-        <div class="section-icon blue">
-          <i class="fas fa-robot" />
-        </div>
-        <div class="section-info">
-          <h3 class="section-title">AI 服务配置</h3>
-          <p class="section-description">配置兼容 OpenAI 或 Claude 协议的模型服务</p>
-        </div>
+        <h3 class="section-title">AI 服务配置</h3>
+        <p class="section-description">配置兼容 OpenAI 或 Claude 协议的模型服务</p>
       </div>
 
       <div v-if="!authStore.isAuthenticated" class="login-prompt">
@@ -89,7 +84,7 @@
                   :loading="editingId === provider.id && loadingDetail"
                   @click="handleEdit(provider.id)"
                 >
-                  {{ editingId === provider.id ? '编辑中' : '编辑' }}
+                  编辑
                 </BaseButton>
                 <BaseButton
                   variant="danger-ghost"
@@ -111,13 +106,7 @@
             <div class="provider-form__header">
               <div>
                 <h4 class="provider-form__title">{{ formTitle }}</h4>
-                <p class="provider-form__description">
-                  {{
-                    editingId
-                      ? '留空 API Key 将继续使用已保存的密钥'
-                      : '填写完成后可先测试连接，再保存配置'
-                  }}
-                </p>
+                <p class="provider-form__description">{{ formDescription }}</p>
               </div>
               <span v-if="editingId" class="editing-badge">编辑中</span>
             </div>
@@ -368,8 +357,11 @@ const selectedProtocol = computed(
   () => protocolOptions.find(option => option.value === form.type) ?? protocolOptions[0]
 )
 const isFormOpen = computed(() => isCreating.value || editingId.value !== null)
-const formTitle = computed(() =>
-  editingId.value ? `编辑 ${form.name || 'AI 服务'}` : '新增 AI 服务'
+const formTitle = computed(() => (editingId.value ? '编辑 AI 服务' : '新增 AI 服务'))
+const formDescription = computed(() =>
+  editingId.value
+    ? `正在编辑：${form.name || '当前服务'} · 留空 API Key 将继续使用已保存的密钥`
+    : '填写完成后可先测试连接，再保存配置'
 )
 const apiKeyPlaceholder = computed(() =>
   hasSavedApiKey.value ? '已保存，输入新 Key 可替换' : selectedProtocol.value.apiKeyPlaceholder
@@ -695,28 +687,6 @@ watch(
 }
 
 .section-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.section-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-  flex-shrink: 0;
-
-  &.blue {
-    background-color: var(--primary-soft);
-    color: var(--color-primary);
-  }
-}
-
-.section-info {
   display: flex;
   flex-direction: column;
   gap: 2px;

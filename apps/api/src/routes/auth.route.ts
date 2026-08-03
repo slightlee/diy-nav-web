@@ -1,5 +1,5 @@
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
-import { AppError } from '@nav/core'
+import { AppError, AVATAR_LIBRARY } from '@nav/core'
 
 import {
   registerSchema,
@@ -12,14 +12,23 @@ import {
   requestEmailBindingSchema,
   updatePreferencesSchema,
   updateProfileSchema,
+  updateAvatarSchema,
   verifyEmailBindingSchema
 } from '../schemas/auth.schema.js'
-import { authService, emailBindingService, preferencesService } from '../services.js'
+import { authService, avatarService, emailBindingService, preferencesService } from '../services.js'
 import { generateAccessToken } from '../lib/token.js'
 import { toUserDto } from '../lib/dto.js'
 import { clearAuthCookie, setAuthCookie } from '../lib/auth-cookie.js'
 
 const authRoutes: FastifyPluginAsyncZod = async app => {
+  app.get('/auth/avatar-options', { onRequest: [app.authenticate] }, async () => ({
+    success: true,
+    data: AVATAR_LIBRARY.map(option => ({
+      ...option,
+      preview: avatarService.getPreviewDataUrl(option.key)
+    }))
+  }))
+
   // Register
   app.post(
     '/auth/register',
@@ -116,6 +125,18 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
           user: toUserDto(user)
         }
       }
+    }
+  )
+
+  app.patch(
+    '/auth/avatar',
+    {
+      onRequest: [app.authenticate],
+      schema: { body: updateAvatarSchema }
+    },
+    async req => {
+      const user = await authService.updateAvatar(req.user.sub, req.body.avatarKey)
+      return { success: true, data: { user: toUserDto(user) } }
     }
   )
 

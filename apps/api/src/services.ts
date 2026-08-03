@@ -59,7 +59,6 @@ export const syncService = new SyncService({
 
 export const avatarService = new AvatarService({
   storage: publicStorage,
-  publicUrlBase: config.storage.publicBaseUrl,
   pathPrefix: config.storage.paths.avatars
 })
 

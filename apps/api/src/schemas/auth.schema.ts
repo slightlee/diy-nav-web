@@ -15,6 +15,10 @@ export const updateProfileSchema = z.object({
   nickname: z.string().trim().min(1).max(30)
 })
 
+export const updateAvatarSchema = z.object({
+  avatarKey: z.string().trim().min(1)
+})
+
 export const updatePreferencesSchema = z.object({
   navTitle: z
     .string()

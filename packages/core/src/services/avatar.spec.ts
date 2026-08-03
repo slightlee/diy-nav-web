@@ -1,10 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { AvatarService } from './avatar.js'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { R2Client } from '@nav/storage'
+import { AvatarService } from './avatar.js'
 
-// Mock dependencies
 const mockR2 = {
-  upload: vi.fn()
+  exists: vi.fn(),
+  upload: vi.fn(),
+  getPublicUrl: vi.fn((key: string) => `https://cdn.example.com/${key}`)
 } as unknown as R2Client
 
 describe('AvatarService', () => {
@@ -13,39 +14,41 @@ describe('AvatarService', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     avatarService = new AvatarService({
-      storage: mockR2,
-      publicUrlBase: 'https://cdn.example.com'
-    })
-  })
-
-  it('should generate and upload avatar', async () => {
-    const userId = 'user1'
-
-    const result = await avatarService.generateAndUpload(userId)
-
-    expect(mockR2.upload).toHaveBeenCalledWith(
-      expect.stringContaining('avatars/avatar_'),
-      expect.stringContaining('<svg'),
-      'image/svg+xml'
-    )
-    expect(result).toContain('https://cdn.example.com/avatars/avatar_')
-  })
-
-  it('should throw error if publicUrlBase is missing', async () => {
-    const serviceWithoutUrl = new AvatarService({
       storage: mockR2
     })
-
-    await expect(serviceWithoutUrl.generateAndUpload('user1')).rejects.toThrow(
-      'publicUrlBase configuration is missing'
-    )
   })
 
-  it('should throw error if upload fails', async () => {
-    vi.spyOn(mockR2, 'upload').mockRejectedValue(new Error('Upload failed'))
+  it('returns a shared public URL for a valid avatar', () => {
+    expect(avatarService.getAvatarUrl('adventurer-01')).toBe(
+      'https://cdn.example.com/avatars/v3/avatar_adventurer-01.svg'
+    )
+    expect(mockR2.getPublicUrl).toHaveBeenCalledWith('avatars/v3/avatar_adventurer-01.svg')
+  })
 
-    await expect(avatarService.generateAndUpload('user1')).rejects.toThrow(
-      'Failed to generate avatar'
+  it('rejects unknown avatar keys', () => {
+    expect(() => avatarService.getAvatarUrl('unknown')).toThrow('Invalid avatar selection')
+    expect(() => avatarService.getPreviewDataUrl('unknown')).toThrow('Invalid avatar selection')
+  })
+
+  it('returns an inline SVG preview without uploading', () => {
+    const preview = avatarService.getPreviewDataUrl('adventurer-02')
+
+    expect(preview).toMatch(/^data:image\/svg\+xml,/)
+    expect(mockR2.upload).not.toHaveBeenCalled()
+  })
+
+  it('seeds only missing shared assets', async () => {
+    vi.mocked(mockR2.exists).mockResolvedValueOnce('existing')
+    vi.mocked(mockR2.exists).mockResolvedValue(null)
+
+    await avatarService.ensureLibraryUploaded()
+
+    expect(mockR2.exists).toHaveBeenCalledTimes(12)
+    expect(mockR2.upload).toHaveBeenCalledTimes(11)
+    expect(mockR2.upload).toHaveBeenCalledWith(
+      expect.stringContaining('avatars/v3/avatar_'),
+      expect.stringContaining('<svg'),
+      'image/svg+xml'
     )
   })
 })

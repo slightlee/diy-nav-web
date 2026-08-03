@@ -12,6 +12,12 @@ export interface User {
   role: 'USER' | 'ADMIN'
 }
 
+export interface AvatarOption {
+  key: string
+  label: string
+  preview: string
+}
+
 export interface LoginMethods {
   email: { bound: boolean; address: string | null; canUnbind: boolean }
   providers: Array<{ provider: OAuthProvider; boundAt: number; canUnbind: boolean }>
@@ -186,6 +192,21 @@ export const useAuthStore = defineStore('auth', () => {
     throw new Error(res.message || 'Failed to update nickname')
   }
 
+  async function getAvatarOptions(): Promise<AvatarOption[]> {
+    const res = await request.get<AvatarOption[]>('/api/auth/avatar-options')
+    if (res.success && res.data) return res.data
+    throw new Error(res.message || 'Failed to load avatar options')
+  }
+
+  async function updateAvatar(avatarKey: string) {
+    const res = await request.patch<{ user: User }>('/api/auth/avatar', { avatarKey })
+    if (res.success && res.data) {
+      setCurrentUser(res.data.user)
+      return res.data.user
+    }
+    throw new Error(res.message || 'Failed to update avatar')
+  }
+
   async function logout() {
     try {
       await request.post('/api/auth/logout')
@@ -212,6 +233,8 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     fetchUser,
     updateNickname,
+    getAvatarOptions,
+    updateAvatar,
     logout
   }
 })

@@ -1,7 +1,7 @@
 import type { DatabaseClient } from '@nav/database'
 import { v4 as uuidv4 } from 'uuid'
 import bcrypt from 'bcryptjs'
-import { AvatarService } from './avatar.js'
+import { AvatarService, getRandomAvatarKey } from './avatar.js'
 import { UserRepository } from '../repositories/user.repository.js'
 import { AppError } from '../error.js'
 import { logger as defaultLogger, type Logger } from '@nav/logger'
@@ -120,6 +120,22 @@ export class AuthService {
     }
   }
 
+  async updateAvatar(userId: string, avatarKey: string): Promise<User> {
+    if (!this.avatarService.isValidKey(avatarKey)) {
+      throw new AppError('Invalid avatar selection', 'INVALID_AVATAR', 400)
+    }
+
+    const user = await this.userRepo.findById(userId)
+    if (!user) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+
+    // Avatar assets are shared library files. Updating a user only stores the selected URL.
+    const avatarUrl = this.avatarService.getAvatarUrl(avatarKey)
+    const updatedAt = Date.now()
+    await this.userRepo.updateAvatar(userId, avatarUrl, updatedAt)
+
+    return { ...user, avatar_url: avatarUrl, updated_at: updatedAt }
+  }
+
   /**
    * Find or create user by provider (OAuth)
    */
@@ -145,8 +161,7 @@ export class AuthService {
       email: null,
       passwordHash: null,
       emailVerifiedAt: null,
-      nickname: rawData.nickname,
-      avatarUrl: rawData.avatar_url
+      nickname: rawData.nickname
     })
 
     await this.userRepo.atomicCreateUserAndIdentity(newUser, {
@@ -286,9 +301,10 @@ export class AuthService {
     let avatarUrl = props.avatarUrl || null
     if (!avatarUrl) {
       try {
-        avatarUrl = await this.avatarService.generateAndUpload(id)
+        // Registration reuses a pre-seeded library asset; it never uploads per-user files.
+        avatarUrl = this.avatarService.getAvatarUrl(getRandomAvatarKey())
       } catch (error) {
-        this.logger.error({ err: error, userId: id }, 'Failed to generate avatar during creation')
+        this.logger.error({ err: error, userId: id }, 'Failed to assign avatar during creation')
       }
     }
 
