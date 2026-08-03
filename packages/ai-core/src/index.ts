@@ -2,12 +2,7 @@
  * @nav/ai-core
  * AI Provider Core Package
  *
- * Provides unified AI provider interface with support for:
- * - OpenAI (GPT-4, GPT-4o)
- * - Claude (Anthropic)
- * - Qwen (通义千问)
- * - ERNIE (文心一言)
- * - Custom OpenAI-compatible endpoints
+ * Provides a unified interface for OpenAI-compatible and Claude-compatible APIs.
  */
 
 // Types
@@ -22,10 +17,7 @@ export {
   type ProviderInitConfig,
   BaseAIProvider,
   OpenAIProvider,
-  ClaudeProvider,
-  QwenProvider,
-  ERNIEProvider,
-  CustomProvider
+  ClaudeProvider
 } from './provider/index.js'
 
 // Registry

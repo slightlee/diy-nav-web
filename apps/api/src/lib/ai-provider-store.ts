@@ -1,11 +1,11 @@
 import type { DatabaseClient } from '@nav/database'
-import type { AIProviderConfig } from '@nav/ai-core'
+import { normalizeAIProtocol, type AIProviderConfig } from '@nav/ai-core'
 
 type AIProviderRow = {
   id: string
   user_id: string
   name: string
-  type: AIProviderConfig['type']
+  type: string
   api_key_encrypted: string
   base_url: string | null
   model: string | null
@@ -18,7 +18,7 @@ const mapRowToConfig = (row: AIProviderRow): AIProviderConfig => ({
   id: row.id,
   userId: row.user_id,
   name: row.name,
-  type: row.type,
+  type: normalizeAIProtocol(row.type),
   apiKeyEncrypted: row.api_key_encrypted,
   baseUrl: row.base_url ?? undefined,
   model: row.model ?? undefined,
@@ -159,4 +159,25 @@ export const updateProvider = async (
     ]
   )
   return true
+}
+
+export const setDefaultProvider = async (
+  db: DatabaseClient,
+  userId: string,
+  id: string
+): Promise<boolean> => {
+  const now = Date.now()
+  const result = await db.execute(
+    `UPDATE ai_providers
+     SET is_default = CASE WHEN id = ? THEN 1 ELSE 0 END,
+         updated_at = CASE WHEN id = ? THEN ? ELSE updated_at END
+     WHERE user_id = ?
+       AND EXISTS (
+         SELECT 1 FROM ai_providers target
+         WHERE target.user_id = ? AND target.id = ?
+       )`,
+    [id, id, now, userId, userId, id]
+  )
+
+  return (result.changes ?? 0) > 0
 }

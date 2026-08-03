@@ -6,10 +6,12 @@
 import { request } from '@/utils/http'
 
 // Types
+export type AIProtocol = 'openai' | 'claude'
+
 export interface AIProvider {
   id: string
   name: string
-  type: 'openai' | 'claude' | 'qwen' | 'ernie' | 'custom'
+  type: AIProtocol
   baseUrl?: string
   model?: string
   isDefault: boolean
@@ -17,16 +19,15 @@ export interface AIProvider {
 }
 
 export interface AIProviderDetail extends AIProvider {
-  apiKey: string
+  hasApiKey: boolean
 }
 
 export interface AIProviderInput {
   name: string
   type: AIProvider['type']
-  apiKey: string
+  apiKey?: string
   baseUrl?: string
   model?: string
-  isDefault?: boolean
 }
 
 export interface AIUsageStats {
@@ -67,7 +68,7 @@ export async function addAIProvider(provider: AIProviderInput): Promise<AIProvid
 }
 
 /**
- * Get AI provider detail (includes apiKey)
+ * Get AI provider detail without exposing the stored API key
  */
 export async function getAIProvider(id: string): Promise<AIProviderDetail> {
   const res = await request.get<AIProviderDetail>(`/api/ai/providers/${id}`)
@@ -98,6 +99,14 @@ export async function deleteAIProvider(id: string): Promise<void> {
   }
 }
 
+export async function setDefaultAIProvider(id: string): Promise<{ id: string }> {
+  const res = await request.patch<{ id: string }>(`/api/ai/providers/${id}/default`)
+  if (res.success && res.data) {
+    return res.data
+  }
+  throw new Error(res.message || 'Failed to set default AI provider')
+}
+
 /**
  * Test an AI provider connection
  */
@@ -109,6 +118,33 @@ export async function testAIProvider(id: string): Promise<{ connected: boolean; 
     return res.data
   }
   throw new Error(res.message || 'Failed to test AI provider')
+}
+
+export async function testAIProviderConfig(
+  provider: Pick<AIProviderInput, 'type' | 'apiKey' | 'baseUrl' | 'model'> & {
+    providerId?: string
+  }
+): Promise<{ connected: boolean; error?: string }> {
+  const res = await request.post<{ connected: boolean; error?: string }>(
+    '/api/ai/providers/test',
+    provider
+  )
+  if (res.success && res.data) {
+    return res.data
+  }
+  throw new Error(res.message || 'Failed to test AI provider')
+}
+
+export async function fetchAIProviderModels(
+  provider: Pick<AIProviderInput, 'type' | 'apiKey' | 'baseUrl' | 'model'> & {
+    providerId?: string
+  }
+): Promise<string[]> {
+  const res = await request.post<{ models: string[] }>('/api/ai/providers/models', provider)
+  if (res.success && res.data) {
+    return res.data.models
+  }
+  throw new Error(res.message || 'Failed to get AI models')
 }
 
 /**

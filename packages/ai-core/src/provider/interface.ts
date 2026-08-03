@@ -87,6 +87,12 @@ export interface AIProvider {
    * @returns true if connection is successful
    */
   testConnection(): Promise<boolean>
+
+  /**
+   * List models exposed by the provider, when the protocol supports it.
+   * Providers without a standard model-list endpoint may omit this method.
+   */
+  listModels?(): Promise<string[]>
 }
 
 /**
@@ -107,7 +113,7 @@ export abstract class BaseAIProvider implements AIProvider {
   initialize(config: ProviderInitConfig): void {
     this._apiKey = config.apiKey
     if (config.baseUrl) {
-      this._baseUrl = config.baseUrl
+      this._baseUrl = config.baseUrl.replace(/\/+$/, '')
     }
     if (config.model) {
       this._model = config.model
@@ -167,11 +173,7 @@ Requirements:
   }
 
   async testConnection(): Promise<boolean> {
-    try {
-      await this.chatComplete([{ role: 'user', content: 'Hi' }], { maxTokens: 10 })
-      return true
-    } catch {
-      return false
-    }
+    await this.chatComplete([{ role: 'user', content: 'Hi' }], { maxTokens: 10 })
+    return true
   }
 }

@@ -4,31 +4,22 @@
  */
 
 import type { AIProvider, ProviderInitConfig } from './provider/interface.js'
-import type { ProviderType, AIProviderConfig, AIProviderDTO } from './types.js'
+import type { AIProtocol, AIProviderConfig, AIProviderDTO } from './types.js'
 import { OpenAIProvider } from './provider/openai.js'
 import { ClaudeProvider } from './provider/claude.js'
-import { QwenProvider } from './provider/qwen.js'
-import { ERNIEProvider } from './provider/ernie.js'
-import { CustomProvider } from './provider/custom.js'
 import { decrypt } from './crypto.js'
 
 /**
  * Factory function to create provider instances
  */
-function createProvider(type: ProviderType): AIProvider {
+function createProvider(type: AIProtocol): AIProvider {
   switch (type) {
     case 'openai':
       return new OpenAIProvider()
     case 'claude':
       return new ClaudeProvider()
-    case 'qwen':
-      return new QwenProvider()
-    case 'ernie':
-      return new ERNIEProvider()
-    case 'custom':
-      return new CustomProvider()
     default:
-      throw new Error(`Unknown provider type: ${type}`)
+      throw new Error(`Unsupported AI protocol: ${type}`)
   }
 }
 
@@ -105,7 +96,7 @@ export class AIProviderRegistry {
    * @returns Initialized provider (not cached)
    */
   createTemporaryProvider(
-    type: ProviderType,
+    type: AIProtocol,
     config: { apiKey: string; baseUrl?: string; model?: string }
   ): AIProvider {
     const provider = createProvider(type)

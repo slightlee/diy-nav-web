@@ -7,7 +7,7 @@
         </div>
         <div class="section-info">
           <h3 class="section-title">AI 服务配置</h3>
-          <p class="section-description">为当前账号添加和管理 AI 服务提供商</p>
+          <p class="section-description">配置兼容 OpenAI 或 Claude 协议的模型服务</p>
         </div>
       </div>
 
@@ -31,17 +31,21 @@
       <div v-else class="ai-config__content">
         <div class="provider-list">
           <div class="provider-list__header">
-            <h4 class="provider-list__title">已配置提供商</h4>
-            <BaseButton
-              variant="ghost"
-              shape="rounded"
-              size="sm"
-              :loading="aiStore.isLoading"
-              class="ai-action-btn"
-              @click="reloadProviders"
-            >
-              刷新
-            </BaseButton>
+            <h4 class="provider-list__title">已配置服务</h4>
+            <div class="provider-list__actions">
+              <BaseButton
+                variant="neutral-ghost"
+                shape="rounded"
+                size="sm"
+                :loading="aiStore.isLoading"
+                @click="reloadProviders"
+              >
+                刷新
+              </BaseButton>
+              <BaseButton variant="primary" shape="rounded" size="sm" @click="handleCreate">
+                添加服务
+              </BaseButton>
+            </div>
           </div>
 
           <div v-if="aiStore.isLoading" class="provider-state">
@@ -49,47 +53,43 @@
             <span>加载中...</span>
           </div>
           <div v-else-if="aiStore.providers.length === 0" class="provider-state text-muted">
-            暂无配置，请在下方添加
+            暂无 AI 服务，请在下方添加
           </div>
           <div v-else class="provider-cards">
-            <div v-for="provider in aiStore.providers" :key="provider.id" class="provider-card">
+            <div
+              v-for="provider in aiStore.providers"
+              :key="provider.id"
+              class="provider-card"
+              :class="{ 'is-editing': editingId === provider.id }"
+            >
               <div class="provider-main">
                 <div class="provider-title">
                   <span>{{ provider.name }}</span>
-                  <span v-if="provider.isDefault" class="badge badge-primary">默认</span>
+                  <span v-if="isProviderDefault(provider)" class="badge badge-primary">默认</span>
                 </div>
                 <div class="provider-meta">
-                  <span class="meta-item">{{ provider.type.toUpperCase() }}</span>
+                  <span class="meta-item">协议：{{ getProtocolLabel(provider.type) }}</span>
                   <span v-if="provider.model" class="meta-item">模型：{{ provider.model }}</span>
                   <span v-if="provider.baseUrl" class="meta-item">URL：{{ provider.baseUrl }}</span>
                 </div>
-                <div
-                  v-if="testResults[provider.id]"
-                  class="provider-test"
-                  :class="testResults[provider.id].connected ? 'ok' : 'error'"
-                >
-                  {{ testResults[provider.id].connected ? '连接成功' : '连接失败' }}
-                  <span v-if="testResults[provider.id].error" class="error-detail">
-                    （{{ testResults[provider.id].error }}）
-                  </span>
-                </div>
               </div>
               <div class="provider-actions">
+                <BaseButton
+                  v-if="!isProviderDefault(provider)"
+                  variant="neutral-ghost"
+                  size="xs"
+                  :loading="settingDefaultId === provider.id"
+                  @click="handleSetDefault(provider.id)"
+                >
+                  设为默认
+                </BaseButton>
                 <BaseButton
                   variant="ghost"
                   size="xs"
                   :loading="editingId === provider.id && loadingDetail"
                   @click="handleEdit(provider.id)"
                 >
-                  编辑
-                </BaseButton>
-                <BaseButton
-                  variant="ghost"
-                  size="xs"
-                  :loading="testingIds[provider.id] === true"
-                  @click="handleTest(provider.id)"
-                >
-                  测试
+                  {{ editingId === provider.id ? '编辑中' : '编辑' }}
                 </BaseButton>
                 <BaseButton
                   variant="danger-ghost"
@@ -104,96 +104,201 @@
           </div>
         </div>
 
-        <div class="divider" />
+        <template v-if="isFormOpen">
+          <div class="divider" />
 
-        <form class="provider-form" @submit.prevent="handleAdd">
-          <h4 class="provider-form__title">
-            {{ editingId ? '编辑提供商' : '新增提供商' }}
-          </h4>
-
-          <div class="form-grid">
-            <label class="form-field">
-              <span class="field-label">名称</span>
-              <input v-model="form.name" type="text" placeholder="如：个人 OpenAI" />
-              <span v-if="errors.name" class="field-error">{{ errors.name }}</span>
-            </label>
-
-            <label class="form-field">
-              <span class="field-label">类型</span>
-              <select v-model="form.type">
-                <option value="openai">OpenAI</option>
-                <option value="claude">Claude</option>
-                <option value="qwen">通义千问</option>
-                <option value="ernie">文心一言</option>
-                <option value="custom">自定义</option>
-              </select>
-            </label>
-
-            <label class="form-field">
-              <span class="field-label">API Key</span>
-              <input v-model="form.apiKey" type="text" placeholder="sk-..." />
-              <span v-if="errors.apiKey" class="field-error">{{ errors.apiKey }}</span>
-            </label>
-
-            <label class="form-field">
-              <span class="field-label">
-                Base URL{{ form.type === 'custom' ? '' : '（可选）' }}
-              </span>
-              <input v-model="form.baseUrl" type="url" placeholder="https://api.openai.com/v1" />
-              <span v-if="errors.baseUrl" class="field-error">{{ errors.baseUrl }}</span>
-            </label>
-
-            <label class="form-field">
-              <span class="field-label">模型{{ form.type === 'custom' ? '' : '（可选）' }}</span>
-              <input v-model="form.model" type="text" placeholder="gpt-4o-mini" />
-              <span v-if="errors.model" class="field-error">{{ errors.model }}</span>
-            </label>
-
-            <label class="form-field form-field--switch">
-              <span class="field-label">设为默认</span>
-              <div class="switch">
-                <input v-model="form.isDefault" type="checkbox" />
-                <span class="slider round" />
+          <form ref="formSection" class="provider-form" @submit.prevent="handleAdd">
+            <div class="provider-form__header">
+              <div>
+                <h4 class="provider-form__title">{{ formTitle }}</h4>
+                <p class="provider-form__description">
+                  {{
+                    editingId
+                      ? '留空 API Key 将继续使用已保存的密钥'
+                      : '填写完成后可先测试连接，再保存配置'
+                  }}
+                </p>
               </div>
-            </label>
-          </div>
+              <span v-if="editingId" class="editing-badge">编辑中</span>
+            </div>
 
-          <div class="form-actions">
-            <BaseButton
-              variant="primary"
-              shape="rounded"
-              size="sm"
-              :loading="submitting"
-              class="ai-action-btn"
-              html-type="submit"
+            <div class="form-grid">
+              <label class="form-field">
+                <span class="field-label">配置名称</span>
+                <input v-model="form.name" type="text" placeholder="例如：DeepSeek" />
+                <span v-if="errors.name" class="field-error">{{ errors.name }}</span>
+              </label>
+
+              <label class="form-field">
+                <span class="field-label">接口协议</span>
+                <select v-model="form.type">
+                  <option
+                    v-for="option in protocolOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </option>
+                </select>
+                <span class="field-hint">{{ selectedProtocol.hint }}</span>
+              </label>
+
+              <label class="form-field">
+                <span class="field-label">API Key</span>
+                <input
+                  v-model="form.apiKey"
+                  type="password"
+                  autocomplete="new-password"
+                  :placeholder="apiKeyPlaceholder"
+                />
+                <span v-if="hasSavedApiKey" class="field-hint">已安全保存，留空表示不修改</span>
+                <span v-if="errors.apiKey" class="field-error">{{ errors.apiKey }}</span>
+              </label>
+
+              <label class="form-field">
+                <span class="field-label">Base URL（可选）</span>
+                <input
+                  v-model="form.baseUrl"
+                  type="url"
+                  :placeholder="selectedProtocol.baseUrlPlaceholder"
+                />
+              </label>
+
+              <label class="form-field">
+                <span class="field-label-row">
+                  <span class="field-label">模型名称</span>
+                  <button
+                    v-if="form.type === 'openai'"
+                    type="button"
+                    class="model-fetch-btn"
+                    :disabled="loadingModels || (!form.apiKey.trim() && !hasSavedApiKey)"
+                    @click="handleFetchModels"
+                  >
+                    <i
+                      class="fas"
+                      :class="loadingModels ? 'fa-spinner fa-spin' : 'fa-cloud-arrow-down'"
+                    />
+                    {{ loadingModels ? '获取中' : '获取模型' }}
+                  </button>
+                </span>
+                <div
+                  ref="modelSelectRef"
+                  class="model-select"
+                  :class="{ 'is-open': modelMenuOpen }"
+                >
+                  <input
+                    v-model="form.model"
+                    type="text"
+                    autocomplete="off"
+                    :placeholder="selectedProtocol.modelPlaceholder"
+                    @focus="handleModelFocus"
+                  />
+                  <button
+                    v-if="form.type === 'openai' && modelOptions.length"
+                    type="button"
+                    class="model-select-toggle"
+                    aria-label="展开模型列表"
+                    :aria-expanded="modelMenuOpen"
+                    @click="toggleModelMenu"
+                  >
+                    <i class="fas fa-chevron-down" />
+                  </button>
+                  <div
+                    v-if="modelMenuOpen && modelOptions.length"
+                    class="model-options"
+                    :class="{ 'is-upward': modelMenuPlacement === 'up' }"
+                    :style="{ maxHeight: `${modelMenuMaxHeight}px` }"
+                    role="listbox"
+                  >
+                    <button
+                      v-for="model in modelOptions"
+                      :key="model"
+                      type="button"
+                      class="model-option"
+                      :class="{ 'is-selected': form.model === model }"
+                      role="option"
+                      :aria-selected="form.model === model"
+                      @click="selectModel(model)"
+                    >
+                      <span>{{ model }}</span>
+                      <i v-if="form.model === model" class="fas fa-check" />
+                    </button>
+                  </div>
+                </div>
+                <span class="field-hint">
+                  留空使用协议默认模型：{{ selectedProtocol.modelPlaceholder }}
+                </span>
+                <span v-if="modelFetchError" class="field-error">{{ modelFetchError }}</span>
+                <span v-else-if="modelOptions.length" class="field-hint">
+                  已获取 {{ modelOptions.length }} 个模型，可直接选择或手动修改
+                </span>
+              </label>
+            </div>
+
+            <div
+              v-if="formTestResult"
+              class="form-test-result"
+              :class="formTestResult.connected ? 'is-success' : 'is-error'"
             >
-              {{ editingId ? '保存修改' : '保存配置' }}
-            </BaseButton>
-            <BaseButton
-              v-if="editingId"
-              variant="ghost"
-              shape="rounded"
-              size="sm"
-              class="ai-action-btn"
-              @click="cancelEdit"
-            >
-              取消编辑
-            </BaseButton>
-          </div>
-        </form>
+              <i
+                class="fas"
+                :class="formTestResult.connected ? 'fa-check-circle' : 'fa-times-circle'"
+              />
+              <span>{{ formTestResult.connected ? '连接成功，可以保存' : '连接失败' }}</span>
+              <span v-if="formTestResult.error" class="form-test-result__detail">
+                {{ formTestResult.error }}
+              </span>
+            </div>
+
+            <div class="form-actions">
+              <BaseButton
+                variant="neutral-ghost"
+                shape="rounded"
+                size="xs"
+                class="form-test-btn"
+                :loading="testingForm"
+                @click="handleTestForm"
+              >
+                <i class="fas fa-flask" />
+                测试连接
+              </BaseButton>
+              <div class="form-actions__primary">
+                <BaseButton variant="ghost" shape="rounded" size="sm" @click="cancelEdit">
+                  取消
+                </BaseButton>
+                <BaseButton
+                  variant="primary"
+                  shape="rounded"
+                  size="sm"
+                  :loading="submitting"
+                  class="ai-action-btn"
+                  html-type="submit"
+                >
+                  {{ editingId ? '保存修改' : '保存配置' }}
+                </BaseButton>
+              </div>
+            </div>
+          </form>
+        </template>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch, onMounted } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { BaseButton } from '@nav/ui'
 import { useAuthStore } from '@/stores/auth'
 import { useAIStore } from '@/stores/ai'
 import { useUIStore } from '@/stores/ui'
-import { testAIProvider } from '@/api/ai'
+import {
+  fetchAIProviderModels,
+  setDefaultAIProvider,
+  testAIProviderConfig,
+  type AIProvider,
+  type AIProtocol
+} from '@/api/ai'
 
 const emit = defineEmits(['close'])
 const router = useRouter()
@@ -202,27 +307,76 @@ const aiStore = useAIStore()
 const uiStore = useUIStore()
 
 const submitting = ref(false)
-const testingIds = reactive<Record<string, boolean>>({})
 const removingIds = reactive<Record<string, boolean>>({})
-const testResults = reactive<Record<string, { connected: boolean; error?: string }>>({})
 const editingId = ref<string | null>(null)
 const loadingDetail = ref(false)
+const isCreating = ref(false)
+const hasSavedApiKey = ref(false)
+const testingForm = ref(false)
+const settingDefaultId = ref<string | null>(null)
+const selectedDefaultId = ref<string | null>(null)
+const formSection = ref<HTMLElement | null>(null)
+const formTestResult = ref<{ connected: boolean; error?: string } | null>(null)
+const modelOptions = ref<string[]>([])
+const loadingModels = ref(false)
+const modelFetchError = ref('')
+const modelSelectRef = ref<HTMLElement | null>(null)
+const modelMenuOpen = ref(false)
+const modelMenuPlacement = ref<'down' | 'up'>('down')
+const modelMenuMaxHeight = ref(220)
+
+const protocolOptions: Array<{
+  value: AIProtocol
+  label: string
+  hint: string
+  apiKeyPlaceholder: string
+  baseUrlPlaceholder: string
+  modelPlaceholder: string
+}> = [
+  {
+    value: 'openai',
+    label: 'OpenAI 兼容协议',
+    hint: '适用于 OpenAI、DeepSeek、通义千问等兼容接口',
+    apiKeyPlaceholder: 'sk-...',
+    baseUrlPlaceholder: 'https://api.openai.com/v1',
+    modelPlaceholder: 'gpt-4o-mini'
+  },
+  {
+    value: 'claude',
+    label: 'Claude 兼容协议',
+    hint: '适用于 Anthropic Claude Messages API 兼容接口',
+    apiKeyPlaceholder: 'sk-ant-...',
+    baseUrlPlaceholder: 'https://api.anthropic.com/v1',
+    modelPlaceholder: 'claude-3-haiku-20240307'
+  }
+]
 
 const form = reactive({
   name: '',
-  type: 'openai' as 'openai' | 'claude' | 'qwen' | 'ernie' | 'custom',
-  apiKey: '',
-  baseUrl: '',
-  model: '',
-  isDefault: false
-})
-
-const errors = reactive({
-  name: '',
+  type: 'openai' as AIProtocol,
   apiKey: '',
   baseUrl: '',
   model: ''
 })
+
+const errors = reactive({
+  name: '',
+  apiKey: ''
+})
+
+const selectedProtocol = computed(
+  () => protocolOptions.find(option => option.value === form.type) ?? protocolOptions[0]
+)
+const isFormOpen = computed(() => isCreating.value || editingId.value !== null)
+const formTitle = computed(() =>
+  editingId.value ? `编辑 ${form.name || 'AI 服务'}` : '新增 AI 服务'
+)
+const apiKeyPlaceholder = computed(() =>
+  hasSavedApiKey.value ? '已保存，输入新 Key 可替换' : selectedProtocol.value.apiKeyPlaceholder
+)
+
+const getProtocolLabel = (protocol: AIProtocol) =>
+  protocolOptions.find(option => option.value === protocol)?.label ?? protocol
 
 const handleGoLogin = () => {
   emit('close')
@@ -232,8 +386,6 @@ const handleGoLogin = () => {
 const resetErrors = () => {
   errors.name = ''
   errors.apiKey = ''
-  errors.baseUrl = ''
-  errors.model = ''
 }
 
 const resetForm = () => {
@@ -242,14 +394,75 @@ const resetForm = () => {
   form.apiKey = ''
   form.baseUrl = ''
   form.model = ''
-  form.isDefault = aiStore.providers.length === 0
+  hasSavedApiKey.value = false
+  formTestResult.value = null
+  modelOptions.value = []
+  modelFetchError.value = ''
+  modelMenuOpen.value = false
+  isCreating.value = false
   editingId.value = null
+}
+
+const handleDocumentPointerDown = (event: PointerEvent) => {
+  if (!modelSelectRef.value?.contains(event.target as Node)) {
+    modelMenuOpen.value = false
+  }
+}
+
+const handleModelFocus = () => {
+  if (modelOptions.value.length) {
+    modelMenuOpen.value = true
+    void nextTick(updateModelMenuPlacement)
+  }
+}
+
+const toggleModelMenu = () => {
+  if (!modelOptions.value.length) return
+  modelMenuOpen.value = !modelMenuOpen.value
+  if (modelMenuOpen.value) void nextTick(updateModelMenuPlacement)
+}
+
+const selectModel = (model: string) => {
+  form.model = model
+  modelMenuOpen.value = false
+}
+
+const updateModelMenuPlacement = () => {
+  const element = modelSelectRef.value
+  if (!element || !modelOptions.value.length) return
+
+  const rect = element.getBoundingClientRect()
+  const spaceBelow = window.innerHeight - rect.bottom - 8
+  const spaceAbove = rect.top - 8
+  const preferredHeight = Math.min(220, modelOptions.value.length * 32 + 8)
+  const shouldOpenUp = spaceBelow < preferredHeight && spaceAbove > spaceBelow
+
+  modelMenuPlacement.value = shouldOpenUp ? 'up' : 'down'
+  modelMenuMaxHeight.value = Math.max(
+    96,
+    Math.min(preferredHeight, shouldOpenUp ? spaceAbove : spaceBelow)
+  )
+}
+
+const scrollToForm = async () => {
+  await nextTick()
+  formSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+const handleCreate = () => {
+  resetForm()
+  isCreating.value = true
+  void scrollToForm()
 }
 
 const reloadProviders = async () => {
   if (!authStore.isAuthenticated) return
+  selectedDefaultId.value = null
   await aiStore.loadProviders()
 }
+
+const isProviderDefault = (provider: AIProvider) =>
+  selectedDefaultId.value ? provider.id === selectedDefaultId.value : provider.isDefault
 
 const handleEdit = async (id: string) => {
   if (loadingDetail.value) return
@@ -260,10 +473,13 @@ const handleEdit = async (id: string) => {
     editingId.value = id
     form.name = detail.name
     form.type = detail.type
-    form.apiKey = detail.apiKey
+    form.apiKey = ''
     form.baseUrl = detail.baseUrl || ''
     form.model = detail.model || ''
-    form.isDefault = detail.isDefault
+    hasSavedApiKey.value = detail.hasApiKey
+    formTestResult.value = null
+    isCreating.value = false
+    void scrollToForm()
   } catch (e) {
     const message = e instanceof Error ? e.message : '加载失败'
     uiStore.showToast(message, 'error')
@@ -283,29 +499,19 @@ const handleAdd = async () => {
   if (!form.name.trim()) {
     errors.name = '名称不能为空'
   }
-  if (!form.apiKey.trim()) {
+  if (!form.apiKey.trim() && !hasSavedApiKey.value) {
     errors.apiKey = 'API Key 不能为空'
   }
-  if (form.type === 'custom') {
-    if (!form.baseUrl.trim()) {
-      errors.baseUrl = 'Base URL 不能为空'
-    }
-    if (!form.model.trim()) {
-      errors.model = '模型不能为空'
-    }
-  }
   if (errors.name || errors.apiKey) return
-  if (errors.baseUrl || errors.model) return
 
   submitting.value = true
   try {
     const payload = {
       name: form.name.trim(),
       type: form.type,
-      apiKey: form.apiKey.trim(),
+      apiKey: form.apiKey.trim() || undefined,
       baseUrl: form.baseUrl.trim() ? form.baseUrl.trim() : undefined,
-      model: form.model.trim() ? form.model.trim() : undefined,
-      isDefault: form.isDefault
+      model: form.model.trim() ? form.model.trim() : undefined
     }
 
     if (editingId.value) {
@@ -324,29 +530,99 @@ const handleAdd = async () => {
   }
 }
 
-const handleTest = async (id: string) => {
-  if (testingIds[id]) return
-  testingIds[id] = true
+const handleTestForm = async () => {
+  if (testingForm.value) return
+  resetErrors()
+
+  if (!form.apiKey.trim() && !hasSavedApiKey.value) {
+    errors.apiKey = '请先填写 API Key'
+    return
+  }
+
+  testingForm.value = true
+  formTestResult.value = null
   try {
-    const result = await testAIProvider(id)
-    testResults[id] = result
+    formTestResult.value = await testAIProviderConfig({
+      providerId: editingId.value || undefined,
+      type: form.type,
+      apiKey: form.apiKey.trim() || undefined,
+      baseUrl: form.baseUrl.trim() || undefined,
+      model: form.model.trim() || undefined
+    })
   } catch (e) {
-    testResults[id] = {
+    formTestResult.value = {
       connected: false,
       error: e instanceof Error ? e.message : '测试失败'
     }
   } finally {
-    testingIds[id] = false
+    testingForm.value = false
+  }
+}
+
+const handleFetchModels = async () => {
+  if (loadingModels.value || form.type !== 'openai') return
+  resetErrors()
+  modelFetchError.value = ''
+
+  if (!form.apiKey.trim() && !hasSavedApiKey.value) {
+    errors.apiKey = '请先填写 API Key'
+    return
+  }
+
+  loadingModels.value = true
+  try {
+    modelOptions.value = await fetchAIProviderModels({
+      providerId: editingId.value || undefined,
+      type: form.type,
+      apiKey: form.apiKey.trim() || undefined,
+      baseUrl: form.baseUrl.trim() || undefined,
+      model: form.model.trim() || undefined
+    })
+    modelMenuOpen.value = false
+    if (modelOptions.value.length === 0) {
+      modelFetchError.value = '服务未返回可用模型，请手动输入模型名称'
+    }
+  } catch (e) {
+    modelOptions.value = []
+    modelFetchError.value = e instanceof Error ? e.message : '获取模型失败，请手动输入'
+  } finally {
+    loadingModels.value = false
+  }
+}
+
+const handleSetDefault = async (id: string) => {
+  if (settingDefaultId.value) return
+  settingDefaultId.value = id
+  try {
+    if (typeof aiStore.setDefaultProvider === 'function') {
+      await aiStore.setDefaultProvider(id)
+    } else {
+      // 兼容开发环境热更新残留的旧 Store 实例，避免按钮失效。
+      const provider = await setDefaultAIProvider(id)
+      aiStore.$patch({
+        providers: aiStore.providers.map(item => ({
+          ...item,
+          isDefault: item.id === provider.id
+        }))
+      })
+    }
+    selectedDefaultId.value = id
+    uiStore.showToast('默认 AI 服务已更新', 'success')
+  } catch (e) {
+    const message = e instanceof Error ? e.message : '设置失败'
+    uiStore.showToast(message, 'error')
+  } finally {
+    settingDefaultId.value = null
   }
 }
 
 const handleRemove = async (id: string) => {
   if (removingIds[id]) return
-  if (!window.confirm('确定要删除该提供商吗？此操作不可恢复。')) return
+  if (!window.confirm('确定要删除该 AI 服务吗？此操作不可恢复。')) return
   removingIds[id] = true
   try {
     await aiStore.removeProvider(id)
-    delete testResults[id]
+    if (editingId.value === id) resetForm()
     uiStore.showToast('已删除', 'success')
   } catch (e) {
     const message = e instanceof Error ? e.message : '删除失败'
@@ -357,10 +633,19 @@ const handleRemove = async (id: string) => {
 }
 
 onMounted(() => {
+  document.addEventListener('pointerdown', handleDocumentPointerDown)
+  window.addEventListener('resize', updateModelMenuPlacement)
+  window.addEventListener('scroll', updateModelMenuPlacement, true)
   if (authStore.isAuthenticated) {
     aiStore.loadProviders()
     resetForm()
   }
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', handleDocumentPointerDown)
+  window.removeEventListener('resize', updateModelMenuPlacement)
+  window.removeEventListener('scroll', updateModelMenuPlacement, true)
 })
 
 watch(
@@ -373,6 +658,23 @@ watch(
       aiStore.clearState()
       resetForm()
     }
+  }
+)
+
+watch(
+  () => [form.type, form.apiKey, form.baseUrl],
+  () => {
+    formTestResult.value = null
+    modelOptions.value = []
+    modelFetchError.value = ''
+    modelMenuOpen.value = false
+  }
+)
+
+watch(
+  () => form.model,
+  () => {
+    formTestResult.value = null
   }
 )
 </script>
@@ -410,7 +712,7 @@ watch(
 
   &.blue {
     background-color: var(--primary-soft);
-    color: #3b82f6;
+    color: var(--color-primary);
   }
 }
 
@@ -487,6 +789,12 @@ watch(
   gap: 12px;
 }
 
+.provider-list__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .provider-list__title {
   font-size: 14px;
   font-weight: 600;
@@ -523,6 +831,14 @@ watch(
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background-color: var(--account-control-bg, var(--bg-panel));
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.provider-card.is-editing {
+  border-color: rgba(var(--color-primary-rgb), 0.42);
+  background-color: rgba(var(--color-primary-rgb), 0.035);
 }
 
 .provider-title {
@@ -543,24 +859,6 @@ watch(
   color: var(--color-neutral-500);
 }
 
-.provider-test {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--color-neutral-500);
-}
-
-.provider-test.ok {
-  color: #059669;
-}
-
-.provider-test.error {
-  color: #dc2626;
-}
-
-.error-detail {
-  color: inherit;
-}
-
 .provider-actions {
   display: flex;
   gap: 8px;
@@ -576,8 +874,8 @@ watch(
 }
 
 .badge-primary {
-  background-color: rgba(59, 130, 246, 0.12);
-  color: #3b82f6;
+  background-color: var(--primary-soft);
+  color: var(--color-primary);
 }
 
 .divider {
@@ -591,6 +889,39 @@ watch(
   font-weight: 600;
   color: var(--color-neutral-800);
   margin: 0 0 12px 0;
+}
+
+.provider-form {
+  scroll-margin-top: 24px;
+  padding: 16px;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.18);
+  border-radius: var(--radius-lg);
+  background-color: rgba(var(--color-primary-rgb), 0.025);
+}
+
+.provider-form__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.provider-form__description {
+  margin: 3px 0 0;
+  color: var(--color-neutral-500);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.editing-badge {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: var(--radius-md);
+  background: var(--primary-soft);
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .form-grid {
@@ -618,6 +949,95 @@ watch(
   background-color: var(--account-control-bg, var(--bg-tile));
 }
 
+.model-select {
+  position: relative;
+}
+
+.model-select input {
+  width: 100%;
+  padding-right: 36px;
+}
+
+.model-select-toggle {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--color-neutral-500);
+  background: transparent;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.model-select-toggle:hover {
+  color: var(--color-primary);
+  background-color: rgba(var(--color-primary-rgb), 0.06);
+}
+
+.model-select.is-open .model-select-toggle {
+  color: var(--color-primary);
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.model-options {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  display: flex;
+  max-height: 220px;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--account-surface-bg, var(--bg-panel));
+  box-shadow: var(--shadow-md, 0 8px 24px rgba(30, 42, 65, 0.12));
+}
+
+.model-options.is-upward {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
+.model-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-neutral-700);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.model-option:hover,
+.model-option.is-selected {
+  color: var(--color-primary);
+  background-color: rgba(var(--color-primary-rgb), 0.08);
+}
+
+.model-option i {
+  font-size: 11px;
+}
+
 .form-field--switch {
   align-items: flex-start;
 }
@@ -627,16 +1047,101 @@ watch(
   color: var(--color-neutral-700);
 }
 
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.model-fetch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.model-fetch-btn:hover:not(:disabled) {
+  color: var(--color-primary-dark, var(--color-primary));
+}
+
+.model-fetch-btn:disabled {
+  color: var(--color-neutral-400);
+  cursor: not-allowed;
+}
+
+.field-hint {
+  color: var(--color-neutral-500);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 .field-error {
   font-size: 12px;
   color: var(--color-error);
 }
 
 .form-actions {
-  margin-top: 12px;
+  margin-top: 16px;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
+}
+
+.form-actions__primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-test-btn {
+  min-height: 28px;
+  padding: 0 4px;
+  gap: 5px;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.form-test-btn:hover:not(.base-button--disabled):not(.base-button--loading) {
+  color: var(--color-primary-dark, var(--color-primary));
+  background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
+
+.form-test-result {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 5px 7px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.form-test-result.is-success {
+  background: color-mix(in srgb, var(--color-success) 8%, transparent);
+  color: var(--color-success);
+}
+
+.form-test-result.is-error {
+  background: color-mix(in srgb, var(--color-error) 7%, transparent);
+  color: var(--color-error);
+}
+
+.form-test-result__detail {
+  flex-basis: 100%;
+  padding-left: 18px;
+  overflow-wrap: anywhere;
 }
 
 .ai-action-btn {
@@ -647,55 +1152,6 @@ watch(
 .ai-action-btn :deep(.button-text) {
   width: 100%;
   text-align: center;
-}
-
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 24px;
-  flex-shrink: 0;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0 0 0 0;
-  background-color: var(--color-neutral-300);
-  transition: 0.4s;
-}
-
-.slider::before {
-  position: absolute;
-  content: '';
-  height: 20px;
-  width: 20px;
-  left: 2px;
-  bottom: 2px;
-  background-color: white;
-  transition: 0.4s;
-}
-
-input:checked + .slider {
-  background-color: var(--color-primary);
-}
-
-input:checked + .slider::before {
-  transform: translateX(20px);
-}
-
-.slider.round {
-  border-radius: 24px;
-}
-
-.slider.round::before {
-  border-radius: 50%;
 }
 
 @media (max-width: 768px) {
@@ -713,11 +1169,17 @@ input:checked + .slider::before {
   }
 
   .form-actions {
-    justify-content: stretch;
+    align-items: stretch;
+    flex-direction: column;
   }
 
+  .form-actions__primary,
   .form-actions :deep(button) {
     width: 100%;
+  }
+
+  .provider-list__header {
+    align-items: flex-start;
   }
 }
 </style>

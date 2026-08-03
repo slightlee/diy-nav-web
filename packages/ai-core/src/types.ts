@@ -4,18 +4,21 @@
  */
 
 // ============================================
-// Provider Types
+// Protocol Types
 // ============================================
 
-/**
- * Supported AI provider types
- * - openai: OpenAI API (GPT-4, GPT-4o, etc.)
- * - claude: Anthropic Claude API
- * - qwen: Alibaba Qwen (通义千问)
- * - ernie: Baidu ERNIE (文心一言)
- * - custom: Custom OpenAI-compatible endpoint
- */
-export type ProviderType = 'openai' | 'claude' | 'qwen' | 'ernie' | 'custom'
+/** Supported request protocols. Vendors using compatible endpoints share one protocol. */
+export const AI_PROTOCOLS = ['openai', 'claude'] as const
+export type AIProtocol = (typeof AI_PROTOCOLS)[number]
+
+const LEGACY_OPENAI_PROTOCOLS = new Set(['qwen', 'ernie', 'custom'])
+
+/** Read legacy provider records without performing a destructive database migration. */
+export const normalizeAIProtocol = (value: string): AIProtocol => {
+  if (value === 'openai' || value === 'claude') return value
+  if (LEGACY_OPENAI_PROTOCOLS.has(value)) return 'openai'
+  throw new Error(`Unsupported AI protocol: ${value}`)
+}
 
 /**
  * AI Provider configuration stored in database
@@ -24,7 +27,7 @@ export interface AIProviderConfig {
   id: string
   userId: string
   name: string
-  type: ProviderType
+  type: AIProtocol
   apiKeyEncrypted: string // AES-256-GCM encrypted
   baseUrl?: string
   model?: string
@@ -38,7 +41,7 @@ export interface AIProviderConfig {
  */
 export interface AIProviderInput {
   name: string
-  type: ProviderType
+  type: AIProtocol
   apiKey: string // Plain text, will be encrypted before storage
   baseUrl?: string
   model?: string
@@ -51,7 +54,7 @@ export interface AIProviderInput {
 export interface AIProviderDTO {
   id: string
   name: string
-  type: ProviderType
+  type: AIProtocol
   baseUrl?: string
   model?: string
   isDefault: boolean
@@ -172,7 +175,7 @@ export interface UsageStats {
  * Preset provider configurations
  */
 export const PROVIDER_PRESETS: Record<
-  Exclude<ProviderType, 'custom'>,
+  AIProtocol,
   { baseUrl: string; defaultModel: string; displayName: string }
 > = {
   openai: {
@@ -184,16 +187,6 @@ export const PROVIDER_PRESETS: Record<
     baseUrl: 'https://api.anthropic.com/v1',
     defaultModel: 'claude-3-haiku-20240307',
     displayName: 'Claude (Anthropic)'
-  },
-  qwen: {
-    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-    defaultModel: 'qwen-turbo',
-    displayName: '通义千问 (Qwen)'
-  },
-  ernie: {
-    baseUrl: 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat',
-    defaultModel: 'ernie-speed-128k',
-    displayName: '文心一言 (ERNIE)'
   }
 } as const
 

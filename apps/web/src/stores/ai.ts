@@ -11,6 +11,7 @@ import {
   addAIProvider,
   updateAIProvider,
   deleteAIProvider,
+  setDefaultAIProvider,
   getAIUsage,
   sendChatMessage,
   type AIProvider,
@@ -118,15 +119,26 @@ export const useAIStore = defineStore('ai', () => {
     error.value = null
     try {
       await deleteAIProvider(id)
-      const index = providers.value.findIndex(p => p.id === id)
-      if (index !== -1) {
-        providers.value.splice(index, 1)
-      }
+      providers.value = await getAIProviders()
     } catch (e) {
       error.value = (e as Error).message
       throw e
     } finally {
       isLoading.value = false
+    }
+  }
+
+  async function setDefaultProvider(id: string) {
+    error.value = null
+    try {
+      const provider = await setDefaultAIProvider(id)
+      providers.value.forEach(item => {
+        item.isDefault = item.id === provider.id
+      })
+      return provider
+    } catch (e) {
+      error.value = (e as Error).message
+      throw e
     }
   }
 
@@ -338,6 +350,7 @@ export const useAIStore = defineStore('ai', () => {
     addProvider,
     updateProvider,
     removeProvider,
+    setDefaultProvider,
     loadUsage,
     clearState,
     addMessage,

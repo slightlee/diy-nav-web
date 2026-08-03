@@ -1,6 +1,6 @@
 # @nav/ai-core
 
-多 AI 服务提供商抽象层，支持 OpenAI、Claude、Qwen、ERNIE 等主流模型。
+AI 服务协议抽象层，支持 OpenAI 兼容协议和 Claude 兼容协议。
 
 ## 架构
 
@@ -15,11 +15,8 @@ src/
 └── provider/
     ├── interface.ts            # 抽象接口
     ├── openai-compatible.ts    # OpenAI 兼容协议基类
-    ├── openai.ts               # OpenAI
-    ├── qwen.ts                 # 通义千问
-    ├── custom.ts               # 自定义 (OpenAI 兼容)
-    ├── claude.ts               # Claude (Anthropic)
-    └── ernie.ts                # 文心一言 (百度)
+    ├── openai.ts               # OpenAI 兼容协议
+    └── claude.ts               # Claude 兼容协议
 ```
 
 ### 类继承关系
@@ -27,11 +24,8 @@ src/
 ```
 BaseAIProvider (抽象基类)
 ├── OpenAICompatibleProvider (OpenAI 兼容协议)
-│   ├── OpenAIProvider
-│   ├── QwenProvider
-│   └── CustomProvider
-├── ClaudeProvider (Anthropic 协议)
-└── ERNIEProvider (百度协议)
+│   └── OpenAIProvider
+└── ClaudeProvider (Claude Messages 协议)
 ```
 
 ## 快速开始
@@ -111,37 +105,27 @@ if (!result.allowed) {
 consumeRateLimit(userId)
 ```
 
-## 新增 OpenAI 兼容厂商
+## 配置 OpenAI 兼容服务
 
 ```typescript
-import { OpenAICompatibleProvider } from '@nav/ai-core'
-import { PROVIDER_PRESETS } from '@nav/ai-core'
-
-export class DeepSeekProvider extends OpenAICompatibleProvider {
-  readonly name = 'deepseek'
-  readonly displayName = 'DeepSeek'
-
-  constructor() {
-    super()
-    this._baseUrl = 'https://api.deepseek.com/v1'
-    this._model = 'deepseek-chat'
-  }
-}
+const provider = new OpenAIProvider()
+provider.initialize({
+  apiKey: 'sk-xxx',
+  baseUrl: 'https://api.deepseek.com/v1',
+  model: 'deepseek-chat'
+})
 ```
 
 ## 支持的模型
 
-| Provider | 默认模型                   | 协议      |
-| -------- | -------------------------- | --------- |
-| OpenAI   | gpt-4o                     | OpenAI    |
-| Qwen     | qwen-max                   | OpenAI    |
-| Claude   | claude-3-5-sonnet-20241022 | Anthropic |
-| ERNIE    | ernie-speed-128k           | 百度      |
-| Custom   | 用户配置                   | OpenAI    |
+| 协议   | 默认地址                     | 默认模型                |
+| ------ | ---------------------------- | ----------------------- |
+| OpenAI | https://api.openai.com/v1    | gpt-4o-mini             |
+| Claude | https://api.anthropic.com/v1 | claude-3-haiku-20240307 |
 
 ## 特性
 
-- ✅ 多提供商统一接口
+- ✅ OpenAI / Claude 双协议统一接口
 - ✅ AES-256-GCM API 密钥加密
 - ✅ 30 秒请求超时
 - ✅ 流式响应支持

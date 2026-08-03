@@ -15,6 +15,7 @@ import {
   decrypt,
   encrypt,
   toProviderDTO,
+  AI_PROTOCOLS,
   type AIProvider,
   type AIProviderConfig
 } from '@nav/ai-core'
@@ -28,6 +29,7 @@ import {
   findUserProviderById,
   findUserDefaultProvider,
   findUserFirstProvider,
+  setDefaultProvider,
   updateProvider
 } from '../lib/ai-provider-store.js'
 
@@ -39,33 +41,27 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
   // Provider Management
   // ============================================
 
-  const providerInputSchema = z
+  const providerConfigSchema = z.object({
+    name: z.string().min(1).max(50),
+    type: z.enum(AI_PROTOCOLS),
+    baseUrl: z.string().url().optional(),
+    model: z.string().optional()
+  })
+  const createProviderSchema = providerConfigSchema.extend({ apiKey: z.string().min(1) })
+  const updateProviderSchema = providerConfigSchema.extend({ apiKey: z.string().min(1).optional() })
+  const testProviderSchema = z
     .object({
-      name: z.string().min(1).max(50),
-      type: z.enum(['openai', 'claude', 'qwen', 'ernie', 'custom']),
-      apiKey: z.string().min(1),
+      providerId: z.string().min(1).optional(),
+      type: z.enum(AI_PROTOCOLS),
+      apiKey: z.string().min(1).optional(),
       baseUrl: z.string().url().optional(),
-      model: z.string().optional(),
-      isDefault: z.boolean().optional()
+      model: z.string().optional()
     })
-    .superRefine((data, ctx) => {
-      if (data.type === 'custom') {
-        if (!data.baseUrl) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: 'Custom provider requires baseUrl',
-            path: ['baseUrl']
-          })
-        }
-        if (!data.model) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: 'Custom provider requires model',
-            path: ['model']
-          })
-        }
-      }
+    .refine(data => data.apiKey || data.providerId, {
+      message: 'API Key is required for a new provider',
+      path: ['apiKey']
     })
+  const modelsProviderSchema = testProviderSchema
 
   // List user's AI providers
   app.get(
@@ -80,13 +76,68 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
     }
   )
 
-  // Get provider detail (includes apiKey for editing)
+  // Fetch models without persisting or exposing the API key
+  app.post(
+    '/ai/providers/models',
+    {
+      onRequest: [app.authenticate],
+      schema: {
+        body: modelsProviderSchema
+      }
+    },
+    async (req, reply) => {
+      const userId = req.user.sub
+      const { providerId, type, apiKey, baseUrl, model } = req.body
+
+      if (type !== 'openai') {
+        return reply.code(400).send({
+          success: false,
+          message: 'Claude 协议暂不支持自动获取模型，请手动输入模型名称'
+        })
+      }
+
+      let resolvedApiKey = apiKey
+      if (!resolvedApiKey && providerId) {
+        const existing = await findUserProviderById(databaseClient, userId, providerId)
+        if (!existing) {
+          return reply.code(404).send({ success: false, message: 'Provider not found' })
+        }
+        resolvedApiKey = decrypt(existing.apiKeyEncrypted, config.auth.jwtSecret)
+      }
+
+      if (!resolvedApiKey) {
+        return reply.code(400).send({ success: false, message: 'API Key is required' })
+      }
+
+      try {
+        const provider = providerRegistry.createTemporaryProvider(type, {
+          apiKey: resolvedApiKey,
+          baseUrl,
+          model
+        })
+        if (!provider.listModels) {
+          return reply.code(400).send({
+            success: false,
+            message: '当前协议不支持自动获取模型，请手动输入模型名称'
+          })
+        }
+
+        const models = await provider.listModels()
+        return { success: true, data: { models } }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        return reply.code(502).send({ success: false, message })
+      }
+    }
+  )
+
+  // Get provider detail without exposing the stored API key
   app.get(
     '/ai/providers/:id',
     {
       onRequest: [app.authenticate],
       schema: {
-        params: z.object({ id: z.string().uuid() })
+        params: z.object({ id: z.string().min(1) })
       }
     },
     async (req, reply) => {
@@ -98,13 +149,11 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
         return reply.code(404).send({ success: false, message: 'Provider not found' })
       }
 
-      const apiKey = decrypt(provider.apiKeyEncrypted, config.auth.jwtSecret)
-
       return {
         success: true,
         data: {
           ...toProviderDTO(provider),
-          apiKey
+          hasApiKey: true
         }
       }
     }
@@ -116,17 +165,18 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
     {
       onRequest: [app.authenticate],
       schema: {
-        body: providerInputSchema
+        body: createProviderSchema
       }
     },
     async req => {
       const userId = req.user.sub
-      const { name, type, apiKey, baseUrl, model, isDefault } = req.body
+      const { name, type, apiKey, baseUrl, model } = req.body
 
       // Encrypt API key
       const apiKeyEncrypted = encrypt(apiKey, config.auth.jwtSecret)
 
       const now = Date.now()
+      const isFirstProvider = !(await findUserFirstProvider(databaseClient, userId))
       const newProvider: AIProviderConfig = {
         id: crypto.randomUUID(),
         userId,
@@ -135,7 +185,7 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
         apiKeyEncrypted,
         baseUrl,
         model,
-        isDefault: isDefault ?? false,
+        isDefault: isFirstProvider,
         createdAt: now,
         updatedAt: now
       }
@@ -155,21 +205,23 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
     {
       onRequest: [app.authenticate],
       schema: {
-        params: z.object({ id: z.string().uuid() }),
-        body: providerInputSchema
+        params: z.object({ id: z.string().min(1) }),
+        body: updateProviderSchema
       }
     },
     async (req, reply) => {
       const userId = req.user.sub
       const { id } = req.params
-      const { name, type, apiKey, baseUrl, model, isDefault } = req.body
+      const { name, type, apiKey, baseUrl, model } = req.body
 
       const existing = await findUserProviderById(databaseClient, userId, id)
       if (!existing) {
         return reply.code(404).send({ success: false, message: 'Provider not found' })
       }
 
-      const apiKeyEncrypted = encrypt(apiKey, config.auth.jwtSecret)
+      const apiKeyEncrypted = apiKey
+        ? encrypt(apiKey, config.auth.jwtSecret)
+        : existing.apiKeyEncrypted
       const updatedAt = Date.now()
       const updatedProvider: AIProviderConfig = {
         ...existing,
@@ -178,7 +230,6 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
         apiKeyEncrypted,
         baseUrl,
         model,
-        isDefault: isDefault ?? existing.isDefault,
         updatedAt
       }
 
@@ -196,25 +247,55 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
     }
   )
 
+  // Mark one provider as the user's default
+  app.patch(
+    '/ai/providers/:id/default',
+    {
+      onRequest: [app.authenticate],
+      schema: {
+        params: z.object({ id: z.string().min(1) })
+      }
+    },
+    async (req, reply) => {
+      const userId = req.user.sub
+      const { id } = req.params
+      const updated = await setDefaultProvider(databaseClient, userId, id)
+
+      if (!updated) {
+        return reply.code(404).send({ success: false, message: 'Provider not found' })
+      }
+
+      return { success: true, data: { id } }
+    }
+  )
+
   // Delete an AI provider
   app.delete(
     '/ai/providers/:id',
     {
       onRequest: [app.authenticate],
       schema: {
-        params: z.object({ id: z.string().uuid() })
+        params: z.object({ id: z.string().min(1) })
       }
     },
     async (req, reply) => {
       const userId = req.user.sub
       const { id } = req.params
 
+      const existing = await findUserProviderById(databaseClient, userId, id)
       const removed = await deleteProvider(databaseClient, userId, id)
       if (!removed) {
         return reply.code(404).send({ success: false, message: 'Provider not found' })
       }
 
       providerRegistry.clearCache(userId, id)
+
+      if (existing?.isDefault) {
+        const fallbackProvider = await findUserFirstProvider(databaseClient, userId)
+        if (fallbackProvider) {
+          await setDefaultProvider(databaseClient, userId, fallbackProvider.id)
+        }
+      }
 
       return { success: true }
     }
@@ -227,7 +308,7 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
   const generateDescriptionSchema = z.object({
     name: z.string().min(1).max(100),
     url: z.string().url(),
-    providerId: z.string().uuid().optional()
+    providerId: z.string().min(1).optional()
   })
 
   app.post(
@@ -390,11 +471,53 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
   // ============================================
 
   app.post(
+    '/ai/providers/test',
+    {
+      onRequest: [app.authenticate],
+      schema: {
+        body: testProviderSchema
+      }
+    },
+    async (req, reply) => {
+      const userId = req.user.sub
+      const { providerId, type, apiKey, baseUrl, model } = req.body
+      let resolvedApiKey = apiKey
+
+      if (!resolvedApiKey && providerId) {
+        const existing = await findUserProviderById(databaseClient, userId, providerId)
+        if (!existing) {
+          return reply.code(404).send({ success: false, message: 'Provider not found' })
+        }
+        resolvedApiKey = decrypt(existing.apiKeyEncrypted, config.auth.jwtSecret)
+      }
+
+      if (!resolvedApiKey) {
+        return reply.code(400).send({ success: false, message: 'API Key is required' })
+      }
+
+      try {
+        const provider = providerRegistry.createTemporaryProvider(type, {
+          apiKey: resolvedApiKey,
+          baseUrl,
+          model
+        })
+        await provider.testConnection()
+        return { success: true, data: { connected: true } }
+      } catch (error) {
+        return {
+          success: true,
+          data: { connected: false, error: (error as Error).message }
+        }
+      }
+    }
+  )
+
+  app.post(
     '/ai/providers/:id/test',
     {
       onRequest: [app.authenticate],
       schema: {
-        params: z.object({ id: z.string().uuid() })
+        params: z.object({ id: z.string().min(1) })
       }
     },
     async (req, reply) => {

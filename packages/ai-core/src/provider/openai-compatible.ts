@@ -32,6 +32,10 @@ interface OpenAIResponse {
   }
 }
 
+interface OpenAIModelsResponse {
+  data?: Array<{ id?: unknown }>
+}
+
 /**
  * Abstract base class for OpenAI-compatible providers
  * Handles: SSE streaming, timeout, multi-format response parsing
@@ -42,6 +46,39 @@ export abstract class OpenAICompatibleProvider extends BaseAIProvider {
    * Default: 30 seconds
    */
   protected readonly requestTimeout = 30000
+
+  async listModels(): Promise<string[]> {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout)
+
+    try {
+      const response = await fetch(`${this._baseUrl}/models`, {
+        method: 'GET',
+        headers: this.buildHeaders(),
+        signal: controller.signal
+      })
+
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(`${this.displayName} 模型列表获取失败: ${response.status} - ${error}`)
+      }
+
+      const data = (await response.json()) as OpenAIModelsResponse
+      return (data.data ?? [])
+        .map(item => (typeof item.id === 'string' ? item.id : ''))
+        .filter(Boolean)
+        .sort((left, right) => left.localeCompare(right))
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(
+          `Request timeout: ${this.displayName} did not respond within ${this.requestTimeout / 1000} seconds`
+        )
+      }
+      throw error
+    } finally {
+      clearTimeout(timeoutId)
+    }
+  }
 
   async *chat(
     messages: Message[],
