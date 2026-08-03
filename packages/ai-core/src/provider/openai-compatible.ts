@@ -43,9 +43,9 @@ interface OpenAIModelsResponse {
 export abstract class OpenAICompatibleProvider extends BaseAIProvider {
   /**
    * Timeout for API requests in milliseconds
-   * Default: 30 seconds
+   * Default: 60 seconds
    */
-  protected readonly requestTimeout = 30000
+  protected readonly requestTimeout = 60000
 
   async listModels(): Promise<string[]> {
     const controller = new AbortController()

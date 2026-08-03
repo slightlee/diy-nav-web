@@ -143,6 +143,13 @@ export const useWebsiteStore = defineStore('website', () => {
     }
   }
 
+  const restoreWebsite = (website: Website) => {
+    if (websites.value.some(item => item.id === website.id)) return
+    websites.value = [...websites.value, website].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    saveToLocalStorage()
+    bumpDataRevision()
+  }
+
   const incrementVisitCount = (id: string) => {
     const now = new Date()
     const next = websites.value.map(w =>
@@ -319,6 +326,7 @@ export const useWebsiteStore = defineStore('website', () => {
     addWebsite,
     updateWebsite,
     deleteWebsite,
+    restoreWebsite,
     incrementVisitCount,
     setSearchFilters,
     clearSearch,

@@ -4,10 +4,19 @@
  */
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import type { AIActionResult } from '@/api/ai'
 
-defineProps<{
+const props = defineProps<{
   role: 'user' | 'assistant' | 'system'
   content: string
+  actionResult?: AIActionResult
+  showUndo?: boolean
+  showRetry?: boolean
+}>()
+
+const emit = defineEmits<{
+  undo: []
+  retry: []
 }>()
 
 const authStore = useAuthStore()
@@ -33,6 +42,32 @@ const userAvatar = computed(() => authStore.user?.avatar_url)
     </div>
     <div class="bubble">
       <div class="content" v-html="content.replace(/\n/g, '<br>')" />
+      <div v-if="props.actionResult?.kind === 'website-added'" class="action-card">
+        <img
+          v-if="props.actionResult.website.favicon"
+          :src="props.actionResult.website.favicon"
+          :alt="`${props.actionResult.website.name} 图标`"
+          class="action-card__icon"
+        />
+        <div class="action-card__info">
+          <strong>{{ props.actionResult.website.name }}</strong>
+          <span>{{ props.actionResult.website.url }}</span>
+        </div>
+        <button v-if="showUndo" type="button" class="action-card__undo" @click="emit('undo')">
+          撤销
+        </button>
+      </div>
+      <button
+        v-else-if="props.actionResult && showUndo"
+        type="button"
+        class="action-card__undo action-card__undo--standalone"
+        @click="emit('undo')"
+      >
+        {{ props.actionResult.kind === 'website-deleted' ? '撤销删除' : '撤销修改' }}
+      </button>
+      <button v-if="showRetry" type="button" class="message-retry" @click="emit('retry')">
+        重试
+      </button>
     </div>
   </div>
 </template>
@@ -117,6 +152,87 @@ const userAvatar = computed(() => authStore.user?.avatar_url)
 
 .content {
   overflow-wrap: break-word;
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--border-tile);
+  border-radius: 12px;
+  background: var(--bg-panel);
+}
+
+.action-card__icon {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.action-card__info {
+  min-width: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.action-card__info strong,
+.action-card__info span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.action-card__info strong {
+  color: var(--text-main);
+  font-size: 13px;
+}
+
+.action-card__info span {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.action-card__undo {
+  flex: 0 0 auto;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--primary-soft);
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.action-card__undo:hover {
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+.action-card__undo--standalone {
+  margin-top: 8px;
+}
+
+.message-retry {
+  display: block;
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.message-retry:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
 }
 
 .content :deep(code) {

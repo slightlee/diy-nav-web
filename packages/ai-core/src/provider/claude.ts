@@ -147,7 +147,7 @@ export class ClaudeProvider extends BaseAIProvider {
     const { system, messages: chatMessages } = this.transformMessages(messages)
 
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 30000)
+    const timeoutId = setTimeout(() => controller.abort(), 60000)
 
     try {
       const response = await fetch(`${this._baseUrl}/messages`, {
@@ -185,7 +185,7 @@ export class ClaudeProvider extends BaseAIProvider {
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Request timeout: Claude did not respond within 30 seconds')
+        throw new Error('Request timeout: Claude did not respond within 60 seconds')
       }
       throw error
     } finally {

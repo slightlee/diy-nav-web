@@ -18,7 +18,8 @@ import {
   type AIProviderDetail,
   type AIProviderInput,
   type AIUsageStats,
-  type ChatMessage
+  type ChatMessage,
+  type AIActionResult
 } from '@/api/ai'
 import { useAuthStore } from './auth'
 
@@ -32,6 +33,12 @@ export const useAIStore = defineStore('ai', () => {
   const isLoading = ref(false)
   const isChatLoading = ref(false)
   const error = ref<string | null>(null)
+  const pendingAction = ref<{
+    name: string
+    args: Record<string, unknown>
+    message: string
+  } | null>(null)
+  const undoAction = ref<{ id: string; execute: () => void } | null>(null)
 
   // Computed
   const isAvailable = computed(() => authStore.isAuthenticated)
@@ -163,6 +170,8 @@ export const useAIStore = defineStore('ai', () => {
     usage.value = null
     messages.value = []
     error.value = null
+    pendingAction.value = null
+    undoAction.value = null
   }
 
   /**
@@ -177,6 +186,8 @@ export const useAIStore = defineStore('ai', () => {
    */
   function clearMessages() {
     messages.value = []
+    pendingAction.value = null
+    undoAction.value = null
   }
 
   /**
@@ -189,7 +200,9 @@ export const useAIStore = defineStore('ai', () => {
     isChatLoading.value = true
     error.value = null
     try {
-      const result = await sendChatMessage(messages.value)
+      const result = await sendChatMessage(
+        messages.value.map(({ role, content }) => ({ role, content }))
+      )
       const content = result.content
 
       // Parse action commands from response: [ACTION:name:{...json...}]
@@ -259,16 +272,51 @@ export const useAIStore = defineStore('ai', () => {
       // Also try to remove any remaining [ACTION:...] patterns
       displayContent = displayContent.replace(/\[ACTION:\w+:\{[\s\S]*?\}\]/g, '').trim()
 
+      const destructiveAction = actions.find(
+        action =>
+          action.name === 'delete_website' ||
+          (action.name === 'update_website' &&
+            (action.args.removeAllTags === true ||
+              (Array.isArray(action.args.removeTags) && action.args.removeTags.length > 0)))
+      )
+
+      if (destructiveAction) {
+        const target =
+          (destructiveAction.args.name as string) ||
+          (destructiveAction.args.id as string) ||
+          '目标网站'
+        const actionLabel =
+          destructiveAction.name === 'delete_website'
+            ? `删除“${target}”`
+            : destructiveAction.args.removeAllTags === true
+              ? `移除“${target}”的全部标签`
+              : `修改“${target}”的标签`
+        pendingAction.value = {
+          ...destructiveAction,
+          message: actionLabel
+        }
+        messages.value.push({
+          role: 'assistant',
+          content: `${displayContent || `我准备${actionLabel}`}\n\n⚠️ 这是一个会修改导航数据的操作，请确认后继续。`
+        })
+        return
+      }
+
       // Execute actions
       if (actions.length > 0) {
         const { executeToolCall } = await import('@/lib/ai-tools')
         const results: string[] = []
+        let actionResult: AIActionResult | undefined
 
         for (const action of actions) {
           const toolResult = await executeToolCall(action.name, action.args)
           let resultText = toolResult.success
             ? `✅ ${toolResult.message}`
             : `❌ ${toolResult.message}`
+
+          if (toolResult.success && toolResult.action?.kind === 'website-added') {
+            resultText = `✅ 已添加网站“${toolResult.action.website.name}”`
+          }
 
           // Add data details if available
           if (toolResult.success && toolResult.data) {
@@ -300,16 +348,27 @@ export const useAIStore = defineStore('ai', () => {
             }
           }
           results.push(resultText)
+          if (toolResult.action) {
+            const undoId = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+            actionResult = { ...toolResult.action, undoId }
+            undoAction.value = toolResult.undo ? { id: undoId, execute: toolResult.undo } : null
+          } else if (toolResult.success && toolResult.undo) {
+            const undoId = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+            undoAction.value = { id: undoId, execute: toolResult.undo }
+          }
         }
 
         // Append execution results to message
+        const resultContent =
+          results.length === 1 ? results[0] : `📋 执行结果：\n${results.join('\n')}`
         const finalContent = displayContent
-          ? `${displayContent}\n\n📋 执行结果:\n${results.join('\n')}`
-          : `📋 执行结果:\n${results.join('\n')}`
+          ? `${displayContent}\n\n${resultContent}`
+          : resultContent
 
         messages.value.push({
           role: 'assistant',
-          content: finalContent
+          content: finalContent,
+          actionResult
         })
       } else {
         // No actions, just add the response
@@ -330,6 +389,61 @@ export const useAIStore = defineStore('ai', () => {
     }
   }
 
+  async function confirmPendingAction() {
+    const action = pendingAction.value
+    if (!action || isChatLoading.value) return
+
+    pendingAction.value = null
+    isChatLoading.value = true
+    try {
+      const { executeToolCall } = await import('@/lib/ai-tools')
+      const toolResult = await executeToolCall(action.name, action.args)
+      let resultText = toolResult.success ? `✅ ${toolResult.message}` : `❌ ${toolResult.message}`
+      let actionResult: AIActionResult | undefined
+
+      if (toolResult.action) {
+        if (toolResult.action.kind === 'website-added') {
+          resultText = `✅ 已添加网站“${toolResult.action.website.name}”`
+        }
+        const undoId = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+        actionResult = { ...toolResult.action, undoId }
+        undoAction.value = toolResult.undo ? { id: undoId, execute: toolResult.undo } : null
+      }
+
+      messages.value.push({ role: 'assistant', content: resultText, actionResult })
+    } catch (e) {
+      messages.value.push({
+        role: 'assistant',
+        content: `❌ 操作失败：${(e as Error).message}`
+      })
+    } finally {
+      isChatLoading.value = false
+    }
+  }
+
+  function cancelPendingAction() {
+    if (!pendingAction.value) return
+    messages.value.push({ role: 'assistant', content: '已取消操作。' })
+    pendingAction.value = null
+  }
+
+  function undoLastAction() {
+    const action = undoAction.value
+    if (!action) return
+    action.execute()
+    undoAction.value = null
+    messages.value.push({ role: 'assistant', content: '↩️ 已撤销上一步操作。' })
+  }
+
+  async function retryLastMessage() {
+    const lastMessage = messages.value[messages.value.length - 1]
+    if (lastMessage?.role !== 'assistant' || !lastMessage.content.startsWith('抱歉，发生错误')) {
+      return
+    }
+    messages.value.pop()
+    await sendChat()
+  }
+
   return {
     // State
     providers: readonly(providers),
@@ -338,6 +452,8 @@ export const useAIStore = defineStore('ai', () => {
     isLoading: readonly(isLoading),
     isChatLoading: readonly(isChatLoading),
     error: readonly(error),
+    pendingAction: readonly(pendingAction),
+    undoAction: readonly(undoAction),
 
     // Computed
     isAvailable,
@@ -355,6 +471,10 @@ export const useAIStore = defineStore('ai', () => {
     clearState,
     addMessage,
     clearMessages,
-    sendChat
+    sendChat,
+    confirmPendingAction,
+    cancelPendingAction,
+    undoLastAction,
+    retryLastMessage
   }
 })

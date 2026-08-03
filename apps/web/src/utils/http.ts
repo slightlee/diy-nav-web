@@ -126,6 +126,15 @@ class HttpClient {
 
         if (isLastAttempt) {
           logger.error({ err: e }, `[HTTP] Request failed: ${endpoint}`)
+          if (
+            (e instanceof DOMException && e.name === 'TimeoutError') ||
+            (e instanceof Error && /timed out|timeout/i.test(e.message))
+          ) {
+            return {
+              success: false,
+              message: '请求超时，AI 服务暂时没有响应，请稍后重试'
+            }
+          }
           return {
             success: false,
             message: e instanceof Error ? e.message : 'Network error'

@@ -36,7 +36,7 @@ export const aiTools = [
     type: 'function' as const,
     function: {
       name: 'add_website',
-      description: '添加一个新网站到导航',
+      description: '添加一个新网站到导航。用户只需提供网站名称和 URL，不必额外说“添加网站”',
       parameters: {
         type: 'object',
         properties: {
@@ -217,6 +217,11 @@ export interface ToolCallResult {
   success: boolean
   message: string
   data?: unknown
+  action?: {
+    kind: 'website-added' | 'website-deleted' | 'website-updated'
+    website: Website
+  }
+  undo?: () => void
 }
 
 /**
@@ -234,8 +239,11 @@ export async function executeToolCall(
     switch (toolName) {
       // Website operations
       case 'add_website': {
-        const name = args.name as string
-        let url = args.url as string
+        const name = typeof args.name === 'string' ? args.name.trim() : ''
+        let url = typeof args.url === 'string' ? args.url.trim() : ''
+
+        if (!name) return { success: false, message: '请提供网站名称' }
+        if (!url) return { success: false, message: '请提供网站地址' }
 
         // Ensure URL has protocol
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
@@ -348,21 +356,37 @@ export async function executeToolCall(
         return {
           success: true,
           message: `已添加网站 "${name}"${statusText}`,
-          data: website
+          data: website,
+          action: { kind: 'website-added', website },
+          undo: () => websiteStore.deleteWebsite(website.id)
         }
       }
 
       case 'delete_website': {
         if (args.id) {
-          websiteStore.deleteWebsite(args.id as string)
-          return { success: true, message: '网站已删除' }
+          const found = websiteStore.websites.find(website => website.id === args.id)
+          if (!found) return { success: false, message: '未找到指定网站' }
+          websiteStore.deleteWebsite(found.id)
+          return {
+            success: true,
+            message: `已删除网站 "${found.name}"`,
+            data: found,
+            action: { kind: 'website-deleted', website: found },
+            undo: () => websiteStore.restoreWebsite(found)
+          }
         }
         // Find by name using helper function
         if (args.name) {
           const found = findWebsiteByName(websiteStore.websites, args.name as string)
           if (found) {
             websiteStore.deleteWebsite(found.id)
-            return { success: true, message: `已删除网站 "${found.name}"` }
+            return {
+              success: true,
+              message: `已删除网站 "${found.name}"`,
+              data: found,
+              action: { kind: 'website-deleted', website: found },
+              undo: () => websiteStore.restoreWebsite(found)
+            }
           }
           return { success: false, message: `未找到名为 "${args.name}" 的网站` }
         }
@@ -433,7 +457,13 @@ export async function executeToolCall(
 
         return {
           success: true,
-          message: `已更新网站 "${found.name}" (${changes.join(', ') || '无变化'})`
+          message: `已更新网站 "${found.name}" (${changes.join(', ') || '无变化'})`,
+          action: { kind: 'website-updated', website: found },
+          undo: () =>
+            websiteStore.updateWebsite(found.id, {
+              categoryId: found.categoryId,
+              tagIds: found.tagIds
+            })
         }
       }
 

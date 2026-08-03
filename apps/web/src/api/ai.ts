@@ -4,6 +4,7 @@
  */
 
 import { request } from '@/utils/http'
+import type { Website } from '@/types'
 
 // Types
 export type AIProtocol = 'openai' | 'claude'
@@ -181,6 +182,7 @@ export async function getAIUsage(): Promise<AIUsageStats> {
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
+  actionResult?: AIActionResult
 }
 
 export interface ChatResult {
@@ -188,11 +190,17 @@ export interface ChatResult {
   tokensUsed?: number
 }
 
+export interface AIActionResult {
+  kind: 'website-added' | 'website-deleted' | 'website-updated'
+  website: Website
+  undoId?: string
+}
+
 /**
  * Send chat messages to AI
  */
 export async function sendChatMessage(messages: ChatMessage[]): Promise<ChatResult> {
-  const res = await request.post<ChatResult>('/api/ai/chat', { messages })
+  const res = await request.post<ChatResult>('/api/ai/chat', { messages }, { timeout: 60000 })
   if (res.success && res.data) {
     return res.data
   }

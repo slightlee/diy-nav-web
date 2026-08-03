@@ -127,7 +127,23 @@ onMounted(() => {
         :key="idx"
         :role="msg.role"
         :content="msg.content"
+        :action-result="msg.actionResult"
+        :show-undo="msg.actionResult?.undoId === aiStore.undoAction?.id"
+        :show-retry="msg.content.startsWith('抱歉，发生错误')"
+        @undo="aiStore.undoLastAction"
+        @retry="aiStore.retryLastMessage"
       />
+      <div v-if="aiStore.pendingAction" class="action-confirmation">
+        <span>确认{{ aiStore.pendingAction.message }}？</span>
+        <div class="action-confirmation__actions">
+          <BaseButton variant="neutral-ghost" size="xs" @click="aiStore.cancelPendingAction">
+            取消
+          </BaseButton>
+          <BaseButton variant="primary" size="xs" @click="aiStore.confirmPendingAction">
+            确认执行
+          </BaseButton>
+        </div>
+      </div>
       <div v-if="isLoading" class="loading-indicator">
         <span class="dot" />
         <span class="dot" />
@@ -142,7 +158,7 @@ onMounted(() => {
         v-model="inputText"
         placeholder="输入消息..."
         rows="1"
-        :disabled="isLoading"
+        :disabled="isLoading || !!aiStore.pendingAction"
         @input="resizeInput"
         @keydown="handleKeydown"
       />
@@ -152,7 +168,7 @@ onMounted(() => {
         icon="fas fa-paper-plane"
         title="发送"
         aria-label="发送消息"
-        :disabled="!inputText.trim() || isLoading"
+        :disabled="!inputText.trim() || isLoading || !!aiStore.pendingAction"
         @click="sendMessage"
       />
     </div>
@@ -283,6 +299,24 @@ onMounted(() => {
 }
 .loading-indicator .dot:nth-child(2) {
   animation-delay: -0.16s;
+}
+
+.action-confirmation {
+  margin: 0 0 12px 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--ai-bubble-assistant-border);
+  border-radius: 16px;
+  background: var(--ai-bubble-assistant-bg);
+  color: var(--text-main);
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.action-confirmation__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
 }
 
 @keyframes bounce {
