@@ -199,6 +199,30 @@ export function useWebsiteSearch(fixedViewSource: MaybeRef<FixedViewType>) {
     }
   )
 
+  // 标签被删除后，仅保留仍然存在的筛选项，并同步清理 URL 中的失效 ID。
+  watch(
+    () => tagStore.tags.map(tag => tag.id),
+    tagIds => {
+      const validSelectedTags = selectedTags.value.filter(tagId => tagIds.includes(tagId))
+      if (validSelectedTags.length === selectedTags.value.length) return
+
+      selectedTags.value = validSelectedTags
+      if (route.query.tag) {
+        void router.replace({
+          query: {
+            ...route.query,
+            tag:
+              validSelectedTags.length === 0
+                ? undefined
+                : validSelectedTags.length === 1
+                  ? validSelectedTags[0]
+                  : validSelectedTags
+          }
+        })
+      }
+    }
+  )
+
   // Watch fixedView changes to re-sync with route (handles navigation between views)
   watch(fixedView, () => {
     syncFiltersFromRoute()

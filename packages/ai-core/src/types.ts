@@ -44,7 +44,7 @@ export interface AIProviderInput {
   type: AIProtocol
   apiKey: string // Plain text, will be encrypted before storage
   baseUrl?: string
-  model?: string
+  model: string
   isDefault?: boolean
 }
 
@@ -174,18 +174,13 @@ export interface UsageStats {
 /**
  * Preset provider configurations
  */
-export const PROVIDER_PRESETS: Record<
-  AIProtocol,
-  { baseUrl: string; defaultModel: string; displayName: string }
-> = {
+export const PROVIDER_PRESETS: Record<AIProtocol, { baseUrl: string; displayName: string }> = {
   openai: {
     baseUrl: 'https://api.openai.com/v1',
-    defaultModel: 'gpt-4o-mini',
     displayName: 'OpenAI'
   },
   claude: {
     baseUrl: 'https://api.anthropic.com/v1',
-    defaultModel: 'claude-3-haiku-20240307',
     displayName: 'Claude (Anthropic)'
   }
 } as const

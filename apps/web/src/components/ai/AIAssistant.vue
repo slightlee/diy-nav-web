@@ -5,11 +5,13 @@
  */
 import { ref, computed, onBeforeUnmount } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useAIStore } from '@/stores/ai'
 import { useSettingsStore } from '@/stores/settings'
 import AIPanel from './AIPanel.vue'
 import PeekBirdSprite from './PeekBirdSprite.vue'
 
 const authStore = useAuthStore()
+const aiStore = useAIStore()
 const settingsStore = useSettingsStore()
 
 const isPanelOpen = ref(false)
@@ -51,6 +53,7 @@ const openPanel = () => {
 }
 
 const closePanel = () => {
+  clearAutoDockTimer()
   clearPanelRevealTimer()
   const wasPanelVisible = isPanelVisible.value
   isPanelOpen.value = false
@@ -74,7 +77,7 @@ const scheduleAutoDock = () => {
     const activeElement = document.activeElement
     const hasFocusedControl = Boolean(activeElement && assistantRef.value?.contains(activeElement))
 
-    if (isPointerInside.value || hasFocusedControl) {
+    if (aiStore.isChatLoading || isPointerInside.value || hasFocusedControl) {
       scheduleAutoDock()
       return
     }

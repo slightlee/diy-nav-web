@@ -244,7 +244,7 @@ const navItems: Array<{
     key: 'ai',
     label: 'AI 配置',
     navDesc: '模型密钥',
-    description: '配置 AI 服务提供商和默认模型',
+    description: '配置 AI 服务提供商和使用模型',
     icon: 'fas fa-robot'
   },
   {

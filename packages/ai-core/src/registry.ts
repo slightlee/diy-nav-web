@@ -23,6 +23,15 @@ function createProvider(type: AIProtocol): AIProvider {
   }
 }
 
+export class AIProviderConfigError extends Error {
+  readonly code = 'AI_PROVIDER_CONFIG_INCOMPLETE'
+
+  constructor() {
+    super('AI 服务配置不完整，请填写模型名称')
+    this.name = 'AIProviderConfigError'
+  }
+}
+
 /**
  * AI Provider Registry
  * Stores and manages provider instances for users
@@ -41,6 +50,10 @@ export class AIProviderRegistry {
    * @returns Initialized AI provider
    */
   getProvider(config: AIProviderConfig): AIProvider {
+    if (!config.model?.trim()) {
+      throw new AIProviderConfigError()
+    }
+
     const cacheKey = `${config.userId}:${config.id}`
 
     // Check cache

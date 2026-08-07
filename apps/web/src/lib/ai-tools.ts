@@ -8,7 +8,7 @@ import { useCategoryStore } from '@/stores/category'
 import { useTagStore } from '@/stores/tag'
 import { request } from '@/utils/http'
 import { getIcon } from '@/api/icon'
-import { generateDescription, sendChatMessage } from '@/api/ai'
+import { classifyWebsite, generateDescription } from '@/api/ai'
 import type { Website } from '@/types'
 
 // ============================================
@@ -25,6 +25,85 @@ function findWebsiteByName(websites: Website[], name: string): Website | undefin
     websites.find(w => w.name.toLowerCase().startsWith(nameLower)) ||
     websites.find(w => w.name.toLowerCase().includes(nameLower))
   )
+}
+
+const FALLBACK_CLASSIFICATION_RULES = [
+  {
+    keywords: ['github', 'gitlab', 'stackoverflow', 'stack overflow', 'npm', 'jsdelivr'],
+    category: '开发工具',
+    tags: ['开发', '代码']
+  },
+  {
+    keywords: ['linux.do', 'reddit', 'v2ex', 'discord', 'forum', 'community', '社区'],
+    category: '社区论坛',
+    tags: ['社区', '技术交流']
+  },
+  {
+    keywords: ['baidu', 'google', 'bing', 'duckduckgo'],
+    category: '搜索引擎',
+    tags: ['搜索', '中文网站']
+  },
+  {
+    keywords: ['notion', 'wikipedia', 'readthedocs', 'docs.', '文档', '知识库'],
+    category: '知识文档',
+    tags: ['知识', '文档']
+  },
+  {
+    keywords: ['youtube', 'bilibili', 'netflix', 'spotify', '视频', '音乐'],
+    category: '影音娱乐',
+    tags: ['视频', '娱乐']
+  },
+  {
+    keywords: ['taobao', 'jd.com', 'amazon', '京东', '淘宝'],
+    category: '购物电商',
+    tags: ['购物', '电商']
+  }
+] as const
+
+function getFallbackClassification(name: string, url: string, description: string) {
+  const text = `${name} ${url} ${description}`.toLowerCase()
+  const matched = FALLBACK_CLASSIFICATION_RULES.find(rule =>
+    rule.keywords.some(keyword => text.includes(keyword))
+  )
+  return matched || { category: '其他网站', tags: ['常用网站'] }
+}
+
+function getOrCreateCategory(
+  categoryStore: ReturnType<typeof useCategoryStore>,
+  name: string,
+  createdIds?: Set<string>
+) {
+  const normalizedName = name.trim()
+  const existing = categoryStore.categories.find(
+    category => category.name.trim().toLowerCase() === normalizedName.toLowerCase()
+  )
+  if (existing) return existing
+  const category = categoryStore.addCategory({
+    name: normalizedName,
+    description: '',
+    icon: 'fas fa-folder'
+  })
+  createdIds?.add(category.id)
+  return category
+}
+
+function getOrCreateTag(
+  tagStore: ReturnType<typeof useTagStore>,
+  name: string,
+  index: number,
+  createdIds?: Set<string>
+) {
+  const normalizedName = name.trim()
+  const existing = tagStore.tags.find(
+    tag => tag.name.trim().toLowerCase() === normalizedName.toLowerCase()
+  )
+  if (existing) return existing
+  const tag = tagStore.addTag({
+    name: normalizedName,
+    color: tagStore.tagColors[index % tagStore.tagColors.length]
+  })
+  createdIds?.add(tag.id)
+  return tag
 }
 
 /**
@@ -220,6 +299,7 @@ export interface ToolCallResult {
   action?: {
     kind: 'website-added' | 'website-deleted' | 'website-updated'
     website: Website
+    classificationFailed?: boolean
   }
   undo?: () => void
 }
@@ -261,64 +341,89 @@ export async function executeToolCall(
           // Icon fetch failed, continue without it
         }
 
-        // 2. Try to generate AI description
-        let description = (args.description as string) || ''
-        if (!description) {
-          try {
-            const descRes = await generateDescription(name, url)
-            description = descRes.description || ''
-          } catch {
-            // Description generation failed, use empty
-          }
-        }
-
-        // 3. Use AI to infer category and tags
-        let categoryId = args.categoryId as string
+        // 2. Analyze the website once for description, category, and tags
+        let description = typeof args.description === 'string' ? args.description.trim() : ''
+        let categoryId =
+          typeof args.categoryId === 'string' &&
+          categoryStore.categories.some(category => category.id === args.categoryId)
+            ? args.categoryId
+            : ''
         let matchedTagIds: string[] = []
 
         // Get available categories and tags
         const categories = categoryStore.categories
         const tags = tagStore.tags
+        const createdCategoryIds = new Set<string>()
+        const createdTagIds = new Set<string>()
+        let classificationFailed = false
 
-        // Only use AI inference if we have categories/tags and no category is specified
-        if (!categoryId && (categories.length > 0 || tags.length > 0)) {
-          try {
-            const categoryList = categories.map(c => `${c.id}:${c.name}`).join(', ')
-            const tagList = tags.map(t => `${t.id}:${t.name}`).join(', ')
+        try {
+          const classification = await classifyWebsite({
+            name,
+            url,
+            description,
+            categories: categories.map(category => ({ id: category.id, name: category.name })),
+            tags: tags.map(tag => ({ id: tag.id, name: tag.name }))
+          })
+          description = classification.description || description
 
-            const inferPrompt = `分析这个网站并推荐分类和标签。
-
-网站名称: ${name}
-网站地址: ${url}
-网站描述: ${description || '无'}
-
-可选分类: ${categoryList || '无'}
-可选标签: ${tagList || '无'}
-
-请只返回 JSON 格式，不要有其他文字:
-{"categoryId": "匹配的分类ID或空字符串", "tagIds": ["匹配的标签ID数组"]}
-
-注意:
-1. categoryId 只能从可选分类中选择一个，如果没有合适的就返回空字符串
-2. tagIds 可以选择多个标签，如果没有合适的就返回空数组
-3. 根据网站的实际用途和特点来匹配`
-
-            const aiResult = await sendChatMessage([{ role: 'user', content: inferPrompt }])
-
-            // Parse AI response
-            const jsonMatch = aiResult.content.match(/\{[\s\S]*\}/)
-            if (jsonMatch) {
-              const parsed = JSON.parse(jsonMatch[0])
-              if (parsed.categoryId && categories.some(c => c.id === parsed.categoryId)) {
-                categoryId = parsed.categoryId
-              }
-              if (Array.isArray(parsed.tagIds)) {
-                matchedTagIds = parsed.tagIds.filter((id: string) => tags.some(t => t.id === id))
-              }
+          if (!categoryId) {
+            if (
+              classification.categoryId &&
+              categories.some(category => category.id === classification.categoryId)
+            ) {
+              categoryId = classification.categoryId
             }
-          } catch {
-            // AI inference failed, continue without category/tags
+
+            if (classification.categoryName) {
+              const category = getOrCreateCategory(
+                categoryStore,
+                classification.categoryName,
+                createdCategoryIds
+              )
+              categoryId = category.id
+            }
           }
+
+          matchedTagIds = classification.tagIds.filter(tagId => tags.some(tag => tag.id === tagId))
+          const suggestedTagIds = classification.tagNames.map(
+            (tagName, index) => getOrCreateTag(tagStore, tagName, index, createdTagIds).id
+          )
+          matchedTagIds = [...new Set([...matchedTagIds, ...suggestedTagIds])].slice(0, 3)
+
+          if (!categoryId || matchedTagIds.length === 0) {
+            classificationFailed = true
+          }
+        } catch {
+          classificationFailed = true
+        }
+
+        // Classification normally supplies the description. Only make a second AI request when
+        // that response failed or omitted it, so website details are not lost on the fallback path.
+        if (!description) {
+          try {
+            const result = await generateDescription(name, url)
+            description = result.description?.trim() || ''
+          } catch {
+            // Description generation is best-effort; classification fallback can still add the site.
+          }
+        }
+
+        if (classificationFailed) {
+          const fallback = getFallbackClassification(name, url, description)
+          if (!categoryId) {
+            categoryId = getOrCreateCategory(
+              categoryStore,
+              fallback.category,
+              createdCategoryIds
+            ).id
+          }
+          if (matchedTagIds.length === 0) {
+            matchedTagIds = fallback.tags
+              .map((tagName, index) => getOrCreateTag(tagStore, tagName, index, createdTagIds).id)
+              .slice(0, 3)
+          }
+          classificationFailed = !categoryId || matchedTagIds.length === 0
         }
 
         // 4. Add website
@@ -357,8 +462,20 @@ export async function executeToolCall(
           success: true,
           message: `已添加网站 "${name}"${statusText}`,
           data: website,
-          action: { kind: 'website-added', website },
-          undo: () => websiteStore.deleteWebsite(website.id)
+          action: { kind: 'website-added', website, classificationFailed },
+          undo: () => {
+            websiteStore.deleteWebsite(website.id)
+            createdTagIds.forEach(tagId => {
+              const isReferenced = websiteStore.websites.some(item => item.tagIds.includes(tagId))
+              if (!isReferenced) tagStore.deleteTag(tagId)
+            })
+            createdCategoryIds.forEach(createdCategoryId => {
+              const isReferenced = websiteStore.websites.some(
+                item => item.categoryId === createdCategoryId
+              )
+              if (!isReferenced) categoryStore.deleteCategory(createdCategoryId)
+            })
+          }
         }
       }
 

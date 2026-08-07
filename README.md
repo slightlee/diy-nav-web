@@ -128,7 +128,7 @@ pnpm install
     | **AI 助手**                    |        |                                                       |
     | `AI_OPENAI_API_KEY`            |   否   | OpenAI 兼容 API Key（启用 AI 助手功能）               |
     | `AI_OPENAI_BASE_URL`           |   否   | 自定义 API 地址（如使用 Claude/通义千问等）           |
-    | `AI_OPENAI_MODEL`              |   否   | 模型名称，默认 `gpt-4o-mini`                          |
+    | `AI_OPENAI_MODEL`              |   否   | 模型名称；配置 `AI_OPENAI_API_KEY` 时必须填写         |
     | **第三方登录 (OAuth)**         |        |                                                       |
     | `VITE_LINUX_DO_CLIENT_ID`      |   否   | Linux Do OAuth Client ID (前端)                       |
     | `LINUX_DO_CLIENT_ID`           |   否   | Linux Do OAuth Client ID (后端)                       |

@@ -7,6 +7,16 @@
 import { BaseAIProvider } from './interface.js'
 import type { Message, ChatOptions, ChatResponseMeta } from '../types.js'
 
+function appendEndpoint(baseUrl: string, endpoint: string): string {
+  try {
+    const url = new URL(baseUrl)
+    url.pathname = `${url.pathname.replace(/\/+$/, '')}/${endpoint.replace(/^\/+/, '')}`
+    return url.toString()
+  } catch {
+    return `${baseUrl.replace(/\/+$/, '')}/${endpoint.replace(/^\/+/, '')}`
+  }
+}
+
 interface OpenAIMessage {
   role: 'system' | 'user' | 'assistant'
   content: string
@@ -52,7 +62,7 @@ export abstract class OpenAICompatibleProvider extends BaseAIProvider {
     const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout)
 
     try {
-      const response = await fetch(`${this._baseUrl}/models`, {
+      const response = await fetch(appendEndpoint(this._baseUrl, 'models'), {
         method: 'GET',
         headers: this.buildHeaders(),
         signal: controller.signal
@@ -84,7 +94,7 @@ export abstract class OpenAICompatibleProvider extends BaseAIProvider {
     messages: Message[],
     options?: ChatOptions
   ): AsyncGenerator<string, ChatResponseMeta, unknown> {
-    const response = await fetch(`${this._baseUrl}/chat/completions`, {
+    const response = await fetch(appendEndpoint(this._baseUrl, 'chat/completions'), {
       method: 'POST',
       headers: this.buildHeaders(),
       body: JSON.stringify(this.buildRequestBody(messages, options, true))
@@ -147,7 +157,7 @@ export abstract class OpenAICompatibleProvider extends BaseAIProvider {
     const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout)
 
     try {
-      const response = await fetch(`${this._baseUrl}/chat/completions`, {
+      const response = await fetch(appendEndpoint(this._baseUrl, 'chat/completions'), {
         method: 'POST',
         headers: this.buildHeaders(),
         body: JSON.stringify(this.buildRequestBody(messages, options, false)),

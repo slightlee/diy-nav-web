@@ -62,4 +62,80 @@ describe('BaseAIProvider', () => {
 
     vi.unstubAllGlobals()
   })
+
+  it.each([
+    ['https://example.com', 'https://example.com/models'],
+    ['https://example.com/', 'https://example.com/models'],
+    ['https://example.com/openai', 'https://example.com/openai/models'],
+    ['https://example.com/openai?tenant=test', 'https://example.com/openai/models?tenant=test'],
+    ['https://example.com/api/v3/', 'https://example.com/api/v3/models'],
+    ['https://example.com/v1beta', 'https://example.com/v1beta/models']
+  ])(
+    'preserves the configured OpenAI-compatible API root %s',
+    async (baseUrl, expectedModelsUrl) => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: [] })
+      })
+      vi.stubGlobal('fetch', fetchMock)
+
+      const provider = new OpenAIProvider()
+      provider.initialize({ apiKey: 'test-key', baseUrl })
+
+      await provider.listModels()
+      expect(fetchMock).toHaveBeenCalledWith(
+        expectedModelsUrl,
+        expect.objectContaining({ method: 'GET' })
+      )
+
+      vi.unstubAllGlobals()
+    }
+  )
+
+  it('uses the versioned OpenAI preset when no custom base URL is configured', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [] })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const provider = new OpenAIProvider()
+    provider.initialize({ apiKey: 'test-key', model: 'gpt-test' })
+
+    await provider.listModels()
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.openai.com/v1/models',
+      expect.objectContaining({ method: 'GET' })
+    )
+
+    vi.unstubAllGlobals()
+  })
+
+  it('preserves query parameters when building chat endpoints', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        model: 'gpt-test',
+        choices: [{ message: { content: 'ok' } }]
+      })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const provider = new OpenAIProvider()
+    provider.initialize({
+      apiKey: 'test-key',
+      baseUrl: 'https://example.com?tenant=test',
+      model: 'gpt-test'
+    })
+
+    await expect(provider.chatComplete([{ role: 'user', content: 'Hi' }])).resolves.toMatchObject({
+      content: 'ok'
+    })
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://example.com/chat/completions?tenant=test',
+      expect.objectContaining({ method: 'POST' })
+    )
+
+    vi.unstubAllGlobals()
+  })
 })

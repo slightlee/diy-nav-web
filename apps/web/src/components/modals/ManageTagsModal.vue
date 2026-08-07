@@ -84,7 +84,11 @@
         </p>
         <p class="delete-confirm-warning">
           <i class="fas fa-info-circle" aria-hidden="true" />
-          <span>删除后无法恢复，请确认是否继续。</span>
+          <span v-if="deleteAffectedCount > 0">
+            该标签正在被
+            {{ deleteAffectedCount }} 个网站使用。删除后，标签将从这些网站中移除，其他标签不受影响。
+          </span>
+          <span v-else>删除后无法恢复，请确认是否继续。</span>
         </p>
       </div>
       <template #footer>
@@ -245,13 +249,6 @@ const cancelEdit = () => {
 
 // 处理删除标签
 const handleDeleteTag = (tag: Tag) => {
-  const websiteCount = getWebsiteCount(tag.id)
-
-  if (websiteCount > 0) {
-    uiStore.showToast(`该标签下还有 ${websiteCount} 个网站，请先移除或删除这些网站`, 'warning')
-    return
-  }
-
   deleteTargetId.value = tag.id
   deleteConfirmOpen.value = true
 }
@@ -259,6 +256,9 @@ const handleDeleteTag = (tag: Tag) => {
 const deleteConfirmOpen = ref(false)
 const deleteTargetId = ref<string>('')
 const deleting = ref(false)
+const deleteAffectedCount = computed(() =>
+  deleteTargetId.value ? getWebsiteCount(deleteTargetId.value) : 0
+)
 
 const closeDeleteConfirm = () => {
   deleteConfirmOpen.value = false
@@ -269,6 +269,7 @@ const confirmDeleteTag = () => {
   if (!deleteTargetId.value || deleting.value) return
   deleting.value = true
   try {
+    websiteStore.removeTagFromWebsites(deleteTargetId.value)
     tagStore.deleteTag(deleteTargetId.value)
     uiStore.showToast('标签删除成功', 'success')
     closeDeleteConfirm()

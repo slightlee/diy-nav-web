@@ -195,7 +195,7 @@ export const useAIStore = defineStore('ai', () => {
    * Parses response for action commands in format: [ACTION:name:args_json]
    */
   async function sendChat() {
-    if (messages.value.length === 0) return
+    if (messages.value.length === 0 || isChatLoading.value) return
 
     isChatLoading.value = true
     error.value = null

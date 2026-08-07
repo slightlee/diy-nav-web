@@ -2,7 +2,7 @@
 /**
  * AI Chat Panel Component
  */
-import { ref, nextTick, onMounted } from 'vue'
+import { computed, ref, nextTick, onMounted, watch } from 'vue'
 import { BaseButton } from '@nav/ui'
 import { useAIStore } from '@/stores/ai'
 import AIMessage from './AIMessage.vue'
@@ -15,7 +15,7 @@ const aiStore = useAIStore()
 const inputText = ref('')
 const inputRef = ref<HTMLTextAreaElement | null>(null)
 const messagesContainer = ref<HTMLElement | null>(null)
-const isLoading = ref(false)
+const isLoading = computed(() => aiStore.isChatLoading)
 
 const resizeInput = () => {
   const input = inputRef.value
@@ -43,13 +43,8 @@ const sendMessage = async () => {
   aiStore.addMessage({ role: 'user', content: text })
   scrollToBottom()
 
-  isLoading.value = true
-  try {
-    await aiStore.sendChat()
-    scrollToBottom()
-  } finally {
-    isLoading.value = false
-  }
+  await aiStore.sendChat()
+  scrollToBottom()
 }
 
 const handleKeydown = (e: KeyboardEvent) => {
@@ -63,6 +58,11 @@ onMounted(() => {
   scrollToBottom()
   resizeInput()
 })
+
+watch(
+  () => [aiStore.messages.length, aiStore.isChatLoading],
+  () => scrollToBottom()
+)
 </script>
 
 <template>
@@ -144,11 +144,7 @@ onMounted(() => {
           </BaseButton>
         </div>
       </div>
-      <div v-if="isLoading" class="loading-indicator">
-        <span class="dot" />
-        <span class="dot" />
-        <span class="dot" />
-      </div>
+      <AIMessage v-if="isLoading" role="assistant" content="" :is-loading="true" />
     </div>
 
     <!-- Input -->
@@ -279,28 +275,6 @@ onMounted(() => {
   justify-content: center;
 }
 
-.loading-indicator {
-  display: flex;
-  gap: 6px;
-  padding: 16px;
-  align-items: center;
-}
-
-.loading-indicator .dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--ai-send-bg);
-  animation: bounce 1.4s infinite ease-in-out both;
-}
-
-.loading-indicator .dot:nth-child(1) {
-  animation-delay: -0.32s;
-}
-.loading-indicator .dot:nth-child(2) {
-  animation-delay: -0.16s;
-}
-
 .action-confirmation {
   margin: 0 0 12px 48px;
   padding: 10px 12px;
@@ -317,20 +291,6 @@ onMounted(() => {
   justify-content: flex-end;
   gap: 6px;
   margin-top: 8px;
-}
-
-@keyframes bounce {
-  0%,
-  80%,
-  100% {
-    transform: scale(0);
-    opacity: 0.5;
-  }
-
-  40% {
-    transform: scale(1);
-    opacity: 1;
-  }
 }
 
 .input-container {

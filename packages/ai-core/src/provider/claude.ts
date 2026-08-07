@@ -37,16 +37,12 @@ export class ClaudeProvider extends BaseAIProvider {
   constructor() {
     super()
     this._baseUrl = PROVIDER_PRESETS.claude.baseUrl
-    this._model = PROVIDER_PRESETS.claude.defaultModel
   }
 
   override initialize(config: ProviderInitConfig): void {
     super.initialize(config)
     if (!this._baseUrl) {
       this._baseUrl = PROVIDER_PRESETS.claude.baseUrl
-    }
-    if (!this._model) {
-      this._model = PROVIDER_PRESETS.claude.defaultModel
     }
   }
 

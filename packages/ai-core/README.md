@@ -45,7 +45,7 @@ const provider = new OpenAIProvider()
 provider.initialize({
   apiKey: 'sk-xxx',
   baseUrl: 'https://api.openai.com/v1', // 可选
-  model: 'gpt-4o-mini' // 可选
+  model: 'gpt-4o-mini' // 必填：请填写供应商实际支持的模型名称
 })
 
 // 生成网站描述
@@ -116,12 +116,12 @@ provider.initialize({
 })
 ```
 
-## 支持的模型
+## 模型配置
 
-| 协议   | 默认地址                     | 默认模型                |
-| ------ | ---------------------------- | ----------------------- |
-| OpenAI | https://api.openai.com/v1    | gpt-4o-mini             |
-| Claude | https://api.anthropic.com/v1 | claude-3-haiku-20240307 |
+| 协议   | 默认地址                     | 模型要求                         |
+| ------ | ---------------------------- | -------------------------------- |
+| OpenAI | https://api.openai.com/v1    | 必须填写供应商实际支持的模型名称 |
+| Claude | https://api.anthropic.com/v1 | 必须填写供应商实际支持的模型名称 |
 
 ## 特性
 

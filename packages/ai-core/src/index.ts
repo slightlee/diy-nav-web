@@ -21,7 +21,7 @@ export {
 } from './provider/index.js'
 
 // Registry
-export { AIProviderRegistry, toProviderDTO } from './registry.js'
+export { AIProviderConfigError, AIProviderRegistry, toProviderDTO } from './registry.js'
 
 // Rate limiter
 export {

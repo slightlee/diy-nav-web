@@ -134,6 +134,40 @@ export const useWebsiteStore = defineStore('website', () => {
     bumpDataRevision()
   }
 
+  const removeCategoryFromWebsites = (categoryId: string) => {
+    const now = new Date()
+    let affectedCount = 0
+    const next = websites.value.map(website => {
+      if (website.categoryId !== categoryId) return website
+      affectedCount += 1
+      return { ...website, categoryId: '', updatedAt: now }
+    })
+    if (affectedCount === 0) return 0
+    websites.value = next
+    saveToLocalStorage()
+    bumpDataRevision()
+    return affectedCount
+  }
+
+  const removeTagFromWebsites = (tagId: string) => {
+    const now = new Date()
+    let affectedCount = 0
+    const next = websites.value.map(website => {
+      if (!website.tagIds.includes(tagId)) return website
+      affectedCount += 1
+      return {
+        ...website,
+        tagIds: website.tagIds.filter(id => id !== tagId),
+        updatedAt: now
+      }
+    })
+    if (affectedCount === 0) return 0
+    websites.value = next
+    saveToLocalStorage()
+    bumpDataRevision()
+    return affectedCount
+  }
+
   const deleteWebsite = (id: string) => {
     const next = websites.value.filter(w => w.id !== id)
     if (next.length !== websites.value.length) {
@@ -325,6 +359,8 @@ export const useWebsiteStore = defineStore('website', () => {
     initializeData,
     addWebsite,
     updateWebsite,
+    removeCategoryFromWebsites,
+    removeTagFromWebsites,
     deleteWebsite,
     restoreWebsite,
     incrementVisitCount,

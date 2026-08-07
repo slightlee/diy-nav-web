@@ -28,7 +28,7 @@ export interface AIProviderInput {
   type: AIProvider['type']
   apiKey?: string
   baseUrl?: string
-  model?: string
+  model: string
 }
 
 export interface AIUsageStats {
@@ -44,6 +44,22 @@ export interface AIUsageStats {
 export interface GenerateDescriptionResult {
   description: string
   tokensUsed?: number
+}
+
+export interface WebsiteClassificationInput {
+  name: string
+  url: string
+  description?: string
+  categories: Array<{ id: string; name: string }>
+  tags: Array<{ id: string; name: string }>
+}
+
+export interface WebsiteClassificationResult {
+  description: string
+  categoryId: string
+  categoryName: string
+  tagIds: string[]
+  tagNames: string[]
 }
 
 /**
@@ -137,7 +153,7 @@ export async function testAIProviderConfig(
 }
 
 export async function fetchAIProviderModels(
-  provider: Pick<AIProviderInput, 'type' | 'apiKey' | 'baseUrl' | 'model'> & {
+  provider: Pick<AIProviderInput, 'type' | 'apiKey' | 'baseUrl'> & {
     providerId?: string
   }
 ): Promise<string[]> {
@@ -167,6 +183,18 @@ export async function generateDescription(
   throw new Error(res.message || 'Failed to generate description')
 }
 
+export async function classifyWebsite(
+  input: WebsiteClassificationInput
+): Promise<WebsiteClassificationResult> {
+  const res = await request.post<WebsiteClassificationResult>('/api/ai/classify-website', input, {
+    timeout: 60000
+  })
+  if (res.success && res.data) {
+    return res.data
+  }
+  throw new Error(res.message || '自动归类失败')
+}
+
 /**
  * Get AI usage statistics
  */
@@ -193,6 +221,7 @@ export interface ChatResult {
 export interface AIActionResult {
   kind: 'website-added' | 'website-deleted' | 'website-updated'
   website: Website
+  classificationFailed?: boolean
   undoId?: string
 }
 

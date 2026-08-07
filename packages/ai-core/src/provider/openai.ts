@@ -13,16 +13,12 @@ export class OpenAIProvider extends OpenAICompatibleProvider {
   constructor() {
     super()
     this._baseUrl = PROVIDER_PRESETS.openai.baseUrl
-    this._model = PROVIDER_PRESETS.openai.defaultModel
   }
 
   override initialize(config: ProviderInitConfig): void {
     super.initialize(config)
     if (!this._baseUrl) {
       this._baseUrl = PROVIDER_PRESETS.openai.baseUrl
-    }
-    if (!this._model) {
-      this._model = PROVIDER_PRESETS.openai.defaultModel
     }
   }
 }

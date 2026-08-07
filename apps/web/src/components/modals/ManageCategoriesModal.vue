@@ -149,7 +149,10 @@
         <p class="delete-confirm-text">确定要删除分类“{{ categoryToDelete?.name }}”吗？</p>
         <p class="delete-confirm-warning">
           <i class="fas fa-info-circle" aria-hidden="true" />
-          <span>该分类下的网站将被移至“未分类”，删除后无法恢复。</span>
+          <span v-if="categoryAffectedCount > 0">
+            该分类下有 {{ categoryAffectedCount }} 个网站。删除后，这些网站将移至“未分类”。
+          </span>
+          <span v-else>删除后无法恢复，请确认是否继续。</span>
         </p>
       </div>
       <template #footer>
@@ -190,6 +193,9 @@ const editingForm = ref({
 const getCategoryCount = (id: string) => {
   return websiteStore.websites.filter(w => w.categoryId === id).length
 }
+const categoryAffectedCount = computed(() =>
+  categoryToDelete.value ? getCategoryCount(categoryToDelete.value.id) : 0
+)
 
 const handleAddCategory = () => {
   if (!newCategoryName.value.trim()) return
@@ -237,11 +243,8 @@ const confirmDelete = (category: Category) => {
 
 const handleDeleteCategory = () => {
   if (categoryToDelete.value) {
+    websiteStore.removeCategoryFromWebsites(categoryToDelete.value.id)
     categoryStore.deleteCategory(categoryToDelete.value.id)
-    const websites = websiteStore.websites.filter(w => w.categoryId === categoryToDelete.value?.id)
-    websites.forEach(w => {
-      websiteStore.updateWebsite(w.id, { categoryId: '' })
-    })
     showDeleteModal.value = false
     categoryToDelete.value = null
   }

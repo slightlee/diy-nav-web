@@ -118,19 +118,50 @@
                 <span v-if="errors.name" class="field-error">{{ errors.name }}</span>
               </label>
 
-              <label class="form-field">
+              <div
+                class="form-field"
+                @keydown.esc.stop="protocolMenuOpen = false"
+                @focusout="handleProtocolFocusOut"
+              >
                 <span class="field-label">接口协议</span>
-                <select v-model="form.type">
-                  <option
-                    v-for="option in protocolOptions"
-                    :key="option.value"
-                    :value="option.value"
+                <div
+                  ref="protocolSelectRef"
+                  class="protocol-select"
+                  :class="{ 'is-open': protocolMenuOpen }"
+                >
+                  <button
+                    type="button"
+                    class="protocol-select__trigger"
+                    aria-haspopup="listbox"
+                    :aria-expanded="protocolMenuOpen"
+                    @click="toggleProtocolMenu"
+                    @keydown="handleProtocolKeydown"
                   >
-                    {{ option.label }}
-                  </option>
-                </select>
-                <span class="field-hint">{{ selectedProtocol.hint }}</span>
-              </label>
+                    <span>{{ selectedProtocol.label }}</span>
+                    <i class="fas fa-chevron-down" aria-hidden="true" />
+                  </button>
+                  <div v-if="protocolMenuOpen" class="protocol-options" role="listbox">
+                    <button
+                      v-for="(option, index) in protocolOptions"
+                      :key="option.value"
+                      type="button"
+                      class="protocol-option"
+                      :class="{ 'is-selected': form.type === option.value }"
+                      role="option"
+                      :aria-selected="form.type === option.value"
+                      @click="selectProtocol(option.value)"
+                      @keydown="handleProtocolKeydown($event, index)"
+                    >
+                      <span>{{ option.label }}</span>
+                      <i
+                        v-if="form.type === option.value"
+                        class="fas fa-check"
+                        aria-hidden="true"
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
 
               <label class="form-field">
                 <span class="field-label">API Key</span>
@@ -178,8 +209,9 @@
                   <input
                     v-model="form.model"
                     type="text"
+                    required
                     autocomplete="off"
-                    :placeholder="selectedProtocol.modelPlaceholder"
+                    placeholder="请输入模型名称"
                     @focus="handleModelFocus"
                   />
                   <button
@@ -214,13 +246,12 @@
                     </button>
                   </div>
                 </div>
-                <span class="field-hint">
-                  留空使用协议默认模型：{{ selectedProtocol.modelPlaceholder }}
-                </span>
+                <span v-if="errors.model" class="field-error">{{ errors.model }}</span>
                 <span v-if="modelFetchError" class="field-error">{{ modelFetchError }}</span>
                 <span v-else-if="modelOptions.length" class="field-hint">
-                  已获取 {{ modelOptions.length }} 个模型，可直接选择或手动修改
+                  已获取 {{ modelOptions.length }} 个模型，请选择或手动输入
                 </span>
+                <span v-else class="field-hint">必须填写供应商实际支持的模型名称</span>
               </label>
             </div>
 
@@ -311,32 +342,30 @@ const loadingModels = ref(false)
 const modelFetchError = ref('')
 const modelSelectRef = ref<HTMLElement | null>(null)
 const modelMenuOpen = ref(false)
+const protocolSelectRef = ref<HTMLElement | null>(null)
+const protocolMenuOpen = ref(false)
+const protocolActiveIndex = ref(0)
+const protocolOptionRefs = ref<Array<HTMLButtonElement | null>>([])
 const modelMenuPlacement = ref<'down' | 'up'>('down')
 const modelMenuMaxHeight = ref(220)
 
 const protocolOptions: Array<{
   value: AIProtocol
   label: string
-  hint: string
   apiKeyPlaceholder: string
   baseUrlPlaceholder: string
-  modelPlaceholder: string
 }> = [
   {
     value: 'openai',
     label: 'OpenAI 兼容协议',
-    hint: '适用于 OpenAI、DeepSeek、通义千问等兼容接口',
     apiKeyPlaceholder: 'sk-...',
-    baseUrlPlaceholder: 'https://api.openai.com/v1',
-    modelPlaceholder: 'gpt-4o-mini'
+    baseUrlPlaceholder: 'https://api.openai.com/v1'
   },
   {
     value: 'claude',
     label: 'Claude 兼容协议',
-    hint: '适用于 Anthropic Claude Messages API 兼容接口',
     apiKeyPlaceholder: 'sk-ant-...',
-    baseUrlPlaceholder: 'https://api.anthropic.com/v1',
-    modelPlaceholder: 'claude-3-haiku-20240307'
+    baseUrlPlaceholder: 'https://api.anthropic.com/v1'
   }
 ]
 
@@ -350,7 +379,8 @@ const form = reactive({
 
 const errors = reactive({
   name: '',
-  apiKey: ''
+  apiKey: '',
+  model: ''
 })
 
 const selectedProtocol = computed(
@@ -378,6 +408,7 @@ const handleGoLogin = () => {
 const resetErrors = () => {
   errors.name = ''
   errors.apiKey = ''
+  errors.model = ''
 }
 
 const resetForm = () => {
@@ -391,6 +422,7 @@ const resetForm = () => {
   modelOptions.value = []
   modelFetchError.value = ''
   modelMenuOpen.value = false
+  protocolMenuOpen.value = false
   isCreating.value = false
   editingId.value = null
 }
@@ -398,6 +430,57 @@ const resetForm = () => {
 const handleDocumentPointerDown = (event: PointerEvent) => {
   if (!modelSelectRef.value?.contains(event.target as Node)) {
     modelMenuOpen.value = false
+  }
+  if (!protocolSelectRef.value?.contains(event.target as Node)) {
+    protocolMenuOpen.value = false
+  }
+}
+
+const handleProtocolFocusOut = (event: FocusEvent) => {
+  const nextTarget = event.relatedTarget as Node | null
+  if (!nextTarget || !protocolSelectRef.value?.contains(nextTarget)) {
+    protocolMenuOpen.value = false
+  }
+}
+
+const focusProtocolOption = async (index: number) => {
+  protocolActiveIndex.value = (index + protocolOptions.length) % protocolOptions.length
+  await nextTick()
+  protocolOptionRefs.value[protocolActiveIndex.value]?.focus()
+}
+
+const toggleProtocolMenu = () => {
+  protocolMenuOpen.value = !protocolMenuOpen.value
+  if (protocolMenuOpen.value) {
+    const selectedIndex = protocolOptions.findIndex(option => option.value === form.type)
+    protocolActiveIndex.value = selectedIndex >= 0 ? selectedIndex : 0
+    void nextTick(() => focusProtocolOption(protocolActiveIndex.value))
+  }
+}
+
+const handleProtocolKeydown = (event: KeyboardEvent, optionIndex?: number) => {
+  const currentIndex =
+    optionIndex ?? protocolOptions.findIndex(option => option.value === form.type)
+
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    protocolMenuOpen.value = false
+    protocolSelectRef.value?.querySelector<HTMLButtonElement>('.protocol-select__trigger')?.focus()
+    return
+  }
+
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault()
+    const direction = event.key === 'ArrowDown' ? 1 : -1
+    protocolMenuOpen.value = true
+    void focusProtocolOption(currentIndex + direction)
+    return
+  }
+
+  if (event.key === 'Home' || event.key === 'End') {
+    event.preventDefault()
+    protocolMenuOpen.value = true
+    void focusProtocolOption(event.key === 'Home' ? 0 : protocolOptions.length - 1)
   }
 }
 
@@ -416,7 +499,20 @@ const toggleModelMenu = () => {
 
 const selectModel = (model: string) => {
   form.model = model
+  errors.model = ''
   modelMenuOpen.value = false
+}
+
+const selectProtocol = (protocol: AIProtocol) => {
+  protocolMenuOpen.value = false
+  if (form.type === protocol) return
+  form.type = protocol
+  handleProtocolChange()
+}
+
+const handleProtocolChange = () => {
+  form.model = ''
+  errors.model = ''
 }
 
 const updateModelMenuPlacement = () => {
@@ -494,7 +590,10 @@ const handleAdd = async () => {
   if (!form.apiKey.trim() && !hasSavedApiKey.value) {
     errors.apiKey = 'API Key 不能为空'
   }
-  if (errors.name || errors.apiKey) return
+  if (!form.model.trim()) {
+    errors.model = '模型名称不能为空'
+  }
+  if (errors.name || errors.apiKey || errors.model) return
 
   submitting.value = true
   try {
@@ -502,8 +601,8 @@ const handleAdd = async () => {
       name: form.name.trim(),
       type: form.type,
       apiKey: form.apiKey.trim() || undefined,
-      baseUrl: form.baseUrl.trim() ? form.baseUrl.trim() : undefined,
-      model: form.model.trim() ? form.model.trim() : undefined
+      baseUrl: form.baseUrl.trim() || undefined,
+      model: form.model.trim()
     }
 
     if (editingId.value) {
@@ -528,8 +627,11 @@ const handleTestForm = async () => {
 
   if (!form.apiKey.trim() && !hasSavedApiKey.value) {
     errors.apiKey = '请先填写 API Key'
-    return
   }
+  if (!form.model.trim()) {
+    errors.model = '请先填写模型名称'
+  }
+  if (errors.apiKey || errors.model) return
 
   testingForm.value = true
   formTestResult.value = null
@@ -539,7 +641,7 @@ const handleTestForm = async () => {
       type: form.type,
       apiKey: form.apiKey.trim() || undefined,
       baseUrl: form.baseUrl.trim() || undefined,
-      model: form.model.trim() || undefined
+      model: form.model.trim()
     })
   } catch (e) {
     formTestResult.value = {
@@ -558,8 +660,8 @@ const handleFetchModels = async () => {
 
   if (!form.apiKey.trim() && !hasSavedApiKey.value) {
     errors.apiKey = '请先填写 API Key'
-    return
   }
+  if (errors.apiKey) return
 
   loadingModels.value = true
   try {
@@ -567,12 +669,14 @@ const handleFetchModels = async () => {
       providerId: editingId.value || undefined,
       type: form.type,
       apiKey: form.apiKey.trim() || undefined,
-      baseUrl: form.baseUrl.trim() || undefined,
-      model: form.model.trim() || undefined
+      baseUrl: form.baseUrl.trim() || undefined
     })
-    modelMenuOpen.value = false
     if (modelOptions.value.length === 0) {
+      modelMenuOpen.value = false
       modelFetchError.value = '服务未返回可用模型，请手动输入模型名称'
+    } else {
+      modelMenuOpen.value = true
+      await nextTick(updateModelMenuPlacement)
     }
   } catch (e) {
     modelOptions.value = []
@@ -909,7 +1013,7 @@ watch(
 }
 
 .form-field input,
-.form-field select {
+.protocol-select__trigger {
   height: 36px;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
@@ -917,6 +1021,44 @@ watch(
   font-size: 13px;
   color: var(--color-neutral-800);
   background-color: var(--account-control-bg, var(--bg-tile));
+}
+
+.protocol-select {
+  position: relative;
+}
+
+.protocol-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.protocol-select__trigger:hover,
+.protocol-select.is-open .protocol-select__trigger {
+  border-color: var(--color-primary);
+}
+
+.protocol-select__trigger:focus-visible {
+  outline: 2px solid rgba(var(--color-primary-rgb), 0.35);
+  outline-offset: 1px;
+}
+
+.protocol-select__trigger i {
+  color: var(--color-neutral-500);
+  font-size: var(--font-size-xs);
+  transition: transform 0.15s ease;
+}
+
+.protocol-select.is-open .protocol-select__trigger i {
+  color: var(--color-primary);
+  transform: rotate(180deg);
 }
 
 .model-select {
@@ -960,7 +1102,8 @@ watch(
   transform: translateY(-50%) rotate(180deg);
 }
 
-.model-options {
+.model-options,
+.protocol-options {
   position: absolute;
   z-index: 5;
   top: calc(100% + 4px);
@@ -982,7 +1125,8 @@ watch(
   bottom: calc(100% + 4px);
 }
 
-.model-option {
+.model-option,
+.protocol-option {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -999,12 +1143,15 @@ watch(
 }
 
 .model-option:hover,
-.model-option.is-selected {
+.model-option.is-selected,
+.protocol-option:hover,
+.protocol-option.is-selected {
   color: var(--color-primary);
   background-color: rgba(var(--color-primary-rgb), 0.08);
 }
 
-.model-option i {
+.model-option i,
+.protocol-option i {
   font-size: 11px;
 }
 
