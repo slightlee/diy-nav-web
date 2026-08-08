@@ -35,7 +35,27 @@
         <div class="backup-control-card backup-control-card--solo">
           <div class="backup-control-card__copy">
             <span class="setting-title">手动备份</span>
-            <span class="setting-desc">立即保存一份当前数据快照到历史备份。</span>
+            <div class="setting-desc current-data-row">
+              <span class="current-data-row__label">当前本地数据</span>
+              <div class="data-stats">
+                <span class="data-stat">
+                  <span class="data-stat__label">网站</span>
+                  <strong class="data-stat__value">
+                    {{ websiteStore.websites.length }}
+                  </strong>
+                </span>
+                <span class="data-stat">
+                  <span class="data-stat__label">分类</span>
+                  <strong class="data-stat__value">
+                    {{ categoryStore.categories.length }}
+                  </strong>
+                </span>
+                <span class="data-stat">
+                  <span class="data-stat__label">标签</span>
+                  <strong class="data-stat__value">{{ tagStore.tags.length }}</strong>
+                </span>
+              </div>
+            </div>
           </div>
           <BaseButton
             variant="primary"
@@ -100,23 +120,23 @@
                   {{ item.type === 'AUTO' ? '自动备份' : '手动备份' }}
                 </span>
                 <span class="backup-list__time">{{ item.createdAtText }}</span>
-                <span class="backup-list__size">{{ item.sizeText }}</span>
+                <span class="backup-list__size" :title="item.sizeText">
+                  {{ item.sizeText }}
+                </span>
               </div>
             </div>
-            <div class="backup-list__stats" :title="item.statsTitle">
-              <span class="backup-list__stat">
-                <em>{{ item.websiteCountText }}</em>
-                网站
+            <div class="backup-list__stats data-stats" :title="item.statsTitle">
+              <span class="data-stat">
+                <span class="data-stat__label">网站</span>
+                <strong class="data-stat__value">{{ item.websiteCountText }}</strong>
               </span>
-              <span class="backup-list__stat-sep" aria-hidden="true">·</span>
-              <span class="backup-list__stat">
-                <em>{{ item.categoryCountText }}</em>
-                分类
+              <span class="data-stat">
+                <span class="data-stat__label">分类</span>
+                <strong class="data-stat__value">{{ item.categoryCountText }}</strong>
               </span>
-              <span class="backup-list__stat-sep" aria-hidden="true">·</span>
-              <span class="backup-list__stat">
-                <em>{{ item.tagCountText }}</em>
-                标签
+              <span class="data-stat">
+                <span class="data-stat__label">标签</span>
+                <strong class="data-stat__value">{{ item.tagCountText }}</strong>
               </span>
             </div>
           </div>
@@ -492,7 +512,7 @@ const formattedBackupHistory = computed(() =>
       categoryCountText,
       tagCountText,
       statsTitle: hasStats
-        ? `${websiteCountText} 个网站 · ${categoryCountText} 个分类 · ${tagCountText} 个标签`
+        ? `网站 ${websiteCountText} · 分类 ${categoryCountText} · 标签 ${tagCountText}`
         : '旧备份未记录数量'
     }
   })
@@ -795,6 +815,42 @@ onUnmounted(() => {
   line-height: 1.45;
 }
 
+.current-data-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+}
+
+.current-data-row__label {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.data-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  gap: 16px;
+}
+
+.data-stat {
+  display: grid;
+  grid-template-columns: 2em 4ch;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.data-stat__label {
+  white-space: nowrap;
+}
+
+.data-stat__value {
+  color: var(--text-main);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
+
 .settings-container {
   display: flex;
   flex-direction: column;
@@ -938,31 +994,11 @@ onUnmounted(() => {
 
 .backup-list__stats {
   min-width: 0;
-  flex: 1 1 160px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  flex-wrap: wrap;
-  gap: 6px 8px;
+  flex: 0 0 auto;
   padding: 0 8px;
   color: var(--text-secondary);
   font-size: 12px;
   line-height: 1.4;
-}
-
-.backup-list__stat {
-  white-space: nowrap;
-
-  em {
-    font-style: normal;
-    font-weight: 650;
-    color: var(--text-main);
-    font-variant-numeric: tabular-nums;
-  }
-}
-
-.backup-list__stat-sep {
-  color: rgba(148, 163, 184, 0.55);
 }
 
 .backup-list__title-row {
@@ -990,8 +1026,13 @@ onUnmounted(() => {
 }
 
 .backup-list__size {
+  flex: 0 0 64px;
+  overflow: hidden;
   color: var(--text-muted);
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .backup-list__time {
