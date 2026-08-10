@@ -1,9 +1,13 @@
-import { watch, onMounted, onUnmounted } from 'vue'
+import { watch, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCloudSync } from '@/composables/useCloudSync'
 import { useWebsiteStore } from '@/stores/website'
 import { useCategoryStore } from '@/stores/category'
 import { useTagStore } from '@/stores/tag'
+import { useUIStore } from '@/stores/ui'
+import { useAIStore } from '@/stores/ai'
+import { useSettingsStore } from '@/stores/settings'
+import { captureAccountSession, isCurrentAccountSession } from '@/utils/account-session'
 
 const SYNC_DEBOUNCE_MS = 2000
 const SYNC_REFRESH_INTERVAL_MS = 60 * 1000
@@ -14,6 +18,9 @@ export function useDataSync() {
   const websiteStore = useWebsiteStore()
   const categoryStore = useCategoryStore()
   const tagStore = useTagStore()
+  const uiStore = useUIStore()
+  const aiStore = useAIStore()
+  const settingsStore = useSettingsStore()
   let syncTimer: number | null = null
   let refreshTimer: number | null = null
   let localSyncInFlight = false
@@ -37,28 +44,52 @@ export function useDataSync() {
   }
 
   const initSync = () => {
-    onMounted(() => {
-      if (authStore.isAuthenticated) {
-        // Start reconcile before any delayed auto-backup can snapshot local forks.
-        void cloudSync.checkOnLogin()
-      }
-    })
-
     watch(
-      () => authStore.isAuthenticated,
-      isAuthenticated => {
-        if (isAuthenticated) {
-          void cloudSync.checkOnLogin()
-        } else if (syncTimer) {
+      [
+        () => authStore.hasCheckedSession,
+        () => (authStore.isAuthenticated ? authStore.user?.id || null : null)
+      ],
+      ([hasCheckedSession, userId]) => {
+        if (syncTimer) {
           window.clearTimeout(syncTimer)
           syncTimer = null
-          cloudSync.resetSession()
-        } else {
-          cloudSync.resetSession()
         }
+
+        // Stop the old account before activating the next workspace. This
+        // prevents old data from being exported under the new session cookie.
+        cloudSync.resetSession(userId)
+        uiStore.closeAllModals()
+        aiStore.clearState()
+
+        if (!hasCheckedSession) {
+          uiStore.setLoading(true, '正在验证登录状态…')
+          return
+        }
+
+        settingsStore.activateAccountPreferences(userId)
+
+        if (userId) {
+          const session = captureAccountSession()
+          uiStore.setLoading(true, '正在加载账号数据…')
+          void cloudSync
+            .activateWorkspace()
+            .then(activated => {
+              if (activated && isCurrentAccountSession(session)) uiStore.setLoading(false)
+            })
+            .catch(error => {
+              if (!isCurrentAccountSession(session)) return
+              uiStore.setLoading(true, '账号数据加载失败，请刷新重试')
+              uiStore.showToast(
+                error instanceof Error ? error.message : '账号数据加载失败，请刷新重试',
+                'error'
+              )
+            })
+          return
+        }
+        uiStore.setLoading(false)
       },
       // Run before other watchers (e.g. auto-backup) react to the same login edge.
-      { flush: 'sync' }
+      { flush: 'sync', immediate: true }
     )
 
     watch(

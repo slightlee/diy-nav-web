@@ -168,6 +168,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function fetchUser() {
+    hasCheckedSession.value = false
     try {
       const res = await request.get<User>('/api/auth/me', undefined, {
         skipUnauthorizedHandler: true
@@ -177,6 +178,10 @@ export const useAuthStore = defineStore('auth', () => {
       } else {
         clearLocalAuth()
       }
+    } catch (error) {
+      // Never expose cached account data until the httpOnly-cookie session is verified.
+      clearLocalAuth()
+      throw error
     } finally {
       hasCheckedSession.value = true
     }
@@ -215,6 +220,10 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  function expireSession() {
+    clearLocalAuth()
+  }
+
   return {
     user,
     hasCheckedSession,
@@ -235,6 +244,7 @@ export const useAuthStore = defineStore('auth', () => {
     updateNickname,
     getAvatarOptions,
     updateAvatar,
-    logout
+    logout,
+    expireSession
   }
 })

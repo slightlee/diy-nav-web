@@ -181,7 +181,6 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import type { AccountPanelTab } from '@/types'
 import { useAuthStore, type AvatarOption } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
@@ -204,7 +203,6 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-const router = useRouter()
 const authStore = useAuthStore()
 const uiStore = useUIStore()
 const activeTab = ref<AccountPanelTab>(props.initialTab)
@@ -358,7 +356,6 @@ const handleLogout = async () => {
   try {
     await authStore.logout()
     emit('close')
-    router.push('/login')
   } finally {
     loggingOut.value = false
   }

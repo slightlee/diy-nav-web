@@ -1,4 +1,5 @@
 import { logger } from '@nav/logger'
+import { captureAccountSession } from '@/utils/account-session'
 
 export interface ApiResponse<T = unknown> {
   success: boolean
@@ -47,8 +48,8 @@ class HttpClient {
   ): Promise<Response> {
     const { timeout = this.defaultTimeout, ...init } = options
 
-    // Use AbortSignal.timeout if available (recent browsers/Node), otherwise fallback
-    const signal = AbortSignal.timeout(timeout)
+    const timeoutSignal = AbortSignal.timeout(timeout)
+    const signal = init.signal ? AbortSignal.any([init.signal, timeoutSignal]) : timeoutSignal
 
     return fetch(url, {
       ...init,
@@ -69,6 +70,20 @@ class HttpClient {
     }
 
     return headers
+  }
+
+  private waitForRetry(delay: number, signal: AbortSignal): Promise<void> {
+    return new Promise(resolve => {
+      const finish = () => {
+        window.clearTimeout(timer)
+        signal.removeEventListener('abort', finish)
+        resolve()
+      }
+
+      const timer = window.setTimeout(finish, delay)
+      signal.addEventListener('abort', finish, { once: true })
+      if (signal.aborted) finish()
+    })
   }
 
   private buildUrl(endpoint: string, params?: Record<string, string | undefined>): string {
@@ -97,12 +112,16 @@ class HttpClient {
       ...init
     } = options
     const url = this.buildUrl(endpoint, params)
+    const accountSession = captureAccountSession()
+    const signal = init.signal
+      ? AbortSignal.any([init.signal, accountSession.signal])
+      : accountSession.signal
 
     let attempt = 0
     while (attempt <= retries) {
       try {
         const headers = this.getHeaders(options)
-        const response = await this.fetchWithTimeout(url, { ...init, headers })
+        const response = await this.fetchWithTimeout(url, { ...init, headers, signal })
 
         if (response.status === 401) {
           if (!skipUnauthorizedHandler) {
@@ -121,6 +140,21 @@ class HttpClient {
         // But for now, just return data as is, trusting server structure.
         return data as ApiResponse<T>
       } catch (e: unknown) {
+        if (accountSession.signal.aborted) {
+          return {
+            success: false,
+            message: '账号已切换，请重新操作',
+            code: 'ACCOUNT_CONTEXT_CHANGED'
+          }
+        }
+        if (signal.aborted) {
+          return {
+            success: false,
+            message: '请求已取消',
+            code: 'REQUEST_ABORTED'
+          }
+        }
+
         attempt++
         const isLastAttempt = attempt > retries
 
@@ -144,7 +178,7 @@ class HttpClient {
         // Exponential backoff
         const delay = retryDelay * Math.pow(2, attempt - 1)
         logger.warn(`[HTTP] Request failed, retrying in ${delay}ms... (${attempt}/${retries})`)
-        await new Promise(resolve => setTimeout(resolve, delay))
+        await this.waitForRetry(delay, signal)
       }
     }
 

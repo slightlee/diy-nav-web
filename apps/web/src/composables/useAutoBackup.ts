@@ -6,11 +6,11 @@ import { useTagStore } from '@/stores/tag'
 import { useUIStore } from '@/stores/ui'
 import { createBackup } from '@/api/backup'
 import { shouldBlockBackgroundDataOps } from '@/composables/useCloudSync'
-import { invalidateBackupCache } from '@/composables/useBackup'
 import { computeCanonicalHash } from '@/utils/hash'
 import { logger } from '@nav/logger'
 import { BACKUP_CONFIG } from '@/config'
 import { watch, onUnmounted, type WatchStopHandle } from 'vue'
+import { getWorkspaceStorageKey } from '@/utils/user-data-storage'
 
 /**
  * Auto backup configuration constants
@@ -23,7 +23,6 @@ const AUTO_BACKUP_CONFIG = {
 } as const
 
 const AUTO_BACKUP_LOCK_NAME = 'auto-backup-lock'
-const LOCAL_STORAGE_BACKUP_LOCK_KEY = 'autoBackupLock'
 
 /**
  * Composable for automatic backup functionality
@@ -63,7 +62,8 @@ export function useAutoBackup() {
   async function runWithLocalStorageBackupLock(task: () => Promise<void>) {
     const now = Date.now()
     const lockId = `${now}-${Math.random()}`
-    const lockTimeStr = localStorage.getItem(LOCAL_STORAGE_BACKUP_LOCK_KEY)
+    const lockKey = getWorkspaceStorageKey('autoBackupLock')
+    const lockTimeStr = localStorage.getItem(lockKey)
     if (lockTimeStr) {
       const [lockTimeValue] = lockTimeStr.split('-')
       const lockTime = parseInt(lockTimeValue, 10)
@@ -74,11 +74,11 @@ export function useAutoBackup() {
     }
 
     try {
-      localStorage.setItem(LOCAL_STORAGE_BACKUP_LOCK_KEY, lockId)
+      localStorage.setItem(lockKey, lockId)
       await task()
     } finally {
-      if (localStorage.getItem(LOCAL_STORAGE_BACKUP_LOCK_KEY) === lockId) {
-        localStorage.removeItem(LOCAL_STORAGE_BACKUP_LOCK_KEY)
+      if (localStorage.getItem(lockKey) === lockId) {
+        localStorage.removeItem(lockKey)
       }
     }
   }
@@ -97,6 +97,8 @@ export function useAutoBackup() {
     if (!authStore.isAuthenticated || !settingsStore.settings.autoBackup) {
       return
     }
+    const userId = authStore.user?.id
+    if (!userId) return
 
     // Never archive while sync is reconciling or a conflict is open — that produced
     // tiny 700B "auto backups" of the local fork before the user chose how to merge.
@@ -110,6 +112,7 @@ export function useAutoBackup() {
     }
 
     await runWithBackupLock(async () => {
+      if (!authStore.isAuthenticated || authStore.user?.id !== userId) return
       if (
         shouldBlockBackgroundDataOps() ||
         uiStore.modalState.syncConflict ||
@@ -119,7 +122,9 @@ export function useAutoBackup() {
         return
       }
 
-      const lastBackupTimeStr = localStorage.getItem('lastAutoBackupTime')
+      const lastBackupTimeKey = getWorkspaceStorageKey('lastAutoBackupTime')
+      const lastBackupHashKey = getWorkspaceStorageKey('lastAutoBackupHash')
+      const lastBackupTimeStr = localStorage.getItem(lastBackupTimeKey)
       const lastBackupTime = lastBackupTimeStr ? parseInt(lastBackupTimeStr, 10) : 0
       const now = Date.now()
 
@@ -160,16 +165,17 @@ export function useAutoBackup() {
         // Use getHashData to exclude volatile fields (visitCount, lastVisited, etc.)
         const hashData = websiteStore.getHashData()
         const currentHash = await computeCanonicalHash(hashData)
-        const lastHash = localStorage.getItem('lastAutoBackupHash')
+        const lastHash = localStorage.getItem(lastBackupHashKey)
 
         if (currentHash === lastHash) {
           logger.info('[AutoBackup] Data has not changed since last backup, skipping.')
           // Update time to avoid checking again too soon, effectively resetting the timer
-          localStorage.setItem('lastAutoBackupTime', now.toString())
+          localStorage.setItem(lastBackupTimeKey, now.toString())
           return
         }
 
         if (
+          authStore.user?.id !== userId ||
           shouldBlockBackgroundDataOps() ||
           uiStore.modalState.syncConflict ||
           uiStore.modalState.syncRecovery
@@ -179,12 +185,12 @@ export function useAutoBackup() {
         }
 
         const res = await createBackup(data, 'AUTO')
+        if (!authStore.isAuthenticated || authStore.user?.id !== userId) return
 
         if (res.success) {
           logger.info('[AutoBackup] Backup successful')
-          localStorage.setItem('lastAutoBackupTime', Date.now().toString())
-          localStorage.setItem('lastAutoBackupHash', currentHash)
-          invalidateBackupCache()
+          localStorage.setItem(lastBackupTimeKey, Date.now().toString())
+          localStorage.setItem(lastBackupHashKey, currentHash)
         } else {
           logger.error({ err: res.message }, '[AutoBackup] Backup failed')
         }

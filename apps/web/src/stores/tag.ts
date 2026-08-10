@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
 import type { Tag } from '@/types'
 import { generateId } from '@/utils/helpers'
+import { getWorkspaceStorageKey } from '@/utils/user-data-storage'
 
 const TAG_COLORS = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#6B7280']
 
@@ -15,7 +16,7 @@ export const useTagStore = defineStore('tag', () => {
 
   const initializeData = () => {
     try {
-      const saved = JSON.parse(localStorage.getItem('tags') || '[]')
+      const saved = JSON.parse(localStorage.getItem(getWorkspaceStorageKey('tags')) || '[]')
       if (Array.isArray(saved)) {
         tags.value = saved.map(item => ({
           ...item,
@@ -91,7 +92,7 @@ export const useTagStore = defineStore('tag', () => {
 
   const saveToLocalStorage = () => {
     try {
-      localStorage.setItem('tags', JSON.stringify(tags.value))
+      localStorage.setItem(getWorkspaceStorageKey('tags'), JSON.stringify(tags.value))
     } catch {
       void 0
     }
@@ -99,7 +100,7 @@ export const useTagStore = defineStore('tag', () => {
 
   const clearAllTags = () => {
     tags.value = []
-    localStorage.removeItem('tags')
+    localStorage.removeItem(getWorkspaceStorageKey('tags'))
     bumpDataRevision()
   }
 

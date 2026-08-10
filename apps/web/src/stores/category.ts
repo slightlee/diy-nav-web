@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, readonly } from 'vue'
 import type { Category } from '@/types'
 import { generateId } from '@/utils/helpers'
+import { getWorkspaceStorageKey } from '@/utils/user-data-storage'
 
 export const useCategoryStore = defineStore('category', () => {
   const categories = ref<Category[]>([])
@@ -14,7 +15,7 @@ export const useCategoryStore = defineStore('category', () => {
 
   const initializeData = () => {
     try {
-      const saved = JSON.parse(localStorage.getItem('categories') || '[]')
+      const saved = JSON.parse(localStorage.getItem(getWorkspaceStorageKey('categories')) || '[]')
       if (Array.isArray(saved)) {
         categories.value = saved.map(item => ({
           ...item,
@@ -88,7 +89,7 @@ export const useCategoryStore = defineStore('category', () => {
 
   const saveToLocalStorage = () => {
     try {
-      localStorage.setItem('categories', JSON.stringify(categories.value))
+      localStorage.setItem(getWorkspaceStorageKey('categories'), JSON.stringify(categories.value))
     } catch {
       void 0
     }

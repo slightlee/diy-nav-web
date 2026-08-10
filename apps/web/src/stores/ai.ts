@@ -22,6 +22,7 @@ import {
   type AIActionResult
 } from '@/api/ai'
 import { useAuthStore } from './auth'
+import { captureAccountSession, isCurrentAccountSession } from '@/utils/account-session'
 
 export const useAIStore = defineStore('ai', () => {
   const authStore = useAuthStore()
@@ -39,6 +40,10 @@ export const useAIStore = defineStore('ai', () => {
     message: string
   } | null>(null)
   const undoAction = ref<{ id: string; execute: () => void } | null>(null)
+  const captureAuthenticatedSession = () => {
+    const session = captureAccountSession()
+    return authStore.isAuthenticated && session.userId ? session : null
+  }
 
   // Computed
   const isAvailable = computed(() => authStore.isAuthenticated)
@@ -49,16 +54,18 @@ export const useAIStore = defineStore('ai', () => {
    * Load user's AI providers
    */
   async function loadProviders() {
-    if (!authStore.isAuthenticated) return
+    const session = captureAuthenticatedSession()
+    if (!session) return
 
     isLoading.value = true
     error.value = null
     try {
-      providers.value = await getAIProviders()
+      const result = await getAIProviders()
+      if (isCurrentAccountSession(session)) providers.value = result
     } catch (e) {
-      error.value = (e as Error).message
+      if (isCurrentAccountSession(session)) error.value = (e as Error).message
     } finally {
-      isLoading.value = false
+      if (isCurrentAccountSession(session)) isLoading.value = false
     }
   }
 
@@ -66,10 +73,13 @@ export const useAIStore = defineStore('ai', () => {
    * Add a new AI provider
    */
   async function addProvider(input: AIProviderInput) {
+    const session = captureAuthenticatedSession()
+    if (!session) throw new Error('请先登录')
     isLoading.value = true
     error.value = null
     try {
       const provider = await addAIProvider(input)
+      if (!isCurrentAccountSession(session)) throw new Error('账号已切换，操作已取消')
       if (provider.isDefault) {
         providers.value.forEach(p => {
           p.isDefault = false
@@ -78,10 +88,10 @@ export const useAIStore = defineStore('ai', () => {
       providers.value.push(provider)
       return provider
     } catch (e) {
-      error.value = (e as Error).message
+      if (isCurrentAccountSession(session)) error.value = (e as Error).message
       throw e
     } finally {
-      isLoading.value = false
+      if (isCurrentAccountSession(session)) isLoading.value = false
     }
   }
 
@@ -89,17 +99,24 @@ export const useAIStore = defineStore('ai', () => {
    * Get provider detail
    */
   async function loadProviderDetail(id: string): Promise<AIProviderDetail> {
-    return getAIProvider(id)
+    const session = captureAuthenticatedSession()
+    if (!session) throw new Error('请先登录')
+    const result = await getAIProvider(id)
+    if (!isCurrentAccountSession(session)) throw new Error('账号已切换，操作已取消')
+    return result
   }
 
   /**
    * Update provider
    */
   async function updateProvider(id: string, input: AIProviderInput) {
+    const session = captureAuthenticatedSession()
+    if (!session) throw new Error('请先登录')
     isLoading.value = true
     error.value = null
     try {
       const provider = await updateAIProvider(id, input)
+      if (!isCurrentAccountSession(session)) throw new Error('账号已切换，操作已取消')
       if (provider.isDefault) {
         providers.value.forEach(p => {
           p.isDefault = false
@@ -111,10 +128,10 @@ export const useAIStore = defineStore('ai', () => {
       }
       return provider
     } catch (e) {
-      error.value = (e as Error).message
+      if (isCurrentAccountSession(session)) error.value = (e as Error).message
       throw e
     } finally {
-      isLoading.value = false
+      if (isCurrentAccountSession(session)) isLoading.value = false
     }
   }
 
@@ -122,29 +139,36 @@ export const useAIStore = defineStore('ai', () => {
    * Remove an AI provider
    */
   async function removeProvider(id: string) {
+    const session = captureAuthenticatedSession()
+    if (!session) throw new Error('请先登录')
     isLoading.value = true
     error.value = null
     try {
       await deleteAIProvider(id)
-      providers.value = await getAIProviders()
+      const result = await getAIProviders()
+      if (!isCurrentAccountSession(session)) throw new Error('账号已切换，操作已取消')
+      providers.value = result
     } catch (e) {
-      error.value = (e as Error).message
+      if (isCurrentAccountSession(session)) error.value = (e as Error).message
       throw e
     } finally {
-      isLoading.value = false
+      if (isCurrentAccountSession(session)) isLoading.value = false
     }
   }
 
   async function setDefaultProvider(id: string) {
+    const session = captureAuthenticatedSession()
+    if (!session) throw new Error('请先登录')
     error.value = null
     try {
       const provider = await setDefaultAIProvider(id)
+      if (!isCurrentAccountSession(session)) throw new Error('账号已切换，操作已取消')
       providers.value.forEach(item => {
         item.isDefault = item.id === provider.id
       })
       return provider
     } catch (e) {
-      error.value = (e as Error).message
+      if (isCurrentAccountSession(session)) error.value = (e as Error).message
       throw e
     }
   }
@@ -153,12 +177,14 @@ export const useAIStore = defineStore('ai', () => {
    * Load usage statistics
    */
   async function loadUsage() {
-    if (!authStore.isAuthenticated) return
+    const session = captureAuthenticatedSession()
+    if (!session) return
 
     try {
-      usage.value = await getAIUsage()
+      const result = await getAIUsage()
+      if (isCurrentAccountSession(session)) usage.value = result
     } catch (e) {
-      error.value = (e as Error).message
+      if (isCurrentAccountSession(session)) error.value = (e as Error).message
     }
   }
 
@@ -172,6 +198,8 @@ export const useAIStore = defineStore('ai', () => {
     error.value = null
     pendingAction.value = null
     undoAction.value = null
+    isLoading.value = false
+    isChatLoading.value = false
   }
 
   /**
@@ -196,6 +224,8 @@ export const useAIStore = defineStore('ai', () => {
    */
   async function sendChat() {
     if (messages.value.length === 0 || isChatLoading.value) return
+    const session = captureAuthenticatedSession()
+    if (!session?.userId) return
 
     isChatLoading.value = true
     error.value = null
@@ -203,6 +233,7 @@ export const useAIStore = defineStore('ai', () => {
       const result = await sendChatMessage(
         messages.value.map(({ role, content }) => ({ role, content }))
       )
+      if (!isCurrentAccountSession(session)) return
       const content = result.content
 
       // Parse action commands from response: [ACTION:name:{...json...}]
@@ -309,7 +340,8 @@ export const useAIStore = defineStore('ai', () => {
         let actionResult: AIActionResult | undefined
 
         for (const action of actions) {
-          const toolResult = await executeToolCall(action.name, action.args)
+          const toolResult = await executeToolCall(action.name, action.args, session)
+          if (!isCurrentAccountSession(session)) return
           let resultText = toolResult.success
             ? `✅ ${toolResult.message}`
             : `❌ ${toolResult.message}`
@@ -378,6 +410,7 @@ export const useAIStore = defineStore('ai', () => {
         })
       }
     } catch (e) {
+      if (!isCurrentAccountSession(session)) return
       error.value = (e as Error).message
       // Add error message
       messages.value.push({
@@ -385,19 +418,24 @@ export const useAIStore = defineStore('ai', () => {
         content: `抱歉，发生错误: ${error.value}`
       })
     } finally {
-      isChatLoading.value = false
+      if (isCurrentAccountSession(session)) {
+        isChatLoading.value = false
+      }
     }
   }
 
   async function confirmPendingAction() {
     const action = pendingAction.value
     if (!action || isChatLoading.value) return
+    const session = captureAuthenticatedSession()
+    if (!session?.userId) return
 
     pendingAction.value = null
     isChatLoading.value = true
     try {
       const { executeToolCall } = await import('@/lib/ai-tools')
-      const toolResult = await executeToolCall(action.name, action.args)
+      const toolResult = await executeToolCall(action.name, action.args, session)
+      if (!isCurrentAccountSession(session)) return
       let resultText = toolResult.success ? `✅ ${toolResult.message}` : `❌ ${toolResult.message}`
       let actionResult: AIActionResult | undefined
 
@@ -412,12 +450,15 @@ export const useAIStore = defineStore('ai', () => {
 
       messages.value.push({ role: 'assistant', content: resultText, actionResult })
     } catch (e) {
+      if (!isCurrentAccountSession(session)) return
       messages.value.push({
         role: 'assistant',
         content: `❌ 操作失败：${(e as Error).message}`
       })
     } finally {
-      isChatLoading.value = false
+      if (isCurrentAccountSession(session)) {
+        isChatLoading.value = false
+      }
     }
   }
 

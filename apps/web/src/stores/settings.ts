@@ -7,6 +7,7 @@ import {
 } from '@nav/config/brand'
 import type { UserPreferences, UserSettings } from '@nav/types'
 import { getPreferences, updatePreferences } from '@/api/preferences'
+import { captureAccountSession, isCurrentAccountSession } from '@/utils/account-session'
 
 export const DEFAULT_SETTINGS: UserSettings = {
   theme: 'auto',
@@ -140,12 +141,32 @@ export const useSettingsStore = defineStore('settings', () => {
     localStorage.setItem(getPreferencesCacheKey(userId), JSON.stringify(preferences))
   }
 
+  /**
+   * Switches the account-owned settings view without touching the device theme.
+   * Signed-out users get neutral defaults; signed-in users get only their own
+   * cache until the server response arrives.
+   */
+  const activateAccountPreferences = (userId?: string | null) => {
+    const cached = userId ? readCachedPreferences(userId) : null
+    settings.value = normalizeSettings({
+      ...DEFAULT_SETTINGS,
+      theme: settings.value.theme,
+      autoBackup: false,
+      ...(cached || {})
+    })
+    saveToLocalStorage()
+    applyTheme()
+    applyDocumentTitle()
+  }
+
   const saveRemotePreferences = async (userId?: string) => {
     if (!userId) return
+    const session = captureAccountSession()
+    if (session.userId !== userId) return
     const preferences = currentPreferences()
     try {
       const res = await updatePreferences(preferences)
-      if (res.success) cachePreferences(userId, preferences)
+      if (res.success && isCurrentAccountSession(session)) cachePreferences(userId, preferences)
     } catch {
       // 本地设置仍然有效，服务端失败时等待下次登录或用户修改后重试。
     }
@@ -153,6 +174,8 @@ export const useSettingsStore = defineStore('settings', () => {
 
   const loadRemotePreferences = (userId?: string): Promise<void> => {
     if (!userId) return Promise.resolve()
+    const session = captureAccountSession()
+    if (session.userId !== userId) return Promise.resolve()
 
     const cached = readCachedPreferences(userId)
     // 先用缓存完成首屏展示，但不能因此跳过服务端校验，否则其他设备的修改会过期。
@@ -167,6 +190,7 @@ export const useSettingsStore = defineStore('settings', () => {
     remoteLoadPromise = (async () => {
       try {
         const res = await getPreferences()
+        if (!isCurrentAccountSession(session)) return
         if (!res.success || !res.data) return
 
         if (res.data.initialized) {
@@ -235,37 +259,6 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
-  const backupData = () => {
-    const backup = {
-      websites: localStorage.getItem('websites'),
-      categories: localStorage.getItem('categories'),
-      tags: localStorage.getItem('tags'),
-      settings: JSON.stringify(settings.value),
-      timestamp: new Date().toISOString()
-    }
-    return JSON.stringify(backup, null, 2)
-  }
-
-  const restoreData = (backupData: string) => {
-    try {
-      const backup = JSON.parse(backupData)
-      if (backup.websites) localStorage.setItem('websites', backup.websites)
-      if (backup.categories) localStorage.setItem('categories', backup.categories)
-      if (backup.tags) localStorage.setItem('tags', backup.tags)
-      if (backup.settings) {
-        const parsed =
-          typeof backup.settings === 'string' ? JSON.parse(backup.settings) : backup.settings
-        settings.value = normalizeSettings(parsed)
-        applyTheme()
-        applyDocumentTitle()
-      }
-      saveToLocalStorage()
-      return true
-    } catch {
-      return false
-    }
-  }
-
   // Keep tab title in sync if settings mutated elsewhere
   watch(
     () => settings.value.navTitle,
@@ -275,6 +268,7 @@ export const useSettingsStore = defineStore('settings', () => {
   return {
     settings: readonly(settings),
     loadSettings,
+    activateAccountPreferences,
     updateSettings,
     resetSettings,
     setTheme,
@@ -284,8 +278,6 @@ export const useSettingsStore = defineStore('settings', () => {
     loadRemotePreferences,
     clearPreferencesCache,
     exportSettings,
-    importSettings,
-    backupData,
-    restoreData
+    importSettings
   }
 })

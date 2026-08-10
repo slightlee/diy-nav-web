@@ -3,7 +3,6 @@ import { logger } from '@nav/logger'
 import { canonicalizeSyncDataForHash, mergeSyncData } from '@nav/utils'
 import type { SyncPayload } from '@/types'
 import { createBackup } from '@/api/backup'
-import { invalidateBackupCache } from '@/composables/useBackup'
 import {
   disableSync,
   enableSync,
@@ -18,6 +17,21 @@ import { useSettingsStore } from '@/stores/settings'
 import { useUIStore } from '@/stores/ui'
 import { useWebsiteStore } from '@/stores/website'
 import { computeCanonicalHash } from '@/utils/hash'
+import {
+  claimAnonymousWorkspace,
+  clearAnonymousWorkspace,
+  clearWorkspaceBackupState,
+  completeWorkspaceClaim,
+  getWorkspaceOwner,
+  hasPendingWorkspaceClaim,
+  readWorkspaceData,
+  setWorkspaceOwner
+} from '@/utils/user-data-storage'
+import {
+  beginAccountSession,
+  captureAccountSession,
+  isCurrentAccountSessionVersion
+} from '@/utils/account-session'
 
 const isSyncing = ref(false)
 /** Only true while enable/disable sync API (and post-enable reconcile) runs. */
@@ -29,12 +43,8 @@ let pendingRemoteSnapshot: SyncPayload | null = null
 let checkPromise: Promise<void> | null = null
 let syncWritePromise: Promise<void> | null = null
 let syncWriteRequested = false
-let pendingRemoteHash: string | null = null
 let pendingRecoveryHash: string | null = null
-let activeSyncUserId = ''
 let checkPromiseUserId = ''
-let checkPromiseToken: symbol | null = null
-let sessionGeneration = 0
 /** True while conflict/recovery UI owns the session — blocks all automatic pushes. */
 let conflictGate = false
 /**
@@ -54,14 +64,11 @@ class SyncRequestError extends Error {
 
 const pendingKey = (userId?: string) => `syncConflictPending:${userId || 'anonymous'}`
 const baseHashKey = (userId: string) => `syncBaseHash:${userId}`
-/** Fallback key so pending survives even if user id was briefly missing. */
-const PENDING_GLOBAL_KEY = 'syncConflictPending'
 
 export const hasPendingSyncConflict = () => {
   if (conflictGate) return true
   const userId = useAuthStore().user?.id
-  if (userId && localStorage.getItem(pendingKey(userId)) === 'true') return true
-  return localStorage.getItem(PENDING_GLOBAL_KEY) === 'true'
+  return !!userId && localStorage.getItem(pendingKey(userId)) === 'true'
 }
 
 /**
@@ -84,7 +91,9 @@ export function useCloudSync() {
 
   const userId = () => authStore.user?.id || ''
   const isActiveSession = (expectedUserId: string, generation: number) =>
-    generation === sessionGeneration && authStore.isAuthenticated && userId() === expectedUserId
+    isCurrentAccountSessionVersion(expectedUserId, generation) &&
+    authStore.isAuthenticated &&
+    userId() === expectedUserId
 
   const exportSyncPayload = (): SyncPayload => {
     const payload = websiteStore.exportData()
@@ -123,7 +132,6 @@ export function useCloudSync() {
   const markConflictPending = () => {
     conflictGate = true
     reconcileGuard = true
-    localStorage.setItem(PENDING_GLOBAL_KEY, 'true')
     const id = userId()
     if (id) localStorage.setItem(pendingKey(id), 'true')
   }
@@ -132,10 +140,9 @@ export function useCloudSync() {
     conflictGate = false
     reconcileGuard = false
     localStorage.removeItem(pendingKey(userId()))
-    localStorage.removeItem(PENDING_GLOBAL_KEY)
+    // Remove the legacy unscoped marker left by older clients.
     localStorage.removeItem('syncConflictPending')
     pendingRemoteSnapshot = null
-    pendingRemoteHash = null
   }
 
   const closeConflict = () => {
@@ -169,13 +176,12 @@ export function useCloudSync() {
     }
 
     const expectedUserId = userId()
-    const generation = sessionGeneration
+    const generation = captureAccountSession().version
     const res = await getSyncState()
     if (!res.success || !res.data) {
       throw new Error(res.message || '获取同步状态失败')
     }
     if (!isActiveSession(expectedUserId, generation)) return null
-    activeSyncUserId = expectedUserId
     remoteState.value = res.data
     return res.data
   }
@@ -197,7 +203,6 @@ export function useCloudSync() {
     const local = exportSyncPayload()
     const frozen = freezeSnapshot(snapshot)
     pendingRemoteSnapshot = frozen
-    pendingRemoteHash = state.currentHash
     markConflictPending()
     uiStore.openModal('syncConflict', {
       localStats: {
@@ -239,7 +244,14 @@ export function useCloudSync() {
     return localWebsites.length < Math.ceil(remoteWebsites.length * 0.5)
   }
 
-  const applyRemoteSnapshot = (snapshot: SyncPayload, hash: string) => {
+  const applyRemoteSnapshot = (
+    snapshot: SyncPayload,
+    hash: string,
+    expectedUserId: string,
+    generation: number
+  ) => {
+    if (!isActiveSession(expectedUserId, generation)) return false
+
     const localById = new Map(websiteStore.websites.map(website => [website.id, website]))
     const localByUrl = new Map(
       websiteStore.websites.map(website => [website.url.trim().toLocaleLowerCase(), website])
@@ -257,13 +269,14 @@ export function useCloudSync() {
       }
     })
 
-    setBaseHash(hash)
+    setBaseHash(hash, expectedUserId)
     websiteStore.importData({ data: { ...snapshot.data, websites } })
+    return true
   }
 
   const pushSnapshot = async (snapshot: SyncPayload, expectedHash: string | null) => {
     const expectedUserId = userId()
-    const generation = sessionGeneration
+    const generation = captureAccountSession().version
     const res = await updateSyncSnapshot(snapshot, expectedHash)
     if (!isActiveSession(expectedUserId, generation)) return false
     if (res.success && res.data) {
@@ -280,7 +293,9 @@ export function useCloudSync() {
       // Keep any frozen conflict snapshot; just refresh the modal with latest cloud if needed.
       try {
         const state = await refreshState()
+        if (!isActiveSession(expectedUserId, generation)) return false
         const remote = await fetchRemoteSnapshot()
+        if (!isActiveSession(expectedUserId, generation)) return false
         if (state?.currentHash && remote && !pendingRemoteSnapshot) {
           await openConflictModal(remote, state)
         } else if (state?.currentHash && remote && pendingRemoteSnapshot) {
@@ -288,7 +303,6 @@ export function useCloudSync() {
           const frozen = pendingRemoteSnapshot
           const useRemote = entityCount(remote) >= entityCount(frozen) ? remote : frozen
           pendingRemoteSnapshot = useRemote
-          pendingRemoteHash = state.currentHash
           markConflictPending()
           uiStore.openModal('syncConflict', {
             localStats: {
@@ -320,10 +334,14 @@ export function useCloudSync() {
   const tryResolveEqualContent = async (
     local: SyncPayload,
     remote: SyncPayload,
-    state: SyncState
+    state: SyncState,
+    expectedUserId: string,
+    generation: number
   ): Promise<boolean> => {
     const localHash = await computePayloadHash(local)
+    if (!isActiveSession(expectedUserId, generation)) return false
     const remoteContentHash = await computePayloadHash(remote)
+    if (!isActiveSession(expectedUserId, generation)) return false
 
     if (localHash === state.currentHash || localHash === remoteContentHash) {
       if (localHash !== state.currentHash && state.currentHash) {
@@ -337,7 +355,7 @@ export function useCloudSync() {
         }
         return false
       }
-      setBaseHash(state.currentHash)
+      setBaseHash(state.currentHash, expectedUserId)
       clearConflictPending()
       uiStore.closeModal('syncConflict')
       uiStore.closeModal('syncRecovery')
@@ -381,10 +399,8 @@ export function useCloudSync() {
     }
 
     const expectedUserId = userId()
-    const generation = sessionGeneration
+    const generation = captureAccountSession().version
     if (checkPromise && checkPromiseUserId === expectedUserId) return checkPromise
-    const taskToken = Symbol('sync-check')
-
     const currentPromise = (async () => {
       isSyncing.value = true
       reconcileGuard = true
@@ -409,13 +425,17 @@ export function useCloudSync() {
 
         const local = exportSyncPayload()
         const localHash = await computePayloadHash(local)
+        if (!isActiveSession(expectedUserId, generation)) return
 
         // The state endpoint already carries the canonical cloud hash. Avoid
         // downloading the full snapshot when this device is already in sync.
         // A pending conflict still requires the frozen remote snapshot to
         // resolve the user's decision safely.
         if (state.currentHash && localHash === state.currentHash && !hasPendingSyncConflict()) {
-          setBaseHash(state.currentHash)
+          setBaseHash(state.currentHash, expectedUserId)
+          if (hasPendingWorkspaceClaim(expectedUserId)) {
+            completeWorkspaceClaim(expectedUserId)
+          }
           clearConflictPending()
           return
         }
@@ -427,6 +447,7 @@ export function useCloudSync() {
           } catch (error) {
             if (error instanceof SyncRequestError && error.code === 'SYNC_SNAPSHOT_UNAVAILABLE') {
               const localHash = await computePayloadHash(local)
+              if (!isActiveSession(expectedUserId, generation)) return
               if (hasSyncData(local) && localHash === state.currentHash) {
                 const repaired = await pushSnapshot(local, state.currentHash)
                 if (repaired) clearConflictPending()
@@ -440,10 +461,55 @@ export function useCloudSync() {
         }
         if (!isActiveSession(expectedUserId, generation)) return
 
+        // A first-login claim owns both sides: local data was created before login,
+        // while the remote snapshot already belongs to the same verified account.
+        // Merge additively before normal base-hash logic so neither side can overwrite the other.
+        if (hasPendingWorkspaceClaim(expectedUserId)) {
+          if (!state.currentHash || !remote) {
+            if (hasSyncData(local)) {
+              const pushed = await pushSnapshot(local, state.currentHash || null)
+              if (!pushed) return
+            } else {
+              setBaseHash(null, expectedUserId)
+            }
+            completeWorkspaceClaim(expectedUserId)
+            clearConflictPending()
+            uiStore.closeModal('syncConflict')
+            return
+          }
+
+          const contentResolved = await tryResolveEqualContent(
+            local,
+            remote,
+            state,
+            expectedUserId,
+            generation
+          )
+          if (!isActiveSession(expectedUserId, generation)) return
+          if (contentResolved) {
+            completeWorkspaceClaim(expectedUserId)
+            return
+          }
+
+          const mergedData = mergeSyncData(local.data, remote.data)
+          websiteStore.importData({ data: mergedData })
+          const pushed = await pushSnapshot(exportSyncPayload(), state.currentHash)
+          if (!pushed) return
+
+          completeWorkspaceClaim(expectedUserId)
+          clearConflictPending()
+          uiStore.closeModal('syncConflict')
+          return
+        }
+
         // Empty cloud: first upload is OK only when there is no existing remote hash.
         if (!state.currentHash || !remote) {
-          if (hasSyncData(local)) await pushSnapshot(local, null)
-          else setBaseHash(null)
+          if (hasSyncData(local)) {
+            const pushed = await pushSnapshot(local, null)
+            if (!pushed) return
+          } else {
+            setBaseHash(null, expectedUserId)
+          }
           clearConflictPending()
           uiStore.closeModal('syncConflict')
           return
@@ -451,7 +517,15 @@ export function useCloudSync() {
 
         // Always re-check content equality first (including after refresh with pending flag).
         // Same counts + same business fields must NOT open a conflict modal.
-        if (await tryResolveEqualContent(local, remote, state)) return
+        const contentResolved = await tryResolveEqualContent(
+          local,
+          remote,
+          state,
+          expectedUserId,
+          generation
+        )
+        if (!isActiveSession(expectedUserId, generation)) return
+        if (contentResolved) return
 
         const baseHash = getBaseHash()
 
@@ -472,7 +546,7 @@ export function useCloudSync() {
 
         // Local empty → take cloud.
         if (!hasSyncData(local)) {
-          applyRemoteSnapshot(remote, state.currentHash)
+          if (!applyRemoteSnapshot(remote, state.currentHash, expectedUserId, generation)) return
           clearConflictPending()
           return
         }
@@ -486,7 +560,7 @@ export function useCloudSync() {
             clearConflictPending()
             return
           }
-          applyRemoteSnapshot(remote, state.currentHash)
+          if (!applyRemoteSnapshot(remote, state.currentHash, expectedUserId, generation)) return
           clearConflictPending()
           return
         }
@@ -504,7 +578,8 @@ export function useCloudSync() {
             await openConflictModal(remote, state)
             return
           }
-          await pushSnapshot(local, state.currentHash)
+          const pushed = await pushSnapshot(local, state.currentHash)
+          if (!pushed) return
           clearConflictPending()
           return
         }
@@ -525,11 +600,10 @@ export function useCloudSync() {
           logger.error({ err: error }, 'Failed to reconcile sync state')
         }
       } finally {
-        if (checkPromiseToken === taskToken) {
+        if (isActiveSession(expectedUserId, generation)) {
           isSyncing.value = false
           checkPromise = null
           checkPromiseUserId = ''
-          checkPromiseToken = null
           // Conflict/recovery still needs the guard until the user finishes.
           if (!conflictGate) reconcileGuard = false
         }
@@ -537,7 +611,6 @@ export function useCloudSync() {
     })()
     checkPromise = currentPromise
     checkPromiseUserId = expectedUserId
-    checkPromiseToken = taskToken
 
     return currentPromise
   }
@@ -546,13 +619,21 @@ export function useCloudSync() {
     syncWriteRequested = true
     if (syncWritePromise) return syncWritePromise
 
-    syncWritePromise = (async () => {
+    const expectedUserId = userId()
+    const generation = captureAccountSession().version
+    if (!isActiveSession(expectedUserId, generation)) {
+      syncWriteRequested = false
+      return
+    }
+    const currentPromise = (async () => {
       while (syncWriteRequested) {
+        if (!isActiveSession(expectedUserId, generation)) return
         syncWriteRequested = false
-        if (!authStore.isAuthenticated || hasPendingSyncConflict()) return
+        if (hasPendingSyncConflict()) return
         if (isSyncing.value) return
 
         const state = remoteState.value || (await refreshState())
+        if (!isActiveSession(expectedUserId, generation)) return
         if (!state?.enabled) return
         if (hasPendingSyncConflict()) return
 
@@ -560,13 +641,15 @@ export function useCloudSync() {
         // Never invent a base and push. Without a base hash, only checkOnLogin may decide.
         if (state.currentHash && !baseHash) {
           await checkOnLogin()
+          if (!isActiveSession(expectedUserId, generation)) return
           return
         }
 
         const local = exportSyncPayload()
         const localHash = await computePayloadHash(local)
+        if (!isActiveSession(expectedUserId, generation)) return
         if (localHash === state.currentHash) {
-          setBaseHash(state.currentHash)
+          setBaseHash(state.currentHash, expectedUserId)
           continue
         }
 
@@ -574,6 +657,7 @@ export function useCloudSync() {
         if (state.currentHash) {
           try {
             const remote = await fetchRemoteSnapshot()
+            if (!isActiveSession(expectedUserId, generation)) return
             if (remote && shouldRequireConflictInsteadOfPush(local, remote)) {
               await openConflictModal(remote, state)
               return
@@ -587,22 +671,32 @@ export function useCloudSync() {
 
         try {
           await pushSnapshot(local, baseHash)
+          if (!isActiveSession(expectedUserId, generation)) return
         } catch (error) {
-          logger.error({ err: error }, 'Failed to push local sync changes')
+          if (isActiveSession(expectedUserId, generation)) {
+            logger.error({ err: error }, 'Failed to push local sync changes')
+          }
         }
       }
     })().finally(() => {
-      syncWritePromise = null
+      if (isActiveSession(expectedUserId, generation)) {
+        syncWritePromise = null
+      }
     })
+    syncWritePromise = currentPromise
 
-    return syncWritePromise
+    return currentPromise
   }
 
   const setSyncEnabled = async (enabled: boolean) => {
     if (isTogglingSync.value) return false
+    const expectedUserId = userId()
+    const generation = captureAccountSession().version
+    if (!isActiveSession(expectedUserId, generation)) return false
     isTogglingSync.value = true
     try {
       const res = enabled ? await enableSync() : await disableSync()
+      if (!isActiveSession(expectedUserId, generation)) return false
       if (!res.success || !res.data) throw new Error(res.message || '更新同步状态失败')
       remoteState.value = res.data
 
@@ -612,6 +706,7 @@ export function useCloudSync() {
       if (enabled) {
         // Reconcile after enable (uses its own isSyncing).
         await checkOnLogin()
+        if (!isActiveSession(expectedUserId, generation)) return false
         uiStore.showToast('云同步已开启：各设备登录后将自动对齐数据', 'success')
       } else {
         closeConflict()
@@ -620,88 +715,147 @@ export function useCloudSync() {
       }
       return true
     } catch (error) {
-      logger.error({ err: error }, 'Failed to update sync state')
-      uiStore.showToast('云同步设置更新失败，请重试', 'error')
+      if (isActiveSession(expectedUserId, generation)) {
+        logger.error({ err: error }, 'Failed to update sync state')
+        uiStore.showToast('云同步设置更新失败，请重试', 'error')
+      }
       return false
     } finally {
-      isTogglingSync.value = false
+      if (isActiveSession(expectedUserId, generation)) {
+        isTogglingSync.value = false
+      }
     }
   }
 
-  const resetSession = () => {
-    sessionGeneration += 1
+  const resetSession = (nextUserId?: string | null) => {
+    beginAccountSession(nextUserId)
     conflictGate = false
     reconcileGuard = false
+    isSyncing.value = false
     isTogglingSync.value = false
     resolvingAction.value = null
-    if (activeSyncUserId) localStorage.removeItem(pendingKey(activeSyncUserId))
-    localStorage.removeItem(PENDING_GLOBAL_KEY)
-    activeSyncUserId = ''
+    // Keep the old account's scoped conflict marker. If that account returns,
+    // reconciliation must resume instead of treating an unresolved fork as safe.
+    localStorage.removeItem('syncConflictPending')
     checkPromise = null
     checkPromiseUserId = ''
-    checkPromiseToken = null
     syncWriteRequested = false
+    syncWritePromise = null
     remoteState.value = null
     pendingRemoteSnapshot = null
-    pendingRemoteHash = null
     pendingRecoveryHash = null
     uiStore.setLoading(false)
     uiStore.closeModal('syncConflict')
     uiStore.closeModal('syncRecovery')
   }
 
+  /** Activates the authenticated user's local partition, then reconciles cloud data. */
+  const activateWorkspace = async () => {
+    const expectedUserId = userId()
+    const generation = captureAccountSession().version
+    if (!isActiveSession(expectedUserId, generation)) return false
+
+    const owner = getWorkspaceOwner()
+    if (owner.kind === 'anonymous') {
+      const anonymousData = exportSyncPayload().data
+      const userOwner = { kind: 'user' as const, userId: expectedUserId }
+      const userData = readWorkspaceData(userOwner)
+      claimAnonymousWorkspace(expectedUserId)
+      websiteStore.importData({ data: mergeSyncData(anonymousData, userData) })
+      clearAnonymousWorkspace()
+      clearWorkspaceBackupState()
+    } else if (owner.userId !== expectedUserId) {
+      const userOwner = { kind: 'user' as const, userId: expectedUserId }
+      const userData = readWorkspaceData(userOwner)
+      setWorkspaceOwner(userOwner)
+      websiteStore.importData({ data: userData })
+    }
+
+    // First login claims anonymous data and enables its first cloud upload.
+    if (hasPendingWorkspaceClaim(expectedUserId)) {
+      const enabled = await enableSync()
+      if (!isActiveSession(expectedUserId, generation)) return false
+      if (!enabled.success || !enabled.data) {
+        throw new Error(enabled.message || '开启云同步失败')
+      }
+      remoteState.value = enabled.data
+      settingsStore.updateSettings({ autoBackup: true })
+    }
+
+    await checkOnLogin()
+    return isActiveSession(expectedUserId, generation)
+  }
+
   const confirmRepairCloud = async () => {
     if (isSyncing.value || !pendingRecoveryHash) return
+    const expectedUserId = userId()
+    const generation = captureAccountSession().version
+    if (!isActiveSession(expectedUserId, generation)) return
     isSyncing.value = true
     try {
       const state = await refreshState()
+      if (!isActiveSession(expectedUserId, generation)) return
       if (!state?.currentHash || state.currentHash !== pendingRecoveryHash) {
         throw new Error('云端同步状态已发生变化')
       }
 
       const res = await recoverSyncSnapshot(exportSyncPayload(), state.currentHash)
+      if (!isActiveSession(expectedUserId, generation)) return
       if (!res.success || !res.data) {
         throw new SyncRequestError(res.message || '修复云端同步数据失败', res.code)
       }
 
       remoteState.value = res.data
-      setBaseHash(res.data.currentHash)
+      setBaseHash(res.data.currentHash, expectedUserId)
       closeRecovery()
       uiStore.showToast('云端同步数据已使用当前本地数据修复', 'success')
     } catch (error) {
-      logger.error({ err: error }, 'Failed to recover cloud sync snapshot')
-      uiStore.showToast('云端同步数据修复失败，请重试', 'error')
+      if (isActiveSession(expectedUserId, generation)) {
+        logger.error({ err: error }, 'Failed to recover cloud sync snapshot')
+        uiStore.showToast('云端同步数据修复失败，请重试', 'error')
+      }
     } finally {
-      isSyncing.value = false
+      if (isActiveSession(expectedUserId, generation)) {
+        isSyncing.value = false
+      }
     }
   }
 
   const confirmDisableBrokenSync = async () => {
     if (isSyncing.value) return
+    const expectedUserId = userId()
+    const generation = captureAccountSession().version
+    if (!isActiveSession(expectedUserId, generation)) return
     isSyncing.value = true
     try {
       const res = await disableSync()
+      if (!isActiveSession(expectedUserId, generation)) return
       if (!res.success || !res.data) throw new Error(res.message || '关闭同步失败')
       remoteState.value = res.data
       settingsStore.updateSettings({ autoBackup: false })
       closeRecovery()
       uiStore.showToast('云同步已关闭，本地数据不受影响', 'success')
     } catch (error) {
-      logger.error({ err: error }, 'Failed to disable broken cloud sync')
-      uiStore.showToast('关闭云同步失败，请重试', 'error')
+      if (isActiveSession(expectedUserId, generation)) {
+        logger.error({ err: error }, 'Failed to disable broken cloud sync')
+        uiStore.showToast('关闭云同步失败，请重试', 'error')
+      }
     } finally {
-      isSyncing.value = false
+      if (isActiveSession(expectedUserId, generation)) {
+        isSyncing.value = false
+      }
     }
   }
 
   /** Only when local is about to be discarded (use cloud). Merge does not need this. */
-  const createLocalSafetyBackup = async () => {
+  const createLocalSafetyBackup = async (expectedUserId: string, generation: number) => {
+    if (!isActiveSession(expectedUserId, generation)) return false
     const local = websiteStore.exportData()
     if (!hasSyncData(exportSyncPayload())) return true
 
     const res = await createBackup(local, 'AUTO')
+    if (!isActiveSession(expectedUserId, generation)) return false
     if (res.success) {
-      invalidateBackupCache()
       return true
     }
     uiStore.showToast('操作前自动备份失败，已取消同步', 'error')
@@ -726,7 +880,8 @@ export function useCloudSync() {
     await yieldForLoadingPaint()
   }
 
-  const endResolve = () => {
+  const endResolve = (expectedUserId: string, generation: number) => {
+    if (!isActiveSession(expectedUserId, generation)) return
     resolvingAction.value = null
     isSyncing.value = false
     uiStore.setLoading(false)
@@ -737,8 +892,9 @@ export function useCloudSync() {
    * If cloud hash advanced (e.g. a bug pushed local), still merge with the frozen
    * full snapshot and write using the *current* hash so we can repair the cloud.
    */
-  const getCurrentPendingSnapshot = async () => {
+  const getCurrentPendingSnapshot = async (expectedUserId: string, generation: number) => {
     const state = await refreshState()
+    if (!isActiveSession(expectedUserId, generation)) return null
     if (!state?.currentHash) throw new Error('云端同步状态不存在')
 
     if (pendingRemoteSnapshot) {
@@ -751,60 +907,79 @@ export function useCloudSync() {
     }
 
     const snapshot = await fetchRemoteSnapshot()
+    if (!isActiveSession(expectedUserId, generation)) return null
     if (!snapshot) throw new Error('云端同步数据不存在')
     return { state, snapshot, writeExpectedHash: state.currentHash }
   }
 
   const confirmUseCloud = async () => {
     if (isSyncing.value) return
+    const expectedUserId = userId()
+    const generation = captureAccountSession().version
+    if (!isActiveSession(expectedUserId, generation)) return
     await beginResolve('useCloud', '正在应用云端数据…')
+    if (!isActiveSession(expectedUserId, generation)) return
     try {
-      const current = await getCurrentPendingSnapshot()
+      const current = await getCurrentPendingSnapshot(expectedUserId, generation)
       if (!current) return
-      if (!(await createLocalSafetyBackup())) return
+      if (!(await createLocalSafetyBackup(expectedUserId, generation))) return
+      if (!isActiveSession(expectedUserId, generation)) return
       const currentHash = current.state.currentHash
       if (!currentHash) throw new Error('云端同步状态不存在')
 
-      applyRemoteSnapshot(current.snapshot, currentHash)
+      if (!applyRemoteSnapshot(current.snapshot, currentHash, expectedUserId, generation)) return
       // If live cloud was already corrupted to a smaller set, re-upload the frozen full snapshot.
       if (current.writeExpectedHash) {
-        await pushSnapshot(exportSyncPayload(), current.writeExpectedHash)
+        const pushed = await pushSnapshot(exportSyncPayload(), current.writeExpectedHash)
+        if (!pushed) return
       }
       closeConflict()
       uiStore.showToast('已使用云端数据', 'success')
     } catch (error) {
-      logger.error({ err: error }, 'Failed to use cloud sync data')
-      uiStore.showToast('云端数据同步失败，请重试', 'error')
+      if (isActiveSession(expectedUserId, generation)) {
+        logger.error({ err: error }, 'Failed to use cloud sync data')
+        uiStore.showToast('云端数据同步失败，请重试', 'error')
+      }
     } finally {
-      endResolve()
+      endResolve(expectedUserId, generation)
     }
   }
 
   const confirmKeepLocal = async () => {
     if (isSyncing.value) return
+    const expectedUserId = userId()
+    const generation = captureAccountSession().version
+    if (!isActiveSession(expectedUserId, generation)) return
     await beginResolve('keepLocal', '正在上传本地数据…')
+    if (!isActiveSession(expectedUserId, generation)) return
     try {
-      const current = await getCurrentPendingSnapshot()
+      const current = await getCurrentPendingSnapshot(expectedUserId, generation)
       if (!current) return
       const succeeded = await pushSnapshot(exportSyncPayload(), current.writeExpectedHash)
       if (!succeeded) return
 
-      setBaseHash(remoteState.value?.currentHash ?? null)
+      setBaseHash(remoteState.value?.currentHash ?? null, expectedUserId)
       closeConflict()
       uiStore.showToast('本地数据已同步到云端', 'success')
     } catch (error) {
-      logger.error({ err: error }, 'Failed to overwrite cloud sync data')
-      uiStore.showToast('本地数据同步失败，请重试', 'error')
+      if (isActiveSession(expectedUserId, generation)) {
+        logger.error({ err: error }, 'Failed to overwrite cloud sync data')
+        uiStore.showToast('本地数据同步失败，请重试', 'error')
+      }
     } finally {
-      endResolve()
+      endResolve(expectedUserId, generation)
     }
   }
 
   const confirmMerge = async () => {
     if (isSyncing.value) return
+    const expectedUserId = userId()
+    const generation = captureAccountSession().version
+    if (!isActiveSession(expectedUserId, generation)) return
     await beginResolve('merge', '正在合并数据，请稍候…')
+    if (!isActiveSession(expectedUserId, generation)) return
     try {
-      const current = await getCurrentPendingSnapshot()
+      const current = await getCurrentPendingSnapshot(expectedUserId, generation)
       if (!current) return
 
       const expectedHash = current.writeExpectedHash
@@ -842,7 +1017,7 @@ export function useCloudSync() {
       )
 
       // Apply first so concurrent auto-sync cannot push pre-merge local data.
-      applyRemoteSnapshot(merged, expectedHash)
+      if (!applyRemoteSnapshot(merged, expectedHash, expectedUserId, generation)) return
 
       if (websiteStore.websites.length < merged.data.websites.length) {
         throw new Error(
@@ -853,17 +1028,19 @@ export function useCloudSync() {
       const succeeded = await pushSnapshot(exportSyncPayload(), expectedHash)
       if (!succeeded || !remoteState.value?.currentHash) return
 
-      setBaseHash(remoteState.value.currentHash)
+      setBaseHash(remoteState.value.currentHash, expectedUserId)
       closeConflict()
       uiStore.showToast(
         `已合并：本地 ${localCount} + 云端 ${remoteCount} → ${merged.data.websites.length} 个网站`,
         'success'
       )
     } catch (error) {
-      logger.error({ err: error }, 'Failed to merge sync data')
-      uiStore.showToast(error instanceof Error ? error.message : '数据合并失败，请重试', 'error')
+      if (isActiveSession(expectedUserId, generation)) {
+        logger.error({ err: error }, 'Failed to merge sync data')
+        uiStore.showToast(error instanceof Error ? error.message : '数据合并失败，请重试', 'error')
+      }
     } finally {
-      endResolve()
+      endResolve(expectedUserId, generation)
     }
   }
 
@@ -875,6 +1052,7 @@ export function useCloudSync() {
     isEnabled: computed(() => remoteState.value?.enabled === true),
     refreshState,
     resetSession,
+    activateWorkspace,
     setSyncEnabled,
     checkOnLogin,
     syncLocalChanges,

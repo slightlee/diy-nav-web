@@ -14,6 +14,7 @@ import { generateId } from '@/utils/helpers'
 import { useCategoryStore } from './category'
 import { useTagStore } from './tag'
 import { cleanDataForHash } from '@nav/utils'
+import { getWorkspaceStorageKey } from '@/utils/user-data-storage'
 
 export const useWebsiteStore = defineStore('website', () => {
   const websites = ref<Website[]>([])
@@ -30,7 +31,7 @@ export const useWebsiteStore = defineStore('website', () => {
 
   const initializeData = () => {
     try {
-      const saved = JSON.parse(localStorage.getItem('websites') || '[]')
+      const saved = JSON.parse(localStorage.getItem(getWorkspaceStorageKey('websites')) || '[]')
       if (Array.isArray(saved)) {
         websites.value = saved
           .map(item => ({
@@ -250,7 +251,7 @@ export const useWebsiteStore = defineStore('website', () => {
 
   const saveToLocalStorage = () => {
     try {
-      localStorage.setItem('websites', JSON.stringify(websites.value))
+      localStorage.setItem(getWorkspaceStorageKey('websites'), JSON.stringify(websites.value))
     } catch {
       void 0
     }

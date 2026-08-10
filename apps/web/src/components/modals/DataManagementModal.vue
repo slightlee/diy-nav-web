@@ -430,6 +430,7 @@ import { useBackup } from '@/composables/useBackup'
 import { useCloudSync } from '@/composables/useCloudSync'
 import { logger } from '@nav/logger'
 import type { BackupItem } from '@/api/backup'
+import { clearWorkspaceBackupState } from '@/utils/user-data-storage'
 
 const emit = defineEmits(['close'])
 const router = useRouter()
@@ -646,15 +647,13 @@ const confirmClearData = async () => {
   try {
     if (syncEnabled.value && !(await setSyncEnabled(false))) return
 
-    localStorage.removeItem('websites')
-    localStorage.removeItem('categories')
-    localStorage.removeItem('tags')
+    clearWorkspaceBackupState()
     localStorage.removeItem('userSettings')
     settingsStore.clearPreferencesCache(authStore.user?.id)
 
-    websiteStore.initializeData()
-    categoryStore.initializeData()
-    tagStore.initializeData()
+    websiteStore.overwriteWebsites([])
+    categoryStore.overwriteCategories([])
+    tagStore.overwriteTags([])
     settingsStore.resetSettings()
 
     uiStore.showToast('所有数据已清除', 'success')

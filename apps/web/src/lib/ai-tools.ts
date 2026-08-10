@@ -9,7 +9,9 @@ import { useTagStore } from '@/stores/tag'
 import { request } from '@/utils/http'
 import { getIcon } from '@/api/icon'
 import { classifyWebsite, generateDescription } from '@/api/ai'
+import { createBackup } from '@/api/backup'
 import type { Website } from '@/types'
+import { isCurrentAccountSession, type AccountSessionContext } from '@/utils/account-session'
 
 // ============================================
 // Helper Functions (P1: Reduce Code Duplication)
@@ -309,13 +311,24 @@ export interface ToolCallResult {
  */
 export async function executeToolCall(
   toolName: string,
-  args: Record<string, unknown>
+  args: Record<string, unknown>,
+  session: AccountSessionContext
 ): Promise<ToolCallResult> {
   const websiteStore = useWebsiteStore()
   const categoryStore = useCategoryStore()
   const tagStore = useTagStore()
+  const expectedUserId = session.userId
+  if (!expectedUserId) return { success: false, message: '请先登录' }
+
+  const assertAccountContext = () => {
+    if (!isCurrentAccountSession(session)) {
+      throw new Error('账号已切换，操作已取消')
+    }
+  }
 
   try {
+    assertAccountContext()
+
     switch (toolName) {
       // Website operations
       case 'add_website': {
@@ -340,6 +353,7 @@ export async function executeToolCall(
         } catch {
           // Icon fetch failed, continue without it
         }
+        assertAccountContext()
 
         // 2. Analyze the website once for description, category, and tags
         let description = typeof args.description === 'string' ? args.description.trim() : ''
@@ -365,6 +379,7 @@ export async function executeToolCall(
             categories: categories.map(category => ({ id: category.id, name: category.name })),
             tags: tags.map(tag => ({ id: tag.id, name: tag.name }))
           })
+          assertAccountContext()
           description = classification.description || description
 
           if (!categoryId) {
@@ -397,6 +412,7 @@ export async function executeToolCall(
         } catch {
           classificationFailed = true
         }
+        assertAccountContext()
 
         // Classification normally supplies the description. Only make a second AI request when
         // that response failed or omitted it, so website details are not lost on the fallback path.
@@ -407,6 +423,7 @@ export async function executeToolCall(
           } catch {
             // Description generation is best-effort; classification fallback can still add the site.
           }
+          assertAccountContext()
         }
 
         if (classificationFailed) {
@@ -427,6 +444,7 @@ export async function executeToolCall(
         }
 
         // 4. Add website
+        assertAccountContext()
         const website = websiteStore.addWebsite({
           name,
           url,
@@ -464,6 +482,7 @@ export async function executeToolCall(
           data: website,
           action: { kind: 'website-added', website, classificationFailed },
           undo: () => {
+            assertAccountContext()
             websiteStore.deleteWebsite(website.id)
             createdTagIds.forEach(tagId => {
               const isReferenced = websiteStore.websites.some(item => item.tagIds.includes(tagId))
@@ -489,7 +508,10 @@ export async function executeToolCall(
             message: `已删除网站 "${found.name}"`,
             data: found,
             action: { kind: 'website-deleted', website: found },
-            undo: () => websiteStore.restoreWebsite(found)
+            undo: () => {
+              assertAccountContext()
+              websiteStore.restoreWebsite(found)
+            }
           }
         }
         // Find by name using helper function
@@ -502,7 +524,10 @@ export async function executeToolCall(
               message: `已删除网站 "${found.name}"`,
               data: found,
               action: { kind: 'website-deleted', website: found },
-              undo: () => websiteStore.restoreWebsite(found)
+              undo: () => {
+                assertAccountContext()
+                websiteStore.restoreWebsite(found)
+              }
             }
           }
           return { success: false, message: `未找到名为 "${args.name}" 的网站` }
@@ -576,11 +601,13 @@ export async function executeToolCall(
           success: true,
           message: `已更新网站 "${found.name}" (${changes.join(', ') || '无变化'})`,
           action: { kind: 'website-updated', website: found },
-          undo: () =>
+          undo: () => {
+            assertAccountContext()
             websiteStore.updateWebsite(found.id, {
               categoryId: found.categoryId,
               tagIds: found.tagIds
             })
+          }
         }
       }
 
@@ -594,6 +621,7 @@ export async function executeToolCall(
         // Call AI to generate description
         try {
           const result = await generateDescription(found.name, found.url)
+          assertAccountContext()
           if (result.description) {
             websiteStore.updateWebsite(found.id, { description: result.description })
             return {
@@ -631,6 +659,7 @@ export async function executeToolCall(
 
         try {
           const iconRes = await getIcon({ url: found.url, refresh: true })
+          assertAccountContext()
           if (iconRes.success && iconRes.data?.url) {
             websiteStore.updateWebsite(found.id, { favicon: iconRes.data.url })
             return {
@@ -713,11 +742,10 @@ export async function executeToolCall(
 
       case 'backup_data': {
         try {
+          assertAccountContext()
           const exportData = websiteStore.exportData()
-          const res = await request.post('/api/backup', {
-            data: exportData,
-            type: 'MANUAL'
-          })
+          const res = await createBackup(exportData, 'MANUAL')
+          assertAccountContext()
           if (res.success) {
             return { success: true, message: '数据已手动备份到云端' }
           }
