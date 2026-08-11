@@ -1,235 +1,206 @@
-# DIY NAV WEB (diy-nav-web)
+# DIY NAV WEB
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)](https://www.typescriptlang.org/)
-[![Vue 3](https://img.shields.io/badge/Vue-3.0-green)](https://vuejs.org/)
-[![Fastify](https://img.shields.io/badge/Fastify-4.0-black)](https://www.fastify.io/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
-[![web](https://img.shields.io/badge/Web-Online-orange)](https://1ddh.cn)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Vue](https://img.shields.io/badge/Vue-3.5-42b883?logo=vue.js&logoColor=white)](https://vuejs.org/)
+[![Fastify](https://img.shields.io/badge/Fastify-5-black?logo=fastify)](https://fastify.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Online](https://img.shields.io/badge/在线体验-1ddh.cn-5b82e5)](https://1ddh.cn)
 
-> **轻量、极速、可定制的现代化个人导航管理平台。**
->
-> _A lightweight, fast, and customizable modern personal navigation management platform._
->
-> 🔗 **在线演示**: [https://1ddh.cn](https://1ddh.cn)
+> 一个本地优先、支持云同步与 AI 批量整理的个人导航管理平台。
 
----
+[在线体验](https://1ddh.cn) · [快速开始](#快速开始) · [部署](#docker-部署)
 
-## 📖 简介 (Introduction)
+## 项目简介
 
-**DIY NAV WEB** 是一个专为追求极致体验的开发者和团队设计的导航管理工具。它不仅仅是一个书签管理器，更是一个高性能、可扩展的资源中心。
+DIY NAV WEB 用于集中管理网站、分类和标签。未登录时数据保存在当前浏览器；登录后可以开启跨设备同步、创建历史备份，并在数据冲突或云端快照异常时进行恢复。
 
-采用 **Monorepo** 架构，前端基于 **Vue 3 + Vite**，后端采用 **Fastify**，底层数据存储无缝集成 **Cloudflare D1 & R2**，为您提供企业级的性能与安全性。
+项目采用 pnpm + Turborepo Monorepo：Web 端基于 Vue 3，API 基于 Fastify，数据与对象存储使用 Cloudflare D1、R2，也支持 WebDAV 和本地对象存储。AI 能力支持用户配置多个 OpenAI 或 Claude 协议服务。
 
-## ✨ 核心特性 (Features)
+## 核心功能
 
-| 特性            | 说明                                                       |
-| :-------------- | :--------------------------------------------------------- |
-| 🎨 **精美 UI**  | 现代化卡片式设计，响应式布局，完美适配桌面与移动端。       |
-| 🔐 **数据安全** | 支持 **Cloudflare R2** 自动与手动云备份，数据永不丢失。    |
-| 🔍 **智能检索** | 支持按名称、描述、分类、标签进行毫秒级实时搜索。           |
-| 🏷 **灵活分类** | 强大的多标签与分类系统，支持拖拽排序。                     |
-| ☁️ **云原生**   | 原生支持 Cloudflare D1 (SQL) 和 R2 (Object Storage) 部署。 |
-| 🤖 **AI 助手**  | 智能对话管理网站，自动获取图标、生成描述、推断分类标签。   |
+| 能力            | 说明                                                                                        |
+| :-------------- | :------------------------------------------------------------------------------------------ |
+| 导航管理        | 网站增删改查、常用与最近使用、拖拽排序、访问统计。                                          |
+| 搜索与筛选      | 根据名称、描述、分类和标签实时检索，支持组合筛选。                                          |
+| 分类与标签      | 独立管理分类和标签，并在网站卡片中展示整理结果。                                            |
+| 响应式界面      | 桌面端与移动端布局，支持浅色、深色和跟随系统主题。                                          |
+| 账号与同步      | 邮箱注册登录，支持 GitHub、Google、Linux.do OAuth 与登录方式绑定。                          |
+| 备份与迁移      | 自动/手动备份、历史恢复、JSON 导入导出、备份数量与内容统计。                                |
+| AI 助手         | 通过对话管理网站、分类、标签和备份，自动生成描述并完成归类。                                |
+| Chrome 书签整理 | 导入 `bookmarks.html`，统一规划分类标签，分批生成描述、归类并获取网站图标，支持暂停后继续。 |
+| 多 AI 服务      | 配置多个 OpenAI/Claude 协议服务，获取模型、测试连接并设置默认服务。                         |
 
-## 📸 预览 (Screenshots)
+## 最新界面
 
-### 核心页面 (Core)
+以下截图来自当前本地代码和测试数据，桌面端尺寸为 1440 × 892。
 
-|               首页               |                  全部                  |
-| :------------------------------: | :------------------------------------: |
-| ![首页概览](doc/images/home.png) | ![All Sites](doc/images/all-sites.png) |
+### 核心页面
 
-### 更多截图 (More)
+|             首页             |               全部网站                |
+| :--------------------------: | :-----------------------------------: |
+| ![首页](doc/images/home.png) | ![全部网站](doc/images/all-sites.png) |
 
-|            登录页面            |               注册页面               |
-| :----------------------------: | :----------------------------------: |
-| ![Login](doc/images/login.png) | ![Register](doc/images/register.png) |
+### 登录、备份与移动端
 
-|               备份               |            首页（移动端）             |               全部（移动端）               |
-| :------------------------------: | :-----------------------------------: | :----------------------------------------: |
-| ![Login](doc/images/backups.png) | ![Backups](doc/images/home-phone.png) | ![Backups](doc/images/all-sites-phone.png) |
-
-|          AI助手页面           |         AI助手-添加网站          |
+|             登录              |               注册               |
 | :---------------------------: | :------------------------------: |
-| ![Login](doc/images/ai-1.png) | ![Register](doc/images/ai-2.png) |
+| ![登录](doc/images/login.png) | ![注册](doc/images/register.png) |
 
-|       AI助手-网站添加标签       |         AI助手-备份数据         |       AI助手-查看备份数据       |
-| :-----------------------------: | :-----------------------------: | :-----------------------------: |
-| ![Login](doc/images/ai-2-1.png) | ![Backups](doc/images/ai-3.png) | ![Backups](doc/images/ai-4.png) |
+|              备份               |                              移动端首页                              |                                移动端全部网站                                 |
+| :-----------------------------: | :------------------------------------------------------------------: | :---------------------------------------------------------------------------: |
+| ![备份](doc/images/backups.png) | <img src="doc/images/home-phone.png" alt="移动端首页" width="390" /> | <img src="doc/images/all-sites-phone.png" alt="移动端全部网站" width="390" /> |
 
-## 🛠 技术栈 (Tech Stack)
+### AI 助手
 
-本项目采用现代化的全栈技术架构：
+|             AI 助手             |        AI 助手：添加网站         |
+| :-----------------------------: | :------------------------------: |
+| ![AI 助手](doc/images/ai-1.png) | ![添加网站](doc/images/ai-2.png) |
 
-- **Frontend**: [Vue 3](https://vuejs.org/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/), [Pinia](https://pinia.vuejs.org/), [SCSS](https://sass-lang.com/)
-- **Backend**: [Node.js](https://nodejs.org/), [Fastify](https://www.fastify.io/), [Zod](https://zod.dev/)
-- **AI**: OpenAI Compatible API, 多 Provider 支持 (OpenAI/Claude/Qwen/文心一言)
-- **Infrastructure**: [Cloudflare D1](https://developers.cloudflare.com/d1/), [Cloudflare R2](https://developers.cloudflare.com/r2/)
-- **Tooling**: [pnpm](https://pnpm.io/) (Monorepo), [TurboRepo](https://turbo.build/), [ESLint](https://eslint.org/), [Prettier](https://prettier.io/)
+|         AI 助手：添加标签          |        AI 助手：备份数据         |        AI 助手：查看备份数据         |
+| :--------------------------------: | :------------------------------: | :----------------------------------: |
+| ![添加标签](doc/images/ai-2-1.png) | ![备份数据](doc/images/ai-3.png) | ![查看备份数据](doc/images/ai-4.png) |
 
-## 🚀 快速开始 (Getting Started)
+## 技术栈
 
-### 前置要求 (Prerequisites)
+| 层级     | 技术                                                           |
+| :------- | :------------------------------------------------------------- |
+| Web      | Vue 3.5、TypeScript、Vite 6、Pinia 3、Vue Router、SCSS         |
+| API      | Node.js 20+、Fastify 5、Zod、JWT                               |
+| AI       | OpenAI Compatible API、Claude API、多 Provider 注册与调用      |
+| 数据库   | Cloudflare D1                                                  |
+| 对象存储 | Cloudflare R2、WebDAV、本地存储                                |
+| 工程化   | pnpm Workspace、Turborepo、ESLint、Stylelint、Prettier、Vitest |
+| 部署     | Docker、Docker Compose、Nginx                                  |
 
-- **Node.js**: >= 18.0.0
-- **pnpm**: >= 8.0.0
+## 项目结构
 
-### 安装 (Installation)
+```text
+.
+├── apps
+│   ├── web                 # Vue Web 应用
+│   └── api                 # Fastify API 服务
+├── packages
+│   ├── ai-core             # AI 协议、Provider 与结构化输出
+│   ├── auth-providers      # GitHub、Google、Linux.do OAuth
+│   ├── config              # 环境配置
+│   ├── core                # 认证、同步、备份等领域服务
+│   ├── database            # Cloudflare D1 客户端
+│   ├── icon-core           # 网站图标获取
+│   ├── storage             # R2、WebDAV、本地存储
+│   ├── types               # 共享类型
+│   └── ui                  # 共享 UI 组件
+├── deploy                  # Docker Compose 与部署脚本
+├── doc/images              # README 截图
+└── README.md
+```
+
+## 快速开始
+
+### 环境要求
+
+- Node.js 20 或更高版本
+- pnpm 8 或更高版本
+- Cloudflare D1 与 R2 凭据，或可用的同类开发配置
+- Docker 与 Docker Compose（仅 Docker 部署需要）
+
+### 安装依赖
 
 ```bash
-# 克隆仓库
 git clone https://github.com/slightlee/diy-nav-web.git
-
-# 进入目录
 cd diy-nav-web
-
-# 安装依赖
 pnpm install
 ```
 
-### 开发 (Development)
-
-1.  **配置环境**
-
-    复制环境变量示例文件（开发环境同样需要）：
-
-    ```bash
-    cp .env.example .env
-    ```
-
-    **环境变量配置说明：**
-
-    请打开 `.env` 文件并根据下表修改关键配置。本项目依赖 Cloudflare D1 和 R2，请确保即使在本地开发时也填入正确的密钥（或使用本地模拟器）。
-
-    | 变量名                         |  必填  | 说明                                                  |
-    | :----------------------------- | :----: | :---------------------------------------------------- |
-    | **基础配置**                   |        |                                                       |
-    | `NODE_ENV`                     |   是   | 环境模式 (development/production)                     |
-    | `APP_PORT`                     |   是   | API 服务端口，默认 `8787`                             |
-    | **Cloudflare 配置**            |        |                                                       |
-    | `STORAGE_R2_ACCOUNT_ID`        | **是** | Cloudflare Account ID (R2 和 D1 共用)                 |
-    | `STORAGE_R2_ENDPOINT`          | **是** | R2 API Endpoint                                       |
-    | `STORAGE_R2_ACCESS_KEY_ID`     | **是** | R2 Access Key                                         |
-    | `STORAGE_R2_SECRET_ACCESS_KEY` | **是** | R2 Secret Key                                         |
-    | `DB_D1_API_TOKEN`              | **是** | Cloudflare API Token (需 D1 读写权限)                 |
-    | `DB_D1_DATABASE_ID`            | **是** | D1 数据库 ID                                          |
-    | **存储配置**                   |        |                                                       |
-    | `PUBLIC_STORAGE_PROVIDER`      |   是   | 公开资源存储: `r2` / `local` (s3 计划支持中)          |
-    | `BACKUP_STORAGE_PROVIDER`      |   是   | 备份存储: `r2` / `webdav`                             |
-    | `STORAGE_BUCKET`               | **是** | R2/S3 存储桶名称                                      |
-    | `STORAGE_PUBLIC_BASE_URL`      | **是** | R2 绑定的公开访问域名 (例如 `https://r2.example.com`) |
-    | **WebDAV 配置 (可选)**         |        | 当 `BACKUP_STORAGE_PROVIDER=webdav` 时使用            |
-    | `WEBDAV_URL`                   |   否   | WebDAV 服务地址 (如坚果云、Nextcloud)                 |
-    | `WEBDAV_USERNAME`              |   否   | WebDAV 用户名                                         |
-    | `WEBDAV_PASSWORD`              |   否   | WebDAV 密码                                           |
-    | **认证 (Auth)**                |        |                                                       |
-    | `JWT_SECRET`                   | **是** | JWT 签名密钥 (生产环境必须 32 位以上)                 |
-    | **AI 助手**                    |        |                                                       |
-    | `AI_OPENAI_API_KEY`            |   否   | OpenAI 兼容 API Key（启用 AI 助手功能）               |
-    | `AI_OPENAI_BASE_URL`           |   否   | 自定义 API 地址（如使用 Claude/通义千问等）           |
-    | `AI_OPENAI_MODEL`              |   否   | 模型名称；配置 `AI_OPENAI_API_KEY` 时必须填写         |
-    | **第三方登录 (OAuth)**         |        |                                                       |
-    | `VITE_LINUX_DO_CLIENT_ID`      |   否   | Linux Do OAuth Client ID (前端)                       |
-    | `LINUX_DO_CLIENT_ID`           |   否   | Linux Do OAuth Client ID (后端)                       |
-    | `LINUX_DO_CLIENT_SECRET`       |   否   | Linux Do OAuth Secret (后端)                          |
-    | `LINUX_DO_REDIRECT_URI`        |   否   | Linux Do OAuth 回调地址                               |
-    | `VITE_GITHUB_CLIENT_ID`        |   否   | GitHub OAuth Client ID (前端)                         |
-    | `GITHUB_CLIENT_ID`             |   否   | GitHub OAuth Client ID (后端)                         |
-    | `GITHUB_CLIENT_SECRET`         |   否   | GitHub OAuth Secret (后端)                            |
-    | `GITHUB_REDIRECT_URI`          |   否   | GitHub OAuth 回调地址                                 |
-    | `VITE_GOOGLE_CLIENT_ID`        |   否   | Google OAuth Client ID (前端)                         |
-    | `GOOGLE_CLIENT_ID`             |   否   | Google OAuth Client ID (后端)                         |
-    | `GOOGLE_CLIENT_SECRET`         |   否   | Google OAuth Secret (后端)                            |
-    | `GOOGLE_REDIRECT_URI`          |   否   | Google OAuth 回调地址                                 |
-
-    > ⚠️ **注意**: `packages` 目录下的内部包构建依赖完整的环境配置，如果配置不完整可能会导致部分功能异常。
-
-2.  **启动服务**
-
-    本项目使用 `pnpm` workspace 管理，可一键启动全栈开发环境：
-
-    ```bash
-    # 同时启动 Web 和 API
-    pnpm dev
-    ```
-
-3.  **访问应用**
-    - **Web**: [http://localhost:3000](http://localhost:3000)
-    - **API**: [http://localhost:8787](http://localhost:8787)
-
-### 构建 (Build)
+### 配置环境变量
 
 ```bash
-# 构建所有应用和包
+cp .env.example .env
+```
+
+完整配置和注释以 [`.env.example`](.env.example) 为准。至少需要根据部署方式检查以下配置：
+
+| 分组  | 关键变量                                                                                            | 说明                                                 |
+| :---- | :-------------------------------------------------------------------------------------------------- | :--------------------------------------------------- |
+| 应用  | `NODE_ENV`、`APP_PORT`                                                                              | API 运行模式和端口。                                 |
+| D1    | `STORAGE_R2_ACCOUNT_ID`、`DB_D1_API_TOKEN`、`DB_D1_DATABASE_ID`                                     | 用户、同步、AI 配置等结构化数据。                    |
+| R2    | `STORAGE_R2_ENDPOINT`、`STORAGE_R2_ACCESS_KEY_ID`、`STORAGE_R2_SECRET_ACCESS_KEY`、`STORAGE_BUCKET` | 图标、头像、备份和同步快照。                         |
+| 存储  | `PUBLIC_STORAGE_PROVIDER`、`BACKUP_STORAGE_PROVIDER`                                                | 当前支持 `r2`、`webdav` 和 `local`，按用途分别配置。 |
+| 认证  | `JWT_SECRET`、`WEB_APP_URL`                                                                         | 生产环境必须使用强随机 JWT 密钥。                    |
+| OAuth | `VITE_*_CLIENT_ID`、服务端 Client ID/Secret、Redirect URI                                           | 可按需启用 GitHub、Google、Linux.do。                |
+| AI    | `AI_OPENAI_API_KEY`、`AI_OPENAI_BASE_URL`、`AI_OPENAI_MODEL`                                        | 可选的系统级 AI 服务；用户也可登录后在界面中配置。   |
+| 前端  | `VITE_API_BASE_URL`、`VITE_BASE`、`VITE_USE_HASH_ROUTER`                                            | API 地址、部署子路径和路由模式。                     |
+
+不要提交真实 Token、Secret、API Key 或 WebDAV 密码。用户在界面中保存的 AI Key 会在服务端加密后写入数据库。
+
+### 启动开发环境
+
+```bash
+# 同时启动 Web、API 和内部包的开发任务
+pnpm dev
+```
+
+- Web: [http://localhost:3000](http://localhost:3000)
+- API: [http://localhost:8787](http://localhost:8787)
+- 健康检查: [http://localhost:8787/healthz](http://localhost:8787/healthz)
+
+也可以分别启动：
+
+```bash
+pnpm dev:web
+pnpm dev:api
+```
+
+## 数据与同步
+
+- 浏览器数据采用本地优先策略，未登录也可以管理导航。
+- 开启云同步后，网站、分类和标签会在同一账号的设备间同步。
+- 写入同步快照前会校验版本，避免静默覆盖其他设备上的更新。
+- 自动备份和手动备份均可在历史列表中恢复或删除。
+- JSON 导入只覆盖文件中包含的对应数据；执行覆盖操作前请先创建备份。
+- 主题、默认首页等偏好与导航数据分开管理。
+
+## 质量检查
+
+```bash
+pnpm type-check
+pnpm lint
+pnpm stylelint
+pnpm test
 pnpm build
 ```
 
-## 🚢 部署 (Deployment)
+提交前可执行完整校验：
 
-### Docker 部署 (推荐)
+```bash
+pnpm ci:verify
+```
 
-本项目提供了一键部署脚本，基于 Docker Compose 快速拉起完整服务。
+## Docker 部署
 
-1.  **配置环境变量**
+```bash
+cp .env.example .env
+# 修改 .env 中的生产配置
+sh deploy/deploy.sh
+```
 
-    复制示例配置文件并修改必要的配置（如端口、密钥等）：
+脚本会使用当前 Git Tag；没有 Tag 时使用当前 Commit SHA 构建并启动 `nav-web` 与 `nav-api` 容器。
 
-    ```bash
-    cp .env.example .env
-    # vim .env
-    ```
+- Web: `http://localhost:3000`
+- API: `http://localhost:8787`
 
-2.  **执行部署脚本**
+## 贡献
 
-    ```bash
-    sh deploy/deploy.sh
-    ```
+1. Fork 本仓库。
+2. 创建功能分支：`git checkout -b feat/example`。
+3. 完成修改并执行质量检查。
+4. 按 [Conventional Commits](https://www.conventionalcommits.org/) 规范提交。
+5. 推送分支并创建 Pull Request。
 
-    脚本会自动构建镜像并启动服务。
-    - **Web**: `http://localhost:3000`
-    - **API**: `http://localhost:8787`
-
-## 🗺 路线图 (Roadmap)
-
-### ✅ 已完成
-
-- [x] 基础导航管理（增删改查、拖拽排序）
-- [x] 分类与标签管理
-- [x] 深色/浅色/自动主题切换
-- [x] 数据导入/导出 (JSON)
-- [x] Cloudflare R2 云端备份
-- [x] WebDAV 备份支持（坚果云、Nextcloud 等）
-- [x] 多用户系统（注册/登录）
-- [x] 第三方登录（Linuxdo / GitHub / Google）
-- [x] Docker 容器化部署
-- [x] **AI 智能助手**
-  - 自然语言管理网站、分类、标签、数据备份
-  - 智能添加网站（自动获取图标、生成描述、推断分类以及标签）
-  - 支持 OpenAI 兼容 API
-
-### 🚧 规划中
-
-- [ ] AWS S3 存储支持
-- [ ] 自定义AI服务商（支持多 Provider 配置持久化）
-- [ ] 快捷键支持
-- [ ] 首页小组件（可拖拽自定义布局）
-- [ ] 网站健康检测（自动检查链接有效性）
-
-## 🤝 贡献指南 (Contributing)
-
-欢迎社区贡献！如果您有通过 Pull Request 贡献代码的意愿，请遵循以下步骤：
-
-1.  **Fork** 本仓库。
-2.  创建一个新的特性分支 (`git checkout -b feature/AmazingFeature`)。
-3.  提交您的更改 (`git commit -m 'feat: Add some AmazingFeature'`)，请遵循 [Conventional Commits](https://www.conventionalcommits.org/) 规范。
-4.  推送到分支 (`git push origin feature/AmazingFeature`)。
-5.  开启一个 **Pull Request**。
-
-## ⭐ Star History
+## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=slightlee/diy-nav-web&type=Date)](https://star-history.com/#slightlee/diy-nav-web&Date)
 
-## 📄 许可证 (License)
+## 许可证
 
-本项目基于 [MIT 许可证](LICENSE) 开源。
+本项目基于 [MIT License](LICENSE) 开源。
