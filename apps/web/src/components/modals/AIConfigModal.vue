@@ -302,13 +302,42 @@
         </template>
       </div>
     </div>
+
+    <BaseModal
+      v-if="providerToRemove"
+      :is-open="Boolean(providerToRemove)"
+      title="删除 AI 服务"
+      size="sm"
+      @close="closeRemoveConfirm"
+    >
+      <div class="delete-confirm-content">
+        <p class="delete-confirm-text">确定要删除该 AI 服务吗？</p>
+        <p class="delete-confirm-warning">
+          <i class="fas fa-info-circle" aria-hidden="true" />
+          <span>“{{ providerToRemove.name }}”删除后无法恢复，请确认是否继续。</span>
+        </p>
+      </div>
+      <template #footer>
+        <div class="delete-confirm-actions">
+          <BaseButton variant="ghost" size="sm" @click="closeRemoveConfirm">取消</BaseButton>
+          <BaseButton
+            variant="danger"
+            size="sm"
+            :loading="removingIds[providerToRemove.id] === true"
+            @click="confirmRemove"
+          >
+            删除
+          </BaseButton>
+        </div>
+      </template>
+    </BaseModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { BaseButton } from '@nav/ui'
+import { BaseButton, BaseModal } from '@nav/ui'
 import { useAuthStore } from '@/stores/auth'
 import { useAIStore } from '@/stores/ai'
 import { useUIStore } from '@/stores/ui'
@@ -328,6 +357,7 @@ const uiStore = useUIStore()
 
 const submitting = ref(false)
 const removingIds = reactive<Record<string, boolean>>({})
+const providerToRemove = ref<AIProvider | null>(null)
 const editingId = ref<string | null>(null)
 const loadingDetail = ref(false)
 const isCreating = ref(false)
@@ -712,14 +742,25 @@ const handleSetDefault = async (id: string) => {
   }
 }
 
-const handleRemove = async (id: string) => {
+const handleRemove = (id: string) => {
   if (removingIds[id]) return
-  if (!window.confirm('确定要删除该 AI 服务吗？此操作不可恢复。')) return
+  providerToRemove.value = aiStore.providers.find(provider => provider.id === id) ?? null
+}
+
+const closeRemoveConfirm = () => {
+  if (providerToRemove.value && removingIds[providerToRemove.value.id]) return
+  providerToRemove.value = null
+}
+
+const confirmRemove = async () => {
+  const id = providerToRemove.value?.id
+  if (!id || removingIds[id]) return
   removingIds[id] = true
   try {
     await aiStore.removeProvider(id)
     if (editingId.value === id) resetForm()
     uiStore.showToast('已删除', 'success')
+    providerToRemove.value = null
   } catch (e) {
     const message = e instanceof Error ? e.message : '删除失败'
     uiStore.showToast(message, 'error')
@@ -788,6 +829,42 @@ watch(
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background-color: var(--account-surface-bg, var(--bg-panel));
+}
+
+.delete-confirm-content {
+  display: grid;
+  gap: 14px;
+}
+
+.delete-confirm-text {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.delete-confirm-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-error) 7%, var(--bg-panel));
+  color: color-mix(in srgb, var(--color-error) 72%, var(--text-main));
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.delete-confirm-warning i {
+  flex: 0 0 auto;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 100%;
 }
 
 .section-header {
@@ -904,7 +981,7 @@ watch(
   padding: 14px 16px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  background-color: var(--account-control-bg, var(--bg-panel));
+  background-color: var(--account-surface-bg, var(--bg-panel));
   transition:
     border-color 0.15s ease,
     background-color 0.15s ease;

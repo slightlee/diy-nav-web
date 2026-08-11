@@ -3,7 +3,7 @@
   滚动到底部时自动加载更多
 -->
 <template>
-  <div class="infinite-website-grid">
+  <div ref="gridRoot" class="infinite-website-grid">
     <!-- 网站网格 -->
     <div class="website-grid">
       <slot v-for="website in visibleItems" :key="website.id" :website="website" />
@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { toRef, watch } from 'vue'
+import { ref, toRef, watch } from 'vue'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import type { Website } from '@/types'
 
@@ -42,10 +42,12 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const websitesRef = toRef(props, 'websites')
+const gridRoot = ref<HTMLElement | null>(null)
 
 const { visibleItems, hasMore, isLoading, reset } = useInfiniteScroll(websitesRef, {
   pageSize: props.pageSize,
-  initialSize: props.initialSize
+  initialSize: props.initialSize,
+  anchor: gridRoot
 })
 
 // 当网站列表变化时，重置加载状态

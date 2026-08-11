@@ -159,7 +159,7 @@
       </div>
 
       <div class="data-actions-grid">
-        <div class="action-card action-card--chrome">
+        <div class="action-card">
           <div class="action-card__content">
             <div class="action-card__title-row">
               <h4 class="action-card__title">Chrome 书签</h4>
@@ -374,41 +374,24 @@
       v-if="deleteConfirmOpen"
       :is-open="deleteConfirmOpen"
       title="删除备份"
+      size="sm"
       @close="closeDeleteConfirm"
     >
-      <div class="danger-confirm__content">
-        <div class="danger-confirm__header">
-          <div class="danger-confirm__icon">
-            <i class="fas fa-exclamation-triangle" />
-          </div>
-          <div class="danger-confirm__title">确定要删除此备份吗？</div>
-        </div>
-        <p v-if="backupToDelete" class="danger-confirm__list">
-          备份时间：{{ new Date(backupToDelete.created_at).toLocaleString() }}
-          <br />
-          此操作无法撤销，删除后将无法恢复该备份数据。
+      <div class="delete-confirm-content">
+        <p class="delete-confirm-text">确定要删除此备份吗？</p>
+        <p class="delete-confirm-warning">
+          <i class="fas fa-info-circle" aria-hidden="true" />
+          <span v-if="backupToDelete">
+            备份时间：{{
+              new Date(backupToDelete.created_at).toLocaleString()
+            }}。删除后无法恢复，请确认是否继续。
+          </span>
         </p>
       </div>
       <template #footer>
-        <div class="danger-confirm__actions">
-          <BaseButton
-            variant="ghost"
-            size="sm"
-            shape="rounded"
-            class="confirm-btn"
-            @click="closeDeleteConfirm"
-          >
-            取消
-          </BaseButton>
-          <BaseButton
-            variant="danger"
-            size="sm"
-            shape="rounded"
-            class="confirm-btn"
-            :loading="isDeleting"
-            @click="confirmDelete"
-          >
-            <i class="fas fa-trash" />
+        <div class="delete-confirm-actions">
+          <BaseButton variant="ghost" size="sm" @click="closeDeleteConfirm">取消</BaseButton>
+          <BaseButton variant="danger" size="sm" :loading="isDeleting" @click="confirmDelete">
             删除
           </BaseButton>
         </div>
@@ -1078,37 +1061,39 @@ onUnmounted(() => {
 .backup-list__main {
   min-width: 0;
   flex: 1;
-  display: flex;
+  display: grid;
+  grid-template-columns: 344px 248px;
   align-items: center;
-  gap: 16px;
+  gap: 24px;
 }
 
 .backup-list__copy {
   min-width: 0;
-  flex: 0 1 auto;
 }
 
 .backup-list__stats {
   min-width: 0;
   flex: 0 0 auto;
-  padding: 0 8px;
+  padding: 0;
   color: var(--text-secondary);
   font-size: 12px;
   line-height: 1.4;
 }
 
 .backup-list__title-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 92px 144px 72px;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .backup-type-tag {
+  justify-self: start;
   padding: 4px 9px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
+  white-space: nowrap;
 
   &.auto {
     color: var(--color-primary);
@@ -1122,7 +1107,7 @@ onUnmounted(() => {
 }
 
 .backup-list__size {
-  flex: 0 0 64px;
+  min-width: 0;
   overflow: hidden;
   color: var(--text-muted);
   font-size: 12px;
@@ -1134,6 +1119,8 @@ onUnmounted(() => {
 .backup-list__time {
   color: var(--text-secondary);
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .table-state {
@@ -1241,10 +1228,6 @@ input:checked + .slider::before {
 
 .action-card__content {
   min-width: 0;
-}
-
-.action-card--chrome {
-  background: color-mix(in srgb, var(--color-primary) 3.5%, transparent);
 }
 
 .action-card__title-row {
@@ -1423,9 +1406,15 @@ input:checked + .slider::before {
 
   .backup-list__main {
     width: 100%;
+    display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+  }
+
+  .backup-list__title-row {
+    display: flex;
+    flex-wrap: wrap;
   }
 
   .backup-list__stats {
@@ -1479,6 +1468,42 @@ input:checked + .slider::before {
   display: flex;
   justify-content: flex-end;
   gap: 12px; /* Reduced from var(--spacing-md) */
+}
+
+.delete-confirm-content {
+  display: grid;
+  gap: 14px;
+}
+
+.delete-confirm-text {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.delete-confirm-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-error) 7%, var(--bg-panel));
+  color: color-mix(in srgb, var(--color-error) 72%, var(--text-main));
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.delete-confirm-warning i {
+  flex: 0 0 auto;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 100%;
 }
 
 .import-confirm__content {

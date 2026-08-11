@@ -3,7 +3,7 @@
  * 滚动到底部时自动加载更多数据
  */
 
-import { ref, computed, onMounted, onUnmounted, type Ref } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, type Ref } from 'vue'
 
 interface InfiniteScrollOptions {
   /** 每次加载数量 */
@@ -12,10 +12,12 @@ interface InfiniteScrollOptions {
   initialSize?: number
   /** 触发加载的距离（距离底部多少像素时触发） */
   threshold?: number
+  /** 用于定位滚动容器的锚点元素 */
+  anchor?: Ref<HTMLElement | null>
 }
 
 export function useInfiniteScroll<T>(items: Ref<T[]>, options: InfiniteScrollOptions = {}) {
-  const { pageSize = 30, initialSize = 30, threshold = 200 } = options
+  const { pageSize = 30, initialSize = 30, threshold = 200, anchor } = options
 
   const loadedCount = ref(initialSize)
   const isLoading = ref(false)
@@ -54,13 +56,31 @@ export function useInfiniteScroll<T>(items: Ref<T[]>, options: InfiniteScrollOpt
     loadedCount.value = initialSize
   }
 
-  // 滚动事件处理
+  let scrollTarget: HTMLElement | Window | null = null
+
+  const resolveScrollTarget = () => {
+    let element = anchor?.value?.parentElement ?? null
+    while (element) {
+      const overflowY = window.getComputedStyle(element).overflowY
+      if (/(auto|scroll|overlay)/.test(overflowY)) return element
+      element = element.parentElement
+    }
+    return window
+  }
+
+  // 滚动事件处理。AppLayout 使用内部 .main-content 滚动，不能只读取 window。
   const handleScroll = () => {
     if (!hasMore.value || isLoading.value) return
 
-    const scrollTop = window.scrollY || document.documentElement.scrollTop
-    const scrollHeight = document.documentElement.scrollHeight
-    const clientHeight = window.innerHeight
+    const target = scrollTarget ?? window
+    const { scrollTop, scrollHeight, clientHeight } =
+      target instanceof HTMLElement
+        ? target
+        : {
+            scrollTop: window.scrollY || document.documentElement.scrollTop,
+            scrollHeight: document.documentElement.scrollHeight,
+            clientHeight: window.innerHeight
+          }
 
     // 距离底部小于 threshold 时加载更多
     if (scrollHeight - scrollTop - clientHeight < threshold) {
@@ -82,12 +102,20 @@ export function useInfiniteScroll<T>(items: Ref<T[]>, options: InfiniteScrollOpt
 
   // 生命周期
   onMounted(() => {
-    window.addEventListener('scroll', throttledScroll, { passive: true })
+    scrollTarget = resolveScrollTarget()
+    scrollTarget.addEventListener('scroll', throttledScroll, { passive: true })
+    requestAnimationFrame(handleScroll)
   })
 
   onUnmounted(() => {
-    window.removeEventListener('scroll', throttledScroll)
+    scrollTarget?.removeEventListener('scroll', throttledScroll)
   })
+
+  // 首批内容不足以撑满容器时，继续补载直到出现可滚动空间或数据耗尽。
+  watch(
+    () => visibleItems.value.length,
+    () => requestAnimationFrame(handleScroll)
+  )
 
   return {
     // 状态
