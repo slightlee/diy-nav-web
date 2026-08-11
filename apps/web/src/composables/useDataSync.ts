@@ -21,6 +21,11 @@ export function useDataSync() {
   const uiStore = useUIStore()
   const aiStore = useAIStore()
   const settingsStore = useSettingsStore()
+  // A cached user means this is a page refresh. Session verification and the
+  // following workspace reconcile can run without blocking the already
+  // hydrated local workspace with a global loading overlay.
+  const startupUserId = authStore.user?.id || null
+  let startupSessionPending = true
   let syncTimer: number | null = null
   let refreshTimer: number | null = null
   let localSyncInFlight = false
@@ -76,15 +81,25 @@ export function useDataSync() {
         aiStore.clearState()
 
         if (!hasCheckedSession) {
-          uiStore.setLoading(true, '正在验证登录状态…')
+          // Verify the httpOnly session silently on startup. The local
+          // workspace was initialized before mount and remains usable while
+          // the server confirms the cached account.
+          uiStore.setLoading(false)
           return
         }
 
+        const isStartupRefresh = startupSessionPending && userId === startupUserId
+        startupSessionPending = false
         settingsStore.activateAccountPreferences(userId)
 
         if (userId) {
           const session = captureAccountSession()
-          uiStore.setLoading(true, '正在加载账号数据…')
+          const shouldShowLoading = !isStartupRefresh
+          if (shouldShowLoading) {
+            uiStore.setLoading(true, '正在加载账号数据…')
+          } else {
+            uiStore.setLoading(false)
+          }
           void cloudSync
             .activateWorkspace()
             .then(activated => {
