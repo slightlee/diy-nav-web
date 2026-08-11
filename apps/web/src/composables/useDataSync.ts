@@ -25,6 +25,20 @@ export function useDataSync() {
   let refreshTimer: number | null = null
   let localSyncInFlight = false
 
+  const showBookmarkImportOnboarding = (userId: string) => {
+    if (websiteStore.websites.length > 0) return
+    if (uiStore.modalState.syncConflict || uiStore.modalState.syncRecovery) return
+
+    const promptKey = `navData:user:${encodeURIComponent(userId)}:bookmarkImportPromptSeen`
+    try {
+      if (localStorage.getItem(promptKey) === 'true') return
+      localStorage.setItem(promptKey, 'true')
+    } catch {
+      // The import entry remains available from data management when storage is unavailable.
+    }
+    uiStore.openModal('accountPanel', { tab: 'data' })
+  }
+
   const flushLocalChanges = async () => {
     if (localSyncInFlight) return
     localSyncInFlight = true
@@ -74,7 +88,10 @@ export function useDataSync() {
           void cloudSync
             .activateWorkspace()
             .then(activated => {
-              if (activated && isCurrentAccountSession(session)) uiStore.setLoading(false)
+              if (activated && isCurrentAccountSession(session)) {
+                uiStore.setLoading(false)
+                showBookmarkImportOnboarding(userId)
+              }
             })
             .catch(error => {
               if (!isCurrentAccountSession(session)) return

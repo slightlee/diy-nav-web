@@ -62,6 +62,56 @@ export interface WebsiteClassificationResult {
   tagNames: string[]
 }
 
+export interface BookmarkTaxonomyRequest {
+  total: number
+  folders: Array<{ path: string; count: number }>
+  domains: Array<{ host: string; count: number; titles: string[] }>
+  samples: Array<{ name: string; host: string; folderPath: string }>
+}
+
+export interface BookmarkTaxonomyResult {
+  categories: string[]
+  tags: string[]
+}
+
+export interface BookmarkTaxonomyItem {
+  id: string
+  name: string
+}
+
+export interface BookmarkClassificationRequest {
+  taxonomy: {
+    categories: BookmarkTaxonomyItem[]
+    tags: BookmarkTaxonomyItem[]
+  }
+  bookmarks: Array<{
+    sourceId: string
+    name: string
+    url: string
+    folderPath: string
+  }>
+}
+
+export interface BookmarkClassificationResult {
+  items: Array<{
+    sourceId: string
+    description: string
+    categoryId: string
+    tagIds: string[]
+  }>
+  errors: Array<{ sourceId: string; message: string }>
+}
+
+export class AIRequestError extends Error {
+  constructor(
+    message: string,
+    readonly code?: string
+  ) {
+    super(message)
+    this.name = 'AIRequestError'
+  }
+}
+
 /**
  * Get all AI providers for current user
  */
@@ -193,6 +243,35 @@ export async function classifyWebsite(
     return res.data
   }
   throw new Error(res.message || '自动归类失败')
+}
+
+export async function planBookmarkTaxonomy(
+  input: BookmarkTaxonomyRequest,
+  signal?: AbortSignal
+): Promise<BookmarkTaxonomyResult> {
+  const res = await request.post<BookmarkTaxonomyResult>(
+    '/api/ai/bookmark-import/taxonomy',
+    input,
+    {
+      timeout: 120000,
+      signal
+    }
+  )
+  if (res.success && res.data) return res.data
+  throw new AIRequestError(res.message || '生成书签分类体系失败', res.code)
+}
+
+export async function classifyBookmarkBatch(
+  input: BookmarkClassificationRequest,
+  signal?: AbortSignal
+): Promise<BookmarkClassificationResult> {
+  const res = await request.post<BookmarkClassificationResult>(
+    '/api/ai/bookmark-import/classify',
+    input,
+    { timeout: 180000, signal }
+  )
+  if (res.success && res.data) return res.data
+  throw new AIRequestError(res.message || '批量分析书签失败', res.code)
 }
 
 /**

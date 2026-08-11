@@ -171,7 +171,11 @@
           </div>
         </div>
 
-        <DataManagementModal v-else-if="activeTab === 'data'" @close="emit('close')" />
+        <DataManagementModal
+          v-else-if="activeTab === 'data'"
+          @close="emit('close')"
+          @open-ai-settings="activeTab = 'ai'"
+        />
         <AIConfigModal v-else-if="activeTab === 'ai'" @close="emit('close')" />
         <SettingsModal v-else-if="activeTab === 'settings'" @close="emit('close')" />
       </div>

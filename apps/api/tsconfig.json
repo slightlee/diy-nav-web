@@ -7,5 +7,6 @@
     "noEmit": false,
     "allowImportingTsExtensions": false
   },
-  "include": ["./**/*.ts"]
+  "include": ["./**/*.ts"],
+  "exclude": ["./**/*.spec.ts"]
 }

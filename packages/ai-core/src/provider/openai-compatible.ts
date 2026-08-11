@@ -56,6 +56,7 @@ export abstract class OpenAICompatibleProvider extends BaseAIProvider {
    * Default: 60 seconds
    */
   protected readonly requestTimeout = 60000
+  protected readonly completionRequestTimeout = 120000
 
   async listModels(): Promise<string[]> {
     const controller = new AbortController()
@@ -154,7 +155,7 @@ export abstract class OpenAICompatibleProvider extends BaseAIProvider {
     options?: ChatOptions
   ): Promise<{ content: string; meta: ChatResponseMeta }> {
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout)
+    const timeoutId = setTimeout(() => controller.abort(), this.completionRequestTimeout)
 
     try {
       const response = await fetch(appendEndpoint(this._baseUrl, 'chat/completions'), {
@@ -187,7 +188,7 @@ export abstract class OpenAICompatibleProvider extends BaseAIProvider {
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error(
-          `Request timeout: ${this.displayName} did not respond within ${this.requestTimeout / 1000} seconds`
+          `Request timeout: ${this.displayName} did not respond within ${this.completionRequestTimeout / 1000} seconds`
         )
       }
       throw error

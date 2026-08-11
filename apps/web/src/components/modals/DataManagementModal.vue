@@ -159,6 +159,38 @@
       </div>
 
       <div class="data-actions-grid">
+        <div class="action-card action-card--chrome">
+          <div class="action-card__content">
+            <div class="action-card__title-row">
+              <h4 class="action-card__title">Chrome 书签</h4>
+              <span class="action-card__badge">AI 整理</span>
+              <span v-if="bookmarkImportSummary" class="action-card__task-state">
+                {{ bookmarkImportSummaryText }}
+              </span>
+            </div>
+            <p class="action-card__description">
+              导入 bookmarks.html，统一生成描述、精简分类和公共标签，支持暂停后继续。
+            </p>
+          </div>
+          <div class="action-card__action">
+            <BaseButton
+              variant="ghost"
+              shape="rounded"
+              size="sm"
+              class="action-btn"
+              @click="handleChromeBookmarkImport"
+            >
+              {{
+                bookmarkImportSummary
+                  ? '继续导入'
+                  : authStore.isAuthenticated
+                    ? '导入书签'
+                    : '登录后导入'
+              }}
+            </BaseButton>
+          </div>
+        </div>
+
         <div class="action-card">
           <div class="action-card__content">
             <h4 class="action-card__title">导入数据</h4>
@@ -227,6 +259,24 @@
     </div>
 
     <!-- Modals -->
+    <BaseModal
+      v-if="chromeImportOpen"
+      :is-open="chromeImportOpen"
+      title="导入 Chrome 书签"
+      size="lg"
+      modal-class="chrome-bookmark-import-modal"
+      :close-on-overlay="false"
+      scrollable
+      @close="closeChromeBookmarkImport"
+    >
+      <ChromeBookmarkImportModal
+        @close="closeChromeBookmarkImport"
+        @imported="handleChromeImportCompleted"
+        @configure-ai="handleConfigureAI"
+        @task-change="refreshBookmarkImportSummary"
+      />
+    </BaseModal>
+
     <BaseModal
       v-if="clearConfirmOpen"
       :is-open="clearConfirmOpen"
@@ -430,9 +480,17 @@ import { useBackup } from '@/composables/useBackup'
 import { useCloudSync } from '@/composables/useCloudSync'
 import { logger } from '@nav/logger'
 import type { BackupItem } from '@/api/backup'
-import { clearWorkspaceBackupState } from '@/utils/user-data-storage'
+import { clearWorkspaceBackupState, getWorkspaceStorageKey } from '@/utils/user-data-storage'
+import ChromeBookmarkImportModal from '@/components/modals/ChromeBookmarkImportModal.vue'
+import {
+  getBookmarkImportTaskSummary,
+  type BookmarkImportTaskSummary
+} from '@/composables/useBookmarkImport'
 
-const emit = defineEmits(['close'])
+const emit = defineEmits<{
+  (event: 'close'): void
+  (event: 'openAiSettings'): void
+}>()
 const router = useRouter()
 
 const websiteStore = useWebsiteStore()
@@ -469,6 +527,7 @@ const {
 
 // Load history on mount
 onMounted(() => {
+  bookmarkImportSummary.value = getBookmarkImportTaskSummary()
   if (authStore.isAuthenticated) {
     // Always hit the network when opening data management so the list matches server.
     void fetchBackups()
@@ -529,6 +588,15 @@ const importConfirmOpen = ref(false)
 const importFileName = ref('')
 const importPreview = ref({ websites: 0, categories: 0, tags: 0 })
 let pendingImportData: Partial<BackupData> | null = null
+const chromeImportOpen = ref(false)
+const bookmarkImportSummary = ref<BookmarkImportTaskSummary | null>(null)
+
+const bookmarkImportSummaryText = computed(() => {
+  const summary = bookmarkImportSummary.value
+  if (!summary) return ''
+  if (summary.phase === 'completed') return '已完成'
+  return `${summary.success}/${summary.total} 已分析`
+})
 
 const deleteConfirmOpen = ref(false)
 const backupToDelete = ref<BackupItem | null>(null)
@@ -539,6 +607,33 @@ const backupToRestore = ref<BackupItem | null>(null)
 const handleManualBackup = async () => {
   const data = websiteStore.exportData()
   await doCreateBackup(data, 'MANUAL')
+}
+
+const refreshBookmarkImportSummary = () => {
+  bookmarkImportSummary.value = getBookmarkImportTaskSummary()
+}
+
+const handleChromeBookmarkImport = () => {
+  if (!authStore.isAuthenticated) {
+    handleGoLogin()
+    return
+  }
+  chromeImportOpen.value = true
+}
+
+const closeChromeBookmarkImport = () => {
+  chromeImportOpen.value = false
+  refreshBookmarkImportSummary()
+}
+
+const handleChromeImportCompleted = () => {
+  refreshBookmarkImportSummary()
+  uiStore.showToast('Chrome 书签导入成功', 'success')
+}
+
+const handleConfigureAI = () => {
+  chromeImportOpen.value = false
+  emit('openAiSettings')
 }
 
 const refreshBackups = () => {
@@ -648,6 +743,8 @@ const confirmClearData = async () => {
     if (syncEnabled.value && !(await setSyncEnabled(false))) return
 
     clearWorkspaceBackupState()
+    localStorage.removeItem(getWorkspaceStorageKey('bookmarkImportTask'))
+    bookmarkImportSummary.value = null
     localStorage.removeItem('userSettings')
     settingsStore.clearPreferencesCache(authStore.user?.id)
 
@@ -1144,6 +1241,36 @@ input:checked + .slider::before {
 
 .action-card__content {
   min-width: 0;
+}
+
+.action-card--chrome {
+  background: color-mix(in srgb, var(--color-primary) 3.5%, transparent);
+}
+
+.action-card__title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.action-card__badge,
+.action-card__task-state {
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.action-card__badge {
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
+}
+
+.action-card__task-state {
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+  color: var(--color-success);
 }
 
 .action-card__title {

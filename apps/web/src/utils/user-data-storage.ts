@@ -7,6 +7,7 @@ export type WorkspaceStorageKey =
   | 'lastAutoBackupTime'
   | 'lastAutoBackupHash'
   | 'autoBackupLock'
+  | 'bookmarkImportTask'
 
 export type WorkspaceOwner = { kind: 'anonymous' } | { kind: 'user'; userId: string }
 
@@ -17,7 +18,8 @@ const ALL_WORKSPACE_KEYS: WorkspaceStorageKey[] = [
   ...CORE_DATA_KEYS,
   'lastAutoBackupTime',
   'lastAutoBackupHash',
-  'autoBackupLock'
+  'autoBackupLock',
+  'bookmarkImportTask'
 ]
 const ACTIVE_WORKSPACE_OWNER_KEY = 'navData:workspaceOwner'
 const LEGACY_CLAIM_PENDING_KEY = 'navData:workspaceClaimPending'

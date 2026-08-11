@@ -34,6 +34,14 @@ import {
   setDefaultProvider,
   updateProvider
 } from '../lib/ai-provider-store.js'
+import {
+  bookmarkClassificationRequestSchema,
+  bookmarkTaxonomyRequestSchema,
+  buildBookmarkClassificationMessages,
+  buildBookmarkTaxonomyMessages,
+  parseBookmarkClassificationResponse,
+  parseBookmarkTaxonomyResponse
+} from '../lib/bookmark-import-ai.js'
 
 // Initialize provider registry with JWT secret as encryption key
 const providerRegistry = new AIProviderRegistry(config.auth.jwtSecret)
@@ -858,6 +866,251 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
         code: 'CLASSIFICATION_FAILED',
         message: '自动归类失败，请稍后重试'
       })
+    }
+  )
+
+  // ============================================
+  // Chrome Bookmark Import
+  // ============================================
+
+  app.post(
+    '/ai/bookmark-import/taxonomy',
+    {
+      onRequest: [app.authenticate],
+      schema: { body: bookmarkTaxonomyRequestSchema },
+      config: { rateLimit: { max: 10, timeWindow: '1 minute' } }
+    },
+    async (req, reply) => {
+      const userId = req.user.sub
+      const aiLog = createAIRequestLogger(req.log, 'bookmark_import_taxonomy', userId)
+      const limitResult = checkRateLimit(userId)
+      if (!limitResult.allowed) {
+        aiLog.rejected('rate_limit')
+        return reply.code(429).send({
+          success: false,
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: '今日 AI 调用次数已达上限'
+        })
+      }
+
+      let resolvedProvider
+      try {
+        resolvedProvider = await resolveChatProvider(userId)
+      } catch (error) {
+        if (error instanceof AIProviderConfigError) {
+          aiLog.rejected(error.code, { err: error })
+          return reply.code(400).send({
+            success: false,
+            code: error.code,
+            message: '当前 AI 服务未配置模型名称，请先到 AI 配置中填写模型名称'
+          })
+        }
+        throw error
+      }
+      if (!resolvedProvider) {
+        aiLog.rejected('no_provider')
+        return reply.code(400).send({
+          success: false,
+          code: 'NO_PROVIDER',
+          message: '请先配置 AI 服务'
+        })
+      }
+
+      const { provider, providerIdForUsage } = resolvedProvider
+      const providerContext = getProviderLogContext(resolvedProvider)
+      const baseMessages = buildBookmarkTaxonomyMessages(req.body)
+      let lastContent = ''
+      let lastError: unknown
+      let totalTokens = 0
+      aiLog.started({
+        ...providerContext,
+        bookmarkCount: req.body.total,
+        folderCount: req.body.folders.length,
+        domainCount: req.body.domains.length
+      })
+
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const messages =
+          attempt === 0
+            ? baseMessages
+            : [
+                ...baseMessages,
+                { role: 'assistant' as const, content: lastContent },
+                {
+                  role: 'user' as const,
+                  content: '上一次输出不符合数量或格式要求，请修正并只输出完整 JSON。'
+                }
+              ]
+
+        let result: Awaited<ReturnType<AIProvider['chatComplete']>>
+        try {
+          result = await provider.chatComplete(messages, {
+            temperature: 0,
+            maxTokens: 2200
+          })
+        } catch (error) {
+          aiLog.failed(error, { ...providerContext, attempt: attempt + 1 })
+          const clientError = toAIClientError(error, '生成书签分类体系失败，请稍后重试')
+          return reply.code(clientError.statusCode).send({
+            success: false,
+            code: clientError.code,
+            message: clientError.message
+          })
+        }
+
+        lastContent = result.content
+        totalTokens += result.meta.totalTokens || 0
+        try {
+          const taxonomy = parseBookmarkTaxonomyResponse(lastContent, req.body.total)
+
+          consumeRateLimit(userId)
+          recordUsage(userId, providerIdForUsage, 'chat', totalTokens)
+          aiLog.completed({
+            ...providerContext,
+            attempts: attempt + 1,
+            tokensUsed: totalTokens,
+            categoryCount: taxonomy.categories.length,
+            tagCount: taxonomy.tags.length
+          })
+          return { success: true, data: taxonomy }
+        } catch (error) {
+          lastError = error
+          aiLog.failed(
+            error,
+            { ...providerContext, attempt: attempt + 1 },
+            'warn',
+            'Bookmark taxonomy response invalid'
+          )
+        }
+      }
+
+      consumeRateLimit(userId)
+      recordUsage(userId, providerIdForUsage, 'chat', totalTokens)
+      aiLog.failed(lastError, { ...providerContext, attempts: 2, tokensUsed: totalTokens })
+      return reply.code(502).send({
+        success: false,
+        code: 'BOOKMARK_TAXONOMY_FAILED',
+        message: 'AI 未能生成有效的分类体系，请重试'
+      })
+    }
+  )
+
+  app.post(
+    '/ai/bookmark-import/classify',
+    {
+      onRequest: [app.authenticate],
+      schema: { body: bookmarkClassificationRequestSchema },
+      config: { rateLimit: { max: 30, timeWindow: '1 minute' } }
+    },
+    async (req, reply) => {
+      const userId = req.user.sub
+      const aiLog = createAIRequestLogger(req.log, 'bookmark_import_classify', userId)
+      const limitResult = checkRateLimit(userId)
+      if (!limitResult.allowed) {
+        aiLog.rejected('rate_limit')
+        return reply.code(429).send({
+          success: false,
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: '今日 AI 调用次数已达上限'
+        })
+      }
+
+      let resolvedProvider
+      try {
+        resolvedProvider = await resolveChatProvider(userId)
+      } catch (error) {
+        if (error instanceof AIProviderConfigError) {
+          aiLog.rejected(error.code, { err: error })
+          return reply.code(400).send({
+            success: false,
+            code: error.code,
+            message: '当前 AI 服务未配置模型名称，请先到 AI 配置中填写模型名称'
+          })
+        }
+        throw error
+      }
+      if (!resolvedProvider) {
+        aiLog.rejected('no_provider')
+        return reply.code(400).send({
+          success: false,
+          code: 'NO_PROVIDER',
+          message: '请先配置 AI 服务'
+        })
+      }
+
+      const { provider, providerIdForUsage } = resolvedProvider
+      const providerContext = getProviderLogContext(resolvedProvider)
+      const baseMessages = buildBookmarkClassificationMessages(req.body)
+      let lastContent = ''
+      let lastError: unknown
+      let totalTokens = 0
+      let bestResult: ReturnType<typeof parseBookmarkClassificationResponse> | null = null
+      aiLog.started({ ...providerContext, bookmarkCount: req.body.bookmarks.length })
+
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const messages =
+          attempt === 0
+            ? baseMessages
+            : [
+                ...baseMessages,
+                { role: 'assistant' as const, content: lastContent },
+                {
+                  role: 'user' as const,
+                  content: '上一次有书签缺失或字段无效。请覆盖全部 sourceId，并只输出完整 JSON。'
+                }
+              ]
+
+        let result: Awaited<ReturnType<AIProvider['chatComplete']>>
+        try {
+          result = await provider.chatComplete(messages, {
+            temperature: 0,
+            maxTokens: 3500
+          })
+        } catch (error) {
+          aiLog.failed(error, { ...providerContext, attempt: attempt + 1 })
+          const clientError = toAIClientError(error, '批量分析书签失败，请稍后重试')
+          return reply.code(clientError.statusCode).send({
+            success: false,
+            code: clientError.code,
+            message: clientError.message
+          })
+        }
+
+        lastContent = result.content
+        totalTokens += result.meta.totalTokens || 0
+        try {
+          const parsed = parseBookmarkClassificationResponse(lastContent, req.body)
+          if (!bestResult || parsed.items.length > bestResult.items.length) bestResult = parsed
+          if (parsed.errors.length === 0) break
+        } catch (error) {
+          lastError = error
+          aiLog.failed(
+            error,
+            { ...providerContext, attempt: attempt + 1 },
+            'warn',
+            'Bookmark classification response invalid'
+          )
+        }
+      }
+
+      consumeRateLimit(userId)
+      recordUsage(userId, providerIdForUsage, 'chat', totalTokens)
+      if (!bestResult || bestResult.items.length === 0) {
+        aiLog.failed(lastError, { ...providerContext, attempts: 2, tokensUsed: totalTokens })
+        return reply.code(502).send({
+          success: false,
+          code: 'BOOKMARK_CLASSIFICATION_FAILED',
+          message: 'AI 未能返回有效的书签分析结果，请重试'
+        })
+      }
+
+      aiLog.completed({
+        ...providerContext,
+        tokensUsed: totalTokens,
+        successCount: bestResult.items.length,
+        errorCount: bestResult.errors.length
+      })
+      return { success: true, data: bestResult }
     }
   )
 

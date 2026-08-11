@@ -8,6 +8,7 @@
     "start": "node ./dist/server.js",
     "dev": "tsx watch server.ts",
     "seed:avatars": "tsx scripts/seed-avatars.ts",
+    "test": "vitest",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -39,6 +40,7 @@
   "devDependencies": {
     "@types/nodemailer": "^8.0.1",
     "tsx": "^4.21.0",
-    "typescript": "~5.7.2"
+    "typescript": "~5.7.2",
+    "vitest": "^4.0.15"
   }
 }
