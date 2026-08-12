@@ -134,6 +134,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { BaseButton, BaseInput, BaseModal } from '@nav/ui'
 import { AuthRequestError, useAuthStore, type LoginMethods } from '@/stores/auth'
+import { useSettingsStore } from '@/stores/settings'
 import { startOAuth, type OAuthProvider } from '@/utils/oauth'
 import { useUIStore } from '@/stores/ui'
 
@@ -156,6 +157,7 @@ const providerMeta: Record<OAuthProvider, { label: string; icon: string }> = {
 }
 
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
 const uiStore = useUIStore()
 const methods = ref<LoginMethods | null>(null)
 const loadingMethods = ref(true)
@@ -244,7 +246,7 @@ const handleBind = async (key: LoginMethodKey) => {
   pendingProvider.value = key
   try {
     const state = await authStore.createProviderBindingIntent(key)
-    startOAuth(key, state, 'bind')
+    startOAuth(key, state, 'bind', settingsStore.settings.navIcon)
   } catch (error) {
     pendingProvider.value = null
     uiStore.showToast(error instanceof Error ? error.message : '无法启动第三方账号绑定', 'error')

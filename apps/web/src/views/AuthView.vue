@@ -257,6 +257,7 @@ import { ref, reactive, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { NAVIGATION_BRAND_CONFIG } from '@nav/config/brand'
 import { useAuthStore } from '@/stores/auth'
+import { useSettingsStore } from '@/stores/settings'
 import { useUIStore } from '@/stores/ui'
 
 import { isValidEmail, isValidPassword } from '@/utils/validators'
@@ -266,6 +267,7 @@ import { AuthLayout, BaseButton, BrandLogo } from '@nav/ui'
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
 const uiStore = useUIStore()
 
 const currentView = ref<'login' | 'register'>('login')
@@ -298,7 +300,7 @@ const registerErrors = reactive({
 
 const handleOAuthLogin = (provider: OAuthProvider) => {
   try {
-    startOAuth(provider, createOAuthLoginState(), 'login')
+    startOAuth(provider, createOAuthLoginState(), 'login', settingsStore.settings.navIcon)
   } catch (error) {
     uiStore.showToast(error instanceof Error ? error.message : '无法启动第三方登录', 'error')
   }

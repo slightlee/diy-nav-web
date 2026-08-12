@@ -58,9 +58,17 @@ const getAuthorizationUrl = (provider: OAuthProvider, state: string, mode: OAuth
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
 }
 
-export const startOAuth = (provider: OAuthProvider, state: string, mode: OAuthMode): void => {
+export const startOAuth = (
+  provider: OAuthProvider,
+  state: string,
+  mode: OAuthMode,
+  brandIcon?: string
+): void => {
   localStorage.setItem('oauth_state', state)
   localStorage.setItem('oauth_provider', provider)
   localStorage.setItem('oauth_mode', mode)
+  const normalizedBrandIcon = brandIcon?.trim()
+  if (normalizedBrandIcon) localStorage.setItem('oauth_brand_icon', normalizedBrandIcon)
+  else localStorage.removeItem('oauth_brand_icon')
   window.location.assign(getAuthorizationUrl(provider, state, mode))
 }

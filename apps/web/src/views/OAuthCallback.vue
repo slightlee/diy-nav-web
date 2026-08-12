@@ -2,8 +2,26 @@
   <AuthLayout>
     <div v-if="!errorState" class="state-loading">
       <!-- Branded Logo (Pulsing) -->
-      <div class="logo-wrapper">
-        <BrandLogo :pulsing="true" />
+      <div
+        class="logo-wrapper"
+        :class="{
+          'has-custom-image': brandIconIsUrl,
+          'is-default-brand': isDefaultBrandIcon
+        }"
+      >
+        <BrandLogo :pulsing="true">
+          <img
+            v-if="brandIconIsUrl"
+            :src="brandIcon"
+            class="brand-logo-image"
+            alt=""
+            @error="brandImageBroken = true"
+          />
+          <i v-else-if="brandIconIsFa" :class="brandIcon" aria-hidden="true" />
+          <span v-else class="brand-logo-text" :class="{ 'is-default': isDefaultBrandIcon }">
+            {{ brandIconText }}
+          </span>
+        </BrandLogo>
       </div>
 
       <h2 class="status-title">{{ statusTitle }}</h2>
@@ -43,9 +61,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { NAVIGATION_BRAND_CONFIG } from '@nav/config/brand'
 import { AuthRequestError, useAuthStore } from '@/stores/auth'
+import { isNavIconFa, isNavIconUrl, useSettingsStore } from '@/stores/settings'
 import { useUIStore } from '@/stores/ui'
 import { AuthLayout, BaseButton, BrandLogo } from '@nav/ui'
 import type { OAuthMode, OAuthProvider } from '@/utils/oauth'
@@ -53,11 +73,33 @@ import type { OAuthMode, OAuthProvider } from '@/utils/oauth'
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const settingsStore = useSettingsStore()
 const uiStore = useUIStore()
 
 const errorState = ref<string | null>(null)
+const brandImageBroken = ref(false)
 const oauthProvider = ref((localStorage.getItem('oauth_provider') || 'linuxdo') as OAuthProvider)
 const oauthMode = ref((localStorage.getItem('oauth_mode') || 'login') as OAuthMode)
+const oauthBrandIcon = localStorage.getItem('oauth_brand_icon')?.trim()
+
+const configuredBrandIcon = computed(
+  () =>
+    oauthBrandIcon || settingsStore.settings.navIcon?.trim() || NAVIGATION_BRAND_CONFIG.defaultIcon
+)
+const brandIcon = computed(() =>
+  brandImageBroken.value ? NAVIGATION_BRAND_CONFIG.defaultIcon : configuredBrandIcon.value
+)
+const brandIconIsUrl = computed(() => isNavIconUrl(brandIcon.value))
+const brandIconIsFa = computed(() => isNavIconFa(brandIcon.value))
+const isDefaultBrandIcon = computed(() => brandIcon.value === NAVIGATION_BRAND_CONFIG.defaultIcon)
+const brandIconText = computed(() => {
+  if (isDefaultBrandIcon.value) return NAVIGATION_BRAND_CONFIG.defaultIcon
+  return Array.from(brandIcon.value).slice(0, 2).join('') || NAVIGATION_BRAND_CONFIG.defaultIcon
+})
+
+watch(configuredBrandIcon, () => {
+  brandImageBroken.value = false
+})
 
 const providerLabel = computed(() => {
   if (oauthProvider.value === 'github') return 'GitHub'
@@ -88,6 +130,7 @@ onMounted(async () => {
   localStorage.removeItem('oauth_state')
   localStorage.removeItem('oauth_provider')
   localStorage.removeItem('oauth_mode')
+  localStorage.removeItem('oauth_brand_icon')
 
   if (!code) {
     errorState.value = '授权回调异常: 未能获取授权码'
@@ -131,6 +174,34 @@ const leaveErrorState = () => {
 
 .logo-wrapper {
   margin-bottom: var(--spacing-2xl);
+}
+
+.logo-wrapper.has-custom-image :deep(.logo) {
+  background: transparent;
+  box-shadow: none;
+}
+
+.logo-wrapper.is-default-brand :deep(.logo) {
+  background: var(--primary-soft);
+  color: var(--color-primary);
+  box-shadow: none;
+}
+
+.logo-wrapper.is-default-brand :deep(.logo-pulse) {
+  display: none;
+}
+
+.brand-logo-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.brand-logo-text.is-default {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.08em;
 }
 
 /* Error State Styles */
