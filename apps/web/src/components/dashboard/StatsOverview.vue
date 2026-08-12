@@ -129,16 +129,15 @@ const { totalSites, favoriteTotal, recentAdded7d, todayVisited } = useWebsiteSta
   text-overflow: ellipsis;
 }
 .stat-value {
-  font-size: 14px;
+  font-size: 11px;
   line-height: 1;
-  font-weight: 650;
-  color: var(--color-primary);
+  font-weight: 400;
+  color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
 
 .stat-value.is-zero {
   color: var(--text-muted);
-  font-weight: 600;
 }
 
 .stats-suggestion {
