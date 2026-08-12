@@ -149,7 +149,7 @@ export function useDataSync() {
         authStore.isAuthenticated &&
         cloudSync.isEnabled.value
       ) {
-        void cloudSync.checkOnLogin()
+        void cloudSync.checkOnLogin().catch(() => undefined)
       }
     }
 

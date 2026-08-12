@@ -246,7 +246,7 @@ export function useCloudSync() {
 
   const applyRemoteSnapshot = (
     snapshot: SyncPayload,
-    hash: string,
+    hash: string | null,
     expectedUserId: string,
     generation: number
   ) => {
@@ -461,62 +461,37 @@ export function useCloudSync() {
         }
         if (!isActiveSession(expectedUserId, generation)) return
 
-        // A first-login claim owns both sides: local data was created before login,
-        // while the remote snapshot already belongs to the same verified account.
-        // Merge additively before normal base-hash logic so neither side can overwrite the other.
-        if (hasPendingWorkspaceClaim(expectedUserId)) {
-          if (!state.currentHash || !remote) {
-            if (hasSyncData(local)) {
-              const pushed = await pushSnapshot(local, state.currentHash || null)
-              if (!pushed) return
-            } else {
-              setBaseHash(null, expectedUserId)
-            }
-            completeWorkspaceClaim(expectedUserId)
-            clearConflictPending()
-            uiStore.closeModal('syncConflict')
-            return
-          }
+        const localHasData = hasSyncData(local)
+        const remoteHasData = !!remote && hasSyncData(remote)
 
-          const contentResolved = await tryResolveEqualContent(
-            local,
-            remote,
-            state,
-            expectedUserId,
-            generation
-          )
-          if (!isActiveSession(expectedUserId, generation)) return
-          if (contentResolved) {
-            completeWorkspaceClaim(expectedUserId)
-            return
-          }
-
-          const mergedData = mergeSyncData(local.data, remote.data)
-          websiteStore.importData({ data: mergedData })
-          const pushed = await pushSnapshot(exportSyncPayload(), state.currentHash)
-          if (!pushed) return
-
+        // Both empty: keep sync enabled and wait for the first local change.
+        if (!localHasData && !remoteHasData) {
+          setBaseHash(state.currentHash, expectedUserId)
           completeWorkspaceClaim(expectedUserId)
           clearConflictPending()
           uiStore.closeModal('syncConflict')
           return
         }
 
-        // Empty cloud: first upload is OK only when there is no existing remote hash.
+        // Local data + empty cloud: establish the first current cloud snapshot.
         if (!state.currentHash || !remote) {
-          if (hasSyncData(local)) {
-            const pushed = await pushSnapshot(local, null)
-            if (!pushed) return
-          } else {
+          if (!localHasData) {
             setBaseHash(null, expectedUserId)
+            completeWorkspaceClaim(expectedUserId)
+            clearConflictPending()
+            return
           }
+          const pushed = await pushSnapshot(local, null)
+          if (!pushed) return
+          completeWorkspaceClaim(expectedUserId)
           clearConflictPending()
           uiStore.closeModal('syncConflict')
           return
         }
 
-        // Always re-check content equality first (including after refresh with pending flag).
-        // Same counts + same business fields must NOT open a conflict modal.
+        if (!remote) return
+
+        // Both sides have data: same content is already synchronized.
         const contentResolved = await tryResolveEqualContent(
           local,
           remote,
@@ -525,80 +500,61 @@ export function useCloudSync() {
           generation
         )
         if (!isActiveSession(expectedUserId, generation)) return
-        if (contentResolved) return
+        if (contentResolved) {
+          completeWorkspaceClaim(expectedUserId)
+          return
+        }
+
+        // An unresolved choice owns both snapshots. Background checks must keep presenting
+        // that same conflict instead of silently overwriting either side on a later pass.
+        if (hasPendingSyncConflict() || conflictGate) {
+          await openConflictModal(remote, state)
+          return
+        }
 
         const baseHash = getBaseHash()
 
-        // While a previous conflict is still pending, never auto pull (would wipe local deletes).
-        // Still allow a safe push when local is clearly "remote minus some deletes".
-        if (hasPendingSyncConflict() || conflictGate) {
-          if (!shouldRequireConflictInsteadOfPush(local, remote) && state.currentHash) {
-            const pushed = await pushSnapshot(local, state.currentHash)
-            if (pushed) {
-              clearConflictPending()
-              uiStore.closeModal('syncConflict')
-              return
-            }
+        // A new browser has no common base. Empty local takes cloud; otherwise ask the user.
+        if (!baseHash) {
+          if (!localHasData) {
+            if (!applyRemoteSnapshot(remote, state.currentHash, expectedUserId, generation)) return
+            completeWorkspaceClaim(expectedUserId)
+            clearConflictPending()
+            return
           }
           await openConflictModal(remote, state)
           return
         }
 
-        // Local empty → take cloud.
-        if (!hasSyncData(local)) {
+        // Local stayed at the common base while another device advanced cloud: pull silently.
+        if (localHash === baseHash && state.currentHash !== baseHash) {
           if (!applyRemoteSnapshot(remote, state.currentHash, expectedUserId, generation)) return
+          completeWorkspaceClaim(expectedUserId)
           clearConflictPending()
           return
         }
 
-        // Local unchanged since last sync base:
-        // - cloud also unchanged → already in sync
-        // - cloud advanced → pull cloud
-        // Never treat "base missing" as unchanged (would resurrect deletes).
-        if (baseHash && baseHash === localHash) {
-          if (state.currentHash === baseHash) {
-            clearConflictPending()
-            return
-          }
-          if (!applyRemoteSnapshot(remote, state.currentHash, expectedUserId, generation)) return
-          clearConflictPending()
-          return
-        }
-
-        // Device was in sync and only local changed → push (includes normal single deletes).
-        if (baseHash === state.currentHash) {
+        // Cloud stayed at the common base while only this device changed: push silently.
+        if (state.currentHash === baseHash && localHash !== baseHash) {
+          // A full local wipe is destructive enough to keep the existing safety confirmation.
           if (shouldRequireConflictInsteadOfPush(local, remote)) {
-            logger.warn(
-              {
-                localWebsites: local.data.websites.length,
-                remoteWebsites: remote.data.websites.length
-              },
-              'Refusing auto-push of much smaller local snapshot; opening conflict'
-            )
             await openConflictModal(remote, state)
             return
           }
           const pushed = await pushSnapshot(local, state.currentHash)
           if (!pushed) return
+          completeWorkspaceClaim(expectedUserId)
           clearConflictPending()
           return
         }
 
-        // baseHash missing/stale but local looks like remote with deletes/edits only → push.
-        if (!shouldRequireConflictInsteadOfPush(local, remote)) {
-          const pushed = await pushSnapshot(local, state.currentHash)
-          if (pushed) {
-            clearConflictPending()
-            return
-          }
-        }
-
-        // Both sides diverged (or no base hash on this device) → user must choose.
+        // Both sides advanced from the same base: this is a real concurrent conflict.
         await openConflictModal(remote, state)
       } catch (error) {
         if (isActiveSession(expectedUserId, generation)) {
           logger.error({ err: error }, 'Failed to reconcile sync state')
         }
+        throw error
       } finally {
         if (isActiveSession(expectedUserId, generation)) {
           isSyncing.value = false
@@ -632,15 +588,21 @@ export function useCloudSync() {
         if (hasPendingSyncConflict()) return
         if (isSyncing.value) return
 
-        const state = remoteState.value || (await refreshState())
+        // Always refresh the lightweight state before writing. The cached state may be stale
+        // when another browser has already advanced the cloud snapshot.
+        const state = await refreshState()
         if (!isActiveSession(expectedUserId, generation)) return
         if (!state?.enabled) return
         if (hasPendingSyncConflict()) return
 
         const baseHash = getBaseHash()
-        // Never invent a base and push. Without a base hash, only checkOnLogin may decide.
-        if (state.currentHash && !baseHash) {
-          await checkOnLogin()
+        // Reconcile first whenever cloud moved away from this device's common base.
+        if (state.currentHash !== baseHash) {
+          try {
+            await checkOnLogin()
+          } catch {
+            // checkOnLogin already records the reconciliation error.
+          }
           if (!isActiveSession(expectedUserId, generation)) return
           return
         }
@@ -705,7 +667,15 @@ export function useCloudSync() {
 
       if (enabled) {
         // Reconcile after enable (uses its own isSyncing).
-        await checkOnLogin()
+        try {
+          await checkOnLogin()
+        } catch (error) {
+          if (isActiveSession(expectedUserId, generation)) {
+            logger.error({ err: error }, 'Sync enabled but initial reconciliation failed')
+            uiStore.showToast('云同步已开启，但数据同步失败，请重试', 'error')
+          }
+          return false
+        }
         if (!isActiveSession(expectedUserId, generation)) return false
         uiStore.showToast('云同步已开启：各设备登录后将自动对齐数据', 'success')
       } else {
@@ -760,7 +730,12 @@ export function useCloudSync() {
       const anonymousData = exportSyncPayload().data
       const userOwner = { kind: 'user' as const, userId: expectedUserId }
       const userData = readWorkspaceData(userOwner)
-      claimAnonymousWorkspace(expectedUserId)
+      const anonymousHasData =
+        anonymousData.websites.length > 0 ||
+        anonymousData.categories.length > 0 ||
+        anonymousData.tags.length > 0
+      if (anonymousHasData) claimAnonymousWorkspace(expectedUserId)
+      else setWorkspaceOwner(userOwner)
       websiteStore.importData({ data: mergeSyncData(anonymousData, userData) })
       clearAnonymousWorkspace()
       clearWorkspaceBackupState()
@@ -769,17 +744,6 @@ export function useCloudSync() {
       const userData = readWorkspaceData(userOwner)
       setWorkspaceOwner(userOwner)
       websiteStore.importData({ data: userData })
-    }
-
-    // First login claims anonymous data and enables its first cloud upload.
-    if (hasPendingWorkspaceClaim(expectedUserId)) {
-      const enabled = await enableSync()
-      if (!isActiveSession(expectedUserId, generation)) return false
-      if (!enabled.success || !enabled.data) {
-        throw new Error(enabled.message || '开启云同步失败')
-      }
-      remoteState.value = enabled.data
-      settingsStore.updateSettings({ autoBackup: true })
     }
 
     await checkOnLogin()
@@ -933,6 +897,7 @@ export function useCloudSync() {
         const pushed = await pushSnapshot(exportSyncPayload(), current.writeExpectedHash)
         if (!pushed) return
       }
+      completeWorkspaceClaim(expectedUserId)
       closeConflict()
       uiStore.showToast('已使用云端数据', 'success')
     } catch (error) {
@@ -959,6 +924,7 @@ export function useCloudSync() {
       if (!succeeded) return
 
       setBaseHash(remoteState.value?.currentHash ?? null, expectedUserId)
+      completeWorkspaceClaim(expectedUserId)
       closeConflict()
       uiStore.showToast('本地数据已同步到云端', 'success')
     } catch (error) {
@@ -1029,6 +995,7 @@ export function useCloudSync() {
       if (!succeeded || !remoteState.value?.currentHash) return
 
       setBaseHash(remoteState.value.currentHash, expectedUserId)
+      completeWorkspaceClaim(expectedUserId)
       closeConflict()
       uiStore.showToast(
         `已合并：本地 ${localCount} + 云端 ${remoteCount} → ${merged.data.websites.length} 个网站`,
