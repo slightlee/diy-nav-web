@@ -26,6 +26,7 @@ export function useDataSync() {
   // hydrated local workspace with a global loading overlay.
   const startupUserId = authStore.user?.id || null
   let startupSessionPending = true
+  let activeSessionUserId: string | null | undefined
   let syncTimer: number | null = null
   let refreshTimer: number | null = null
   let localSyncInFlight = false
@@ -66,7 +67,9 @@ export function useDataSync() {
     watch(
       [
         () => authStore.hasCheckedSession,
-        () => (authStore.isAuthenticated ? authStore.user?.id || null : null)
+        // Keep the cached user id while the cookie session is being verified. OAuth binding
+        // callbacks run during this window and must stay in the same account session.
+        () => authStore.user?.id || null
       ],
       ([hasCheckedSession, userId]) => {
         if (syncTimer) {
@@ -74,11 +77,15 @@ export function useDataSync() {
           syncTimer = null
         }
 
-        // Stop the old account before activating the next workspace. This
-        // prevents old data from being exported under the new session cookie.
-        cloudSync.resetSession(userId)
-        uiStore.closeAllModals()
-        aiStore.clearState()
+        // Session verification changes hasCheckedSession for the same user. Reset only when
+        // the actual account id changes, otherwise in-flight OAuth binding is aborted after
+        // the server has already completed it and the callback incorrectly reports failure.
+        if (activeSessionUserId !== userId) {
+          activeSessionUserId = userId
+          cloudSync.resetSession(userId)
+          uiStore.closeAllModals()
+          aiStore.clearState()
+        }
 
         if (!hasCheckedSession) {
           // Verify the httpOnly session silently on startup. The local

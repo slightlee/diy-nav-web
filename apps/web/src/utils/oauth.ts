@@ -34,7 +34,10 @@ const getAuthorizationUrl = (provider: OAuthProvider, state: string, mode: OAuth
       client_id: clientId,
       redirect_uri: redirectUri,
       scope: 'read:user user:email',
-      state
+      state,
+      // GitHub may reuse a previous OAuth grant without showing any page. Binding must still
+      // let the user explicitly choose which GitHub account is linked to the current account.
+      ...(mode === 'bind' ? { prompt: 'select_account' } : {})
     })
     return `https://github.com/login/oauth/authorize?${params.toString()}`
   }
@@ -48,7 +51,9 @@ const getAuthorizationUrl = (provider: OAuthProvider, state: string, mode: OAuth
     response_type: 'code',
     scope: 'openid email profile',
     state,
-    ...(mode === 'bind' ? { prompt: 'select_account' } : {})
+    // Binding must let Google disclose the requested identity scopes before the
+    // user confirms, even when this OAuth client was previously authorized.
+    ...(mode === 'bind' ? { prompt: 'consent select_account' } : {})
   })
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
 }
