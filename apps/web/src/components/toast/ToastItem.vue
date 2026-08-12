@@ -118,7 +118,6 @@ const toastRef = ref<HTMLElement>()
 // 内部状态
 const isVisible = ref(false)
 const isHovered = ref(false)
-const remainingTime = ref(0)
 const progressInterval = ref<ReturnType<typeof setInterval> | undefined>()
 
 // 计算属性
@@ -268,6 +267,8 @@ defineExpose({
 
 // 基础Toast样式
 .toast-item {
+  --toast-accent: var(--color-primary);
+
   display: flex;
   align-items: flex-start;
   gap: var(--spacing-sm);
@@ -297,37 +298,12 @@ defineExpose({
     box-shadow: var(--shadow-xl);
   }
 
-  // 类型变体
-  &--success {
-    border-left: 4px solid var(--color-success);
-
-    .toast-item__icon-img {
-      color: var(--color-success);
-    }
-  }
-
   &--error {
-    border-left: 4px solid var(--color-error);
-
-    .toast-item__icon-img {
-      color: var(--color-error);
-    }
+    --toast-accent: var(--color-error);
   }
 
   &--warning {
-    border-left: 4px solid var(--color-warning);
-
-    .toast-item__icon-img {
-      color: var(--color-warning);
-    }
-  }
-
-  &--info {
-    border-left: 4px solid var(--color-info);
-
-    .toast-item__icon-img {
-      color: var(--color-info);
-    }
+    --toast-accent: var(--color-warning);
   }
 
   // 有描述文本时的样式
@@ -351,6 +327,7 @@ defineExpose({
 
 .toast-item__icon-img {
   font-size: var(--font-size-lg);
+  color: var(--toast-accent);
 }
 
 // 内容区域
@@ -409,7 +386,7 @@ defineExpose({
   left: 0;
   height: 3px;
   width: 100%;
-  background-color: var(--color-primary);
+  background-color: var(--toast-accent);
   transform-origin: left;
   animation: progress-shrink linear forwards;
 
@@ -420,22 +397,6 @@ defineExpose({
     to {
       transform: scaleX(0);
     }
-  }
-
-  .toast-item--success & {
-    background-color: var(--color-success);
-  }
-
-  .toast-item--error & {
-    background-color: var(--color-error);
-  }
-
-  .toast-item--warning & {
-    background-color: var(--color-warning);
-  }
-
-  .toast-item--info & {
-    background-color: var(--color-info);
   }
 }
 

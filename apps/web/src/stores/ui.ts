@@ -2,6 +2,13 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { ModalState, ToastMessage, ModalPayloads } from '@/types'
 
+const TOAST_DURATION = {
+  success: 1800,
+  info: 1800,
+  warning: 2600,
+  error: 2600
+} as const
+
 export const useUIStore = defineStore('ui', () => {
   const modalState = ref<ModalState>({
     addSite: false,
@@ -45,7 +52,7 @@ export const useUIStore = defineStore('ui', () => {
   const showToast = (
     message: string,
     type: 'success' | 'error' | 'warning' | 'info',
-    duration = 3000
+    duration = TOAST_DURATION[type]
   ) => {
     const exists = toasts.value.some(t => t.message === message && t.type === type)
     if (exists) return
