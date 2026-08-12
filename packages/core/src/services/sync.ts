@@ -183,6 +183,8 @@ export class SyncService {
       throw new AppError('Remote data changed during sync', 'SYNC_CONFLICT', 409)
     }
 
+    await this.deleteSupersededSnapshot(current.current_storage_key, storageKey)
+
     return {
       enabled: true,
       currentHash: nextHash,
@@ -308,6 +310,24 @@ export class SyncService {
       enabled: true,
       currentHash,
       updatedAt: now
+    }
+  }
+
+  /**
+   * The sync pointer is the only owner of a current snapshot. Delete the previous object only
+   * after the compare-and-swap update succeeds, so a failed concurrent write cannot remove the
+   * snapshot still referenced by the database. Cleanup failure must not turn an accepted write
+   * into a client-visible sync failure because the pointer has already advanced.
+   */
+  private async deleteSupersededSnapshot(
+    previousStorageKey: string | null,
+    currentStorageKey: string
+  ): Promise<void> {
+    if (!previousStorageKey || previousStorageKey === currentStorageKey) return
+    try {
+      await this.storage.delete(previousStorageKey)
+    } catch {
+      // The current snapshot remains valid; a transient orphan can be removed operationally.
     }
   }
 

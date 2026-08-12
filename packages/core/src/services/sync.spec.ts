@@ -327,6 +327,7 @@ describe('SyncService', () => {
     await service.updateSnapshot('user-1', next, 'old-hash')
 
     expect(mockBackupService.createBackup).not.toHaveBeenCalled()
+    expect(mockStorage.delete).toHaveBeenCalledWith('old.json')
   })
 
   it('does not archive previous cloud data when the new snapshot is not smaller', async () => {
@@ -374,6 +375,7 @@ describe('SyncService', () => {
     })
     // Same-size overwrite is not archived; write still fails on CAS.
     expect(mockBackupService.createBackup).not.toHaveBeenCalled()
+    expect(mockStorage.delete).not.toHaveBeenCalled()
   })
 })
 
