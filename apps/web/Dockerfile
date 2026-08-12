@@ -25,8 +25,6 @@ COPY --from=prune /app/tsup.config.ts .
 
 # Build Args
 ARG VITE_API_BASE_URL
-ARG VITE_LINUX_DO_CLIENT_ID
-ARG VITE_LINUX_DO_REDIRECT_URI
 
 # Build
 RUN npx turbo run build --filter=web...

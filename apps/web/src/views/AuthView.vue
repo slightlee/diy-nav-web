@@ -68,16 +68,20 @@
             <a href="#">忘记密码？</a>
           </div>
 
-          <div class="divider"><span>或使用第三方登录</span></div>
+          <div v-if="showOAuthSection" class="divider">
+            <span>或使用第三方登录</span>
+          </div>
 
-          <div class="social-row">
+          <div v-if="showOAuthSection" class="social-row" :aria-busy="oauthProvidersLoading">
             <BaseButton
+              v-if="oauthProvidersLoading || isOAuthAvailable('github')"
               variant="secondary"
               size="md"
               shape="circle"
               class="social-btn"
               title="GitHub 登录"
               aria-label="GitHub 登录"
+              :disabled="oauthProvidersLoading"
               @click="handleGitHubLogin"
             >
               <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor">
@@ -87,12 +91,14 @@
               </svg>
             </BaseButton>
             <BaseButton
+              v-if="oauthProvidersLoading || isOAuthAvailable('google')"
               variant="secondary"
               size="md"
               shape="circle"
               class="social-btn"
               title="Google 登录"
               aria-label="Google 登录"
+              :disabled="oauthProvidersLoading"
               @click="handleGoogleLogin"
             >
               <svg class="social-icon" viewBox="0 0 24 24">
@@ -115,12 +121,14 @@
               </svg>
             </BaseButton>
             <BaseButton
+              v-if="oauthProvidersLoading || isOAuthAvailable('linuxdo')"
               variant="secondary"
               size="md"
               shape="circle"
               class="social-btn"
               title="Linuxdo 登录"
               aria-label="Linuxdo 登录"
+              :disabled="oauthProvidersLoading"
               @click="handleLinuxDoLogin"
             >
               <svg class="social-icon" viewBox="0 0 24 24" fill="none">
@@ -253,7 +261,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue'
+import { computed, ref, reactive, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { NAVIGATION_BRAND_CONFIG } from '@nav/config/brand'
 import { useAuthStore } from '@/stores/auth'
@@ -261,7 +269,12 @@ import { useSettingsStore } from '@/stores/settings'
 import { useUIStore } from '@/stores/ui'
 
 import { isValidEmail, isValidPassword } from '@/utils/validators'
-import { createOAuthLoginState, startOAuth, type OAuthProvider } from '@/utils/oauth'
+import {
+  createOAuthLoginState,
+  fetchOAuthProviderConfigs,
+  startOAuth,
+  type OAuthProvider
+} from '@/utils/oauth'
 import { AuthLayout, BaseButton, BrandLogo } from '@nav/ui'
 
 const router = useRouter()
@@ -272,6 +285,11 @@ const uiStore = useUIStore()
 
 const currentView = ref<'login' | 'register'>('login')
 const loading = ref(false)
+const availableOAuthProviders = ref<OAuthProvider[]>([])
+const oauthProvidersLoading = ref(true)
+const showOAuthSection = computed(
+  () => oauthProvidersLoading.value || availableOAuthProviders.value.length > 0
+)
 
 // Login State
 const loginForm = reactive({
@@ -298,9 +316,12 @@ const registerErrors = reactive({
   confirmPassword: ''
 })
 
-const handleOAuthLogin = (provider: OAuthProvider) => {
+const isOAuthAvailable = (provider: OAuthProvider) =>
+  availableOAuthProviders.value.includes(provider)
+
+const handleOAuthLogin = async (provider: OAuthProvider) => {
   try {
-    startOAuth(provider, createOAuthLoginState(), 'login', settingsStore.settings.navIcon)
+    await startOAuth(provider, createOAuthLoginState(), 'login', settingsStore.settings.navIcon)
   } catch (error) {
     uiStore.showToast(error instanceof Error ? error.message : '无法启动第三方登录', 'error')
   }
@@ -316,6 +337,13 @@ onMounted(async () => {
     currentView.value = 'register'
   } else {
     currentView.value = 'login'
+  }
+  try {
+    availableOAuthProviders.value = (await fetchOAuthProviderConfigs()).map(item => item.provider)
+  } catch {
+    availableOAuthProviders.value = []
+  } finally {
+    oauthProvidersLoading.value = false
   }
 })
 

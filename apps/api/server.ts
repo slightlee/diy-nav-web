@@ -4,7 +4,7 @@ import staticPlugin from '@fastify/static'
 import { validatorCompiler, serializerCompiler, ZodTypeProvider } from 'fastify-type-provider-zod'
 import { join } from 'path'
 import { config } from '@nav/config'
-import { initServices } from './src/services.js'
+import { databaseClient, initServices } from './src/services.js'
 import { AppError } from '@nav/core'
 import { configs } from '@nav/logger'
 import iconRoutes from './src/routes/icon.js'
@@ -12,13 +12,8 @@ import backupRoutes from './src/routes/backup.js'
 import syncRoutes from './src/routes/sync.route.js'
 import authRoutes from './src/routes/auth.route.js'
 import aiRoutes from './src/routes/ai.route.js'
-import {
-  authProviderPlugin,
-  LinuxDoProvider,
-  GitHubProvider,
-  GoogleProvider
-} from '@nav/auth-providers'
 import { httpClient } from './src/lib/http.js'
+import { OAuthProviderConfigService } from './src/lib/oauth-provider-config.js'
 import authRenewalPlugin from './src/plugins/auth-renewal.js'
 import jwt from '@fastify/jwt'
 import rateLimit from '@fastify/rate-limit'
@@ -130,46 +125,12 @@ app.get('/readyz', async () => ({ status: 'ready' }))
 await app.register(iconRoutes, { prefix: '/api' })
 await app.register(backupRoutes, { prefix: '/api' })
 await app.register(syncRoutes, { prefix: '/api' })
-await app.register(authProviderPlugin)
-
-// Register OAuth Strategies (DI)
-const { linuxDo, github, google } = config.auth
-
-if (linuxDo.clientId && linuxDo.clientSecret && linuxDo.redirectUri) {
-  const provider = new LinuxDoProvider(
-    {
-      clientId: linuxDo.clientId,
-      clientSecret: linuxDo.clientSecret,
-      redirectUri: linuxDo.redirectUri
-    },
-    httpClient
-  )
-  app.authProviderFactory.register(provider)
-}
-
-if (github.clientId && github.clientSecret) {
-  const provider = new GitHubProvider(
-    {
-      clientId: github.clientId,
-      clientSecret: github.clientSecret,
-      redirectUri: github.redirectUri || ''
-    },
-    httpClient
-  )
-  app.authProviderFactory.register(provider)
-}
-
-if (google.clientId && google.clientSecret && google.redirectUri) {
-  const provider = new GoogleProvider(
-    {
-      clientId: google.clientId,
-      clientSecret: google.clientSecret,
-      redirectUri: google.redirectUri
-    },
-    httpClient
-  )
-  app.authProviderFactory.register(provider)
-}
+const oauthProviderConfigService = new OAuthProviderConfigService(
+  databaseClient,
+  httpClient,
+  config.auth.oauthConfigEncryptionKey
+)
+app.decorate('oauthProviderConfigService', oauthProviderConfigService)
 
 await app.register(authRoutes, { prefix: '/api' })
 await app.register(aiRoutes, { prefix: '/api' })
@@ -181,6 +142,8 @@ const start = async () => {
   try {
     // Initialize services (DB tables, etc.)
     await initServices(app.log)
+    await oauthProviderConfigService.initTable()
+    await oauthProviderConfigService.validateEnabledProviders()
 
     const port = config.server.port
     await app.listen({ port, host: '0.0.0.0' })

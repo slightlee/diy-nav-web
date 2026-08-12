@@ -127,11 +127,33 @@ cp .env.example .env
 | R2    | `STORAGE_R2_ENDPOINT`、`STORAGE_R2_ACCESS_KEY_ID`、`STORAGE_R2_SECRET_ACCESS_KEY`、`STORAGE_BUCKET` | 图标、头像、备份和同步快照。                         |
 | 存储  | `PUBLIC_STORAGE_PROVIDER`、`BACKUP_STORAGE_PROVIDER`                                                | 当前支持 `r2`、`webdav` 和 `local`，按用途分别配置。 |
 | 认证  | `JWT_SECRET`、`WEB_APP_URL`                                                                         | 生产环境必须使用强随机 JWT 密钥。                    |
-| OAuth | `VITE_*_CLIENT_ID`、服务端 Client ID/Secret、Redirect URI                                           | 可按需启用 GitHub、Google、Linux.do。                |
+| OAuth | `OAUTH_CONFIG_ENCRYPTION_KEY`                                                                       | 平台配置保存在数据库，环境变量仅保存主加密密钥。     |
 | AI    | `AI_OPENAI_API_KEY`、`AI_OPENAI_BASE_URL`、`AI_OPENAI_MODEL`                                        | 可选的系统级 AI 服务；用户也可登录后在界面中配置。   |
 | 前端  | `VITE_API_BASE_URL`、`VITE_BASE`、`VITE_USE_HASH_ROUTER`                                            | API 地址、部署子路径和路由模式。                     |
 
 不要提交真实 Token、Secret、API Key 或 WebDAV 密码。用户在界面中保存的 AI Key 会在服务端加密后写入数据库。
+
+#### 配置第三方登录
+
+OAuth 平台配置保存在 `oauth_provider_configs` 表中，API 启动时会自动创建该表。
+
+先在 `.env` 中设置 `OAUTH_CONFIG_ENCRYPTION_KEY`，再生成 Client Secret 密文：
+
+```bash
+pnpm --filter api exec node --input-type=module -e "import { encrypt } from '@nav/ai-core'; import { config } from '@nav/config'; console.log(encrypt(process.argv[1], config.auth.oauthConfigEncryptionKey))" "替换为 Client Secret"
+```
+
+然后在数据库中填写：
+
+| 字段                      | 说明                            |
+| :------------------------ | :------------------------------ |
+| `provider`                | `github`、`google` 或 `linuxdo` |
+| `enabled`                 | `1` 启用，`0` 停用              |
+| `client_id`               | 第三方平台提供的 Client ID      |
+| `client_secret_encrypted` | 上述命令生成的密文              |
+| `redirect_uri`            | 第三方平台登记的完整回调地址    |
+
+Redirect URI 必须与第三方平台后台完全一致。请妥善保管主加密密钥；密钥丢失或更换后，已有密文将无法解密。
 
 ### 启动开发环境
 

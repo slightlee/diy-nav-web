@@ -4,6 +4,8 @@
  */
 import { z } from 'zod'
 
+const DEVELOPMENT_OAUTH_CONFIG_KEY = 'dev-oauth-config-key-change-me-now'
+
 // ============================================
 // Server 配置
 // ============================================
@@ -19,21 +21,13 @@ export const serverSchema = z.object({
 // ============================================
 export const authSchema = z.object({
   JWT_SECRET: z.string().default('dev-secret-do-not-use-in-prod'),
+  OAUTH_CONFIG_ENCRYPTION_KEY: z.preprocess(
+    value => (value === '' ? undefined : value),
+    z.string().min(32).default(DEVELOPMENT_OAUTH_CONFIG_KEY)
+  ),
   WEB_APP_URL: z.string().url().default('http://127.0.0.1:3000'),
   SMTP_USER: z.string().optional(),
-  SMTP_PASSWORD: z.string().optional(),
-  // Linux.do
-  LINUX_DO_CLIENT_ID: z.string().optional(),
-  LINUX_DO_CLIENT_SECRET: z.string().optional(),
-  LINUX_DO_REDIRECT_URI: z.string().optional(),
-  // GitHub
-  GITHUB_CLIENT_ID: z.string().optional(),
-  GITHUB_CLIENT_SECRET: z.string().optional(),
-  GITHUB_REDIRECT_URI: z.string().optional(),
-  // Google
-  GOOGLE_CLIENT_ID: z.string().optional(),
-  GOOGLE_CLIENT_SECRET: z.string().optional(),
-  GOOGLE_REDIRECT_URI: z.string().optional()
+  SMTP_PASSWORD: z.string().optional()
 })
 
 // ============================================
@@ -137,6 +131,13 @@ export const configSchema = z
           code: z.ZodIssueCode.custom,
           message: 'JWT_SECRET must be set in production (at least 32 characters)',
           path: ['JWT_SECRET']
+        })
+      }
+      if (data.OAUTH_CONFIG_ENCRYPTION_KEY === DEVELOPMENT_OAUTH_CONFIG_KEY) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'OAUTH_CONFIG_ENCRYPTION_KEY must be set in production',
+          path: ['OAUTH_CONFIG_ENCRYPTION_KEY']
         })
       }
     }

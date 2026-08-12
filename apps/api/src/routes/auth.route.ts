@@ -21,6 +21,20 @@ import { toUserDto } from '../lib/dto.js'
 import { clearAuthCookie, setAuthCookie } from '../lib/auth-cookie.js'
 
 const authRoutes: FastifyPluginAsyncZod = async app => {
+  const getOAuthProvider = async (providerName: 'github' | 'google' | 'linuxdo') => {
+    const provider = await app.oauthProviderConfigService.getEnabledProvider(providerName)
+    if (!provider) {
+      throw new AppError('OAuth provider is unavailable', 'OAUTH_PROVIDER_UNAVAILABLE', 503)
+    }
+    return provider
+  }
+
+  app.get(
+    '/auth/oauth-providers',
+    { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    async () => ({ success: true, data: await app.oauthProviderConfigService.listPublic() })
+  )
+
   app.get('/auth/avatar-options', { onRequest: [app.authenticate] }, async () => ({
     success: true,
     data: AVATAR_LIBRARY.map(option => ({
@@ -141,11 +155,14 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
   )
 
   app.get('/auth/login-methods', { onRequest: [app.authenticate] }, async req => {
+    const availableProviders = (await app.oauthProviderConfigService.listPublic()).map(
+      item => item.provider
+    )
     return {
       success: true,
       data: {
         ...(await authService.getLoginMethods(req.user.sub)),
-        availableProviders: app.authProviderFactory.getProviderNames()
+        availableProviders
       }
     }
   })
@@ -246,7 +263,7 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
       const { code } = req.body
 
       // 1. Get Provider Strategy from DI Container
-      const provider = app.authProviderFactory.getProvider(providerName)
+      const provider = await getOAuthProvider(providerName)
 
       // 2. Exchange Token
       const tokenData = await provider.exchangeToken(code)
@@ -290,9 +307,7 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
     },
     async req => {
       const { provider } = req.params
-      if (!app.authProviderFactory.getProviderNames().includes(provider)) {
-        throw new AppError('OAuth provider is unavailable', 'OAUTH_PROVIDER_UNAVAILABLE', 503)
-      }
+      await getOAuthProvider(provider)
       const state = app.jwt.sign(
         {
           sub: req.user.sub,
@@ -329,7 +344,7 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
         throw new AppError('OAuth binding request is invalid', 'OAUTH_BINDING_INVALID', 400)
       }
 
-      const provider = app.authProviderFactory.getProvider(providerName)
+      const provider = await getOAuthProvider(providerName)
       const tokenData = await provider.exchangeToken(req.body.code)
       const userData = await provider.getUserInfo(tokenData.access_token)
       await authService.bindProviderIdentity(req.user.sub, provider.name, userData.id, {

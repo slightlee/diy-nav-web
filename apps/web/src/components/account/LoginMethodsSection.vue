@@ -246,7 +246,7 @@ const handleBind = async (key: LoginMethodKey) => {
   pendingProvider.value = key
   try {
     const state = await authStore.createProviderBindingIntent(key)
-    startOAuth(key, state, 'bind', settingsStore.settings.navIcon)
+    await startOAuth(key, state, 'bind', settingsStore.settings.navIcon)
   } catch (error) {
     pendingProvider.value = null
     uiStore.showToast(error instanceof Error ? error.message : '无法启动第三方账号绑定', 'error')

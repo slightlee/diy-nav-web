@@ -1,5 +1,15 @@
+import { request } from '@/utils/http'
+
 export type OAuthProvider = 'github' | 'google' | 'linuxdo'
 export type OAuthMode = 'login' | 'bind'
+
+export interface OAuthProviderConfig {
+  provider: OAuthProvider
+  clientId: string
+  redirectUri: string
+}
+
+let oauthProviderConfigsPromise: Promise<OAuthProviderConfig[]> | null = null
 
 const createRandomState = (): string => {
   const values = new Uint32Array(4)
@@ -11,11 +21,31 @@ const createRandomState = (): string => {
 
 export const createOAuthLoginState = (): string => createRandomState()
 
-const getAuthorizationUrl = (provider: OAuthProvider, state: string, mode: OAuthMode): string => {
+export const fetchOAuthProviderConfigs = (): Promise<OAuthProviderConfig[]> => {
+  if (!oauthProviderConfigsPromise) {
+    oauthProviderConfigsPromise = request
+      .get<OAuthProviderConfig[]>('/api/auth/oauth-providers')
+      .then(response => {
+        if (!response.success || !response.data) {
+          throw new Error(response.message || '第三方登录配置读取失败')
+        }
+        return response.data
+      })
+      .catch(error => {
+        oauthProviderConfigsPromise = null
+        throw error
+      })
+  }
+  return oauthProviderConfigsPromise
+}
+
+const getAuthorizationUrl = (
+  config: OAuthProviderConfig,
+  state: string,
+  mode: OAuthMode
+): string => {
+  const { provider, clientId, redirectUri } = config
   if (provider === 'linuxdo') {
-    const clientId = import.meta.env.VITE_LINUX_DO_CLIENT_ID
-    const redirectUri = import.meta.env.VITE_LINUX_DO_REDIRECT_URI
-    if (!clientId || !redirectUri) throw new Error('LinuxDo 登录配置缺失')
     const params = new URLSearchParams({
       client_id: clientId,
       response_type: 'code',
@@ -26,10 +56,6 @@ const getAuthorizationUrl = (provider: OAuthProvider, state: string, mode: OAuth
   }
 
   if (provider === 'github') {
-    const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID
-    const redirectUri =
-      import.meta.env.VITE_GITHUB_REDIRECT_URI || `${window.location.origin}/oauth2/callback`
-    if (!clientId) throw new Error('GitHub 登录配置缺失')
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: redirectUri,
@@ -42,9 +68,6 @@ const getAuthorizationUrl = (provider: OAuthProvider, state: string, mode: OAuth
     return `https://github.com/login/oauth/authorize?${params.toString()}`
   }
 
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
-  const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI
-  if (!clientId || !redirectUri) throw new Error('Google 登录配置缺失')
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
@@ -58,17 +81,21 @@ const getAuthorizationUrl = (provider: OAuthProvider, state: string, mode: OAuth
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
 }
 
-export const startOAuth = (
+export const startOAuth = async (
   provider: OAuthProvider,
   state: string,
   mode: OAuthMode,
   brandIcon?: string
-): void => {
+): Promise<void> => {
+  const configs = await fetchOAuthProviderConfigs()
+  const config = configs.find(item => item.provider === provider)
+  if (!config) throw new Error(`${provider} 登录暂未配置`)
+
   localStorage.setItem('oauth_state', state)
   localStorage.setItem('oauth_provider', provider)
   localStorage.setItem('oauth_mode', mode)
   const normalizedBrandIcon = brandIcon?.trim()
   if (normalizedBrandIcon) localStorage.setItem('oauth_brand_icon', normalizedBrandIcon)
   else localStorage.removeItem('oauth_brand_icon')
-  window.location.assign(getAuthorizationUrl(provider, state, mode))
+  window.location.assign(getAuthorizationUrl(config, state, mode))
 }
