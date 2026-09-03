@@ -127,10 +127,7 @@
                   type="button"
                   class="btn-clear"
                   title="清空"
-                  @click="
-                    form.siteLogo = ''
-                    logoLoadError = false
-                  "
+                  @click="clearLogo"
                 >
                   <i class="fas fa-xmark" />
                 </button>
@@ -281,6 +278,11 @@ const saving = ref(false)
 const globalError = ref('')
 const showSecret = ref(false)
 const logoLoadError = ref(false)
+
+const clearLogo = () => {
+  form.siteLogo = ''
+  logoLoadError.value = false
+}
 const activeGroup = ref<SettingGroupKey>('basic')
 
 const smtpReady = computed(() => form.hasSmtpPassword && !!form.smtpUser.trim())

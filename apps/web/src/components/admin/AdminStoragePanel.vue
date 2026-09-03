@@ -23,10 +23,7 @@
             type="button"
             class="purpose-item"
             :class="{ 'is-active': activePurpose === p.key }"
-            @click="
-              activePurpose = p.key
-              testResult = null
-            "
+            @click="selectPurpose(p.key)"
           >
             <div class="purpose-icon" :class="`purpose-icon--${p.key}`">
               <!-- Real Public Assets SVG -->
@@ -510,6 +507,11 @@ const globalError = ref('')
 const testResult = ref<StorageTestResult | null>(null)
 const showSecret = ref(false)
 const activePurpose = ref<StoragePurpose>('public')
+
+const selectPurpose = (key: StoragePurpose) => {
+  activePurpose.value = key
+  testResult.value = null
+}
 
 const configs = reactive<Record<StoragePurpose, AdminStoragePurposeConfig | null>>({
   public: null,
