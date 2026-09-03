@@ -153,10 +153,12 @@ const validDefault = (['home', 'all'].includes(current || '') ? current : 'home'
 const defaultHome = ref<'home' | 'all'>(validDefault)
 const aiAnimationEnabled = ref(store.settings.aiAnimationEnabled !== false)
 
-const rawTitle = store.settings.navTitle || NAVIGATION_BRAND_CONFIG.defaultTitle
+// 草稿基于“生效品牌”初始化：用户自定义优先，否则跟随管理员配置的站点名称/Logo，
+// 保证管理员修改后用户设置页与导航栏展示一致。
+const rawTitle = store.effectiveNavTitle || NAVIGATION_BRAND_CONFIG.defaultTitle
 const navTitleDraft = ref(clampNavigationTitle(rawTitle))
 
-const savedIcon = (store.settings.navIcon || '').trim()
+const savedIcon = (store.effectiveNavIcon || '').trim()
 const urlIconDraft = ref(isNavIconUrl(savedIcon) ? savedIcon : '')
 const urlPreviewBroken = ref(false)
 
@@ -187,20 +189,32 @@ const onTitleInput = () => {
 const commitBrand = () => {
   const title = clampNavigationTitle(navTitleDraft.value) || NAVIGATION_BRAND_CONFIG.defaultTitle
   const url = urlIconDraft.value.trim()
+  const effectiveTitle = store.effectiveNavTitle || NAVIGATION_BRAND_CONFIG.defaultTitle
+
+  // 内容与站点生效品牌一致时保存默认占位（“跟随站点”），
+  // 管理员后续改名/换 Logo 仍会同步到该用户；只有真正的差异才存为个人定制。
+  const nextTitle = title === effectiveTitle ? NAVIGATION_BRAND_CONFIG.defaultTitle : title
 
   if (!url) {
-    const savedIcon = (store.settings.navIcon || '').trim()
-    const icon = isNavIconFa(savedIcon)
-      ? savedIcon
-      : Array.from(title)[0] || NAVIGATION_BRAND_CONFIG.defaultIcon
-    store.setNavBrand({ navTitle: title, navIcon: icon })
+    const personalIcon = (store.settings.navIcon || '').trim()
+    const icon = isNavIconFa(personalIcon)
+      ? personalIcon
+      : nextTitle === NAVIGATION_BRAND_CONFIG.defaultTitle
+        ? NAVIGATION_BRAND_CONFIG.defaultIcon
+        : Array.from(title)[0] || NAVIGATION_BRAND_CONFIG.defaultIcon
+    store.setNavBrand({ navTitle: nextTitle, navIcon: icon })
   } else if (isNavIconUrl(url)) {
-    store.setNavBrand({ navTitle: title, navIcon: url })
+    const siteLogo = store.publicSiteConfig?.siteLogo || ''
+    const nextIcon =
+      url === siteLogo && nextTitle === NAVIGATION_BRAND_CONFIG.defaultTitle
+        ? NAVIGATION_BRAND_CONFIG.defaultIcon
+        : url
+    store.setNavBrand({ navTitle: nextTitle, navIcon: nextIcon })
   } else {
-    store.setNavBrand({ navTitle: title })
+    store.setNavBrand({ navTitle: nextTitle })
   }
 
-  navTitleDraft.value = store.settings.navTitle || title
+  navTitleDraft.value = store.effectiveNavTitle || title
   if (authStore.isAuthenticated) void store.saveRemotePreferences(authStore.user?.id)
 }
 
