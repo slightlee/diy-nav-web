@@ -6,7 +6,7 @@ import { config } from '@nav/config'
 export const httpClient = axios.create({
   timeout: 15000,
   headers: {
-    'User-Agent': config.server?.appName || 'DIY-Nav'
+    'User-Agent': 'DIY-Nav'
   }
 })
 

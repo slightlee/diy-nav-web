@@ -43,6 +43,13 @@ export class AvatarService {
     this.pathPrefix = config.pathPrefix ?? 'avatars'
   }
 
+  /** Hot-swap: called by storage config service when admin updates paths */
+  setPathPrefix(prefix: string): void {
+    if (prefix && prefix.trim()) {
+      this.pathPrefix = prefix.trim()
+    }
+  }
+
   async ensureLibraryUploaded(): Promise<void> {
     // This method is only called by the one-time seed script, never by user-facing flows.
     await Promise.all(

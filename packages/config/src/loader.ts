@@ -18,12 +18,10 @@ function loadEnvFiles(): void {
   const cwd = process.cwd()
   const nodeEnv = process.env.NODE_ENV || 'development'
 
-  // 可能的 .env 文件路径（按优先级排序，后加载的会覆盖先加载的）
   const envPaths = [
-    '.env', // 基础配置
-    `.env.${nodeEnv}`, // 环境特定配置
-    '.env.local', // 本地覆盖（不提交到 git）
-    // Monorepo 根目录
+    '.env',
+    `.env.${nodeEnv}`,
+    '.env.local',
     '../../.env',
     `../../.env.${nodeEnv}`,
     '../../.env.local'
@@ -38,19 +36,6 @@ function loadEnvFiles(): void {
 }
 
 /**
- * 解析 R2 Account ID（从 endpoint 中提取）
- */
-function resolveR2AccountId(config: RawConfig): string {
-  if (config.STORAGE_R2_ACCOUNT_ID) {
-    return config.STORAGE_R2_ACCOUNT_ID
-  }
-
-  const endpoint = config.STORAGE_R2_ENDPOINT || ''
-  const match = endpoint.match(/https:\/\/([^.]+)\.r2\.cloudflarestorage\.com/)
-  return match ? match[1] : ''
-}
-
-/**
  * 加载并验证配置
  * @param forceReload 是否强制重新加载（忽略缓存）
  */
@@ -59,15 +44,18 @@ export function loadRawConfig(forceReload = false): RawConfig {
     return configCache
   }
 
-  // 加载 .env 文件
   loadEnvFiles()
 
-  // 处理 APP_PORT -> PORT 兼容
+  // APP_PORT -> PORT 兼容
   if (process.env.APP_PORT && !process.env.PORT) {
     process.env.PORT = process.env.APP_PORT
   }
 
-  // 验证配置
+  // 兼容旧 env：STORAGE_R2_ACCOUNT_ID 作为 CLOUDFLARE_ACCOUNT_ID 的别名
+  if (process.env.STORAGE_R2_ACCOUNT_ID && !process.env.CLOUDFLARE_ACCOUNT_ID) {
+    process.env.CLOUDFLARE_ACCOUNT_ID = process.env.STORAGE_R2_ACCOUNT_ID
+  }
+
   const result = configSchema.safeParse(process.env)
 
   if (!result.success) {
@@ -78,62 +66,27 @@ export function loadRawConfig(forceReload = false): RawConfig {
     throw new Error('Invalid environment variables')
   }
 
-  const config = result.data
-
-  configCache = config
-  return config
+  configCache = result.data
+  return configCache
 }
 
 /**
  * 获取结构化配置对象
+ *
+ * 注意：存储凭据（R2/S3/WebDAV）不再从环境变量读取，
+ * 统一由管理后台写入数据库（storage_purpose_configs 表）。
  */
 export function getConfig() {
   const raw = loadRawConfig()
-  const accountId = resolveR2AccountId(raw)
 
   return {
     server: {
       port: raw.PORT,
-      env: raw.NODE_ENV,
-      appName: raw.APP_NAME
+      env: raw.NODE_ENV
     },
     auth: {
       jwtSecret: raw.JWT_SECRET,
-      oauthConfigEncryptionKey: raw.OAUTH_CONFIG_ENCRYPTION_KEY,
-      webAppUrl: raw.WEB_APP_URL,
-      smtp: {
-        user: raw.SMTP_USER,
-        password: raw.SMTP_PASSWORD
-      }
-    },
-    storage: {
-      publicProvider: raw.PUBLIC_STORAGE_PROVIDER,
-      backupProvider: raw.BACKUP_STORAGE_PROVIDER,
-      bucket: raw.STORAGE_BUCKET,
-      publicBaseUrl: raw.STORAGE_PUBLIC_BASE_URL,
-      paths: {
-        icons: raw.STORAGE_ICONS_PATH,
-        avatars: raw.STORAGE_AVATARS_PATH,
-        backups: raw.STORAGE_BACKUPS_PATH
-      },
-      s3: {
-        region: raw.STORAGE_S3_REGION,
-        endpoint: raw.STORAGE_S3_ENDPOINT,
-        accessKeyId: raw.STORAGE_S3_ACCESS_KEY_ID,
-        secretAccessKey: raw.STORAGE_S3_SECRET_ACCESS_KEY
-      },
-      r2: {
-        accountId,
-        endpoint: raw.STORAGE_R2_ENDPOINT,
-        accessKeyId: raw.STORAGE_R2_ACCESS_KEY_ID,
-        secretAccessKey: raw.STORAGE_R2_SECRET_ACCESS_KEY
-      },
-      webdav: {
-        url: raw.WEBDAV_URL,
-        username: raw.WEBDAV_USERNAME,
-        password: raw.WEBDAV_PASSWORD,
-        basePath: raw.WEBDAV_BASE_PATH
-      }
+      oauthConfigEncryptionKey: raw.OAUTH_CONFIG_ENCRYPTION_KEY
     },
     database: {
       d1: {
@@ -146,27 +99,15 @@ export function getConfig() {
       defaultUrl: raw.ICON_DEFAULT_URL,
       googleProxyUrl: raw.ICON_GOOGLE_PROXY_URL
     },
-    backup: {
-      maxRetained: raw.BACKUP_MAX_RETAINED
-    },
     log: {
       level: raw.LOG_LEVEL,
       headers: raw.LOG_HEADERS
     },
-    // Cloudflare 组合配置（便捷访问）
+    // Cloudflare 账号信息（D1 数据库连接需要 Account ID）
     cloudflare: {
-      accountId,
+      accountId: raw.CLOUDFLARE_ACCOUNT_ID || '',
       apiToken: raw.DB_D1_API_TOKEN || '',
       d1DatabaseId: raw.DB_D1_DATABASE_ID || ''
-    },
-    // R2 组合配置（便捷访问）
-    r2: {
-      accessKeyId: raw.STORAGE_R2_ACCESS_KEY_ID || '',
-      secretAccessKey: raw.STORAGE_R2_SECRET_ACCESS_KEY || '',
-      bucketName: raw.STORAGE_BUCKET || '',
-      publicUrlBase:
-        raw.STORAGE_PUBLIC_BASE_URL ||
-        `https://${raw.STORAGE_BUCKET}.${accountId}.r2.cloudflarestorage.com`
     }
   }
 }

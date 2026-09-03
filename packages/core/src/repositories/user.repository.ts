@@ -10,6 +10,14 @@ export interface UserIdentityRecord {
   last_used_at: number | null
 }
 
+export interface UserListOptions {
+  query?: string
+  role?: User['role']
+  status?: User['status']
+  limit: number
+  offset: number
+}
+
 export class UserRepository {
   constructor(private readonly db: DatabaseClient) {}
 
@@ -25,6 +33,99 @@ export class UserRepository {
    */
   async findById(id: string): Promise<User | null> {
     return this.db.first<User>('SELECT * FROM users WHERE id = ?', [id])
+  }
+
+  async list(options: UserListOptions): Promise<{
+    users: User[]
+    total: number
+    adminCount: number
+    activeCount: number
+    suspendedCount: number
+  }> {
+    const query = options.query?.trim() || ''
+    const conditions: string[] = ['deleted_at IS NULL']
+    const params: unknown[] = []
+
+    if (query) {
+      conditions.push('(email LIKE ? OR nickname LIKE ?)')
+      params.push(`%${query}%`, `%${query}%`)
+    }
+    if (options.role) {
+      conditions.push('role = ?')
+      params.push(options.role)
+    }
+    if (options.status) {
+      conditions.push('status = ?')
+      params.push(options.status)
+    }
+
+    const where = `WHERE ${conditions.join(' AND ')}`
+
+    const [users, filteredTotalRow, totalRow, adminRow, activeRow, suspendedRow] =
+      await Promise.all([
+        this.db.all<User>(
+          `SELECT * FROM users ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+          [...params, options.limit, options.offset]
+        ),
+        this.db.first<{ count: number }>(`SELECT COUNT(*) AS count FROM users ${where}`, params),
+        this.db.first<{ count: number }>(
+          'SELECT COUNT(*) AS count FROM users WHERE deleted_at IS NULL'
+        ),
+        this.db.first<{ count: number }>(
+          "SELECT COUNT(*) AS count FROM users WHERE deleted_at IS NULL AND role = 'ADMIN'"
+        ),
+        this.db.first<{ count: number }>(
+          "SELECT COUNT(*) AS count FROM users WHERE deleted_at IS NULL AND status = 'ACTIVE'"
+        ),
+        this.db.first<{ count: number }>(
+          "SELECT COUNT(*) AS count FROM users WHERE deleted_at IS NULL AND status = 'SUSPENDED'"
+        )
+      ])
+
+    return {
+      users,
+      total: totalRow?.count || 0,
+      filteredTotal: filteredTotalRow?.count || 0,
+      adminCount: adminRow?.count || 0,
+      activeCount: activeRow?.count || 0,
+      suspendedCount: suspendedRow?.count || 0
+    }
+  }
+
+  async updateRole(
+    userId: string,
+    role: User['role'],
+    updatedAt: number,
+    preserveOneAdmin = false
+  ): Promise<boolean> {
+    const where = preserveOneAdmin
+      ? `WHERE id = ? AND deleted_at IS NULL AND role = 'ADMIN'
+         AND (SELECT COUNT(*) FROM users WHERE deleted_at IS NULL AND role = 'ADMIN') > 1`
+      : 'WHERE id = ? AND deleted_at IS NULL'
+    const result = await this.db.execute(`UPDATE users SET role = ?, updated_at = ? ${where}`, [
+      role,
+      updatedAt,
+      userId
+    ])
+    return (result.changes || 0) > 0
+  }
+
+  async updateStatus(
+    userId: string,
+    status: User['status'],
+    updatedAt: number,
+    preserveOneActiveAdmin = false
+  ): Promise<boolean> {
+    const where = preserveOneActiveAdmin
+      ? `WHERE id = ? AND deleted_at IS NULL AND role = 'ADMIN' AND status = 'ACTIVE'
+         AND (SELECT COUNT(*) FROM users WHERE deleted_at IS NULL AND role = 'ADMIN' AND status = 'ACTIVE') > 1`
+      : 'WHERE id = ? AND deleted_at IS NULL'
+    const result = await this.db.execute(`UPDATE users SET status = ?, updated_at = ? ${where}`, [
+      status,
+      updatedAt,
+      userId
+    ])
+    return (result.changes || 0) > 0
   }
 
   /**

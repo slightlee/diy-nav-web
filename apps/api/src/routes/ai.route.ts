@@ -184,19 +184,8 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
       }
     }
 
-    const envApiKey = process.env.AI_OPENAI_API_KEY
-    if (!envApiKey) return null
-    if (!process.env.AI_OPENAI_MODEL?.trim()) {
-      throw new AIProviderConfigError()
-    }
-
-    const provider = new OpenAIProvider()
-    provider.initialize({
-      apiKey: envApiKey,
-      baseUrl: process.env.AI_OPENAI_BASE_URL,
-      model: process.env.AI_OPENAI_MODEL
-    })
-    return { provider, providerIdForUsage: 'system' }
+    // No user-configured provider — AI features unavailable until user adds one
+    return null
   }
 
   // List user's AI providers

@@ -46,10 +46,12 @@ export interface StorageClient {
  * R2/S3 Storage Configuration
  */
 export interface R2Config {
-  accountId: string
+  accountId?: string
   accessKeyId: string
   secretAccessKey: string
   bucketName: string
+  endpoint?: string
+  region?: string
   /** Public base URL for accessing stored files */
   publicBaseUrl?: string
   /** Optional base path prefix for all operations */
@@ -70,7 +72,7 @@ export interface WebDAVConfig {
  * Storage Provider Constants
  * Using const assertion for type-safe provider validation
  */
-export const STORAGE_PROVIDERS = ['r2', 'webdav', 'local'] as const
+export const STORAGE_PROVIDERS = ['r2', 's3', 'webdav', 'local'] as const
 export type StorageProviderType = (typeof STORAGE_PROVIDERS)[number]
 
 /**

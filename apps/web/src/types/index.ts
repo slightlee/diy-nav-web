@@ -41,7 +41,7 @@ export interface ModalState {
   syncRecovery: boolean
 }
 
-export type AccountPanelTab = 'account' | 'data' | 'ai' | 'settings'
+export type AccountPanelTab = 'account' | 'data' | 'ai' | 'settings' | 'admin'
 
 export interface SearchFilters {
   keyword: string

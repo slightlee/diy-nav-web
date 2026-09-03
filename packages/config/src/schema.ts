@@ -1,6 +1,10 @@
 /**
  * @nav/config - Schema Definitions
  * 所有环境变量的 Zod schema 定义（Single Source of Truth）
+ *
+ * 设计原则：
+ * - 只放"启动时必须有"的配置（数据库连接、安全密钥、服务端口等）
+ * - 存储凭据（R2/S3/WebDAV）统一由管理后台写入数据库，不再走环境变量
  */
 import { z } from 'zod'
 
@@ -12,8 +16,7 @@ const DEVELOPMENT_OAUTH_CONFIG_KEY = 'dev-oauth-config-key-change-me-now'
 export const serverSchema = z.object({
   PORT: z.coerce.number().default(8787),
   APP_PORT: z.coerce.number().optional(),
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  APP_NAME: z.string().default('diy-nav-web')
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development')
 })
 
 // ============================================
@@ -24,69 +27,26 @@ export const authSchema = z.object({
   OAUTH_CONFIG_ENCRYPTION_KEY: z.preprocess(
     value => (value === '' ? undefined : value),
     z.string().min(32).default(DEVELOPMENT_OAUTH_CONFIG_KEY)
-  ),
-  WEB_APP_URL: z.string().url().default('http://127.0.0.1:3000'),
-  SMTP_USER: z.string().optional(),
-  SMTP_PASSWORD: z.string().optional()
-})
-
-// ============================================
-// Storage 配置
-// ============================================
-export const storageSchema = z.object({
-  // Storage providers
-  PUBLIC_STORAGE_PROVIDER: z.enum(['r2', 's3', 'local']).default('r2'),
-  BACKUP_STORAGE_PROVIDER: z.enum(['r2', 'webdav']).default('r2'),
-
-  STORAGE_BUCKET: z.string().optional(),
-  STORAGE_PUBLIC_BASE_URL: z.string().optional(),
-
-  // Per-service path prefixes
-  STORAGE_ICONS_PATH: z.string().default('icons'),
-  STORAGE_AVATARS_PATH: z.string().default('avatars'),
-  STORAGE_BACKUPS_PATH: z.string().default('data-backups'),
-
-  // AWS S3
-  STORAGE_S3_REGION: z.string().optional(),
-  STORAGE_S3_ENDPOINT: z.string().optional(),
-  STORAGE_S3_ACCESS_KEY_ID: z.string().optional(),
-  STORAGE_S3_SECRET_ACCESS_KEY: z.string().optional(),
-
-  // Cloudflare R2
-  STORAGE_R2_ACCOUNT_ID: z.string().optional(),
-  STORAGE_R2_ENDPOINT: z.string().optional(),
-  STORAGE_R2_ACCESS_KEY_ID: z.string().optional(),
-  STORAGE_R2_SECRET_ACCESS_KEY: z.string().optional(),
-
-  // WebDAV (for backup storage)
-  WEBDAV_URL: z.string().optional(),
-  WEBDAV_USERNAME: z.string().optional(),
-  WEBDAV_PASSWORD: z.string().optional(),
-  WEBDAV_BASE_PATH: z.string().default('/nav-backup/')
+  )
 })
 
 // ============================================
 // Database 配置
 // ============================================
 export const databaseSchema = z.object({
+  // Cloudflare Account ID 用于 D1 数据库 API 地址
+  CLOUDFLARE_ACCOUNT_ID: z.string().optional(),
   DB_D1_API_TOKEN: z.string().optional(),
   DB_D1_DATABASE_ID: z.string().optional()
 })
 
 // ============================================
-// Icon 配置
+// Icon 配置（应用行为，非敏感数据）
 // ============================================
 export const iconSchema = z.object({
   ICON_SIZE: z.coerce.number().default(64),
   ICON_DEFAULT_URL: z.string().default('/icons/default.svg'),
   ICON_GOOGLE_PROXY_URL: z.string().default('https://www.google.com/s2/favicons')
-})
-
-// ============================================
-// Backup 配置
-// ============================================
-export const backupSchema = z.object({
-  BACKUP_MAX_RETAINED: z.coerce.number().default(5)
 })
 
 // ============================================
@@ -107,25 +67,16 @@ export const configSchema = z
   .object({})
   .merge(serverSchema)
   .merge(authSchema)
-  .merge(storageSchema)
   .merge(databaseSchema)
   .merge(iconSchema)
-  .merge(backupSchema)
   .merge(logSchema)
   .superRefine((data, ctx) => {
-    if (Boolean(data.SMTP_USER) !== Boolean(data.SMTP_PASSWORD)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'SMTP_USER and SMTP_PASSWORD must be configured together',
-        path: ['SMTP_USER']
-      })
-    }
+    // (SMTP config is now managed in site_settings DB table — no env validation needed)
 
     // ============================================
     // 生产环境安全检查
     // ============================================
     if (data.NODE_ENV === 'production') {
-      // JWT_SECRET 不能使用默认值
       if (data.JWT_SECRET === 'dev-secret-do-not-use-in-prod') {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -138,26 +89,6 @@ export const configSchema = z
           code: z.ZodIssueCode.custom,
           message: 'OAUTH_CONFIG_ENCRYPTION_KEY must be set in production',
           path: ['OAUTH_CONFIG_ENCRYPTION_KEY']
-        })
-      }
-    }
-
-    // ============================================
-    // 云存储提供商验证
-    // ============================================
-    if (data.PUBLIC_STORAGE_PROVIDER === 'r2' || data.PUBLIC_STORAGE_PROVIDER === 's3') {
-      if (!data.STORAGE_BUCKET) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `STORAGE_BUCKET required for ${data.PUBLIC_STORAGE_PROVIDER} provider`,
-          path: ['STORAGE_BUCKET']
-        })
-      }
-      if (!data.STORAGE_PUBLIC_BASE_URL) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `STORAGE_PUBLIC_BASE_URL required for ${data.PUBLIC_STORAGE_PROVIDER} provider`,
-          path: ['STORAGE_PUBLIC_BASE_URL']
         })
       }
     }

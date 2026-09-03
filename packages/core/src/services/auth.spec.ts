@@ -155,6 +155,79 @@ describe('AuthService', () => {
     })
   })
 
+  describe('updateUserRole', () => {
+    it('rejects a user changing their own role', async () => {
+      await expect(authService.updateUserRole('admin-1', 'admin-1', 'USER')).rejects.toMatchObject({
+        code: 'SELF_ROLE_CHANGE_FORBIDDEN',
+        statusCode: 409
+      })
+      expect(mockDb.first).not.toHaveBeenCalled()
+      expect(mockDb.execute).not.toHaveBeenCalled()
+    })
+
+    it('keeps the final administrator from being demoted', async () => {
+      vi.spyOn(mockDb, 'first').mockResolvedValueOnce({ id: 'admin-2', role: 'ADMIN' })
+      vi.spyOn(mockDb, 'execute').mockResolvedValueOnce({ changes: 0 })
+
+      await expect(authService.updateUserRole('admin-1', 'admin-2', 'USER')).rejects.toMatchObject({
+        code: 'LAST_ADMIN_FORBIDDEN',
+        statusCode: 409
+      })
+      expect(mockDb.execute).toHaveBeenCalledWith(expect.stringContaining("role = 'ADMIN'"), [
+        'USER',
+        expect.any(Number),
+        'admin-2'
+      ])
+    })
+  })
+
+  describe('updateUserStatus', () => {
+    it('rejects a user changing their own status', async () => {
+      await expect(
+        authService.updateUserStatus('admin-1', 'admin-1', 'SUSPENDED')
+      ).rejects.toMatchObject({
+        code: 'SELF_STATUS_CHANGE_FORBIDDEN',
+        statusCode: 409
+      })
+      expect(mockDb.first).not.toHaveBeenCalled()
+      expect(mockDb.execute).not.toHaveBeenCalled()
+    })
+
+    it('keeps the final active administrator from being suspended', async () => {
+      vi.spyOn(mockDb, 'first').mockResolvedValueOnce({
+        id: 'admin-2',
+        role: 'ADMIN',
+        status: 'ACTIVE'
+      })
+      vi.spyOn(mockDb, 'execute').mockResolvedValueOnce({ changes: 0 })
+
+      await expect(
+        authService.updateUserStatus('admin-1', 'admin-2', 'SUSPENDED')
+      ).rejects.toMatchObject({
+        code: 'LAST_ACTIVE_ADMIN_FORBIDDEN',
+        statusCode: 409
+      })
+      expect(mockDb.execute).toHaveBeenCalledWith(expect.stringContaining("status = 'ACTIVE'"), [
+        'SUSPENDED',
+        expect.any(Number),
+        'admin-2'
+      ])
+    })
+
+    it('successfully updates user status when allowed', async () => {
+      const targetUser = { id: 'user-2', role: 'USER', status: 'ACTIVE' }
+      vi.spyOn(mockDb, 'first').mockResolvedValueOnce(targetUser)
+      vi.spyOn(mockDb, 'execute').mockResolvedValueOnce({ changes: 1 })
+
+      const result = await authService.updateUserStatus('admin-1', 'user-2', 'SUSPENDED')
+      expect(result.status).toBe('SUSPENDED')
+      expect(mockDb.execute).toHaveBeenCalledWith(
+        'UPDATE users SET status = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
+        ['SUSPENDED', expect.any(Number), 'user-2']
+      )
+    })
+  })
+
   describe('provider identities', () => {
     it('does not auto-link an existing email when a provider identity is new', async () => {
       vi.spyOn(mockDb, 'first').mockResolvedValueOnce(null)

@@ -28,10 +28,20 @@ export interface PublicOAuthProviderConfig {
   redirectUri: string
 }
 
+export interface AdminOAuthProviderConfig {
+  provider: OAuthProviderName
+  enabled: boolean
+  clientId: string
+  redirectUri: string
+  hasSecret: boolean
+  createdAt: number
+  updatedAt: number
+}
+
 export interface UpdateOAuthProviderConfig {
   enabled: boolean
   clientId: string
-  clientSecret: string
+  clientSecret?: string
   redirectUri: string
 }
 
@@ -70,6 +80,24 @@ export class OAuthProviderConfigService {
     return this.cachePublicConfigs(rows)
   }
 
+  async listAdminConfigs(): Promise<AdminOAuthProviderConfig[]> {
+    const rows = await this.listRows(false)
+    const rowMap = new Map(rows.map(r => [r.provider, r]))
+
+    return OAUTH_PROVIDER_NAMES.map(provider => {
+      const row = rowMap.get(provider)
+      return {
+        provider,
+        enabled: row?.enabled === 1,
+        clientId: row?.client_id || '',
+        redirectUri: row?.redirect_uri || '',
+        hasSecret: Boolean(row?.client_secret_encrypted),
+        createdAt: row?.created_at || 0,
+        updatedAt: row?.updated_at || 0
+      }
+    })
+  }
+
   async validateEnabledProviders(): Promise<void> {
     const rows = await this.listRows(true)
     rows.forEach(row => this.createProvider(row))
@@ -91,17 +119,39 @@ export class OAuthProviderConfigService {
     return row?.enabled === 1 ? this.createProvider(row) : null
   }
 
-  async update(provider: OAuthProviderName, input: UpdateOAuthProviderConfig): Promise<void> {
+  async update(
+    provider: OAuthProviderName,
+    input: UpdateOAuthProviderConfig
+  ): Promise<AdminOAuthProviderConfig> {
     const clientId = input.clientId.trim()
     const redirectUri = input.redirectUri.trim()
-    const clientSecret = input.clientSecret.trim()
+    const clientSecret = input.clientSecret?.trim()
 
-    if (!clientId || !clientSecret || !redirectUri) {
-      throw new OAuthProviderConfigError('Client ID、Client Secret 和回调地址不能为空')
+    if (!clientId || !redirectUri) {
+      throw new OAuthProviderConfigError('Client ID 和回调地址不能为空')
+    }
+
+    const existingRow = await this.findRow(provider)
+    let encryptedSecret = existingRow?.client_secret_encrypted || ''
+
+    if (clientSecret) {
+      encryptedSecret = encrypt(clientSecret, this.encryptionKey)
+    } else if (!encryptedSecret) {
+      throw new OAuthProviderConfigError('首次配置必须提供 Client Secret')
+    }
+
+    if (input.enabled) {
+      try {
+        const decrypted = decrypt(encryptedSecret, this.encryptionKey)
+        if (!decrypted) throw new Error('Secret is empty')
+      } catch {
+        throw new OAuthProviderConfigError('无法使用主密钥解密 Client Secret，请重新输入')
+      }
     }
 
     const now = Date.now()
-    const encryptedSecret = encrypt(clientSecret, this.encryptionKey)
+    const createdAt = existingRow?.created_at || now
+
     await this.db.execute(
       `INSERT INTO oauth_provider_configs
          (provider, enabled, client_id, client_secret_encrypted, redirect_uri, created_at, updated_at)
@@ -112,8 +162,21 @@ export class OAuthProviderConfigService {
          client_secret_encrypted = excluded.client_secret_encrypted,
          redirect_uri = excluded.redirect_uri,
          updated_at = excluded.updated_at`,
-      [provider, input.enabled ? 1 : 0, clientId, encryptedSecret, redirectUri, now, now]
+      [provider, input.enabled ? 1 : 0, clientId, encryptedSecret, redirectUri, createdAt, now]
     )
+
+    this.publicConfigs = null
+    this.publicConfigsExpireAt = 0
+
+    return {
+      provider,
+      enabled: input.enabled,
+      clientId,
+      redirectUri,
+      hasSecret: true,
+      createdAt,
+      updatedAt: now
+    }
   }
 
   private async listRows(enabledOnly: boolean): Promise<OAuthProviderConfigRow[]> {

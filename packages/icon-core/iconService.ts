@@ -17,6 +17,13 @@ export class IconService {
     private pathPrefix: string = 'icons'
   ) {}
 
+  /** Hot-swap: called by storage config service when admin updates paths */
+  setPathPrefix(prefix: string): void {
+    if (prefix && prefix.trim()) {
+      this.pathPrefix = prefix.trim()
+    }
+  }
+
   async getIconUrl(
     domain: string,
     forceRefresh: boolean = false

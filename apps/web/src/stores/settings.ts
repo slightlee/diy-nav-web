@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { readonly, ref, watch } from 'vue'
+import { computed, readonly, ref, watch } from 'vue'
 import {
   NAVIGATION_BRAND_CONFIG,
   resolveNavigationIcon,
@@ -7,6 +7,7 @@ import {
 } from '@nav/config/brand'
 import type { UserPreferences, UserSettings } from '@nav/types'
 import { getPreferences, updatePreferences } from '@/api/preferences'
+import { getPublicSiteConfig, type PublicSiteConfig } from '@/api/admin'
 import { captureAccountSession, isCurrentAccountSession } from '@/utils/account-session'
 
 export const DEFAULT_SETTINGS: UserSettings = {
@@ -51,14 +52,56 @@ export function isNavIconFa(value: string): boolean {
 
 export const useSettingsStore = defineStore('settings', () => {
   const settings = ref<UserSettings>({ ...DEFAULT_SETTINGS })
+  const publicSiteConfig = ref<PublicSiteConfig | null>(null)
   let mql: MediaQueryList | null = null
   let mqlHandler: ((e: MediaQueryListEvent) => void) | null = null
   let remoteLoadPromise: Promise<void> | null = null
   let remoteLoadUserId: string | null = null
 
+  const effectiveNavTitle = computed(() => {
+    // If user has customized title, use it
+    if (
+      settings.value.navTitle &&
+      settings.value.navTitle !== NAVIGATION_BRAND_CONFIG.defaultTitle
+    ) {
+      return settings.value.navTitle
+    }
+    // Otherwise fallback to DB public site name, or default
+    return (
+      publicSiteConfig.value?.siteName ||
+      settings.value.navTitle ||
+      NAVIGATION_BRAND_CONFIG.defaultTitle
+    )
+  })
+
+  const effectiveNavIcon = computed(() => {
+    // If user has customized icon, use it
+    if (settings.value.navIcon && settings.value.navIcon !== NAVIGATION_BRAND_CONFIG.defaultIcon) {
+      return settings.value.navIcon
+    }
+    // Otherwise fallback to DB public site logo, or default
+    return (
+      publicSiteConfig.value?.siteLogo ||
+      settings.value.navIcon ||
+      NAVIGATION_BRAND_CONFIG.defaultIcon
+    )
+  })
+
+  const fetchPublicSiteConfig = async () => {
+    try {
+      const res = await getPublicSiteConfig()
+      if (res.success && res.data) {
+        publicSiteConfig.value = res.data
+        applyDocumentTitle()
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   const applyDocumentTitle = () => {
     if (typeof document === 'undefined') return
-    document.title = settings.value.navTitle || NAVIGATION_BRAND_CONFIG.defaultTitle
+    document.title = effectiveNavTitle.value || NAVIGATION_BRAND_CONFIG.defaultTitle
   }
 
   const loadSettings = () => {
@@ -74,6 +117,7 @@ export const useSettingsStore = defineStore('settings', () => {
     }
     applyTheme()
     applyDocumentTitle()
+    void fetchPublicSiteConfig()
   }
 
   const updateSettings = (updates: Partial<UserSettings>) => {
@@ -267,6 +311,10 @@ export const useSettingsStore = defineStore('settings', () => {
 
   return {
     settings: readonly(settings),
+    publicSiteConfig: readonly(publicSiteConfig),
+    effectiveNavTitle,
+    effectiveNavIcon,
+    fetchPublicSiteConfig,
     loadSettings,
     activateAccountPreferences,
     updateSettings,

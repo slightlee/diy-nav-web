@@ -25,9 +25,13 @@ export class R2Client extends BaseStorageClient {
     this.bucket = config.bucketName
     this.publicBaseUrl = (config.publicBaseUrl || '').replace(/\/+$/, '')
 
+    const endpoint =
+      config.endpoint ||
+      (config.accountId ? `https://${config.accountId}.r2.cloudflarestorage.com` : undefined)
+
     this.client = new S3Client({
-      region: 'auto',
-      endpoint: `https://${config.accountId}.r2.cloudflarestorage.com`,
+      region: config.region || 'auto',
+      ...(endpoint ? { endpoint } : {}),
       credentials: {
         accessKeyId: config.accessKeyId,
         secretAccessKey: config.secretAccessKey

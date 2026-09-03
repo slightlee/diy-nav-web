@@ -39,7 +39,7 @@ export class EmailBindingService {
   private readonly userRepo: UserRepository
   private readonly bindingRepo: EmailBindingRepository
   private readonly sender: EmailVerificationSender
-  private readonly webAppUrl: string
+  private webAppUrl: string
   private readonly exposeVerificationUrl: boolean
 
   constructor(options: EmailBindingServiceOptions) {
@@ -48,6 +48,11 @@ export class EmailBindingService {
     this.sender = options.sender
     this.webAppUrl = options.webAppUrl.replace(/\/$/, '')
     this.exposeVerificationUrl = options.exposeVerificationUrl ?? false
+  }
+
+  /** Hot-swap the web app URL without restarting the server */
+  setWebAppUrl(url: string): void {
+    this.webAppUrl = url.replace(/\/$/, '')
   }
 
   async initTable(): Promise<void> {

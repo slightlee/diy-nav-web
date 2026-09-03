@@ -19,7 +19,13 @@ const NETEASE_SMTP_CONFIG = {
 export class SmtpVerificationEmailSender implements EmailVerificationSender {
   private transporter?: Transporter
 
-  constructor(private readonly options: SmtpVerificationEmailSenderOptions) {}
+  constructor(private options: SmtpVerificationEmailSenderOptions) {}
+
+  /** Hot-swap credentials without restarting the server */
+  setCredentials(user: string | undefined, password: string | undefined): void {
+    this.options = { ...this.options, user, password }
+    this.transporter = undefined // reset so next send recreates it
+  }
 
   async sendEmailBindingVerification(message: EmailVerificationMessage): Promise<void> {
     const { user, password, fromName, environment, logger } = this.options

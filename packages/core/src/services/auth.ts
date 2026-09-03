@@ -96,6 +96,73 @@ export class AuthService {
     return this.userRepo.findById(id)
   }
 
+  async listUsers(options: {
+    query?: string
+    role?: User['role']
+    status?: User['status']
+    limit: number
+    offset: number
+  }) {
+    return this.userRepo.list(options)
+  }
+
+  async updateUserRole(
+    actorUserId: string,
+    targetUserId: string,
+    role: User['role']
+  ): Promise<User> {
+    if (actorUserId === targetUserId) {
+      throw new AppError('You cannot change your own role', 'SELF_ROLE_CHANGE_FORBIDDEN', 409)
+    }
+
+    const target = await this.userRepo.findById(targetUserId)
+    if (!target) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    if (target.role === role) return target
+
+    const updatedAt = Date.now()
+    const preserveOneAdmin = target.role === 'ADMIN' && role === 'USER'
+    const updated = await this.userRepo.updateRole(targetUserId, role, updatedAt, preserveOneAdmin)
+    if (!updated && preserveOneAdmin) {
+      throw new AppError('At least one administrator must remain', 'LAST_ADMIN_FORBIDDEN', 409)
+    }
+    if (!updated) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+
+    return { ...target, role, updated_at: updatedAt }
+  }
+
+  async updateUserStatus(
+    actorUserId: string,
+    targetUserId: string,
+    status: User['status']
+  ): Promise<User> {
+    if (actorUserId === targetUserId) {
+      throw new AppError('You cannot change your own status', 'SELF_STATUS_CHANGE_FORBIDDEN', 409)
+    }
+
+    const target = await this.userRepo.findById(targetUserId)
+    if (!target) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    if (target.status === status) return target
+
+    const updatedAt = Date.now()
+    const preserveOneActiveAdmin = target.role === 'ADMIN' && status !== 'ACTIVE'
+    const updated = await this.userRepo.updateStatus(
+      targetUserId,
+      status,
+      updatedAt,
+      preserveOneActiveAdmin
+    )
+    if (!updated && preserveOneActiveAdmin) {
+      throw new AppError(
+        'At least one active administrator must remain',
+        'LAST_ACTIVE_ADMIN_FORBIDDEN',
+        409
+      )
+    }
+    if (!updated) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+
+    return { ...target, status, updated_at: updatedAt }
+  }
+
   /**
    * Update the profile fields managed by the user
    */

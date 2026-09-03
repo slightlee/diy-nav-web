@@ -1,7 +1,8 @@
 import type { FastifyBaseLogger } from 'fastify'
+import type { Readable } from 'stream'
 
 import { createDatabaseClient } from '@nav/database'
-import { createStorageClientFromEnv, type R2Config } from '@nav/storage'
+import { LocalClient, type StorageClient } from '@nav/storage'
 import {
   BackupService,
   AuthService,
@@ -15,6 +16,11 @@ import { NAVIGATION_BRAND_CONFIG } from '@nav/config/brand'
 import { IconService, getProviders } from '@nav/icon-core'
 import { initAIProviderTable } from './lib/ai-provider-store.js'
 import { SmtpVerificationEmailSender } from './lib/verification-email.js'
+import {
+  StorageProviderConfigService,
+  type StorageActivePaths
+} from './lib/storage-provider-config.js'
+import { SiteSettingsService } from './lib/site-settings.js'
 import { logger } from '@nav/logger'
 
 // --- Database Client ---
@@ -27,28 +33,90 @@ export const databaseClient = createDatabaseClient({
   }
 })
 
-// --- Storage Clients ---
-// R2 configuration (shared between public and backup when using R2)
-const r2Config: R2Config = {
-  accountId: config.cloudflare.accountId,
-  accessKeyId: config.r2.accessKeyId,
-  secretAccessKey: config.r2.secretAccessKey,
-  bucketName: config.r2.bucketName,
-  publicBaseUrl: config.storage.publicBaseUrl
+// --- Dynamic Storage Client Proxy ---
+export class DynamicStorageClient implements StorageClient {
+  private client: StorageClient
+
+  constructor(initialClient: StorageClient) {
+    this.client = initialClient
+  }
+
+  setClient(newClient: StorageClient): void {
+    this.client = newClient
+  }
+
+  getClient(): StorageClient {
+    return this.client
+  }
+
+  upload(key: string, body: string | Buffer | Readable, contentType?: string): Promise<void> {
+    return this.client.upload(key, body, contentType)
+  }
+
+  get(key: string): Promise<string> {
+    return this.client.get(key)
+  }
+
+  delete(key: string): Promise<void> {
+    return this.client.delete(key)
+  }
+
+  getDownloadUrl(key: string, expiresIn?: number): Promise<string> {
+    if (this.client.getDownloadUrl) {
+      return this.client.getDownloadUrl(key, expiresIn)
+    }
+    return Promise.reject(
+      new Error('Presigned URLs are not supported by the current storage driver')
+    )
+  }
+
+  exists(key: string): Promise<string | null> {
+    return this.client.exists(key)
+  }
+
+  getPublicUrl(key: string): string {
+    return this.client.getPublicUrl(key)
+  }
+
+  store(key: string, data: ArrayBuffer, contentType: string): Promise<string> {
+    return this.client.store(key, data, contentType)
+  }
 }
 
-// Public storage (avatars, icons) - requires public URL access
-export const publicStorage = createStorageClientFromEnv('public', { r2: r2Config })
+// Dynamic proxies allowing runtime hot-swap when admin updates storage config.
+// Initial value is a LocalClient placeholder — replaced from DB during initServices.
+export const dynamicPublicStorage = new DynamicStorageClient(
+  new LocalClient({ folderPath: './public/storage-fallback', publicBaseUrl: '/storage-fallback' })
+)
+export const dynamicBackupStorage = new DynamicStorageClient(
+  new LocalClient({ folderPath: './public/storage-fallback', publicBaseUrl: '/storage-fallback' })
+)
 
-// Backup storage - private data, supports WebDAV
-export const backupStorage = createStorageClientFromEnv('backup', { r2: r2Config })
+export const publicStorage: StorageClient = dynamicPublicStorage
+export const backupStorage: StorageClient = dynamicBackupStorage
+
+// Storage Provider Configuration Service
+export const storageProviderConfigService = new StorageProviderConfigService(
+  databaseClient,
+  config.auth.oauthConfigEncryptionKey || config.auth.jwtSecret,
+  (backupClient, publicClient, paths: StorageActivePaths) => {
+    // Hot-swap storage clients in-place
+    dynamicBackupStorage.setClient(backupClient)
+    dynamicPublicStorage.setClient(publicClient)
+    // Hot-swap path configs — no extra DB query needed
+    backupService.setBackupRootDir(paths.backupPath)
+    backupService.setMaxBackups(paths.maxRetainedBackups)
+    avatarService.setPathPrefix(paths.publicPath)
+    iconService.setPathPrefix(paths.publicPath)
+  }
+)
 
 // --- Services ---
 export const backupService = new BackupService({
   db: databaseClient,
   storage: backupStorage,
-  maxBackups: config.backup.maxRetained,
-  backupRootDir: config.storage.paths.backups
+  maxBackups: 5, // replaced from DB during initServices
+  backupRootDir: 'data-backups' // replaced from DB during initServices
 })
 
 export const syncService = new SyncService({
@@ -59,7 +127,7 @@ export const syncService = new SyncService({
 
 export const avatarService = new AvatarService({
   storage: publicStorage,
-  pathPrefix: config.storage.paths.avatars
+  pathPrefix: 'avatars' // replaced from DB during initServices
 })
 
 export const authService = new AuthService({
@@ -67,9 +135,16 @@ export const authService = new AuthService({
   avatarService
 })
 
-const verificationEmailSender = new SmtpVerificationEmailSender({
-  user: config.auth.smtp.user,
-  password: config.auth.smtp.password,
+// --- Site Settings Service ---
+export const siteSettingsService = new SiteSettingsService(
+  databaseClient,
+  config.auth.oauthConfigEncryptionKey || config.auth.jwtSecret
+)
+
+// --- Email Sender (credentials loaded from DB during initServices) ---
+export const verificationEmailSender = new SmtpVerificationEmailSender({
+  user: undefined,
+  password: undefined,
   fromName: NAVIGATION_BRAND_CONFIG.defaultTitle,
   environment: config.server.env,
   logger
@@ -78,7 +153,7 @@ const verificationEmailSender = new SmtpVerificationEmailSender({
 export const emailBindingService = new EmailBindingService({
   db: databaseClient,
   sender: verificationEmailSender,
-  webAppUrl: config.auth.webAppUrl,
+  webAppUrl: 'http://localhost:3000', // replaced from DB during initServices
   exposeVerificationUrl: config.server.env !== 'production'
 })
 
@@ -91,11 +166,11 @@ export const iconService = new IconService(
   publicStorage,
   providers,
   iconConfig.ICON_DEFAULT_URL,
-  config.storage.paths.icons
+  'icons' // replaced from DB during initServices
 )
 
 /**
- * Initialize database tables
+ * Initialize database tables and load dynamic storage clients + site settings
  */
 export const initServices = async (logger: FastifyBaseLogger): Promise<void> => {
   try {
@@ -105,6 +180,40 @@ export const initServices = async (logger: FastifyBaseLogger): Promise<void> => 
     await emailBindingService.initTable()
     await preferencesService.initTable()
     await initAIProviderTable(databaseClient)
+    await storageProviderConfigService.initTable()
+    await siteSettingsService.initTable()
+
+    // Hydrate per-purpose storage clients and path configs from DB
+    try {
+      const { backupClient, publicClient, resolvedPaths } =
+        await storageProviderConfigService.buildStorageClientsFromDb()
+      dynamicBackupStorage.setClient(backupClient)
+      dynamicPublicStorage.setClient(publicClient)
+      backupService.setBackupRootDir(resolvedPaths.backupPath)
+      backupService.setMaxBackups(resolvedPaths.maxRetainedBackups)
+      avatarService.setPathPrefix(resolvedPaths.publicPath)
+      iconService.setPathPrefix(resolvedPaths.publicPath)
+    } catch (e) {
+      logger.warn({ err: e }, 'Using default storage clients (storage not configured yet)')
+    }
+
+    // Hydrate site settings (SMTP, web app URL, site name) from DB
+    try {
+      await siteSettingsService.hydrateCache()
+      const settings = siteSettingsService.getSettings()
+      verificationEmailSender.setCredentials(
+        settings.smtpUser || undefined,
+        siteSettingsService.getSmtpPassword() || undefined
+      )
+      emailBindingService.setWebAppUrl(settings.webAppUrl)
+      logger.info(
+        { webAppUrl: settings.webAppUrl, smtpConfigured: settings.hasSmtpPassword },
+        'Site settings loaded from DB'
+      )
+    } catch (e) {
+      logger.warn({ err: e }, 'Could not load site settings from DB, using defaults')
+    }
+
     logger.info('Services initialized')
   } catch (err) {
     logger.error({ err }, 'Failed to init services')

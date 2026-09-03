@@ -22,6 +22,14 @@
         <nav class="tabs" aria-label="视图">
           <router-link class="tabs__item" to="/home" active-class="is-on">首页</router-link>
           <router-link class="tabs__item" to="/all" active-class="is-on">全部</router-link>
+          <router-link
+            v-if="authStore.user?.role === 'ADMIN'"
+            class="tabs__item"
+            to="/admin"
+            active-class="is-on"
+          >
+            管理台
+          </router-link>
         </nav>
       </div>
 
@@ -128,10 +136,10 @@ const settingsStore = useSettingsStore()
 const authStore = useAuthStore()
 
 const navTitle = computed(
-  () => settingsStore.settings.navTitle || NAVIGATION_BRAND_CONFIG.defaultTitle
+  () => settingsStore.effectiveNavTitle || NAVIGATION_BRAND_CONFIG.defaultTitle
 )
 const navIcon = computed(
-  () => settingsStore.settings.navIcon || NAVIGATION_BRAND_CONFIG.defaultIcon
+  () => settingsStore.effectiveNavIcon || NAVIGATION_BRAND_CONFIG.defaultIcon
 )
 const iconIsUrl = computed(() => isNavIconUrl(navIcon.value))
 const iconIsFa = computed(() => isNavIconFa(navIcon.value))

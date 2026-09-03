@@ -185,6 +185,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import type { AccountPanelTab } from '@/types'
 import { useAuthStore, type AvatarOption } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
@@ -209,6 +210,7 @@ const emit = defineEmits<{
 
 const authStore = useAuthStore()
 const uiStore = useUIStore()
+const router = useRouter()
 const activeTab = ref<AccountPanelTab>(props.initialTab)
 const loggingOut = ref(false)
 const nicknameDraft = ref('')
@@ -221,42 +223,63 @@ const avatarOptions = ref<AvatarOption[]>([])
 const selectedAvatarKey = ref('')
 const avatarError = ref('')
 
-const navItems: Array<{
-  key: AccountPanelTab
-  label: string
-  navDesc: string
-  description: string
-  icon: string
-}> = [
-  {
-    key: 'account',
-    label: '账号',
-    navDesc: '登录方式',
-    description: '管理登录方式和当前账号状态',
-    icon: 'fas fa-user'
-  },
-  {
-    key: 'data',
-    label: '数据管理',
-    navDesc: '备份导入',
-    description: '云同步、历史备份、导入导出和清除数据',
-    icon: 'fas fa-database'
-  },
-  {
-    key: 'ai',
-    label: 'AI 配置',
-    navDesc: '模型密钥',
-    description: '配置 AI 服务提供商和使用模型',
-    icon: 'fas fa-robot'
-  },
-  {
-    key: 'settings',
-    label: '设置',
-    navDesc: '偏好',
-    description: '调整应用偏好和默认打开页面',
-    icon: 'fas fa-sliders-h'
+const navItems = computed<
+  Array<{
+    key: AccountPanelTab
+    label: string
+    navDesc: string
+    description: string
+    icon: string
+  }>
+>(() => {
+  const items: Array<{
+    key: AccountPanelTab
+    label: string
+    navDesc: string
+    description: string
+    icon: string
+  }> = [
+    {
+      key: 'account',
+      label: '账号',
+      navDesc: '登录方式',
+      description: '管理登录方式和当前账号状态',
+      icon: 'fas fa-user'
+    },
+    {
+      key: 'data',
+      label: '数据管理',
+      navDesc: '备份导入',
+      description: '云同步、历史备份、导入导出和清除数据',
+      icon: 'fas fa-database'
+    },
+    {
+      key: 'ai',
+      label: 'AI 配置',
+      navDesc: '模型密钥',
+      description: '配置 AI 服务提供商和使用模型',
+      icon: 'fas fa-robot'
+    },
+    {
+      key: 'settings',
+      label: '设置',
+      navDesc: '偏好',
+      description: '调整应用偏好和默认打开页面',
+      icon: 'fas fa-sliders-h'
+    }
+  ]
+
+  if (authStore.user?.role === 'ADMIN') {
+    items.push({
+      key: 'admin',
+      label: '管理台',
+      navDesc: '用户与角色',
+      description: '管理用户权限与系统配置',
+      icon: 'fas fa-shield-halved'
+    })
   }
-]
+  return items
+})
 
 watch(
   () => props.initialTab,
@@ -288,6 +311,11 @@ const canSaveNickname = computed(() => {
   )
 })
 const selectTab = (tab: AccountPanelTab, event?: MouseEvent) => {
+  if (tab === 'admin') {
+    emit('close')
+    void router.push('/admin')
+    return
+  }
   activeTab.value = tab
   const target = event?.currentTarget
   const shouldCenterNavItem =

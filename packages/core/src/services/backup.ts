@@ -40,6 +40,20 @@ export class BackupService {
     this.logger = config.logger || defaultLogger
   }
 
+  /** Hot-swap: called by storage config service when admin updates paths */
+  setBackupRootDir(dir: string): void {
+    if (dir && dir.trim()) {
+      this.backupRootDir = dir.trim()
+    }
+  }
+
+  /** Hot-swap: called by storage config service when admin updates max retained backups */
+  setMaxBackups(max: number): void {
+    if (max && max > 0) {
+      this.maxBackups = max
+    }
+  }
+
   /**
    * Initialize the database table if it doesn't exist
    */

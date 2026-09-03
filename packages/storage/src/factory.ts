@@ -55,16 +55,23 @@ function validateWebDAVConfig(): WebDAVConfig {
 }
 
 /**
- * Validate R2 configuration
+ * Validate R2 / S3 configuration
  * @throws {StorageError} When configuration is invalid or incomplete
  */
 function validateR2Config(config?: R2Config): R2Config {
   if (!config) {
-    throw StorageError.configInvalid('R2 configuration is required when using r2 provider')
-  }
-  if (!config.accountId || !config.accessKeyId || !config.secretAccessKey || !config.bucketName) {
     throw StorageError.configInvalid(
-      'R2 configuration is incomplete: accountId, accessKeyId, secretAccessKey, and bucketName are required'
+      'Storage configuration is required when using r2 or s3 provider'
+    )
+  }
+  if (!config.accessKeyId || !config.secretAccessKey || !config.bucketName) {
+    throw StorageError.configInvalid(
+      'Storage configuration is incomplete: accessKeyId, secretAccessKey, and bucketName are required'
+    )
+  }
+  if (!config.accountId && !config.endpoint) {
+    throw StorageError.configInvalid(
+      'Storage configuration requires either accountId (for Cloudflare R2) or endpoint (for S3-compatible storage)'
     )
   }
   return config
@@ -94,6 +101,7 @@ function validateR2Config(config?: R2Config): R2Config {
 export function createStorageClient(config: StorageFactoryConfig): StorageClient {
   switch (config.provider) {
     case 'r2':
+    case 's3':
       return new R2Client(validateR2Config(config.r2))
 
     case 'webdav':
