@@ -13,6 +13,7 @@ import syncRoutes from './src/routes/sync.route.js'
 import authRoutes from './src/routes/auth.route.js'
 import aiRoutes from './src/routes/ai.route.js'
 import adminRoutes from './src/routes/admin.route.js'
+import siteRoutes from './src/routes/site.route.js'
 import { httpClient } from './src/lib/http.js'
 import { OAuthProviderConfigService } from './src/lib/oauth-provider-config.js'
 import authRenewalPlugin from './src/plugins/auth-renewal.js'
@@ -136,6 +137,7 @@ app.decorate('oauthProviderConfigService', oauthProviderConfigService)
 await app.register(authRoutes, { prefix: '/api' })
 await app.register(aiRoutes, { prefix: '/api' })
 await app.register(adminRoutes, { prefix: '/api' })
+await app.register(siteRoutes, { prefix: '/api' })
 
 await app.register(authRenewalPlugin)
 

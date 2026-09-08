@@ -204,6 +204,15 @@ export class AuthService {
   }
 
   /**
+   * Whether a provider identity has already been linked to a local account.
+   * Used to allow existing OAuth users to sign in when registration is closed.
+   */
+  async hasProviderIdentity(provider: string, providerUid: string): Promise<boolean> {
+    const identity = await this.userRepo.findIdentity(provider, providerUid)
+    return !!identity
+  }
+
+  /**
    * Find or create user by provider (OAuth)
    */
   async findOrCreateByProvider(

@@ -164,7 +164,7 @@ export const useAuthStore = defineStore('auth', () => {
       isNewRegistration.value = true
       return true
     }
-    throw new Error(res.message || 'Registration failed')
+    throw new AuthRequestError(res.message || 'Registration failed', res.code)
   }
 
   async function fetchUser() {

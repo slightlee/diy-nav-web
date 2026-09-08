@@ -146,7 +146,7 @@
             </BaseButton>
           </div>
 
-          <div class="switch-row">
+          <div v-if="!registrationClosed" class="switch-row">
             还没有账号？
             <a href="#" @click.prevent="switchView('register')">免费注册</a>
           </div>
@@ -156,12 +156,34 @@
       </div>
 
       <!-- Register View -->
-      <div class="view" :class="{ active: currentView === 'register' }">
+      <div
+        class="view"
+        :class="[{ active: currentView === 'register' }, { 'view--centered': registrationClosed }]"
+      >
         <div class="header">
           <div class="header-sub">同步多端导航配置，随时云端备份</div>
         </div>
 
-        <form @submit.prevent="handleRegister">
+        <!-- 注册已关闭提示 -->
+        <div v-if="registrationClosed" class="register-closed">
+          <span class="register-closed__icon">
+            <i class="fas fa-user-lock" />
+          </span>
+          <h3 class="register-closed__title">当前站点已关闭新用户注册</h3>
+          <p class="register-closed__desc">
+            站点管理员已暂停新账号注册，已有账号可正常登录。
+            <br />
+            如需账号，请联系站点管理员开通。
+          </p>
+          <div class="register-closed__actions">
+            <BaseButton block size="md" @click="switchView('login')">去登录</BaseButton>
+            <BaseButton block size="md" variant="secondary" @click="router.push('/')">
+              返回首页
+            </BaseButton>
+          </div>
+        </div>
+
+        <form v-else @submit.prevent="handleRegister">
           <div class="form-group">
             <label class="form-label">
               邮箱
@@ -244,6 +266,11 @@
             </div>
           </div>
 
+          <div v-if="registerFormError" class="form-alert" role="alert">
+            <i class="fas fa-circle-exclamation" />
+            <span>{{ registerFormError }}</span>
+          </div>
+
           <BaseButton block size="lg" class="auth-submit" html-type="submit" :loading="loading">
             {{ loading ? '注册中...' : '创建账号' }}
           </BaseButton>
@@ -264,7 +291,7 @@
 import { computed, ref, reactive, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { NAVIGATION_BRAND_CONFIG } from '@nav/config/brand'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore, AuthRequestError } from '@/stores/auth'
 import { useSettingsStore } from '@/stores/settings'
 import { useUIStore } from '@/stores/ui'
 
@@ -291,6 +318,11 @@ const showOAuthSection = computed(
   () => oauthProvidersLoading.value || availableOAuthProviders.value.length > 0
 )
 
+// 注册开关关闭后不再展示注册入口；配置未加载完成时默认开放，避免闪断
+const registrationClosed = computed(
+  () => settingsStore.publicSiteConfig?.registrationEnabled === false
+)
+
 // Login State
 const loginForm = reactive({
   email: '',
@@ -315,6 +347,8 @@ const registerErrors = reactive({
   password: '',
   confirmPassword: ''
 })
+// 表单级错误（如注册开关关闭），与具体字段无关，展示在提交按钮上方
+const registerFormError = ref('')
 
 const isOAuthAvailable = (provider: OAuthProvider) =>
   availableOAuthProviders.value.includes(provider)
@@ -338,6 +372,8 @@ onMounted(async () => {
   } else {
     currentView.value = 'login'
   }
+  // 刷新注册开关等公共配置，避免停留在过期的表单状态
+  void settingsStore.fetchPublicSiteConfig()
   try {
     availableOAuthProviders.value = (await fetchOAuthProviderConfigs()).map(item => item.provider)
   } catch {
@@ -370,6 +406,7 @@ const switchView = (view: 'login' | 'register') => {
   registerErrors.email = ''
   registerErrors.password = ''
   registerErrors.confirmPassword = ''
+  registerFormError.value = ''
 }
 
 const getErrorMessage = (error: unknown): string => {
@@ -417,6 +454,7 @@ const handleRegister = async () => {
   registerErrors.email = ''
   registerErrors.password = ''
   registerErrors.confirmPassword = ''
+  registerFormError.value = ''
 
   let hasError = false
   if (!isValidEmail(registerForm.email)) {
@@ -442,8 +480,10 @@ const handleRegister = async () => {
     const message = getErrorMessage(error)
     if (message.includes('User already exists')) {
       registerErrors.email = '该邮箱已被注册'
+    } else if (error instanceof AuthRequestError && error.code === 'REGISTRATION_DISABLED') {
+      registerFormError.value = message || '当前站点已关闭新用户注册，请联系管理员'
     } else {
-      registerErrors.password = message || '注册失败，请稍后重试'
+      registerFormError.value = message || '注册失败，请稍后重试'
     }
   } finally {
     loading.value = false
@@ -536,6 +576,59 @@ const handleRegister = async () => {
 .header-sub {
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
+}
+
+/* 注册关闭：视图纵向居中 */
+.view--centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.register-closed {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 24px 8px;
+  text-align: center;
+}
+
+.register-closed__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--primary-soft);
+  color: var(--color-primary);
+  font-size: 20px;
+  box-shadow: 0 6px 16px rgba(var(--color-primary-rgb), 0.1);
+}
+
+.register-closed__title {
+  margin: 16px 0 0;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.01em;
+  color: var(--text-main);
+}
+
+.register-closed__desc {
+  margin: 8px 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.register-closed__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 300px;
+  margin-top: 24px;
 }
 
 .form-group {
@@ -679,6 +772,26 @@ input::placeholder {
   font-size: var(--font-size-xs);
   margin-top: var(--spacing-xs);
   margin-left: var(--spacing-xs);
+}
+
+/* 表单级错误提示（提交按钮上方） */
+.form-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--color-error) 25%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-error) 8%, transparent);
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+
+  i {
+    flex-shrink: 0;
+    font-size: 14px;
+  }
 }
 
 /* Dark Mode overrides */

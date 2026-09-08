@@ -19,7 +19,8 @@ export const SITE_SETTING_KEYS = {
   SITE_NAME: 'site_name',
   WEB_APP_URL: 'web_app_url',
   SMTP_USER: 'smtp_user',
-  SMTP_PASSWORD: 'smtp_password'
+  SMTP_PASSWORD: 'smtp_password',
+  REGISTRATION_ENABLED: 'registration_enabled'
 } as const
 
 export type SiteSettingKey = (typeof SITE_SETTING_KEYS)[keyof typeof SITE_SETTING_KEYS]
@@ -32,7 +33,8 @@ const DEFAULTS: Record<SiteSettingKey, string> = {
   site_name: 'DIY 导航',
   web_app_url: 'http://localhost:3000',
   smtp_user: '',
-  smtp_password: ''
+  smtp_password: '',
+  registration_enabled: 'true'
 }
 
 // ─────────────────────────────────────────────
@@ -44,6 +46,7 @@ export interface SiteSettings {
   webAppUrl: string
   smtpUser: string
   hasSmtpPassword: boolean
+  registrationEnabled: boolean
 }
 
 export interface AdminSiteSettingsConfig extends SiteSettings {
@@ -56,6 +59,8 @@ export interface UpdateSiteSettingsPayload {
   smtpUser?: string
   /** Provide to change password; omit to keep existing */
   smtpPassword?: string
+  /** Whether new user sign-ups (email + OAuth) are allowed */
+  registrationEnabled?: boolean
 }
 
 type SiteSettingRow = {
@@ -116,7 +121,8 @@ export class SiteSettingsService {
       site_name: map.site_name ?? DEFAULTS.site_name,
       web_app_url: map.web_app_url ?? DEFAULTS.web_app_url,
       smtp_user: map.smtp_user ?? DEFAULTS.smtp_user,
-      smtp_password: map.smtp_password ?? DEFAULTS.smtp_password
+      smtp_password: map.smtp_password ?? DEFAULTS.smtp_password,
+      registration_enabled: map.registration_enabled ?? DEFAULTS.registration_enabled
     }
 
     this.cacheUpdatedAt = Date.now()
@@ -131,7 +137,8 @@ export class SiteSettingsService {
       siteName: c?.site_name ?? DEFAULTS.site_name,
       webAppUrl: c?.web_app_url ?? DEFAULTS.web_app_url,
       smtpUser: c?.smtp_user ?? DEFAULTS.smtp_user,
-      hasSmtpPassword: !!c?.smtp_password
+      hasSmtpPassword: !!c?.smtp_password,
+      registrationEnabled: (c?.registration_enabled ?? DEFAULTS.registration_enabled) === 'true'
     }
   }
 
@@ -176,6 +183,11 @@ export class SiteSettingsService {
       await upsert(SITE_SETTING_KEYS.SMTP_USER, payload.smtpUser.trim())
     if (payload.smtpPassword?.trim())
       await upsert(SITE_SETTING_KEYS.SMTP_PASSWORD, payload.smtpPassword.trim(), true)
+    if (payload.registrationEnabled !== undefined)
+      await upsert(
+        SITE_SETTING_KEYS.REGISTRATION_ENABLED,
+        payload.registrationEnabled ? 'true' : 'false'
+      )
 
     // Refresh cache after write
     await this.hydrateCache()

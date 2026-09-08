@@ -83,7 +83,8 @@ const updateSiteSettingsSchema = z.object({
   siteName: z.string().trim().min(1).max(64).optional(),
   webAppUrl: z.string().trim().url().optional(),
   smtpUser: z.string().trim().email().optional().or(z.literal('')),
-  smtpPassword: z.string().trim().optional()
+  smtpPassword: z.string().trim().optional(),
+  registrationEnabled: z.boolean().optional()
 })
 
 const adminRoutes: FastifyPluginAsyncZod = async app => {

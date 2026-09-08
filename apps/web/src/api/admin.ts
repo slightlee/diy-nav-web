@@ -178,12 +178,14 @@ export interface AdminSiteSettingsConfig {
   webAppUrl: string
   smtpUser: string
   hasSmtpPassword: boolean
+  registrationEnabled: boolean
   updatedAt: number
 }
 
 export interface PublicSiteConfig {
   siteName: string
-  siteLogo: string
+  siteLogo?: string
+  registrationEnabled: boolean
 }
 
 export interface UpdateSiteSettingsPayload {
@@ -192,6 +194,7 @@ export interface UpdateSiteSettingsPayload {
   webAppUrl?: string
   smtpUser?: string
   smtpPassword?: string
+  registrationEnabled?: boolean
 }
 
 /** GET /api/site/public-config */

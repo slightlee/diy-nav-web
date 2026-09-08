@@ -46,6 +46,23 @@
                 />
                 <path d="M2 12h20" />
               </svg>
+              <!-- User Plus SVG -->
+              <svg
+                v-else-if="g.key === 'register'"
+                viewBox="0 0 24 24"
+                width="15"
+                height="15"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <line x1="19" y1="8" x2="19" y2="14" />
+                <line x1="22" y1="11" x2="16" y2="11" />
+              </svg>
               <!-- Mail SVG -->
               <svg
                 v-else
@@ -63,11 +80,8 @@
               </svg>
             </div>
             <span class="group-name">{{ g.name }}</span>
-            <span
-              class="group-status-chip"
-              :class="isGroupConfigured(g.key) ? 'is-ok' : 'is-pending'"
-            >
-              {{ isGroupConfigured(g.key) ? '已配置' : '待配置' }}
+            <span class="group-status-chip" :class="groupChipClass(g.key)">
+              {{ groupChipText(g.key) }}
             </span>
           </button>
         </nav>
@@ -223,6 +237,35 @@
             </div>
           </div>
 
+          <!-- 分组 3: 用户注册开关 -->
+          <div v-else-if="activeGroup === 'register'" class="config-section">
+            <div class="status-toggle-card" :class="{ 'is-enabled': form.registrationEnabled }">
+              <div class="toggle-card-body">
+                <div class="toggle-card-title">
+                  <span>开放新用户注册</span>
+                  <span
+                    class="status-chip"
+                    :class="
+                      form.registrationEnabled ? 'status-chip--active' : 'status-chip--inactive'
+                    "
+                  >
+                    {{ form.registrationEnabled ? '已开启' : '已关闭' }}
+                  </span>
+                </div>
+                <p class="toggle-card-desc">
+                  关闭后，新用户将无法通过邮箱或第三方登录注册账号，已注册用户登录不受影响。
+                </p>
+              </div>
+              <label
+                class="switch-control"
+                :title="form.registrationEnabled ? '点击关闭注册' : '点击开放注册'"
+              >
+                <input v-model="form.registrationEnabled" type="checkbox" />
+                <span class="switch-control__track" />
+              </label>
+            </div>
+          </div>
+
           <!-- 底部操作按钮 -->
           <div class="form-footer">
             <button
@@ -250,7 +293,7 @@ import { getSiteSettings, updateSiteSettings } from '@/api/admin'
 import { useUIStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
 
-type SettingGroupKey = 'basic' | 'smtp'
+type SettingGroupKey = 'basic' | 'smtp' | 'register'
 
 interface SettingGroupMeta {
   key: SettingGroupKey
@@ -268,6 +311,11 @@ const groups: SettingGroupMeta[] = [
     key: 'smtp',
     name: 'SMTP 邮件服务',
     desc: '验证邮件的发信通道。'
+  },
+  {
+    key: 'register',
+    name: '用户注册',
+    desc: '新用户注册开放开关。'
   }
 ]
 
@@ -290,13 +338,22 @@ const smtpReady = computed(() => form.hasSmtpPassword && !!form.smtpUser.trim())
 const isGroupConfigured = (key: SettingGroupKey) =>
   key === 'basic' ? !!form.siteName.trim() : smtpReady.value
 
+const groupChipText = (key: SettingGroupKey) => {
+  if (key === 'register') return form.registrationEnabled ? '已开启' : '已关闭'
+  return isGroupConfigured(key) ? '已配置' : '待配置'
+}
+
+const groupChipClass = (key: SettingGroupKey) =>
+  groupChipText(key) === '已配置' || groupChipText(key) === '已开启' ? 'is-ok' : 'is-pending'
+
 const form = reactive({
   siteName: '',
   siteLogo: '',
   webAppUrl: '',
   smtpUser: '',
   smtpPassword: '',
-  hasSmtpPassword: false
+  hasSmtpPassword: false,
+  registrationEnabled: true
 })
 
 const loadSettings = async () => {
@@ -313,6 +370,7 @@ const loadSettings = async () => {
     form.smtpUser = res.data.smtpUser || ''
     form.smtpPassword = ''
     form.hasSmtpPassword = res.data.hasSmtpPassword
+    form.registrationEnabled = res.data.registrationEnabled !== false
     logoLoadError.value = false
   } catch (e) {
     globalError.value = e instanceof Error ? e.message : '获取站点配置失败'
@@ -339,7 +397,8 @@ const handleSave = async () => {
       siteLogo: logoUrl,
       webAppUrl: form.webAppUrl.trim(),
       smtpUser: form.smtpUser.trim(),
-      smtpPassword: form.smtpPassword.trim() || undefined
+      smtpPassword: form.smtpPassword.trim() || undefined,
+      registrationEnabled: form.registrationEnabled
     })
 
     if (!res.success || !res.data) {
@@ -351,6 +410,7 @@ const handleSave = async () => {
     form.webAppUrl = res.data.webAppUrl
     form.smtpUser = res.data.smtpUser
     form.hasSmtpPassword = res.data.hasSmtpPassword
+    form.registrationEnabled = res.data.registrationEnabled
     form.smtpPassword = ''
     showSecret.value = false
 
@@ -654,6 +714,110 @@ onMounted(() => void loadSettings())
   flex-direction: column;
   gap: 18px;
   padding: 26px 26px 24px;
+}
+
+/* ── Status Toggle Card (same pattern as OAuth panel) ── */
+.status-toggle-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--border-tile);
+  background: var(--bg-tile);
+  transition: all 0.15s ease;
+
+  &.is-enabled {
+    border-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+    background: color-mix(in srgb, var(--color-primary) 4%, var(--bg-panel));
+  }
+}
+
+.toggle-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.toggle-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.toggle-card-desc {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+
+  &--active {
+    background: color-mix(in srgb, var(--color-success) 12%, transparent);
+    color: var(--color-success);
+  }
+
+  &--inactive {
+    background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+    color: var(--text-muted);
+  }
+}
+
+/* Switch control */
+.switch-control {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+  cursor: pointer;
+
+  input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  &__track {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in srgb, var(--border-tile) 80%, #94a3b8);
+    border-radius: 24px;
+    transition: all 0.2s ease;
+
+    &::before {
+      position: absolute;
+      content: '';
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  input:checked + &__track {
+    background: var(--color-primary);
+  }
+
+  input:checked + &__track::before {
+    transform: translateX(20px);
+  }
 }
 
 /* ── Fields ────────────────────────────────────── */

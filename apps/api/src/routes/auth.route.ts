@@ -15,12 +15,26 @@ import {
   updateAvatarSchema,
   verifyEmailBindingSchema
 } from '../schemas/auth.schema.js'
-import { authService, avatarService, emailBindingService, preferencesService } from '../services.js'
+import {
+  authService,
+  avatarService,
+  emailBindingService,
+  preferencesService,
+  siteSettingsService
+} from '../services.js'
 import { generateAccessToken } from '../lib/token.js'
 import { toUserDto } from '../lib/dto.js'
 import { clearAuthCookie, setAuthCookie } from '../lib/auth-cookie.js'
 
 const authRoutes: FastifyPluginAsyncZod = async app => {
+  const REGISTRATION_DISABLED_MESSAGE = '当前站点已关闭新用户注册，请联系管理员'
+
+  const ensureRegistrationOpen = () => {
+    if (!siteSettingsService.getSettings().registrationEnabled) {
+      throw new AppError(REGISTRATION_DISABLED_MESSAGE, 'REGISTRATION_DISABLED', 403)
+    }
+  }
+
   const getOAuthProvider = async (providerName: 'github' | 'google' | 'linuxdo') => {
     const provider = await app.oauthProviderConfigService.getEnabledProvider(providerName)
     if (!provider) {
@@ -56,6 +70,7 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
       }
     },
     async req => {
+      ensureRegistrationOpen()
       const { email, password } = req.body
       const user = await authService.register(email, password)
       return { success: true, data: { id: user.id, email: user.email } }
@@ -271,7 +286,16 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
       // 3. Get User Info
       const userData = await provider.getUserInfo(tokenData.access_token)
 
-      // 4. Find or Create User (Business Logic)
+      // 4. Registration toggle only blocks brand-new account creation;
+      //    existing linked identities keep signing in as usual.
+      if (!siteSettingsService.getSettings().registrationEnabled) {
+        const isExistingUser = await authService.hasProviderIdentity(provider.name, userData.id)
+        if (!isExistingUser) {
+          throw new AppError(REGISTRATION_DISABLED_MESSAGE, 'REGISTRATION_DISABLED', 403)
+        }
+      }
+
+      // 5. Find or Create User (Business Logic)
       const { user, isNewUser } = await authService.findOrCreateByProvider(
         provider.name,
         userData.id,
@@ -282,7 +306,7 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
         }
       )
 
-      // 5. Update Stats & Issue Token
+      // 6. Update Stats & Issue Token
       await authService.updateLoginStats(user.id, req.ip)
 
       const token = generateAccessToken(app, user)
