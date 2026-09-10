@@ -7,7 +7,8 @@ import { NAVIGATION_BRAND_CONFIG } from '@nav/config/brand'
 const navigationBrandPlugin: Plugin = {
   name: 'navigation-brand-config',
   transformIndexHtml(html) {
-    return html.replace('__NAVIGATION_DEFAULT_TITLE__', NAVIGATION_BRAND_CONFIG.defaultTitle)
+    // index.html 启动脚本中也引用了该占位符，必须全局替换。
+    return html.replace(/__NAVIGATION_DEFAULT_TITLE__/g, NAVIGATION_BRAND_CONFIG.defaultTitle)
   }
 }
 

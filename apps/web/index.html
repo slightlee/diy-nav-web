@@ -5,17 +5,10 @@
     <link rel="icon" type="image/svg+xml" href="%BASE_URL%vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>__NAVIGATION_DEFAULT_TITLE__</title>
-    <script>
-      try {
-        const cachedSettings = localStorage.getItem('userSettings')
-        const cachedTitle = cachedSettings ? JSON.parse(cachedSettings)?.navTitle : null
-        if (typeof cachedTitle === 'string' && cachedTitle.trim()) {
-          document.title = cachedTitle.trim()
-        }
-      } catch {
-        // 本地缓存不可用时保留构建阶段注入的默认标题。
-      }
-    </script>
+    <!-- 站点品牌引导脚本（由 API 动态生成，逻辑见 apps/api/src/lib/site-boot.ts）：
+         渲染前同步写入后台配置的站点名/Logo 并设置标签页标题，消除首屏品牌闪烁。
+         加载失败（API 不可用）时页面正常渲染，回退构建期默认标题与前端本地缓存。 -->
+    <script src="/api/site/boot.js"></script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
