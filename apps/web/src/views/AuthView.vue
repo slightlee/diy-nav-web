@@ -3,9 +3,17 @@
     <!-- Logo -->
     <div class="logo-container">
       <BrandLogo link="/" title="返回首页">
-        {{ NAVIGATION_BRAND_CONFIG.defaultIcon }}
+        <img
+          v-if="brandIconIsUrl && !brandImageBroken"
+          :src="brandIcon"
+          class="auth-brand-logo"
+          alt=""
+          @error="brandImageBroken = true"
+        />
+        <i v-else-if="brandIconIsFa" :class="brandIcon" aria-hidden="true" />
+        <template v-else>{{ brandIcon }}</template>
       </BrandLogo>
-      <span class="auth-brand-name">{{ NAVIGATION_BRAND_CONFIG.defaultTitle }}</span>
+      <span class="auth-brand-name">{{ brandTitle }}</span>
     </div>
 
     <!-- Login/Register Views -->
@@ -292,7 +300,7 @@ import { computed, ref, reactive, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { NAVIGATION_BRAND_CONFIG } from '@nav/config/brand'
 import { useAuthStore, AuthRequestError } from '@/stores/auth'
-import { useSettingsStore } from '@/stores/settings'
+import { isNavIconFa, isNavIconUrl, useSettingsStore } from '@/stores/settings'
 import { useUIStore } from '@/stores/ui'
 
 import { isValidEmail, isValidPassword } from '@/utils/validators'
@@ -317,6 +325,21 @@ const oauthProvidersLoading = ref(true)
 const showOAuthSection = computed(
   () => oauthProvidersLoading.value || availableOAuthProviders.value.length > 0
 )
+
+// 登录/注册页品牌跟随站点配置（管理员设置的名称与 Logo），个人定制其次。
+const brandTitle = computed(
+  () => settingsStore.effectiveNavTitle || NAVIGATION_BRAND_CONFIG.defaultTitle
+)
+const brandIcon = computed(
+  () => settingsStore.effectiveNavIcon || NAVIGATION_BRAND_CONFIG.defaultIcon
+)
+const brandIconIsUrl = computed(() => isNavIconUrl(brandIcon.value))
+const brandIconIsFa = computed(() => isNavIconFa(brandIcon.value))
+const brandImageBroken = ref(false)
+
+watch(brandIcon, () => {
+  brandImageBroken.value = false
+})
 
 // 注册开关关闭后不再展示注册入口；配置未加载完成时默认开放，避免闪断
 const registrationClosed = computed(
@@ -355,7 +378,7 @@ const isOAuthAvailable = (provider: OAuthProvider) =>
 
 const handleOAuthLogin = async (provider: OAuthProvider) => {
   try {
-    await startOAuth(provider, createOAuthLoginState(), 'login', settingsStore.settings.navIcon)
+    await startOAuth(provider, createOAuthLoginState(), 'login')
   } catch (error) {
     uiStore.showToast(error instanceof Error ? error.message : '无法启动第三方登录', 'error')
   }
@@ -521,6 +544,14 @@ const handleRegister = async () => {
   font-weight: 800;
   letter-spacing: -0.08em;
   box-shadow: none;
+}
+
+.logo-container :deep(.auth-brand-logo) {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+  display: block;
 }
 
 .logo-container :deep(a.logo:hover) {

@@ -1,10 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, readonly, ref, watch } from 'vue'
-import {
-  NAVIGATION_BRAND_CONFIG,
-  resolveNavigationIcon,
-  resolveNavigationTitle
-} from '@nav/config/brand'
+import { NAVIGATION_BRAND_CONFIG } from '@nav/config/brand'
 import type { UserPreferences, UserSettings } from '@nav/types'
 import { getPreferences, updatePreferences } from '@/api/preferences'
 import { getPublicSiteConfig, type PublicSiteConfig } from '@/api/admin'
@@ -14,12 +10,46 @@ export const DEFAULT_SETTINGS: UserSettings = {
   theme: 'auto',
   autoBackup: true,
   aiAnimationEnabled: true,
-  defaultHome: 'home',
-  navTitle: NAVIGATION_BRAND_CONFIG.defaultTitle,
-  navIcon: NAVIGATION_BRAND_CONFIG.defaultIcon
+  defaultHome: 'home'
 }
 
 const USER_PREFERENCES_CACHE_PREFIX = 'userPreferences:'
+// 站点公开配置的本地缓存：仅作为 boot.js 不可用（API 故障）时的兜底品牌。
+// 正常情况下 boot.js 每次加载都带回最新配置（no-store），缓存由 boot 数据保持最新。
+const PUBLIC_SITE_CONFIG_CACHE_KEY = 'publicSiteConfig'
+
+interface RawSiteConfig {
+  siteName?: unknown
+  siteLogo?: unknown
+  registrationEnabled?: unknown
+}
+
+/** 统一校验来自 boot.js / localStorage 的站点配置形状，非法数据一律拒绝。 */
+function normalizePublicSiteConfig(raw: RawSiteConfig | null | undefined): PublicSiteConfig | null {
+  if (!raw || typeof raw.siteName !== 'string' || !raw.siteName.trim()) return null
+  return {
+    siteName: raw.siteName,
+    siteLogo: typeof raw.siteLogo === 'string' ? raw.siteLogo : '',
+    registrationEnabled: raw.registrationEnabled !== false
+  }
+}
+
+function readBootSiteConfig(): PublicSiteConfig | null {
+  // index.html 在 <head> 同步加载 /api/site/boot.js（由 API 动态生成），
+  // 渲染前即写入 window.__SITE_BOOT_CONFIG__，首帧即可用。
+  const boot = (window as { __SITE_BOOT_CONFIG__?: RawSiteConfig }).__SITE_BOOT_CONFIG__
+  return normalizePublicSiteConfig(boot)
+}
+
+function readCachedPublicSiteConfig(): PublicSiteConfig | null {
+  try {
+    const raw = localStorage.getItem(PUBLIC_SITE_CONFIG_CACHE_KEY)
+    if (!raw) return null
+    return normalizePublicSiteConfig(JSON.parse(raw) as Partial<PublicSiteConfig>)
+  } catch {
+    return null
+  }
+}
 
 function normalizeSettings(raw: Partial<UserSettings> | null | undefined): UserSettings {
   const theme = raw?.theme
@@ -35,67 +65,63 @@ function normalizeSettings(raw: Partial<UserSettings> | null | undefined): UserS
       typeof raw?.aiAnimationEnabled === 'boolean'
         ? raw.aiAnimationEnabled
         : DEFAULT_SETTINGS.aiAnimationEnabled,
-    defaultHome: validHome,
-    navTitle: resolveNavigationTitle(raw?.navTitle),
-    navIcon: resolveNavigationIcon(raw?.navIcon)
+    defaultHome: validHome
   }
 }
 
-export function isNavIconUrl(value: string): boolean {
-  return /^(https?:\/\/|data:image\/|\/)/i.test(value.trim())
-}
-
-export function isNavIconFa(value: string): boolean {
-  const v = value.trim()
-  return /^(fa[srlbd]?|fa)\s+fa-[\w-]+/i.test(v) || /^fa-[\w-]+(\s+fa-[\w-]+)*$/i.test(v)
-}
+// 图标类型判定已下沉到 @nav/config/brand，这里保留导出兼容既有引用。
+export { isNavIconUrl, isNavIconFa } from '@nav/config/brand'
 
 export const useSettingsStore = defineStore('settings', () => {
   const settings = ref<UserSettings>({ ...DEFAULT_SETTINGS })
-  const publicSiteConfig = ref<PublicSiteConfig | null>(null)
+  // 初始品牌：boot.js 注入的后台配置（首访零闪、每次最新）优先，本地缓存仅兜底。
+  // 品牌由管理员统一配置、全员一致：站点配置 > 项目内置默认，无用户级覆盖。
+  const bootSiteConfig = readBootSiteConfig()
+  const publicSiteConfig = ref<PublicSiteConfig | null>(
+    bootSiteConfig || readCachedPublicSiteConfig()
+  )
+  // boot 数据顺手写入兜底缓存；boot 已带回最新配置时跳过启动期冗余请求。
+  if (bootSiteConfig) {
+    try {
+      localStorage.setItem(PUBLIC_SITE_CONFIG_CACHE_KEY, JSON.stringify(bootSiteConfig))
+    } catch {
+      // 缓存写入失败不影响本次展示。
+    }
+  }
+  const skipInitialSiteConfigFetch = !!bootSiteConfig
   let mql: MediaQueryList | null = null
   let mqlHandler: ((e: MediaQueryListEvent) => void) | null = null
   let remoteLoadPromise: Promise<void> | null = null
   let remoteLoadUserId: string | null = null
 
-  const effectiveNavTitle = computed(() => {
-    // If user has customized title, use it
-    if (
-      settings.value.navTitle &&
-      settings.value.navTitle !== NAVIGATION_BRAND_CONFIG.defaultTitle
-    ) {
-      return settings.value.navTitle
-    }
-    // Otherwise fallback to DB public site name, or default
-    return (
-      publicSiteConfig.value?.siteName ||
-      settings.value.navTitle ||
-      NAVIGATION_BRAND_CONFIG.defaultTitle
-    )
-  })
+  const effectiveNavTitle = computed(
+    () => publicSiteConfig.value?.siteName || NAVIGATION_BRAND_CONFIG.defaultTitle
+  )
 
-  const effectiveNavIcon = computed(() => {
-    // If user has customized icon, use it
-    if (settings.value.navIcon && settings.value.navIcon !== NAVIGATION_BRAND_CONFIG.defaultIcon) {
-      return settings.value.navIcon
-    }
-    // Otherwise fallback to DB public site logo, or default
-    return (
-      publicSiteConfig.value?.siteLogo ||
-      settings.value.navIcon ||
-      NAVIGATION_BRAND_CONFIG.defaultIcon
-    )
-  })
+  const effectiveNavIcon = computed(
+    () => publicSiteConfig.value?.siteLogo || NAVIGATION_BRAND_CONFIG.defaultIcon
+  )
 
-  const fetchPublicSiteConfig = async () => {
+  const fetchPublicSiteConfig = async (isRetry = false): Promise<void> => {
     try {
       const res = await getPublicSiteConfig()
       if (res.success && res.data) {
         publicSiteConfig.value = res.data
+        try {
+          localStorage.setItem(PUBLIC_SITE_CONFIG_CACHE_KEY, JSON.stringify(res.data))
+        } catch {
+          // 缓存写入失败不影响本次展示，下次拉取会再次尝试。
+        }
         applyDocumentTitle()
+        return
       }
     } catch {
-      // ignore
+      // 落入下方重试；失败时继续使用本地缓存的品牌而非项目默认值。
+    }
+    if (!isRetry) {
+      // 失败重试一次，避免启动瞬间网络抖动导致页面一直停留在旧品牌。
+      await new Promise(resolve => setTimeout(resolve, 1200))
+      await fetchPublicSiteConfig(true)
     }
   }
 
@@ -117,21 +143,21 @@ export const useSettingsStore = defineStore('settings', () => {
     }
     applyTheme()
     applyDocumentTitle()
-    void fetchPublicSiteConfig()
+    // boot.js 已带回最新站点配置时跳过启动请求（数据同源，重复拉取只会
+    // 增加一次冗余请求和一次潜在的二次跳变）；管理面板保存后仍会显式刷新。
+    if (!skipInitialSiteConfigFetch) void fetchPublicSiteConfig()
   }
 
   const updateSettings = (updates: Partial<UserSettings>) => {
     settings.value = normalizeSettings({ ...settings.value, ...updates })
     saveToLocalStorage()
     applyTheme()
-    applyDocumentTitle()
   }
 
   const resetSettings = () => {
     settings.value = { ...DEFAULT_SETTINGS }
     saveToLocalStorage()
     applyTheme()
-    applyDocumentTitle()
   }
 
   const setTheme = (theme: UserSettings['theme']) => {
@@ -142,13 +168,7 @@ export const useSettingsStore = defineStore('settings', () => {
     updateSettings({ defaultHome: home })
   }
 
-  const setNavBrand = (payload: { navTitle?: string; navIcon?: string }) => {
-    updateSettings(payload)
-  }
-
   const currentPreferences = (): UserPreferences => ({
-    navTitle: settings.value.navTitle || NAVIGATION_BRAND_CONFIG.defaultTitle,
-    navIcon: settings.value.navIcon || NAVIGATION_BRAND_CONFIG.defaultIcon,
     defaultHome: settings.value.defaultHome === 'all' ? 'all' : 'home',
     aiAnimationEnabled: settings.value.aiAnimationEnabled !== false
   })
@@ -163,16 +183,12 @@ export const useSettingsStore = defineStore('settings', () => {
       if (!raw) return null
       const parsed = JSON.parse(raw) as Partial<UserPreferences>
       if (
-        typeof parsed.navTitle !== 'string' ||
-        typeof parsed.navIcon !== 'string' ||
         (parsed.defaultHome !== 'home' && parsed.defaultHome !== 'all') ||
         typeof parsed.aiAnimationEnabled !== 'boolean'
       ) {
         return null
       }
       return {
-        navTitle: parsed.navTitle,
-        navIcon: parsed.navIcon,
         defaultHome: parsed.defaultHome,
         aiAnimationEnabled: parsed.aiAnimationEnabled
       }
@@ -200,7 +216,6 @@ export const useSettingsStore = defineStore('settings', () => {
     })
     saveToLocalStorage()
     applyTheme()
-    applyDocumentTitle()
   }
 
   const saveRemotePreferences = async (userId?: string) => {
@@ -239,15 +254,12 @@ export const useSettingsStore = defineStore('settings', () => {
 
         if (res.data.initialized) {
           const preferences: UserPreferences = {
-            navTitle: res.data.navTitle,
-            navIcon: res.data.navIcon,
             defaultHome: res.data.defaultHome,
             aiAnimationEnabled: res.data.aiAnimationEnabled !== false
           }
           updateSettings(preferences)
           cachePreferences(userId, preferences)
         } else {
-          // 首次迁移保留当前设备已有的品牌配置，不用默认值覆盖用户设置。
           await saveRemotePreferences(userId)
         }
       } catch {
@@ -296,18 +308,14 @@ export const useSettingsStore = defineStore('settings', () => {
       settings.value = normalizeSettings(JSON.parse(data))
       saveToLocalStorage()
       applyTheme()
-      applyDocumentTitle()
       return true
     } catch {
       return false
     }
   }
 
-  // Keep tab title in sync if settings mutated elsewhere
-  watch(
-    () => settings.value.navTitle,
-    () => applyDocumentTitle()
-  )
+  // Keep tab title in sync if site config is refreshed at runtime.
+  watch(effectiveNavTitle, () => applyDocumentTitle())
 
   return {
     settings: readonly(settings),
@@ -321,7 +329,6 @@ export const useSettingsStore = defineStore('settings', () => {
     resetSettings,
     setTheme,
     setDefaultHome,
-    setNavBrand,
     saveRemotePreferences,
     loadRemotePreferences,
     clearPreferencesCache,

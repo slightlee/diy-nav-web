@@ -43,19 +43,9 @@ export interface UserSettings {
   /** 是否播放 AI 助手贴边小鸟动效 */
   aiAnimationEnabled?: boolean
   defaultHome?: 'home' | 'all'
-  /** 顶部导航名称；显示宽度由各界面自行控制。 */
-  navTitle?: string
-  /**
-   * 顶部导航图标：
-   * - http(s)/data/相对路径 → 图片
-   * - 其它短字符 → 文字徽标回退（历史兼容）
-   */
-  navIcon?: string
 }
 
 export interface UserPreferences {
-  navTitle: string
-  navIcon: string
   defaultHome: 'home' | 'all'
   aiAnimationEnabled: boolean
 }

@@ -1,9 +1,4 @@
 import type { DatabaseClient } from '@nav/database'
-import {
-  NAVIGATION_BRAND_CONFIG,
-  resolveNavigationIcon,
-  resolveNavigationTitle
-} from '@nav/config/brand'
 import type { UserSettings } from '@nav/types'
 import {
   UserPreferencesRepository,
@@ -12,8 +7,6 @@ import {
 } from '../repositories/user-preferences.repository.js'
 
 interface PreferencesPayload {
-  navTitle: string
-  navIcon: string
   defaultHome: DefaultHome
   aiAnimationEnabled: boolean
 }
@@ -24,8 +17,6 @@ export interface UserPreferencesResult extends PreferencesPayload {
 }
 
 const DEFAULT_PREFERENCES: PreferencesPayload = {
-  navTitle: NAVIGATION_BRAND_CONFIG.defaultTitle,
-  navIcon: NAVIGATION_BRAND_CONFIG.defaultIcon,
   defaultHome: 'home',
   aiAnimationEnabled: true
 }
@@ -36,8 +27,6 @@ const normalizeHome = (value: unknown): DefaultHome =>
 const normalizeAnimation = (value: unknown) => value !== false && value !== 0
 
 const toResult = (record: UserPreferencesRecord | null): UserPreferencesResult => ({
-  navTitle: resolveNavigationTitle(record?.nav_title),
-  navIcon: resolveNavigationIcon(record?.nav_icon),
   defaultHome: normalizeHome(record?.default_home),
   aiAnimationEnabled: normalizeAnimation(record?.ai_animation_enabled),
   initialized: !!record,
@@ -64,8 +53,6 @@ export class PreferencesService {
     if (!current) {
       // The user may have created local settings before the first authenticated request.
       const preferences = {
-        navTitle: resolveNavigationTitle(input.navTitle),
-        navIcon: resolveNavigationIcon(input.navIcon),
         defaultHome: normalizeHome(input.defaultHome),
         aiAnimationEnabled: normalizeAnimation(input.aiAnimationEnabled)
       }
@@ -73,8 +60,6 @@ export class PreferencesService {
     }
 
     const preferences = {
-      navTitle: resolveNavigationTitle(input.navTitle ?? current.nav_title),
-      navIcon: resolveNavigationIcon(input.navIcon ?? current.nav_icon),
       defaultHome: normalizeHome(input.defaultHome ?? current.default_home),
       aiAnimationEnabled: normalizeAnimation(
         input.aiAnimationEnabled ?? current.ai_animation_enabled

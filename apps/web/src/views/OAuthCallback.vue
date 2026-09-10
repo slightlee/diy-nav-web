@@ -80,11 +80,10 @@ const errorState = ref<string | null>(null)
 const brandImageBroken = ref(false)
 const oauthProvider = ref((localStorage.getItem('oauth_provider') || 'linuxdo') as OAuthProvider)
 const oauthMode = ref((localStorage.getItem('oauth_mode') || 'login') as OAuthMode)
-const oauthBrandIcon = localStorage.getItem('oauth_brand_icon')?.trim()
 
+// 品牌由管理员统一配置：直接读站点配置（boot.js 已同步注入），不再随 OAuth 流程携带。
 const configuredBrandIcon = computed(
-  () =>
-    oauthBrandIcon || settingsStore.settings.navIcon?.trim() || NAVIGATION_BRAND_CONFIG.defaultIcon
+  () => settingsStore.effectiveNavIcon?.trim() || NAVIGATION_BRAND_CONFIG.defaultIcon
 )
 const brandIcon = computed(() =>
   brandImageBroken.value ? NAVIGATION_BRAND_CONFIG.defaultIcon : configuredBrandIcon.value

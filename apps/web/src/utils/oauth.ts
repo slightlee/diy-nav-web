@@ -84,8 +84,7 @@ const getAuthorizationUrl = (
 export const startOAuth = async (
   provider: OAuthProvider,
   state: string,
-  mode: OAuthMode,
-  brandIcon?: string
+  mode: OAuthMode
 ): Promise<void> => {
   const configs = await fetchOAuthProviderConfigs()
   const config = configs.find(item => item.provider === provider)
@@ -94,8 +93,7 @@ export const startOAuth = async (
   localStorage.setItem('oauth_state', state)
   localStorage.setItem('oauth_provider', provider)
   localStorage.setItem('oauth_mode', mode)
-  const normalizedBrandIcon = brandIcon?.trim()
-  if (normalizedBrandIcon) localStorage.setItem('oauth_brand_icon', normalizedBrandIcon)
-  else localStorage.removeItem('oauth_brand_icon')
+  // 品牌由管理员统一配置，回调页直接读站点配置，无需随流程携带。
+  localStorage.removeItem('oauth_brand_icon')
   window.location.assign(getAuthorizationUrl(config, state, mode))
 }

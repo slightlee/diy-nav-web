@@ -1,27 +1,23 @@
 import { describe, expect, it } from 'vitest'
-import {
-  NAVIGATION_BRAND_CONFIG,
-  clampNavigationTitle,
-  countNavigationTitle,
-  resolveNavigationIcon,
-  resolveNavigationTitle
-} from './brand.js'
+import { NAVIGATION_BRAND_CONFIG, isNavIconFa, isNavIconUrl } from './brand.js'
 
 describe('navigation brand config', () => {
-  it('uses the configured defaults for missing values', () => {
-    expect(resolveNavigationTitle(undefined)).toBe(NAVIGATION_BRAND_CONFIG.defaultTitle)
-    expect(resolveNavigationTitle('   ')).toBe(NAVIGATION_BRAND_CONFIG.defaultTitle)
-    expect(resolveNavigationIcon(null)).toBe(NAVIGATION_BRAND_CONFIG.defaultIcon)
+  it('exposes the project fallback defaults', () => {
+    expect(NAVIGATION_BRAND_CONFIG.defaultTitle).toBe('DIY 导航')
+    expect(NAVIGATION_BRAND_CONFIG.defaultIcon).toBe('D')
   })
+})
 
-  it('limits titles by graphemes and preserves valid custom titles', () => {
-    expect(clampNavigationTitle('一点导航')).toBe('一点导航')
-    expect(clampNavigationTitle('一点导航测试名称超长')).toBe('一点导航测试名称')
-    expect(resolveNavigationTitle('我的导航')).toBe('我的导航')
-  })
+describe('icon type detection', () => {
+  it('recognizes image URLs and Font Awesome classes', () => {
+    expect(isNavIconUrl('https://cdn.example.com/logo.svg')).toBe(true)
+    expect(isNavIconUrl('data:image/png;base64,xxxx')).toBe(true)
+    expect(isNavIconUrl('/storage/icons/a.png')).toBe(true)
+    expect(isNavIconUrl('D')).toBe(false)
+    expect(isNavIconUrl('fa fa-compass')).toBe(false)
 
-  it('counts compound emoji as one grapheme', () => {
-    expect(countNavigationTitle('👨‍👩‍👧‍👦导航')).toBe(3)
-    expect(clampNavigationTitle('👨‍👩‍👧‍👦导航')).toBe('👨‍👩‍👧‍👦导航')
+    expect(isNavIconFa('fas fa-compass')).toBe(true)
+    expect(isNavIconFa('fa-compass')).toBe(true)
+    expect(isNavIconFa('https://cdn.example.com/logo.svg')).toBe(false)
   })
 })
