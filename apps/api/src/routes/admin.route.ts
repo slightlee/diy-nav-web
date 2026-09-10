@@ -81,6 +81,14 @@ const testStorageProviderSchema = z.object({
 
 const updateSiteSettingsSchema = z.object({
   siteName: z.string().trim().min(1).max(64).optional(),
+  siteLogo: z
+    .string()
+    .trim()
+    .max(512)
+    .refine(value => value === '' || /^https?:\/\/.+/i.test(value), {
+      message: 'Site logo must be a valid HTTP(S) URL'
+    })
+    .optional(),
   webAppUrl: z.string().trim().url().optional(),
   smtpUser: z.string().trim().email().optional().or(z.literal('')),
   smtpPassword: z.string().trim().optional(),
@@ -295,12 +303,13 @@ const adminRoutes: FastifyPluginAsyncZod = async app => {
       await requireAdmin(req.user.sub)
       const updated = await siteSettingsService.updateSettings(req.body)
 
-      // Hot-swap SMTP and webAppUrl into running services (no restart needed)
+      // Hot-swap SMTP, site name and webAppUrl into running services (no restart needed)
       const smtpPassword = siteSettingsService.getSmtpPassword()
       verificationEmailSender.setCredentials(
         updated.smtpUser || undefined,
         smtpPassword || undefined
       )
+      verificationEmailSender.setFromName(updated.siteName)
       emailBindingService.setWebAppUrl(updated.webAppUrl)
 
       return reply.send({ success: true, data: updated })

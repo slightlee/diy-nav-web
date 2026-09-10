@@ -205,6 +205,7 @@ export const initServices = async (logger: FastifyBaseLogger): Promise<void> => 
         settings.smtpUser || undefined,
         siteSettingsService.getSmtpPassword() || undefined
       )
+      verificationEmailSender.setFromName(settings.siteName)
       emailBindingService.setWebAppUrl(settings.webAppUrl)
       logger.info(
         { webAppUrl: settings.webAppUrl, smtpConfigured: settings.hasSmtpPassword },

@@ -27,6 +27,11 @@ export class SmtpVerificationEmailSender implements EmailVerificationSender {
     this.transporter = undefined // reset so next send recreates it
   }
 
+  /** Hot-swap the brand name used in verification emails (follows admin site name) */
+  setFromName(fromName: string): void {
+    this.options = { ...this.options, fromName }
+  }
+
   async sendEmailBindingVerification(message: EmailVerificationMessage): Promise<void> {
     const { user, password, fromName, environment, logger } = this.options
     if (!user || !password) {

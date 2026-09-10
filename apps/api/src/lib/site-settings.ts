@@ -9,6 +9,7 @@
  * OAUTH_CONFIG_ENCRYPTION_KEY used by the OAuth config service.
  */
 import type { DatabaseClient } from '@nav/database'
+import { NAVIGATION_BRAND_CONFIG } from '@nav/config/brand'
 import { decrypt, encrypt } from '@nav/ai-core'
 
 // ─────────────────────────────────────────────
@@ -17,6 +18,7 @@ import { decrypt, encrypt } from '@nav/ai-core'
 
 export const SITE_SETTING_KEYS = {
   SITE_NAME: 'site_name',
+  SITE_LOGO: 'site_logo',
   WEB_APP_URL: 'web_app_url',
   SMTP_USER: 'smtp_user',
   SMTP_PASSWORD: 'smtp_password',
@@ -30,7 +32,8 @@ export type SiteSettingKey = (typeof SITE_SETTING_KEYS)[keyof typeof SITE_SETTIN
 // ─────────────────────────────────────────────
 
 const DEFAULTS: Record<SiteSettingKey, string> = {
-  site_name: 'DIY 导航',
+  site_name: NAVIGATION_BRAND_CONFIG.defaultTitle,
+  site_logo: '',
   web_app_url: 'http://localhost:3000',
   smtp_user: '',
   smtp_password: '',
@@ -43,6 +46,7 @@ const DEFAULTS: Record<SiteSettingKey, string> = {
 
 export interface SiteSettings {
   siteName: string
+  siteLogo: string
   webAppUrl: string
   smtpUser: string
   hasSmtpPassword: boolean
@@ -55,6 +59,8 @@ export interface AdminSiteSettingsConfig extends SiteSettings {
 
 export interface UpdateSiteSettingsPayload {
   siteName?: string
+  /** HTTP(S) image URL shown as the nav logo; empty string clears it */
+  siteLogo?: string
   webAppUrl?: string
   smtpUser?: string
   /** Provide to change password; omit to keep existing */
@@ -119,6 +125,7 @@ export class SiteSettingsService {
 
     this.cache = {
       site_name: map.site_name ?? DEFAULTS.site_name,
+      site_logo: map.site_logo ?? DEFAULTS.site_logo,
       web_app_url: map.web_app_url ?? DEFAULTS.web_app_url,
       smtp_user: map.smtp_user ?? DEFAULTS.smtp_user,
       smtp_password: map.smtp_password ?? DEFAULTS.smtp_password,
@@ -135,6 +142,7 @@ export class SiteSettingsService {
     const c = this.cache
     return {
       siteName: c?.site_name ?? DEFAULTS.site_name,
+      siteLogo: c?.site_logo ?? DEFAULTS.site_logo,
       webAppUrl: c?.web_app_url ?? DEFAULTS.web_app_url,
       smtpUser: c?.smtp_user ?? DEFAULTS.smtp_user,
       hasSmtpPassword: !!c?.smtp_password,
@@ -177,6 +185,8 @@ export class SiteSettingsService {
 
     if (payload.siteName !== undefined)
       await upsert(SITE_SETTING_KEYS.SITE_NAME, payload.siteName.trim())
+    if (payload.siteLogo !== undefined)
+      await upsert(SITE_SETTING_KEYS.SITE_LOGO, payload.siteLogo.trim())
     if (payload.webAppUrl !== undefined)
       await upsert(SITE_SETTING_KEYS.WEB_APP_URL, payload.webAppUrl.trim())
     if (payload.smtpUser !== undefined)
