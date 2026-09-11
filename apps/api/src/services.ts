@@ -1,7 +1,7 @@
 import type { FastifyBaseLogger } from 'fastify'
 import type { Readable } from 'stream'
 
-import { createDatabaseClient } from '@nav/database'
+import { createDatabaseClient, type DatabaseClient } from '@nav/database'
 import { LocalClient, type StorageClient } from '@nav/storage'
 import {
   BackupService,
@@ -24,14 +24,38 @@ import { SiteSettingsService } from './lib/site-settings.js'
 import { logger } from '@nav/logger'
 
 // --- Database Client ---
-export const databaseClient = createDatabaseClient({
-  provider: 'd1',
-  config: {
-    accountId: config.cloudflare.accountId,
-    databaseId: config.cloudflare.d1DatabaseId,
-    apiToken: config.cloudflare.apiToken
+// 通过 DB_PROVIDER 环境变量选择数据库：d1（默认，Cloudflare）或 mysql（自建）。
+function createConfiguredDatabaseClient(): DatabaseClient {
+  const { provider, d1, mysql } = config.database
+  if (provider === 'mysql') {
+    if (!mysql.host || !mysql.user || !mysql.database) {
+      throw new Error(
+        'DB_PROVIDER=mysql 需要同时配置 DB_MYSQL_HOST、DB_MYSQL_USER 和 DB_MYSQL_DATABASE'
+      )
+    }
+    return createDatabaseClient({
+      provider: 'mysql',
+      config: {
+        host: mysql.host,
+        port: mysql.port,
+        user: mysql.user,
+        password: mysql.password,
+        database: mysql.database,
+        connectionLimit: mysql.connectionLimit
+      }
+    })
   }
-})
+  return createDatabaseClient({
+    provider: 'd1',
+    config: {
+      accountId: config.cloudflare.accountId,
+      databaseId: config.cloudflare.d1DatabaseId,
+      apiToken: config.cloudflare.apiToken
+    }
+  })
+}
+
+export const databaseClient = createConfiguredDatabaseClient()
 
 // --- Dynamic Storage Client Proxy ---
 export class DynamicStorageClient implements StorageClient {

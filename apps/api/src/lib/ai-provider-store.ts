@@ -1,4 +1,4 @@
-import type { DatabaseClient } from '@nav/database'
+import { ensureIndex, type DatabaseClient } from '@nav/database'
 import { normalizeAIProtocol, type AIProviderConfig } from '@nav/ai-core'
 
 type AIProviderRow = {
@@ -33,19 +33,19 @@ const mapRowToConfig = (row: AIProviderRow): AIProviderConfig => ({
 export const initAIProviderTable = async (db: DatabaseClient): Promise<void> => {
   await db.execute(`
     CREATE TABLE IF NOT EXISTS ai_providers (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
-      name TEXT NOT NULL,
-      type TEXT NOT NULL,
+      id VARCHAR(64) PRIMARY KEY,
+      user_id VARCHAR(64) NOT NULL,
+      name VARCHAR(128) NOT NULL,
+      type VARCHAR(32) NOT NULL,
       api_key_encrypted TEXT NOT NULL,
-      base_url TEXT,
-      model TEXT,
+      base_url VARCHAR(512),
+      model VARCHAR(128),
       is_default INTEGER NOT NULL DEFAULT 0,
-      created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL
+      created_at BIGINT NOT NULL,
+      updated_at BIGINT NOT NULL
     );
   `)
-  await db.execute(`CREATE INDEX IF NOT EXISTS idx_ai_providers_user_id ON ai_providers(user_id);`)
+  await ensureIndex(db, 'idx_ai_providers_user_id', 'ai_providers', ['user_id'])
 }
 
 export const listUserProviders = async (

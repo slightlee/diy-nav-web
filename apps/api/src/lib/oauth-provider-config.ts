@@ -60,13 +60,13 @@ export class OAuthProviderConfigService {
   async initTable(): Promise<void> {
     await this.db.execute(`
       CREATE TABLE IF NOT EXISTS oauth_provider_configs (
-        provider TEXT PRIMARY KEY CHECK (provider IN ('github', 'google', 'linuxdo')),
+        provider VARCHAR(32) PRIMARY KEY CHECK (provider IN ('github', 'google', 'linuxdo')),
         enabled INTEGER NOT NULL DEFAULT 0 CHECK (enabled IN (0, 1)),
-        client_id TEXT NOT NULL,
+        client_id VARCHAR(255) NOT NULL,
         client_secret_encrypted TEXT NOT NULL,
-        redirect_uri TEXT NOT NULL,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
+        redirect_uri VARCHAR(512) NOT NULL,
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL
       );
     `)
   }
@@ -152,16 +152,25 @@ export class OAuthProviderConfigService {
     const now = Date.now()
     const createdAt = existingRow?.created_at || now
 
-    await this.db.execute(
-      `INSERT INTO oauth_provider_configs
-         (provider, enabled, client_id, client_secret_encrypted, redirect_uri, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(provider) DO UPDATE SET
+    const upsertClause =
+      this.db.dialect === 'mysql'
+        ? `ON DUPLICATE KEY UPDATE
+         enabled = VALUES(enabled),
+         client_id = VALUES(client_id),
+         client_secret_encrypted = VALUES(client_secret_encrypted),
+         redirect_uri = VALUES(redirect_uri),
+         updated_at = VALUES(updated_at)`
+        : `ON CONFLICT(provider) DO UPDATE SET
          enabled = excluded.enabled,
          client_id = excluded.client_id,
          client_secret_encrypted = excluded.client_secret_encrypted,
          redirect_uri = excluded.redirect_uri,
-         updated_at = excluded.updated_at`,
+         updated_at = excluded.updated_at`
+    await this.db.execute(
+      `INSERT INTO oauth_provider_configs
+         (provider, enabled, client_id, client_secret_encrypted, redirect_uri, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ${upsertClause}`,
       [provider, input.enabled ? 1 : 0, clientId, encryptedSecret, redirectUri, createdAt, now]
     )
 

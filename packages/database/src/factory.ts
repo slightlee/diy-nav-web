@@ -1,11 +1,17 @@
 import { D1Client, type D1ClientConfig } from './providers/d1.js'
+import { MysqlClient, type MysqlClientConfig } from './providers/mysql.js'
 import type { DatabaseClient } from './types.js'
 
-export type CreateDatabaseClientOptions = D1DatabaseClientOptions
+export type CreateDatabaseClientOptions = D1DatabaseClientOptions | MysqlDatabaseClientOptions
 
 export interface D1DatabaseClientOptions {
   provider: 'd1'
   config: D1ClientConfig
+}
+
+export interface MysqlDatabaseClientOptions {
+  provider: 'mysql'
+  config: MysqlClientConfig
 }
 
 /**
@@ -16,9 +22,11 @@ export function createDatabaseClient(options: CreateDatabaseClientOptions): Data
   switch (options.provider) {
     case 'd1':
       return new D1Client(options.config)
+    case 'mysql':
+      return new MysqlClient(options.config)
     default: {
-      const exhaustive: never = options.provider
-      throw new Error(`Unsupported database provider: ${exhaustive}`)
+      const exhaustive: never = options
+      throw new Error(`Unsupported database provider: ${JSON.stringify(exhaustive)}`)
     }
   }
 }

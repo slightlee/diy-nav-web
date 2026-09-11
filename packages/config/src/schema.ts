@@ -37,7 +37,15 @@ export const databaseSchema = z.object({
   // Cloudflare Account ID 用于 D1 数据库 API 地址
   CLOUDFLARE_ACCOUNT_ID: z.string().optional(),
   DB_D1_API_TOKEN: z.string().optional(),
-  DB_D1_DATABASE_ID: z.string().optional()
+  DB_D1_DATABASE_ID: z.string().optional(),
+  // 数据库提供商：d1（Cloudflare，默认）或 mysql（自建，如阿里云 RDS）
+  DB_PROVIDER: z.enum(['d1', 'mysql']).default('d1'),
+  DB_MYSQL_HOST: z.string().optional(),
+  DB_MYSQL_PORT: z.coerce.number().optional(),
+  DB_MYSQL_USER: z.string().optional(),
+  DB_MYSQL_PASSWORD: z.string().optional(),
+  DB_MYSQL_DATABASE: z.string().optional(),
+  DB_MYSQL_CONNECTION_LIMIT: z.coerce.number().optional()
 })
 
 // ============================================

@@ -89,9 +89,18 @@ export function getConfig() {
       oauthConfigEncryptionKey: raw.OAUTH_CONFIG_ENCRYPTION_KEY
     },
     database: {
+      provider: raw.DB_PROVIDER ?? 'd1',
       d1: {
         apiToken: raw.DB_D1_API_TOKEN,
         databaseId: raw.DB_D1_DATABASE_ID
+      },
+      mysql: {
+        host: raw.DB_MYSQL_HOST,
+        port: raw.DB_MYSQL_PORT,
+        user: raw.DB_MYSQL_USER,
+        password: raw.DB_MYSQL_PASSWORD,
+        database: raw.DB_MYSQL_DATABASE,
+        connectionLimit: raw.DB_MYSQL_CONNECTION_LIMIT
       }
     },
     icon: {

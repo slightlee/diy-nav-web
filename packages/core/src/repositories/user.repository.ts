@@ -1,4 +1,4 @@
-import type { DatabaseClient } from '@nav/database'
+import { ensureIndex, getTableColumns, type DatabaseClient } from '@nav/database'
 import { User } from '../services/auth.js'
 
 export interface UserIdentityRecord {
@@ -294,49 +294,59 @@ export class UserRepository {
    * Note: In production, use migrations instead.
    */
   async initTable(): Promise<void> {
-    // Create users table
+    // 列类型同时兼容 SQLite（D1）与 MySQL：
+    // - 主键/唯一列/带默认值列用 VARCHAR（MySQL 的 TEXT 不能作主键、不能带字面量默认值）
+    // - 时间戳用 BIGINT（MySQL INTEGER 为 4 字节，存不下 Date.now() 毫秒值）
     await this.db.execute(`
       CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY,
-        email TEXT UNIQUE,
-        password_hash TEXT,
-        email_verified_at INTEGER,
-        nickname TEXT,
-        avatar_url TEXT,
-        role TEXT DEFAULT 'USER',
-        status TEXT DEFAULT 'ACTIVE',
-        last_login_at INTEGER,
-        last_login_ip TEXT,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL,
-        deleted_at INTEGER
+        id VARCHAR(64) PRIMARY KEY,
+        email VARCHAR(255) UNIQUE,
+        password_hash VARCHAR(255),
+        email_verified_at BIGINT,
+        nickname VARCHAR(128),
+        avatar_url VARCHAR(512),
+        role VARCHAR(16) DEFAULT 'USER',
+        status VARCHAR(16) DEFAULT 'ACTIVE',
+        last_login_at BIGINT,
+        last_login_ip VARCHAR(64),
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL,
+        deleted_at BIGINT
       );
     `)
 
-    const userColumns = await this.db.all<{ name: string }>('PRAGMA table_info(users)')
-    if (!userColumns.some(column => column.name === 'email_verified_at')) {
-      await this.db.execute('ALTER TABLE users ADD COLUMN email_verified_at INTEGER')
+    const userColumns = await getTableColumns(this.db, 'users')
+    if (!userColumns.has('email_verified_at')) {
+      await this.db.execute('ALTER TABLE users ADD COLUMN email_verified_at BIGINT')
       await this.db.execute(
         'UPDATE users SET email_verified_at = created_at WHERE email IS NOT NULL AND email_verified_at IS NULL'
       )
     }
 
     // Create user_identities table
+    const identityIdColumn =
+      this.db.dialect === 'mysql'
+        ? 'id BIGINT AUTO_INCREMENT PRIMARY KEY'
+        : 'id INTEGER PRIMARY KEY AUTOINCREMENT'
     await this.db.execute(`
       CREATE TABLE IF NOT EXISTS user_identities (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT NOT NULL,
-        provider TEXT NOT NULL,
-        provider_uid TEXT NOT NULL,
+        ${identityIdColumn},
+        user_id VARCHAR(64) NOT NULL,
+        provider VARCHAR(32) NOT NULL,
+        provider_uid VARCHAR(255) NOT NULL,
         profile_data TEXT,
-        created_at INTEGER NOT NULL,
-        last_used_at INTEGER,
+        created_at BIGINT NOT NULL,
+        last_used_at BIGINT,
         UNIQUE(provider, provider_uid)
       );
     `)
 
-    await this.db.execute(
-      'CREATE UNIQUE INDEX IF NOT EXISTS idx_user_identities_user_provider ON user_identities(user_id, provider)'
+    await ensureIndex(
+      this.db,
+      'idx_user_identities_user_provider',
+      'user_identities',
+      ['user_id', 'provider'],
+      { unique: true }
     )
   }
 

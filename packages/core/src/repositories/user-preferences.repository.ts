@@ -28,13 +28,21 @@ export class UserPreferencesRepository {
     },
     updatedAt: number
   ): Promise<UserPreferencesRecord> {
+    const upsertClause =
+      this.db.dialect === 'mysql'
+        ? `ON DUPLICATE KEY UPDATE
+         default_home = VALUES(default_home),
+         ai_animation_enabled = VALUES(ai_animation_enabled),
+         updated_at = VALUES(updated_at)`
+        : `ON CONFLICT(user_id) DO UPDATE SET
+         default_home = excluded.default_home,
+         ai_animation_enabled = excluded.ai_animation_enabled,
+         updated_at = excluded.updated_at`
+
     await this.db.execute(
       `INSERT INTO user_preferences (user_id, default_home, ai_animation_enabled, updated_at)
        VALUES (?, ?, ?, ?)
-       ON CONFLICT(user_id) DO UPDATE SET
-         default_home = excluded.default_home,
-         ai_animation_enabled = excluded.ai_animation_enabled,
-         updated_at = excluded.updated_at`,
+       ${upsertClause}`,
       [userId, preferences.defaultHome, preferences.aiAnimationEnabled ? 1 : 0, updatedAt]
     )
 
@@ -47,14 +55,17 @@ export class UserPreferencesRepository {
   }
 
   async initTable(): Promise<void> {
+    // nav_title/nav_icon/nav_brand_custom 为已废弃的用户品牌定制列：
+    // 保留建表以兼容存量库结构，新代码不再读写。
     await this.db.execute(`
       CREATE TABLE IF NOT EXISTS user_preferences (
-        user_id TEXT PRIMARY KEY,
+        user_id VARCHAR(64) PRIMARY KEY,
         nav_title TEXT,
         nav_icon TEXT,
-        default_home TEXT NOT NULL DEFAULT 'home',
+        default_home VARCHAR(8) NOT NULL DEFAULT 'home',
         ai_animation_enabled INTEGER NOT NULL DEFAULT 1,
-        updated_at INTEGER NOT NULL,
+        nav_brand_custom INTEGER NOT NULL DEFAULT 0,
+        updated_at BIGINT NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       );
     `)

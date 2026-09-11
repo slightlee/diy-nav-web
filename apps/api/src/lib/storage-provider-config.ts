@@ -128,22 +128,22 @@ export class StorageProviderConfigService {
   async initTable(): Promise<void> {
     await this.db.execute(`
       CREATE TABLE IF NOT EXISTS storage_purpose_configs (
-        purpose TEXT PRIMARY KEY CHECK (purpose IN ('public', 'backup')),
-        provider TEXT NOT NULL DEFAULT 'r2' CHECK (provider IN ('r2', 's3', 'webdav')),
-        bucket_name TEXT,
-        account_id TEXT,
-        access_key_id TEXT,
+        purpose VARCHAR(16) PRIMARY KEY CHECK (purpose IN ('public', 'backup')),
+        provider VARCHAR(16) NOT NULL DEFAULT 'r2' CHECK (provider IN ('r2', 's3', 'webdav')),
+        bucket_name VARCHAR(255),
+        account_id VARCHAR(128),
+        access_key_id VARCHAR(255),
         secret_access_key_encrypted TEXT,
-        endpoint TEXT,
-        region TEXT,
-        public_base_url TEXT,
-        webdav_url TEXT,
-        webdav_username TEXT,
+        endpoint VARCHAR(512),
+        region VARCHAR(64),
+        public_base_url VARCHAR(512),
+        webdav_url VARCHAR(512),
+        webdav_username VARCHAR(255),
         webdav_password_encrypted TEXT,
-        storage_path TEXT,
+        storage_path VARCHAR(512),
         max_retained_backups INTEGER NOT NULL DEFAULT 5,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL
       );
     `)
 
@@ -325,15 +325,24 @@ export class StorageProviderConfigService {
     const now = Date.now()
     const defaultPath = purpose === 'backup' ? DEFAULT_BACKUP_PATH : DEFAULT_PUBLIC_PATH
 
-    await this.db.execute(
-      `
-      INSERT INTO storage_purpose_configs (
-        purpose, provider, bucket_name, account_id, access_key_id,
-        secret_access_key_encrypted, endpoint, region, public_base_url,
-        webdav_url, webdav_username, webdav_password_encrypted,
-        storage_path, max_retained_backups, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(purpose) DO UPDATE SET
+    const upsertClause =
+      this.db.dialect === 'mysql'
+        ? `ON DUPLICATE KEY UPDATE
+        provider = VALUES(provider),
+        bucket_name = VALUES(bucket_name),
+        account_id = VALUES(account_id),
+        access_key_id = VALUES(access_key_id),
+        secret_access_key_encrypted = COALESCE(VALUES(secret_access_key_encrypted), secret_access_key_encrypted),
+        endpoint = VALUES(endpoint),
+        region = VALUES(region),
+        public_base_url = VALUES(public_base_url),
+        webdav_url = VALUES(webdav_url),
+        webdav_username = VALUES(webdav_username),
+        webdav_password_encrypted = COALESCE(VALUES(webdav_password_encrypted), webdav_password_encrypted),
+        storage_path = VALUES(storage_path),
+        max_retained_backups = VALUES(max_retained_backups),
+        updated_at = VALUES(updated_at)`
+        : `ON CONFLICT(purpose) DO UPDATE SET
         provider = excluded.provider,
         bucket_name = excluded.bucket_name,
         account_id = excluded.account_id,
@@ -347,7 +356,16 @@ export class StorageProviderConfigService {
         webdav_password_encrypted = COALESCE(excluded.webdav_password_encrypted, storage_purpose_configs.webdav_password_encrypted),
         storage_path = excluded.storage_path,
         max_retained_backups = excluded.max_retained_backups,
-        updated_at = excluded.updated_at;
+        updated_at = excluded.updated_at`
+    await this.db.execute(
+      `
+      INSERT INTO storage_purpose_configs (
+        purpose, provider, bucket_name, account_id, access_key_id,
+        secret_access_key_encrypted, endpoint, region, public_base_url,
+        webdav_url, webdav_username, webdav_password_encrypted,
+        storage_path, max_retained_backups, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ${upsertClause}
       `,
       [
         purpose,

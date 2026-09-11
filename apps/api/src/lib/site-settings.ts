@@ -94,10 +94,10 @@ export class SiteSettingsService {
   async initTable(): Promise<void> {
     await this.db.execute(`
       CREATE TABLE IF NOT EXISTS site_settings (
-        key       TEXT PRIMARY KEY,
-        value     TEXT NOT NULL,
-        encrypted INTEGER NOT NULL DEFAULT 0,
-        updated_at INTEGER NOT NULL
+        \`key\`      VARCHAR(64) PRIMARY KEY,
+        value      TEXT NOT NULL,
+        encrypted  INTEGER NOT NULL DEFAULT 0,
+        updated_at BIGINT NOT NULL
       )
     `)
   }
@@ -172,13 +172,21 @@ export class SiteSettingsService {
 
     const upsert = async (key: SiteSettingKey, value: string, encrypted = false) => {
       const stored = encrypted ? encrypt(value, this.encryptionKey) : value
-      await this.db.execute(
-        `INSERT INTO site_settings (key, value, encrypted, updated_at)
-         VALUES (?, ?, ?, ?)
-         ON CONFLICT(key) DO UPDATE SET
+      // `key` 是 MySQL 保留字，两种方言都用反引号引用
+      const upsertClause =
+        this.db.dialect === 'mysql'
+          ? `ON DUPLICATE KEY UPDATE
+           value = VALUES(value),
+           encrypted = VALUES(encrypted),
+           updated_at = VALUES(updated_at)`
+          : `ON CONFLICT(key) DO UPDATE SET
            value = excluded.value,
            encrypted = excluded.encrypted,
-           updated_at = excluded.updated_at`,
+           updated_at = excluded.updated_at`
+      await this.db.execute(
+        `INSERT INTO site_settings (\`key\`, value, encrypted, updated_at)
+         VALUES (?, ?, ?, ?)
+         ${upsertClause}`,
         [key, stored, encrypted ? 1 : 0, now]
       )
     }

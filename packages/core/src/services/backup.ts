@@ -1,4 +1,4 @@
-import type { DatabaseClient } from '@nav/database'
+import { getTableColumns, type DatabaseClient } from '@nav/database'
 import type { StorageClient } from '@nav/storage'
 import { logger as defaultLogger, type Logger } from '@nav/logger'
 import { cleanDataForHash, computeHash } from '@nav/utils'
@@ -58,16 +58,20 @@ export class BackupService {
    * Initialize the database table if it doesn't exist
    */
   async initTable(): Promise<void> {
+    const idColumn =
+      this.db.dialect === 'mysql'
+        ? 'id BIGINT AUTO_INCREMENT PRIMARY KEY'
+        : 'id INTEGER PRIMARY KEY AUTOINCREMENT'
     const sql = `
       CREATE TABLE IF NOT EXISTS data_backups (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT NOT NULL,
-        name TEXT NOT NULL,
-        type TEXT NOT NULL,
-        storage_key TEXT NOT NULL,
-        file_hash TEXT NOT NULL,
-        size INTEGER NOT NULL,
-        created_at INTEGER NOT NULL,
+        ${idColumn},
+        user_id VARCHAR(64) NOT NULL,
+        name VARCHAR(128) NOT NULL,
+        type VARCHAR(16) NOT NULL,
+        storage_key VARCHAR(512) NOT NULL,
+        file_hash VARCHAR(128) NOT NULL,
+        size BIGINT NOT NULL,
+        created_at BIGINT NOT NULL,
         website_count INTEGER,
         category_count INTEGER,
         tag_count INTEGER
@@ -76,8 +80,7 @@ export class BackupService {
     await this.db.execute(sql)
 
     // Migrate existing tables created before summary counts existed.
-    const columns = await this.db.all<{ name: string }>('PRAGMA table_info(data_backups)')
-    const columnNames = new Set(columns.map(column => column.name))
+    const columnNames = await getTableColumns(this.db, 'data_backups')
     if (!columnNames.has('website_count')) {
       await this.db.execute('ALTER TABLE data_backups ADD COLUMN website_count INTEGER')
     }
@@ -146,13 +149,15 @@ export class BackupService {
 
     const { websiteCount, categoryCount, tagCount } = this.extractCounts(data)
 
+    // MySQL 的 SELECT 需要 FROM DUAL 才能携带 WHERE 子句
+    const dedupeSuffix = this.db.dialect === 'mysql' ? ' FROM DUAL' : ''
     const insertSql =
       type === 'AUTO'
         ? `INSERT INTO data_backups (
          user_id, name, type, storage_key, file_hash, size, created_at,
          website_count, category_count, tag_count
        )
-       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?${dedupeSuffix}
        WHERE NOT EXISTS (
          SELECT 1 FROM data_backups WHERE user_id = ? AND type = ? AND file_hash = ?
        )`

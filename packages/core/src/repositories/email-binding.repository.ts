@@ -1,4 +1,4 @@
-import type { DatabaseClient } from '@nav/database'
+import { ensureIndex, type DatabaseClient } from '@nav/database'
 
 export interface EmailBindingChallenge {
   id: string
@@ -16,19 +16,20 @@ export class EmailBindingRepository {
   async initTable(): Promise<void> {
     await this.db.execute(`
       CREATE TABLE IF NOT EXISTS email_binding_challenges (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        email TEXT NOT NULL,
-        token_hash TEXT NOT NULL UNIQUE,
-        expires_at INTEGER NOT NULL,
-        created_at INTEGER NOT NULL,
-        consumed_at INTEGER,
+        id VARCHAR(64) PRIMARY KEY,
+        user_id VARCHAR(64) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        token_hash VARCHAR(128) NOT NULL UNIQUE,
+        expires_at BIGINT NOT NULL,
+        created_at BIGINT NOT NULL,
+        consumed_at BIGINT,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       );
     `)
-    await this.db.execute(
-      'CREATE INDEX IF NOT EXISTS idx_email_binding_challenges_user ON email_binding_challenges(user_id, created_at)'
-    )
+    await ensureIndex(this.db, 'idx_email_binding_challenges_user', 'email_binding_challenges', [
+      'user_id',
+      'created_at'
+    ])
   }
 
   async replacePendingForUser(challenge: EmailBindingChallenge): Promise<void> {

@@ -1,3 +1,5 @@
 export * from './factory.js'
+export * from './helpers.js'
 export * from './providers/d1.js'
+export * from './providers/mysql.js'
 export * from './types.js'

@@ -1,4 +1,4 @@
-import type { DatabaseClient } from '@nav/database'
+import { getTableColumns, type DatabaseClient } from '@nav/database'
 import type { StorageClient } from '@nav/storage'
 import type { SyncData, SyncPayload } from '@nav/types'
 import { canonicalizeSyncDataForHash, computeHash, sanitizeSyncData } from '@nav/utils'
@@ -42,16 +42,15 @@ export class SyncService {
   async initTable(): Promise<void> {
     await this.db.execute(`
       CREATE TABLE IF NOT EXISTS user_sync_state (
-        user_id TEXT PRIMARY KEY,
+        user_id VARCHAR(64) PRIMARY KEY,
         enabled INTEGER NOT NULL DEFAULT 0,
-        current_hash TEXT,
-        current_storage_key TEXT,
-        updated_at INTEGER NOT NULL
+        current_hash VARCHAR(128),
+        current_storage_key VARCHAR(512),
+        updated_at BIGINT NOT NULL
       );
     `)
 
-    const columns = await this.db.all<{ name: string }>('PRAGMA table_info(user_sync_state)')
-    const columnNames = new Set(columns.map(column => column.name))
+    const columnNames = await getTableColumns(this.db, 'user_sync_state')
 
     if (!columnNames.has('enabled')) {
       await this.db.execute(
@@ -98,12 +97,18 @@ export class SyncService {
     if ((updateResult.changes ?? 0) === 0) {
       // Only write fields shared by fresh and legacy schemas. Historical pointer
       // columns keep their defaults, while existing rows retain their snapshots.
+      const upsertClause =
+        this.db.dialect === 'mysql'
+          ? `ON DUPLICATE KEY UPDATE
+           enabled = VALUES(enabled),
+           updated_at = VALUES(updated_at)`
+          : `ON CONFLICT(user_id) DO UPDATE SET
+           enabled = excluded.enabled,
+           updated_at = excluded.updated_at`
       await this.db.execute(
         `INSERT INTO user_sync_state (user_id, enabled, updated_at)
          VALUES (?, ?, ?)
-         ON CONFLICT(user_id) DO UPDATE SET
-           enabled = excluded.enabled,
-           updated_at = excluded.updated_at`,
+         ${upsertClause}`,
         [userId, enabledValue, now]
       )
     }

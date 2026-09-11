@@ -1,6 +1,11 @@
 import { ofetch } from 'ofetch'
 import { logger } from '@nav/logger'
-import type { DatabaseClient, DatabaseExecuteResult, DatabaseStatement } from '../types.js'
+import type {
+  DatabaseClient,
+  DatabaseDialect,
+  DatabaseExecuteResult,
+  DatabaseStatement
+} from '../types.js'
 
 export interface D1ClientConfig {
   accountId: string
@@ -43,6 +48,8 @@ export interface D1QueryResponse<T = unknown> {
 export type D1Result<T = unknown> = D1QueryResponse<T>
 
 export class D1Client implements DatabaseClient {
+  readonly dialect: DatabaseDialect = 'sqlite'
+
   private config: D1ClientConfig
   private baseUrl: string
 
