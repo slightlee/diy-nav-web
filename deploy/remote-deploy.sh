@@ -123,6 +123,7 @@ transfer_config() {
     $SSH_CMD "mkdir -p $REMOTE_DIR/deploy"
     $SCP_CMD "$PROJECT_ROOT/.env" $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR/
     $SCP_CMD "$PROJECT_ROOT/deploy/docker-compose.yml" $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR/deploy/
+    $SCP_CMD "$PROJECT_ROOT/deploy/docker-compose.mysql.yml" $REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR/deploy/
     
     log_info "配置文件传输完成"
 }
@@ -132,9 +133,18 @@ start_containers() {
     log_step "启动容器..."
     
     TAG=$(get_tag)
+    COMPOSE_FILES="-f deploy/docker-compose.yml"
+    CONFIGURED_DB_PROVIDER=$(sed -n 's/^DB_PROVIDER=//p' "$PROJECT_ROOT/.env" | tail -n 1 | tr -d '\r')
+
+    if [ "$CONFIGURED_DB_PROVIDER" = "mysql" ]; then
+        COMPOSE_FILES="$COMPOSE_FILES -f deploy/docker-compose.mysql.yml"
+        log_info "数据库提供商: MySQL（启用 mysql_default 共享网络）"
+    else
+        log_info "数据库提供商: D1"
+    fi
     
     # 停止旧容器并启动新容器（显式指定 .env 路径）
-    $SSH_CMD "cd $REMOTE_DIR && TAG=$TAG docker compose --env-file .env -f deploy/docker-compose.yml up -d --remove-orphans"
+    $SSH_CMD "cd $REMOTE_DIR && TAG=$TAG docker compose --env-file .env $COMPOSE_FILES up -d --remove-orphans"
     
     # 清理旧镜像
     $SSH_CMD "docker image prune -f" &>/dev/null || true

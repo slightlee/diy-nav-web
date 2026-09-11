@@ -1,0 +1,14 @@
+services:
+  api:
+    environment:
+      # MySQL 与 API 共享 Docker 网络，使用容器 DNS 名直连
+      - DB_MYSQL_HOST=mysql
+    networks:
+      - default
+      - mysql-network
+
+networks:
+  mysql-network:
+    # MySQL 由独立 Compose 项目管理，复用其现有网络
+    name: mysql_default
+    external: true
