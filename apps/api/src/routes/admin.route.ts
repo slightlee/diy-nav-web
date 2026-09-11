@@ -231,7 +231,7 @@ const adminRoutes: FastifyPluginAsyncZod = async app => {
           uptimeSeconds: Math.floor(process.uptime()),
           publicStorageProvider: 'db-managed',
           backupStorageProvider: 'db-managed',
-          databaseType: 'Cloudflare D1',
+          databaseType: config.database.provider === 'mysql' ? 'MySQL' : 'Cloudflare D1',
           serverPort: config.server.port
         }
       }
