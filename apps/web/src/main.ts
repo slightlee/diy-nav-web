@@ -2,10 +2,12 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import './styles/main.scss'
 import '@nav/ui/styles'
+import { logger } from '@nav/logger'
 import { useSettingsStore } from '@/stores/settings'
 import { useWebsiteStore } from '@/stores/website'
 import { useCategoryStore } from '@/stores/category'
 import { useTagStore } from '@/stores/tag'
+import { useUIStore } from '@/stores/ui'
 import { initializeWorkspaceStorage } from '@/utils/user-data-storage'
 
 import App from './App.vue'
@@ -20,6 +22,12 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 
+// 全局兜底：未捕获的 Promise 拒绝只进日志，不打扰用户、
+// 不向前端暴露内部错误细节。
+window.addEventListener('unhandledrejection', event => {
+  logger.error({ err: event.reason }, '[Web] Unhandled promise rejection')
+})
+
 // Setup global http interceptors
 request.onUnauthorized(() => {
   const authStore = useAuthStore()
@@ -27,6 +35,17 @@ request.onUnauthorized(() => {
   // account session so local data remains available without a recursive logout request.
   authStore.expireSession()
 })
+
+// Vue 渲染/生命周期错误：记日志并给用户一条通用提示（去重由
+// didNotifyRuntimeError 保证只提示一次，文案不暴露内部细节）。
+let didNotifyRuntimeError = false
+app.config.errorHandler = (err, _instance, info) => {
+  logger.error({ err, info }, '[Vue] Unhandled component error')
+  if (!didNotifyRuntimeError) {
+    didNotifyRuntimeError = true
+    useUIStore().showToast('页面出现异常，建议刷新后重试', 'error')
+  }
+}
 
 const settingsStore = useSettingsStore()
 const websiteStore = useWebsiteStore()
