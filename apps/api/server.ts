@@ -5,6 +5,7 @@ import { validatorCompiler, serializerCompiler, ZodTypeProvider } from 'fastify-
 import { join } from 'path'
 import { config } from '@nav/config'
 import { databaseClient, initServices } from './src/services.js'
+import { isDatabaseUnavailableError } from '@nav/database'
 import { AppError } from '@nav/core'
 import { configs } from '@nav/logger'
 import iconRoutes from './src/routes/icon.js'
@@ -15,6 +16,7 @@ import aiRoutes from './src/routes/ai.route.js'
 import adminRoutes from './src/routes/admin.route.js'
 import siteRoutes from './src/routes/site.route.js'
 import { httpClient } from './src/lib/http.js'
+import { isNetworkUnavailableError, toFrameworkClientError } from './src/lib/infra-error.js'
 import { OAuthProviderConfigService } from './src/lib/oauth-provider-config.js'
 import authRenewalPlugin from './src/plugins/auth-renewal.js'
 import jwt from '@fastify/jwt'
@@ -34,13 +36,33 @@ app.setValidatorCompiler(validatorCompiler)
 app.setSerializerCompiler(serializerCompiler)
 
 app.setErrorHandler((error, request, reply) => {
-  // Handle AppError
+  // Handle AppError：业务语义错误，直接透出
   if (error instanceof AppError) {
     return reply.status(error.statusCode).send({
       success: false,
       code: error.code,
-      message: error.message,
-      isOperational: error.isOperational
+      message: error.message
+    })
+  }
+
+  // 数据库不可用：503 + 泛化文案（不向前端暴露"数据库"等内部实现细节），
+  // 原始错误与具体原因只进日志
+  if (isDatabaseUnavailableError(error)) {
+    request.log.error({ err: error, url: request.url }, 'Database unavailable')
+    return reply.status(503).send({
+      success: false,
+      code: 'SERVICE_UNAVAILABLE',
+      message: '服务暂时不可用，请稍后重试'
+    })
+  }
+
+  // 其它外部依赖网络失败（SMTP、OAuth 上游等），同样只进日志
+  if (isNetworkUnavailableError(error)) {
+    request.log.error({ err: error, url: request.url }, 'Dependency unavailable')
+    return reply.status(503).send({
+      success: false,
+      code: 'SERVICE_UNAVAILABLE',
+      message: '服务暂时不可用，请稍后重试'
     })
   }
 
@@ -56,17 +78,38 @@ app.setErrorHandler((error, request, reply) => {
     return reply.status(400).send({
       success: false,
       code: 'VALIDATION_ERROR',
-      message: 'Validation failed',
+      message: '请求参数不合法',
       details: validationError.validation
     })
   }
 
+  // Fastify 框架自带 4xx（空 body、非法 JSON、限流等），避免被误报成 500
+  const frameworkError = toFrameworkClientError(error)
+  if (frameworkError) {
+    request.log.warn({ err: error, url: request.url }, 'Framework client error')
+    return reply.status(frameworkError.statusCode).send({
+      success: false,
+      code: frameworkError.code,
+      message: frameworkError.message
+    })
+  }
+
   // Handle generic errors
-  app.log.error(error)
+  request.log.error({ err: error, url: request.url }, 'Unhandled error')
   return reply.status(500).send({
     success: false,
     code: 'INTERNAL_SERVER_ERROR',
-    message: 'Internal Server Error'
+    message: '服务器内部错误，请稍后重试'
+  })
+})
+
+// 404 走 notFoundHandler，不经过 setErrorHandler，需要单独统一信封
+app.setNotFoundHandler((request, reply) => {
+  request.log.warn({ url: request.url }, 'Route not found')
+  return reply.status(404).send({
+    success: false,
+    code: 'NOT_FOUND',
+    message: '接口不存在'
   })
 })
 
@@ -108,7 +151,7 @@ app.decorate('authenticate', async function (req, reply) {
     return reply.status(401).send({
       success: false,
       code: 'UNAUTHORIZED',
-      message: 'Invalid or expired token'
+      message: '登录状态已失效，请重新登录'
     })
   }
 })
@@ -145,9 +188,37 @@ await app.register(authRenewalPlugin)
 const start = async () => {
   try {
     // Initialize services (DB tables, etc.)
-    await initServices(app.log)
-    await oauthProviderConfigService.initTable()
-    await oauthProviderConfigService.validateEnabledProviders()
+    // 数据库不可用时不再 fail-fast：服务照常监听（请求期错误由全局
+    // 503 信封兜住），并在后台按间隔重试初始化，数据库恢复后自愈。
+    const RETRY_INTERVAL_MS = 10_000
+    const initAll = async () => {
+      await initServices(app.log)
+      await oauthProviderConfigService.initTable()
+      await oauthProviderConfigService.validateEnabledProviders()
+    }
+
+    const scheduleDbInitRetry = () => {
+      const timer = setTimeout(async () => {
+        try {
+          await initAll()
+          app.log.info('Database became available, services initialized')
+        } catch (retryErr) {
+          app.log.warn({ err: retryErr }, 'Database still unavailable, will retry')
+          scheduleDbInitRetry()
+        }
+      }, RETRY_INTERVAL_MS)
+      timer.unref()
+    }
+
+    try {
+      await initAll()
+    } catch (initErr) {
+      app.log.error(
+        { err: initErr },
+        'Database unavailable at startup, serving degraded until it recovers'
+      )
+      scheduleDbInitRetry()
+    }
 
     const port = config.server.port
     await app.listen({ port, host: '0.0.0.0' })
