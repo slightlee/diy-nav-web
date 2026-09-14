@@ -1,5 +1,6 @@
 import { createPool, type Pool } from 'mysql2/promise'
 import { logger } from '@nav/logger'
+import { wrapDatabaseError } from '../errors.js'
 import type {
   DatabaseClient,
   DatabaseDialect,
@@ -50,7 +51,7 @@ export class MysqlClient implements DatabaseClient {
       }
     } catch (error) {
       logger.error({ err: error, sql }, 'MySQL Execution Failed')
-      throw error
+      throw wrapDatabaseError(error)
     }
   }
 
@@ -65,7 +66,7 @@ export class MysqlClient implements DatabaseClient {
       return (Array.isArray(rows) ? rows : []) as T[]
     } catch (error) {
       logger.error({ err: error, sql }, 'MySQL Query Failed')
-      throw error
+      throw wrapDatabaseError(error)
     }
   }
 
@@ -76,7 +77,13 @@ export class MysqlClient implements DatabaseClient {
   async batch(statements: DatabaseStatement[]): Promise<DatabaseExecuteResult[]> {
     if (statements.length === 0) return []
 
-    const connection = await this.pool.getConnection()
+    let connection
+    try {
+      connection = await this.pool.getConnection()
+    } catch (error) {
+      logger.error({ err: error }, 'MySQL Connection Acquisition Failed')
+      throw wrapDatabaseError(error)
+    }
     try {
       await connection.beginTransaction()
       const results: DatabaseExecuteResult[] = []
@@ -93,7 +100,7 @@ export class MysqlClient implements DatabaseClient {
     } catch (error) {
       await connection.rollback()
       logger.error({ err: error }, 'MySQL Batch Execution Failed')
-      throw error
+      throw wrapDatabaseError(error)
     } finally {
       connection.release()
     }

@@ -1,3 +1,4 @@
+export * from './errors.js'
 export * from './factory.js'
 export * from './helpers.js'
 export * from './providers/d1.js'

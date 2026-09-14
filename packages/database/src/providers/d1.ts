@@ -1,5 +1,6 @@
 import { ofetch } from 'ofetch'
 import { logger } from '@nav/logger'
+import { wrapDatabaseError } from '../errors.js'
 import type {
   DatabaseClient,
   DatabaseDialect,
@@ -83,7 +84,7 @@ export class D1Client implements DatabaseClient {
       return response
     } catch (error) {
       logger.error({ error }, 'D1 Execution Failed')
-      throw error
+      throw wrapDatabaseError(error)
     }
   }
 
@@ -166,7 +167,7 @@ export class D1Client implements DatabaseClient {
     } catch (error: unknown) {
       const errorDetail = this.extractErrorDetail(error)
       logger.error({ error: errorDetail }, 'D1 Batch Execution Failed')
-      throw error
+      throw wrapDatabaseError(error)
     }
   }
 
