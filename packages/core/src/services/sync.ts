@@ -129,11 +129,11 @@ export class SyncService {
   ): Promise<SyncState> {
     const current = await this.getStateRecord(userId)
     if (!current?.enabled) {
-      throw new AppError('Data sync is disabled', 'SYNC_DISABLED', 409)
+      throw new AppError('云同步功能未开启', 'SYNC_DISABLED', 409)
     }
 
     if (current.current_hash !== expectedHash) {
-      throw new AppError('Remote data changed since the last sync', 'SYNC_CONFLICT', 409)
+      throw new AppError('自上次同步后云端数据已变化，请刷新重试', 'SYNC_CONFLICT', 409)
     }
 
     const normalizedPayload = this.normalizePayload(payload)
@@ -185,7 +185,7 @@ export class SyncService {
         )
 
     if (updateResult.changes === 0) {
-      throw new AppError('Remote data changed during sync', 'SYNC_CONFLICT', 409)
+      throw new AppError('同步期间云端数据已变化，请重试', 'SYNC_CONFLICT', 409)
     }
 
     await this.deleteSupersededSnapshot(current.current_storage_key, storageKey)
@@ -204,10 +204,10 @@ export class SyncService {
   ): Promise<SyncState> {
     const current = await this.getStateRecord(userId)
     if (!current?.enabled) {
-      throw new AppError('Data sync is disabled', 'SYNC_DISABLED', 409)
+      throw new AppError('云同步功能未开启', 'SYNC_DISABLED', 409)
     }
     if (!current.current_hash || current.current_hash !== expectedHash) {
-      throw new AppError('Remote data changed since recovery started', 'SYNC_CONFLICT', 409)
+      throw new AppError('云端数据已更新，请刷新后重试', 'SYNC_CONFLICT', 409)
     }
 
     if (current.current_storage_key) {
@@ -239,7 +239,7 @@ export class SyncService {
     )
 
     if (updateResult.changes === 0) {
-      throw new AppError('Remote data changed during recovery', 'SYNC_CONFLICT', 409)
+      throw new AppError('恢复期间云端数据已变化，请重试', 'SYNC_CONFLICT', 409)
     }
 
     return {
@@ -272,7 +272,7 @@ export class SyncService {
       }
       return payload as SyncPayload
     } catch {
-      throw new AppError('Cloud sync snapshot is unavailable', 'SYNC_SNAPSHOT_UNAVAILABLE', 409)
+      throw new AppError('云端同步数据暂不可用，请稍后重试', 'SYNC_SNAPSHOT_UNAVAILABLE', 409)
     }
   }
 
@@ -282,7 +282,7 @@ export class SyncService {
   ): Promise<SyncState> {
     const currentHash = current.current_hash
     if (!currentHash) {
-      throw new AppError('Current sync hash is missing', 'SYNC_STATE_INVALID', 409)
+      throw new AppError('同步状态异常，请刷新后重试', 'SYNC_STATE_INVALID', 409)
     }
 
     if (current.current_storage_key) {
@@ -308,7 +308,7 @@ export class SyncService {
     )
 
     if (updateResult.changes === 0) {
-      throw new AppError('Remote data changed during sync', 'SYNC_CONFLICT', 409)
+      throw new AppError('同步期间云端数据已变化，请重试', 'SYNC_CONFLICT', 409)
     }
 
     return {

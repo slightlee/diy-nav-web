@@ -64,7 +64,7 @@ export class AvatarService {
   }
 
   getAvatarUrl(avatarKey: string): string {
-    if (!isAvatarKey(avatarKey)) throw new Error('Invalid avatar selection')
+    if (!isAvatarKey(avatarKey)) throw new Error('头像选择无效')
     return this.storage.getPublicUrl(this.getAssetKey(avatarKey))
   }
 
@@ -73,7 +73,7 @@ export class AvatarService {
   }
 
   getPreviewDataUrl(avatarKey: string): string {
-    if (!isAvatarKey(avatarKey)) throw new Error('Invalid avatar selection')
+    if (!isAvatarKey(avatarKey)) throw new Error('头像选择无效')
     return `data:image/svg+xml,${encodeURIComponent(this.createSvg(avatarKey))}`
   }
 

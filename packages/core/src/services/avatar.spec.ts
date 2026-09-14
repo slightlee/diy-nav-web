@@ -26,8 +26,8 @@ describe('AvatarService', () => {
   })
 
   it('rejects unknown avatar keys', () => {
-    expect(() => avatarService.getAvatarUrl('unknown')).toThrow('Invalid avatar selection')
-    expect(() => avatarService.getPreviewDataUrl('unknown')).toThrow('Invalid avatar selection')
+    expect(() => avatarService.getAvatarUrl('unknown')).toThrow('头像选择无效')
+    expect(() => avatarService.getPreviewDataUrl('unknown')).toThrow('头像选择无效')
   })
 
   it('returns an inline SVG preview without uploading', () => {

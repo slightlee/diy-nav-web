@@ -62,14 +62,14 @@ export class EmailBindingService {
   async requestBinding(userId: string, rawEmail: string): Promise<EmailBindingRequestResult> {
     const email = rawEmail.trim().toLowerCase()
     const user = await this.userRepo.findById(userId)
-    if (!user) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    if (!user) throw new AppError('用户不存在', 'USER_NOT_FOUND', 404)
     if (user.email) {
-      throw new AppError('Current account already has an email login', 'EMAIL_ALREADY_BOUND', 409)
+      throw new AppError('当前账号已绑定邮箱登录', 'EMAIL_ALREADY_BOUND', 409)
     }
 
     const existing = await this.userRepo.findByEmail(email)
     if (existing) {
-      throw new AppError('This email is already in use', 'EMAIL_IN_USE', 409)
+      throw new AppError('该邮箱已被使用', 'EMAIL_IN_USE', 409)
     }
 
     const now = Date.now()
@@ -108,26 +108,36 @@ export class EmailBindingService {
     const challenge = await this.requireActiveChallenge(token)
     const existing = await this.userRepo.findByEmail(challenge.email)
     if (existing && existing.id !== challenge.user_id) {
-      throw new AppError('This email is already in use', 'EMAIL_IN_USE', 409)
+      throw new AppError('该邮箱已被使用', 'EMAIL_IN_USE', 409)
     }
     return { email: this.maskEmail(challenge.email) }
+  }
+
+  /** Repository 层用普通 Error 表示"challenge 已消费"，这里转成用户可恢复的 409。 */
+  private async consumeChallenge(id: string, consumedAt: number): Promise<void> {
+    try {
+      await this.bindingRepo.consume(id, consumedAt)
+    } catch (error) {
+      if (error instanceof AppError) throw error
+      throw new AppError('该验证链接已被使用，请重新发起绑定', 'CHALLENGE_ALREADY_CONSUMED', 409)
+    }
   }
 
   async completeBinding(token: string, password: string): Promise<User> {
     const challenge = await this.requireActiveChallenge(token)
     const user = await this.userRepo.findById(challenge.user_id)
-    if (!user) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    if (!user) throw new AppError('用户不存在', 'USER_NOT_FOUND', 404)
     if (user.email) {
       if (user.email.toLowerCase() === challenge.email) {
-        await this.bindingRepo.consume(challenge.id, Date.now())
+        await this.consumeChallenge(challenge.id, Date.now())
         return user
       }
-      throw new AppError('Current account already has an email login', 'EMAIL_ALREADY_BOUND', 409)
+      throw new AppError('当前账号已绑定邮箱登录', 'EMAIL_ALREADY_BOUND', 409)
     }
 
     const existing = await this.userRepo.findByEmail(challenge.email)
     if (existing) {
-      throw new AppError('This email is already in use', 'EMAIL_IN_USE', 409)
+      throw new AppError('该邮箱已被使用', 'EMAIL_IN_USE', 409)
     }
 
     const now = Date.now()
@@ -137,24 +147,24 @@ export class EmailBindingService {
     } catch (error) {
       const occupied = await this.userRepo.findByEmail(challenge.email)
       if (occupied && occupied.id !== challenge.user_id) {
-        throw new AppError('This email is already in use', 'EMAIL_IN_USE', 409)
+        throw new AppError('该邮箱已被使用', 'EMAIL_IN_USE', 409)
       }
       throw error
     }
-    await this.bindingRepo.consume(challenge.id, now)
+    await this.consumeChallenge(challenge.id, now)
 
     const updated = await this.userRepo.findById(challenge.user_id)
-    if (!updated) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    if (!updated) throw new AppError('用户不存在', 'USER_NOT_FOUND', 404)
     return updated
   }
 
   private async requireActiveChallenge(token: string): Promise<EmailBindingChallenge> {
     const challenge = await this.bindingRepo.findByTokenHash(this.hashToken(token))
     if (!challenge || challenge.consumed_at) {
-      throw new AppError('Email verification link is invalid', 'EMAIL_BINDING_INVALID', 400)
+      throw new AppError('邮箱验证链接无效', 'EMAIL_BINDING_INVALID', 400)
     }
     if (challenge.expires_at <= Date.now()) {
-      throw new AppError('Email verification link has expired', 'EMAIL_BINDING_EXPIRED', 410)
+      throw new AppError('邮箱验证链接已过期，请重新获取', 'EMAIL_BINDING_EXPIRED', 410)
     }
     return challenge
   }

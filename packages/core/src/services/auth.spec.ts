@@ -43,7 +43,7 @@ describe('AuthService', () => {
       vi.spyOn(mockDb, 'first').mockResolvedValueOnce({ id: 'existing' })
 
       await expect(authService.register('test@example.com', 'password')).rejects.toThrow(
-        'User already exists'
+        '用户已存在'
       )
     })
 
@@ -131,7 +131,7 @@ describe('AuthService', () => {
 
     it('should reject an empty nickname', async () => {
       await expect(authService.updateNickname('1', '   ')).rejects.toThrow(
-        'Nickname must contain 1 to 30 characters'
+        '昵称长度需在 1 到 30 个字符之间'
       )
       expect(mockDb.first).not.toHaveBeenCalled()
       expect(mockDb.execute).not.toHaveBeenCalled()
@@ -139,7 +139,7 @@ describe('AuthService', () => {
 
     it('should reject a nickname longer than 30 characters', async () => {
       await expect(authService.updateNickname('1', 'a'.repeat(31))).rejects.toThrow(
-        'Nickname must contain 1 to 30 characters'
+        '昵称长度需在 1 到 30 个字符之间'
       )
       expect(mockDb.first).not.toHaveBeenCalled()
       expect(mockDb.execute).not.toHaveBeenCalled()
@@ -148,9 +148,7 @@ describe('AuthService', () => {
     it('should return not found when the user does not exist', async () => {
       vi.spyOn(mockDb, 'first').mockResolvedValue(null)
 
-      await expect(authService.updateNickname('missing', 'New name')).rejects.toThrow(
-        'User not found'
-      )
+      await expect(authService.updateNickname('missing', 'New name')).rejects.toThrow('用户不存在')
       expect(mockDb.execute).not.toHaveBeenCalled()
     })
   })

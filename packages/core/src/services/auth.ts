@@ -58,7 +58,7 @@ export class AuthService {
     const normalizedEmail = email.trim().toLowerCase()
     const existing = await this.userRepo.findByEmail(normalizedEmail)
     if (existing) {
-      throw new AppError('User already exists', 'USER_EXISTS', 409)
+      throw new AppError('用户已存在', 'USER_EXISTS', 409)
     }
 
     const passwordHash = await bcrypt.hash(password, 10)
@@ -112,20 +112,20 @@ export class AuthService {
     role: User['role']
   ): Promise<User> {
     if (actorUserId === targetUserId) {
-      throw new AppError('You cannot change your own role', 'SELF_ROLE_CHANGE_FORBIDDEN', 409)
+      throw new AppError('不能修改自己的角色', 'SELF_ROLE_CHANGE_FORBIDDEN', 409)
     }
 
     const target = await this.userRepo.findById(targetUserId)
-    if (!target) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    if (!target) throw new AppError('用户不存在', 'USER_NOT_FOUND', 404)
     if (target.role === role) return target
 
     const updatedAt = Date.now()
     const preserveOneAdmin = target.role === 'ADMIN' && role === 'USER'
     const updated = await this.userRepo.updateRole(targetUserId, role, updatedAt, preserveOneAdmin)
     if (!updated && preserveOneAdmin) {
-      throw new AppError('At least one administrator must remain', 'LAST_ADMIN_FORBIDDEN', 409)
+      throw new AppError('至少需要保留一名管理员', 'LAST_ADMIN_FORBIDDEN', 409)
     }
-    if (!updated) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    if (!updated) throw new AppError('用户不存在', 'USER_NOT_FOUND', 404)
 
     return { ...target, role, updated_at: updatedAt }
   }
@@ -136,11 +136,11 @@ export class AuthService {
     status: User['status']
   ): Promise<User> {
     if (actorUserId === targetUserId) {
-      throw new AppError('You cannot change your own status', 'SELF_STATUS_CHANGE_FORBIDDEN', 409)
+      throw new AppError('不能修改自己的状态', 'SELF_STATUS_CHANGE_FORBIDDEN', 409)
     }
 
     const target = await this.userRepo.findById(targetUserId)
-    if (!target) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    if (!target) throw new AppError('用户不存在', 'USER_NOT_FOUND', 404)
     if (target.status === status) return target
 
     const updatedAt = Date.now()
@@ -158,7 +158,7 @@ export class AuthService {
         409
       )
     }
-    if (!updated) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    if (!updated) throw new AppError('用户不存在', 'USER_NOT_FOUND', 404)
 
     return { ...target, status, updated_at: updatedAt }
   }
@@ -169,12 +169,12 @@ export class AuthService {
   async updateNickname(userId: string, nickname: string): Promise<User> {
     const normalizedNickname = nickname.trim()
     if (!normalizedNickname || normalizedNickname.length > 30) {
-      throw new AppError('Nickname must contain 1 to 30 characters', 'INVALID_NICKNAME', 400)
+      throw new AppError('昵称长度需在 1 到 30 个字符之间', 'INVALID_NICKNAME', 400)
     }
 
     const user = await this.userRepo.findById(userId)
     if (!user) {
-      throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+      throw new AppError('用户不存在', 'USER_NOT_FOUND', 404)
     }
 
     const updatedAt = Date.now()
@@ -189,11 +189,11 @@ export class AuthService {
 
   async updateAvatar(userId: string, avatarKey: string): Promise<User> {
     if (!this.avatarService.isValidKey(avatarKey)) {
-      throw new AppError('Invalid avatar selection', 'INVALID_AVATAR', 400)
+      throw new AppError('头像选择无效', 'INVALID_AVATAR', 400)
     }
 
     const user = await this.userRepo.findById(userId)
-    if (!user) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    if (!user) throw new AppError('用户不存在', 'USER_NOT_FOUND', 404)
 
     // Avatar assets are shared library files. Updating a user only stores the selected URL.
     const avatarUrl = this.avatarService.getAvatarUrl(avatarKey)
@@ -254,7 +254,7 @@ export class AuthService {
     providers: Array<{ provider: string; boundAt: number; canUnbind: boolean }>
   }> {
     const user = await this.userRepo.findById(userId)
-    if (!user) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    if (!user) throw new AppError('用户不存在', 'USER_NOT_FOUND', 404)
     const identities = await this.userRepo.listIdentities(userId)
     const loginMethodCount = (user.email ? 1 : 0) + identities.length
     return {
@@ -273,29 +273,29 @@ export class AuthService {
 
   async unbindEmailLogin(userId: string): Promise<User> {
     const user = await this.userRepo.findById(userId)
-    if (!user) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    if (!user) throw new AppError('用户不存在', 'USER_NOT_FOUND', 404)
     if (!user.email) return user
 
     const removed = await this.userRepo.unbindEmailLogin(userId, Date.now())
     if (!removed) {
-      throw new AppError('At least one login method must remain bound', 'LAST_LOGIN_METHOD', 409)
+      throw new AppError('至少需要保留一种登录方式', 'LAST_LOGIN_METHOD', 409)
     }
 
     const updated = await this.userRepo.findById(userId)
-    if (!updated) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    if (!updated) throw new AppError('用户不存在', 'USER_NOT_FOUND', 404)
     return updated
   }
 
   async unbindProviderIdentity(userId: string, provider: string): Promise<void> {
     const user = await this.userRepo.findById(userId)
-    if (!user) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    if (!user) throw new AppError('用户不存在', 'USER_NOT_FOUND', 404)
 
     const identity = await this.userRepo.findIdentityByUserAndProvider(userId, provider)
     if (!identity) return
 
     const removed = await this.userRepo.removeIdentity(userId, provider)
     if (!removed) {
-      throw new AppError('At least one login method must remain bound', 'LAST_LOGIN_METHOD', 409)
+      throw new AppError('至少需要保留一种登录方式', 'LAST_LOGIN_METHOD', 409)
     }
   }
 
@@ -306,12 +306,12 @@ export class AuthService {
     rawData: { email?: string; nickname?: string; avatar_url?: string }
   ): Promise<void> {
     const user = await this.userRepo.findById(userId)
-    if (!user) throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+    if (!user) throw new AppError('用户不存在', 'USER_NOT_FOUND', 404)
 
     const existingIdentity = await this.userRepo.findIdentity(provider, providerUid)
     if (existingIdentity) {
       if (existingIdentity.user_id === userId) return
-      throw new AppError('This provider account is already in use', 'PROVIDER_ACCOUNT_IN_USE', 409)
+      throw new AppError('该第三方账号已被使用', 'PROVIDER_ACCOUNT_IN_USE', 409)
     }
 
     const existingProvider = await this.userRepo.findIdentityByUserAndProvider(userId, provider)
@@ -328,11 +328,7 @@ export class AuthService {
     } catch (error) {
       const occupied = await this.userRepo.findIdentity(provider, providerUid)
       if (occupied && occupied.user_id !== userId) {
-        throw new AppError(
-          'This provider account is already in use',
-          'PROVIDER_ACCOUNT_IN_USE',
-          409
-        )
+        throw new AppError('该第三方账号已被使用', 'PROVIDER_ACCOUNT_IN_USE', 409)
       }
       throw error
     }
