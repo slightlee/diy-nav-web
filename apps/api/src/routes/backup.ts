@@ -24,8 +24,10 @@ const backupRoutes: FastifyPluginAsyncZod = async app => {
         const result = await backupService.createBackup(userId, data, type)
         return { success: true, data: result }
       } catch (err) {
-        req.log.error(err)
-        return reply.code(500).send({ code: 'BACKUP_FAILED', message: 'Failed to create backup' })
+        req.log.error({ err, userId }, 'Backup creation failed')
+        return reply
+          .code(500)
+          .send({ success: false, code: 'BACKUP_FAILED', message: '创建备份失败，请稍后重试' })
       }
     }
   )
@@ -41,8 +43,10 @@ const backupRoutes: FastifyPluginAsyncZod = async app => {
         const backups = await backupService.listBackups(userId)
         return { success: true, data: backups }
       } catch (err) {
-        req.log.error(err)
-        return reply.code(500).send({ code: 'LIST_FAILED', message: 'Failed to list backups' })
+        req.log.error({ err, userId }, 'Backup listing failed')
+        return reply
+          .code(500)
+          .send({ success: false, code: 'LIST_FAILED', message: '获取备份列表失败，请稍后重试' })
       }
     }
   )
@@ -67,8 +71,10 @@ const backupRoutes: FastifyPluginAsyncZod = async app => {
         const content = await backupService.getBackupContent(userId, backupId)
         return { success: true, data: content }
       } catch (err) {
-        req.log.error(err)
-        return reply.code(500).send({ code: 'RESTORE_FAILED', message: 'Failed to restore backup' })
+        req.log.error({ err, userId, backupId }, 'Backup restore failed')
+        return reply
+          .code(500)
+          .send({ success: false, code: 'RESTORE_FAILED', message: '恢复备份失败，请稍后重试' })
       }
     }
   )
@@ -93,8 +99,10 @@ const backupRoutes: FastifyPluginAsyncZod = async app => {
         await backupService.deleteBackup(userId, id)
         return { success: true }
       } catch (err) {
-        req.log.error(err)
-        return reply.code(500).send({ code: 'DELETE_FAILED', message: 'Failed to delete backup' })
+        req.log.error({ err, userId, id }, 'Backup deletion failed')
+        return reply
+          .code(500)
+          .send({ success: false, code: 'DELETE_FAILED', message: '删除备份失败，请稍后重试' })
       }
     }
   )

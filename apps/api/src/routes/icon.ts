@@ -30,10 +30,12 @@ const iconRoutes: FastifyPluginAsyncZod = async app => {
       })
     }),
     400: z.object({
+      success: z.boolean(),
       code: z.string(),
       message: z.string()
     }),
     500: z.object({
+      success: z.boolean(),
       code: z.string(),
       message: z.string()
     })
@@ -53,7 +55,9 @@ const iconRoutes: FastifyPluginAsyncZod = async app => {
       const target = domain || url
 
       if (!target) {
-        return reply.code(400).send({ code: 'BAD_REQUEST', message: 'missing domain or url' })
+        return reply
+          .code(400)
+          .send({ success: false, code: 'BAD_REQUEST', message: '缺少 domain 或 url 参数' })
       }
 
       try {
@@ -68,8 +72,12 @@ const iconRoutes: FastifyPluginAsyncZod = async app => {
           }
         }
       } catch (err) {
-        req.log.error(err)
-        return reply.code(500).send({ code: 'INTERNAL_ERROR', message: 'failed to fetch icon' })
+        req.log.error({ err, target }, 'Icon fetch failed')
+        return reply.code(500).send({
+          success: false,
+          code: 'INTERNAL_ERROR',
+          message: '图标获取失败，请稍后重试'
+        })
       }
     }
   )

@@ -17,6 +17,7 @@ import {
   decrypt,
   encrypt,
   toProviderDTO,
+  extractUpstreamErrorMessage,
   AI_PROTOCOLS,
   type AIProvider,
   type AIProviderConfig
@@ -54,9 +55,9 @@ type ResolvedAIProvider = {
 const toError = (error: unknown): Error =>
   error instanceof Error ? error : new Error(String(error))
 
-const toAIClientError = (error: unknown, fallbackMessage: string) => {
-  const message = error instanceof Error ? error.message : String(error)
-  const normalizedMessage = message.toLowerCase()
+const toAIClientError = (error: unknown, fallbackMessage: string, includeDetail = false) => {
+  const rawMessage = error instanceof Error ? error.message : String(error)
+  const normalizedMessage = rawMessage.toLowerCase()
 
   if (
     normalizedMessage.includes('无可用渠道') ||
@@ -85,10 +86,14 @@ const toAIClientError = (error: unknown, fallbackMessage: string) => {
     }
   }
 
+  // includeDetail：面向管理端（如模型列表调试）附带已脱敏的上游原因；
+  // extractUpstreamErrorMessage 保证只输出单行人话，不会带出整段 JSON。
   return {
     statusCode: 502,
     code: 'AI_PROVIDER_FAILED',
-    message: fallbackMessage
+    message: includeDetail
+      ? `${fallbackMessage}（${extractUpstreamErrorMessage(rawMessage)}）`
+      : fallbackMessage
   }
 }
 
@@ -230,14 +235,18 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
         const existing = await findUserProviderById(databaseClient, userId, providerId)
         if (!existing) {
           aiLog.rejected('provider_not_found', logContext)
-          return reply.code(404).send({ success: false, message: 'Provider not found' })
+          return reply
+            .code(404)
+            .send({ success: false, code: 'PROVIDER_NOT_FOUND', message: '未找到该模型配置' })
         }
         resolvedApiKey = decrypt(existing.apiKeyEncrypted, config.auth.jwtSecret)
       }
 
       if (!resolvedApiKey) {
         aiLog.rejected('api_key_missing', logContext)
-        return reply.code(400).send({ success: false, message: 'API Key is required' })
+        return reply
+          .code(400)
+          .send({ success: false, code: 'API_KEY_REQUIRED', message: '请先填写 API Key' })
       }
 
       try {
@@ -257,9 +266,17 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
         aiLog.completed({ ...logContext, modelCount: models.length })
         return { success: true, data: { models } }
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
         aiLog.failed(error, logContext)
-        return reply.code(502).send({ success: false, message })
+        const clientError = toAIClientError(
+          error,
+          '获取模型列表失败，请检查模型服务配置后重试',
+          true
+        )
+        return reply.code(clientError.statusCode).send({
+          success: false,
+          code: clientError.code,
+          message: clientError.message
+        })
       }
     }
   )
@@ -279,7 +296,9 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
       const provider = await findUserProviderById(databaseClient, userId, id)
 
       if (!provider) {
-        return reply.code(404).send({ success: false, message: 'Provider not found' })
+        return reply
+          .code(404)
+          .send({ success: false, code: 'PROVIDER_NOT_FOUND', message: '未找到该模型配置' })
       }
 
       return {
@@ -361,7 +380,9 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
 
       const existing = await findUserProviderById(databaseClient, userId, id)
       if (!existing) {
-        return reply.code(404).send({ success: false, message: 'Provider not found' })
+        return reply
+          .code(404)
+          .send({ success: false, code: 'PROVIDER_NOT_FOUND', message: '未找到该模型配置' })
       }
 
       const apiKeyEncrypted = apiKey
@@ -380,7 +401,9 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
 
       const ok = await updateProvider(databaseClient, updatedProvider)
       if (!ok) {
-        return reply.code(404).send({ success: false, message: 'Provider not found' })
+        return reply
+          .code(404)
+          .send({ success: false, code: 'PROVIDER_NOT_FOUND', message: '未找到该模型配置' })
       }
 
       providerRegistry.clearCache(userId, id)
@@ -419,7 +442,9 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
       const updated = await setDefaultProvider(databaseClient, userId, id)
 
       if (!updated) {
-        return reply.code(404).send({ success: false, message: 'Provider not found' })
+        return reply
+          .code(404)
+          .send({ success: false, code: 'PROVIDER_NOT_FOUND', message: '未找到该模型配置' })
       }
 
       req.log.info(
@@ -447,7 +472,9 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
       const existing = await findUserProviderById(databaseClient, userId, id)
       const removed = await deleteProvider(databaseClient, userId, id)
       if (!removed) {
-        return reply.code(404).send({ success: false, message: 'Provider not found' })
+        return reply
+          .code(404)
+          .send({ success: false, code: 'PROVIDER_NOT_FOUND', message: '未找到该模型配置' })
       }
 
       providerRegistry.clearCache(userId, id)
@@ -1153,14 +1180,18 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
         const existing = await findUserProviderById(databaseClient, userId, providerId)
         if (!existing) {
           aiLog.rejected('provider_not_found', logContext)
-          return reply.code(404).send({ success: false, message: 'Provider not found' })
+          return reply
+            .code(404)
+            .send({ success: false, code: 'PROVIDER_NOT_FOUND', message: '未找到该模型配置' })
         }
         resolvedApiKey = decrypt(existing.apiKeyEncrypted, config.auth.jwtSecret)
       }
 
       if (!resolvedApiKey) {
         aiLog.rejected('api_key_missing', logContext)
-        return reply.code(400).send({ success: false, message: 'API Key is required' })
+        return reply
+          .code(400)
+          .send({ success: false, code: 'API_KEY_REQUIRED', message: '请先填写 API Key' })
       }
 
       try {
@@ -1199,7 +1230,9 @@ const aiRoutes: FastifyPluginAsyncZod = async app => {
 
       if (!providerConfig) {
         aiLog.rejected('provider_not_found', { providerId: id })
-        return reply.code(404).send({ success: false, message: 'Provider not found' })
+        return reply
+          .code(404)
+          .send({ success: false, code: 'PROVIDER_NOT_FOUND', message: '未找到该模型配置' })
       }
 
       try {
