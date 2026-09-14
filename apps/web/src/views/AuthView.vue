@@ -457,7 +457,7 @@ const handleLogin = async () => {
     router.push('/')
   } catch (error) {
     const message = getErrorMessage(error)
-    if (message.includes('Invalid credentials')) {
+    if (error instanceof AuthRequestError && error.code === 'INVALID_CREDENTIALS') {
       loginErrors.password = '邮箱或密码错误'
     } else {
       loginErrors.password = message || '登录失败，请稍后重试'
@@ -501,7 +501,7 @@ const handleRegister = async () => {
     router.push('/')
   } catch (error) {
     const message = getErrorMessage(error)
-    if (message.includes('User already exists')) {
+    if (error instanceof AuthRequestError && error.code === 'USER_EXISTS') {
       registerErrors.email = '该邮箱已被注册'
     } else if (error instanceof AuthRequestError && error.code === 'REGISTRATION_DISABLED') {
       registerFormError.value = message || '当前站点已关闭新用户注册，请联系管理员'

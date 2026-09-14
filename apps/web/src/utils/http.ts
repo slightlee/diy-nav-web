@@ -103,6 +103,32 @@ class HttpClient {
     return url.toString()
   }
 
+  /**
+   * 解析响应体为统一信封。
+   * 网关/代理故障时可能返回 HTML 错误页，直接 response.json() 会抛出
+   * "Unexpected token '<'..."，这里按 HTTP 状态映射为可读的中文提示。
+   */
+  private async parseResponse<T>(response: Response, endpoint: string): Promise<ApiResponse<T>> {
+    const text = await response.text()
+    try {
+      return JSON.parse(text) as ApiResponse<T>
+    } catch {
+      logger.warn(
+        `[HTTP] Non-JSON response (${response.status}) from ${endpoint}: ${text.slice(0, 120)}`
+      )
+      if (response.status >= 500) {
+        return { success: false, code: 'BAD_GATEWAY', message: '服务暂时不可用，请稍后重试' }
+      }
+      if (response.status === 401) {
+        return { success: false, code: 'UNAUTHORIZED', message: '登录状态已失效，请重新登录' }
+      }
+      if (response.status === 404) {
+        return { success: false, code: 'NOT_FOUND', message: '请求的接口不存在' }
+      }
+      return { success: false, code: 'HTTP_ERROR', message: `请求失败（HTTP ${response.status}）` }
+    }
+  }
+
   async http<T>(endpoint: string, options: RequestOptions = {}): Promise<ApiResponse<T>> {
     const {
       params,
@@ -127,18 +153,16 @@ class HttpClient {
           if (!skipUnauthorizedHandler) {
             this.handleUnauthorized()
           }
-          return {
-            success: false,
-            message: 'Unauthorized',
-            code: 'UNAUTHORIZED'
-          }
+          // 登录失败与会话过期共用 401：响应体本身就是统一信封，
+          // 保留服务端的真实 code 与文案，不要在这里覆盖
+          return this.parseResponse<T>(response, endpoint)
         }
 
-        const data = await response.json()
+        const data = await this.parseResponse<T>(response, endpoint)
 
         // Enhance: If success is explicitly false in data, we can log it here?
         // But for now, just return data as is, trusting server structure.
-        return data as ApiResponse<T>
+        return data
       } catch (e: unknown) {
         if (accountSession.signal.aborted) {
           return {
@@ -166,12 +190,15 @@ class HttpClient {
           ) {
             return {
               success: false,
-              message: '请求超时，AI 服务暂时没有响应，请稍后重试'
+              code: 'REQUEST_TIMEOUT',
+              message: '请求超时，服务暂时没有响应，请稍后重试'
             }
           }
+          // 浏览器网络层失败的 message（"Failed to fetch" 等）对用户没有意义
           return {
             success: false,
-            message: e instanceof Error ? e.message : 'Network error'
+            code: 'NETWORK_ERROR',
+            message: '网络连接失败，请检查网络后重试'
           }
         }
 
@@ -182,7 +209,7 @@ class HttpClient {
       }
     }
 
-    return { success: false, message: 'Max retries exceeded' }
+    return { success: false, code: 'MAX_RETRIES_EXCEEDED', message: '请求多次失败，请稍后重试' }
   }
 
   get<T>(

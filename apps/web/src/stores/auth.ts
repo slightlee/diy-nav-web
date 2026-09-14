@@ -65,17 +65,19 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function login(email: string, password: string) {
-    const res = await request.post<{ user: User }>('/api/auth/login', {
-      email,
-      password
-    })
+    const res = await request.post<{ user: User }>(
+      '/api/auth/login',
+      { email, password },
+      // 登录动作本身返回 401 属于正常失败（密码错误），不应触发全局会话过期逻辑
+      { skipUnauthorizedHandler: true }
+    )
 
     if (res.success && res.data) {
       setCurrentUser(res.data.user)
       void useSettingsStore().loadRemotePreferences(res.data.user.id)
       return true
     }
-    throw new Error(res.message || 'Login failed')
+    throw new AuthRequestError(res.message || '登录失败，请稍后重试', res.code)
   }
 
   async function loginWithProvider(provider: string, code: string) {
@@ -83,7 +85,8 @@ export const useAuthStore = defineStore('auth', () => {
       `/api/auth/${provider}/login`,
       {
         code
-      }
+      },
+      { skipUnauthorizedHandler: true }
     )
 
     if (res.success && res.data) {
@@ -92,7 +95,7 @@ export const useAuthStore = defineStore('auth', () => {
       void useSettingsStore().loadRemotePreferences(res.data.user.id)
       return true
     }
-    throw new Error(res.message || 'OAuth Login failed')
+    throw new AuthRequestError(res.message || '第三方登录失败，请重试', res.code)
   }
 
   async function fetchLoginMethods(): Promise<LoginMethods> {
@@ -164,7 +167,7 @@ export const useAuthStore = defineStore('auth', () => {
       isNewRegistration.value = true
       return true
     }
-    throw new AuthRequestError(res.message || 'Registration failed', res.code)
+    throw new AuthRequestError(res.message || '注册失败，请稍后重试', res.code)
   }
 
   async function fetchUser() {
@@ -194,13 +197,13 @@ export const useAuthStore = defineStore('auth', () => {
       setCurrentUser(res.data.user)
       return res.data.user
     }
-    throw new Error(res.message || 'Failed to update nickname')
+    throw new Error(res.message || '更新昵称失败，请稍后重试')
   }
 
   async function getAvatarOptions(): Promise<AvatarOption[]> {
     const res = await request.get<AvatarOption[]>('/api/auth/avatar-options')
     if (res.success && res.data) return res.data
-    throw new Error(res.message || 'Failed to load avatar options')
+    throw new Error(res.message || '获取头像选项失败，请稍后重试')
   }
 
   async function updateAvatar(avatarKey: string) {
@@ -209,7 +212,7 @@ export const useAuthStore = defineStore('auth', () => {
       setCurrentUser(res.data.user)
       return res.data.user
     }
-    throw new Error(res.message || 'Failed to update avatar')
+    throw new Error(res.message || '更新头像失败，请稍后重试')
   }
 
   async function logout() {

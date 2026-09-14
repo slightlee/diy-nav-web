@@ -242,6 +242,12 @@ const loadAllData = async () => {
     if (storageRes.success && storageRes.data) {
       storageConfig.value = storageRes.data
     }
+
+    // http 客户端不抛错，失败只会体现在 success:false 上；挑第一条失败信息展示
+    const firstFailed = [userRes, oauthRes, sysRes, storageRes].find(res => !res.success)
+    if (firstFailed) {
+      error.value = firstFailed.message || '概览统计数据加载失败，请稍后重试'
+    }
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : '概览统计数据加载失败'
   } finally {
