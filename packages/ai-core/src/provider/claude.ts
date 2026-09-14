@@ -5,6 +5,7 @@
 import { BaseAIProvider, type ProviderInitConfig } from './interface.js'
 import type { Message, ChatOptions, ChatResponseMeta } from '../types.js'
 import { PROVIDER_PRESETS } from '../types.js'
+import { extractUpstreamErrorMessage } from './upstream-error.js'
 
 interface ClaudeMessage {
   role: 'user' | 'assistant'
@@ -84,7 +85,7 @@ export class ClaudeProvider extends BaseAIProvider {
     })
 
     if (!response.ok) {
-      const error = await response.text()
+      const error = extractUpstreamErrorMessage(await response.text())
       throw new Error(`Claude API error: ${response.status} - ${error}`)
     }
 
@@ -163,7 +164,7 @@ export class ClaudeProvider extends BaseAIProvider {
       })
 
       if (!response.ok) {
-        const error = await response.text()
+        const error = extractUpstreamErrorMessage(await response.text())
         throw new Error(`Claude API error: ${response.status} - ${error}`)
       }
 

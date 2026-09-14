@@ -6,6 +6,7 @@
 
 import { BaseAIProvider } from './interface.js'
 import type { Message, ChatOptions, ChatResponseMeta } from '../types.js'
+import { extractUpstreamErrorMessage } from './upstream-error.js'
 
 function appendEndpoint(baseUrl: string, endpoint: string): string {
   try {
@@ -70,7 +71,7 @@ export abstract class OpenAICompatibleProvider extends BaseAIProvider {
       })
 
       if (!response.ok) {
-        const error = await response.text()
+        const error = extractUpstreamErrorMessage(await response.text())
         throw new Error(`${this.displayName} 模型列表获取失败: ${response.status} - ${error}`)
       }
 
@@ -102,7 +103,7 @@ export abstract class OpenAICompatibleProvider extends BaseAIProvider {
     })
 
     if (!response.ok) {
-      const error = await response.text()
+      const error = extractUpstreamErrorMessage(await response.text())
       throw new Error(`${this.displayName} API error: ${response.status} - ${error}`)
     }
 
@@ -166,7 +167,7 @@ export abstract class OpenAICompatibleProvider extends BaseAIProvider {
       })
 
       if (!response.ok) {
-        const error = await response.text()
+        const error = extractUpstreamErrorMessage(await response.text())
         throw new Error(`${this.displayName} API error: ${response.status} - ${error}`)
       }
 

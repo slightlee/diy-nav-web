@@ -17,7 +17,8 @@ export {
   type ProviderInitConfig,
   BaseAIProvider,
   OpenAIProvider,
-  ClaudeProvider
+  ClaudeProvider,
+  extractUpstreamErrorMessage
 } from './provider/index.js'
 
 // Registry
