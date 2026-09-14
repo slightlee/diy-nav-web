@@ -7,7 +7,8 @@ import {
   storageProviderConfigService,
   siteSettingsService,
   verificationEmailSender,
-  emailBindingService
+  emailBindingService,
+  adminAuditLogService
 } from '../services.js'
 import { toUserDto } from '../lib/dto.js'
 import { OAUTH_PROVIDER_NAMES, type OAuthProviderName } from '../lib/oauth-provider-config.js'
@@ -140,6 +141,15 @@ const adminRoutes: FastifyPluginAsyncZod = async app => {
     async req => {
       await requireAdmin(req.user.sub)
       const user = await authService.updateUserRole(req.user.sub, req.params.id, req.body.role)
+      void adminAuditLogService.log({
+        actorUserId: req.user.sub,
+        actorEmail: req.user.email,
+        action: 'ADMIN_USER_ROLE_UPDATE',
+        targetType: 'user',
+        targetId: user.id,
+        summary: `调整用户「${user.email || user.id}」角色为 ${user.role}`,
+        ip: req.ip
+      })
       return {
         success: true,
         data: {
@@ -164,6 +174,15 @@ const adminRoutes: FastifyPluginAsyncZod = async app => {
     async req => {
       await requireAdmin(req.user.sub)
       const user = await authService.updateUserStatus(req.user.sub, req.params.id, req.body.status)
+      void adminAuditLogService.log({
+        actorUserId: req.user.sub,
+        actorEmail: req.user.email,
+        action: 'ADMIN_USER_STATUS_UPDATE',
+        targetType: 'user',
+        targetId: user.id,
+        summary: `变更用户「${user.email || user.id}」状态为 ${user.status}`,
+        ip: req.ip
+      })
       return {
         success: true,
         data: {
@@ -207,6 +226,16 @@ const adminRoutes: FastifyPluginAsyncZod = async app => {
         req.params.provider as OAuthProviderName,
         req.body
       )
+      void adminAuditLogService.log({
+        actorUserId: req.user.sub,
+        actorEmail: req.user.email,
+        action: 'ADMIN_OAUTH_CONFIG_UPDATE',
+        targetType: 'oauth',
+        targetId: req.params.provider,
+        summary: `更新第三方登录「${req.params.provider}」配置`,
+        detail: { enabled: req.body.enabled },
+        ip: req.ip
+      })
       return {
         success: true,
         data: updated
@@ -265,6 +294,15 @@ const adminRoutes: FastifyPluginAsyncZod = async app => {
       await requireAdmin(req.user.sub)
       const { purpose } = req.params
       const updated = await storageProviderConfigService.updatePurposeConfig(purpose, req.body)
+      void adminAuditLogService.log({
+        actorUserId: req.user.sub,
+        actorEmail: req.user.email,
+        action: 'ADMIN_STORAGE_CONFIG_UPDATE',
+        targetType: 'storage',
+        targetId: purpose,
+        summary: `更新「${purpose}」存储配置为 ${req.body.provider}`,
+        ip: req.ip
+      })
       return reply.send({ success: true, data: updated })
     }
   )
@@ -279,6 +317,16 @@ const adminRoutes: FastifyPluginAsyncZod = async app => {
     async (req, reply) => {
       await requireAdmin(req.user.sub)
       const result = await storageProviderConfigService.testConnection(req.body)
+      void adminAuditLogService.log({
+        actorUserId: req.user.sub,
+        actorEmail: req.user.email,
+        action: 'ADMIN_STORAGE_CONNECTION_TEST',
+        targetType: 'storage',
+        targetId: req.body.purpose,
+        summary: `测试「${req.body.purpose}」存储连接${result.success ? '成功' : '失败'}`,
+        detail: { success: result.success, provider: req.body.provider },
+        ip: req.ip
+      })
       return reply.send({ success: result.success, data: result })
     }
   )
@@ -312,7 +360,47 @@ const adminRoutes: FastifyPluginAsyncZod = async app => {
       verificationEmailSender.setFromName(updated.siteName)
       emailBindingService.setWebAppUrl(updated.webAppUrl)
 
+      void adminAuditLogService.log({
+        actorUserId: req.user.sub,
+        actorEmail: req.user.email,
+        action: 'ADMIN_SITE_SETTINGS_UPDATE',
+        targetType: 'site',
+        summary: `更新站点配置（${Object.keys(req.body).join('、')}）`,
+        detail: {
+          changedKeys: Object.keys(req.body),
+          smtpUserChanged: req.body.smtpUser !== undefined,
+          smtpPasswordChanged: !!req.body.smtpPassword
+        },
+        ip: req.ip
+      })
+
       return reply.send({ success: true, data: updated })
+    }
+  )
+
+  // ── Audit Logs ─────────────────────────────────────────────────────────
+
+  // GET /admin/audit-logs → paginated audit trail (newest first)
+  const auditLogsQuerySchema = z.object({
+    action: z.string().trim().max(64).optional(),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    offset: z.coerce.number().int().min(0).default(0)
+  })
+
+  app.get(
+    '/admin/audit-logs',
+    {
+      onRequest: [app.authenticate],
+      schema: { querystring: auditLogsQuerySchema }
+    },
+    async req => {
+      await requireAdmin(req.user.sub)
+      const data = await adminAuditLogService.list({
+        action: req.query.action,
+        limit: req.query.limit,
+        offset: req.query.offset
+      })
+      return { success: true, data }
     }
   )
 }

@@ -20,7 +20,8 @@ import {
   avatarService,
   emailBindingService,
   preferencesService,
-  siteSettingsService
+  siteSettingsService,
+  adminAuditLogService
 } from '../services.js'
 import { generateAccessToken } from '../lib/token.js'
 import { toUserDto } from '../lib/dto.js'
@@ -93,6 +94,16 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
       const { email, password } = req.body
       const user = await authService.validateUser(email, password)
       if (!user) {
+        // 登录失败可能是高频爆破：只进结构化日志，不落审计表（防刷表）
+        void adminAuditLogService.log({
+          actorUserId: null,
+          actorEmail: email,
+          action: 'AUTH_LOGIN_FAILED',
+          targetType: 'auth',
+          summary: `登录失败：${email}`,
+          ip: req.ip,
+          persist: false
+        })
         throw new AppError('邮箱或密码不正确', 'INVALID_CREDENTIALS', 401)
       }
 
@@ -102,6 +113,16 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
       // Generate Token
       const token = generateAccessToken(app, user)
       setAuthCookie(reply, token)
+
+      void adminAuditLogService.log({
+        actorUserId: user.id,
+        actorEmail: user.email,
+        action: 'AUTH_LOGIN_SUCCESS',
+        targetType: 'auth',
+        summary: `登录成功：${user.email || user.id}`,
+        ip: req.ip,
+        persist: false
+      })
 
       return {
         success: true,

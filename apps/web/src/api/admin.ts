@@ -206,3 +206,45 @@ export const getSiteSettings = () => request.get<AdminSiteSettingsConfig>('/api/
 /** PATCH /admin/config/site */
 export const updateSiteSettings = (payload: UpdateSiteSettingsPayload) =>
   request.patch<AdminSiteSettingsConfig>('/api/admin/config/site', payload)
+
+// ─────────────────────────────────────────────
+//  Admin Audit Logs
+// ─────────────────────────────────────────────
+
+/** 与后端 AUDIT_ACTIONS 对齐（登录成功/失败为日志型事件，默认不落表） */
+export const AUDIT_ACTION_LABELS: Record<string, string> = {
+  ADMIN_USER_ROLE_UPDATE: '用户角色变更',
+  ADMIN_USER_STATUS_UPDATE: '用户状态变更',
+  ADMIN_OAUTH_CONFIG_UPDATE: '第三方登录配置更新',
+  ADMIN_STORAGE_CONFIG_UPDATE: '存储配置更新',
+  ADMIN_STORAGE_CONNECTION_TEST: '存储连接测试',
+  ADMIN_SITE_SETTINGS_UPDATE: '站点配置更新',
+  AUTH_LOGIN_SUCCESS: '登录成功',
+  AUTH_LOGIN_FAILED: '登录失败'
+}
+
+export interface AuditLogItem {
+  id: number
+  actorUserId: string | null
+  actorEmail: string | null
+  action: string
+  targetType: string | null
+  targetId: string | null
+  summary: string
+  detail: Record<string, unknown> | null
+  ip: string | null
+  createdAt: number
+}
+
+export interface AuditLogListResult {
+  items: AuditLogItem[]
+  total: number
+}
+
+/** GET /admin/audit-logs */
+export const getAuditLogs = (params: { action?: string; limit?: number; offset?: number }) =>
+  request.get<AuditLogListResult>('/api/admin/audit-logs', {
+    action: params.action,
+    limit: params.limit?.toString(),
+    offset: params.offset?.toString()
+  })

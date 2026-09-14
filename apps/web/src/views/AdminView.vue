@@ -144,6 +144,35 @@
               <span class="menu-link__text">对象存储</span>
             </RouterLink>
           </div>
+
+          <!-- Group 4: Audit -->
+          <div class="menu-section">
+            <span class="menu-section__label">安全</span>
+            <RouterLink
+              class="menu-link"
+              :class="{ 'is-active': route.name === 'admin-audit-logs' }"
+              to="/admin/audit-logs"
+            >
+              <svg
+                class="menu-link__svg"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <path d="M14 2v6h6" />
+                <path d="M16 13H8" />
+                <path d="M16 17H8" />
+                <path d="M10 9H8" />
+              </svg>
+              <span class="menu-link__text">操作日志</span>
+            </RouterLink>
+          </div>
         </nav>
 
         <!-- Back to Navigation Link -->
@@ -164,6 +193,7 @@
           <AdminSiteSettingsPanel v-else-if="route.name === 'admin-config-site'" />
           <AdminOAuthPanel v-else-if="route.name === 'admin-config-oauth'" />
           <AdminStoragePanel v-else-if="route.name === 'admin-config-storage'" />
+          <AdminAuditLogPanel v-else-if="route.name === 'admin-audit-logs'" />
         </div>
       </main>
     </div>
@@ -187,6 +217,7 @@ import AdminManagementPanel from '@/components/admin/AdminManagementPanel.vue'
 import AdminSiteSettingsPanel from '@/components/admin/AdminSiteSettingsPanel.vue'
 import AdminOAuthPanel from '@/components/admin/AdminOAuthPanel.vue'
 import AdminStoragePanel from '@/components/admin/AdminStoragePanel.vue'
+import AdminAuditLogPanel from '@/components/admin/AdminAuditLogPanel.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
@@ -199,7 +230,8 @@ const PAGE_META: Record<string, string> = {
   'admin-users': '用户与权限',
   'admin-config-site': '站点与邮件',
   'admin-config-oauth': '第三方登录',
-  'admin-config-storage': '对象存储'
+  'admin-config-storage': '对象存储',
+  'admin-audit-logs': '操作日志'
 }
 
 const pageTitle = computed(() => PAGE_META[String(route.name)] ?? '管理控制台')

@@ -21,6 +21,7 @@ import {
   type StorageActivePaths
 } from './lib/storage-provider-config.js'
 import { SiteSettingsService } from './lib/site-settings.js'
+import { AdminAuditLogService } from './lib/admin-audit-log.js'
 import { logger } from '@nav/logger'
 
 // --- Database Client ---
@@ -165,6 +166,9 @@ export const siteSettingsService = new SiteSettingsService(
   config.auth.oauthConfigEncryptionKey || config.auth.jwtSecret
 )
 
+// --- Admin Audit Log Service ---
+export const adminAuditLogService = new AdminAuditLogService(databaseClient)
+
 // --- Email Sender (credentials loaded from DB during initServices) ---
 export const verificationEmailSender = new SmtpVerificationEmailSender({
   user: undefined,
@@ -206,6 +210,7 @@ export const initServices = async (logger: FastifyBaseLogger): Promise<void> => 
     await initAIProviderTable(databaseClient)
     await storageProviderConfigService.initTable()
     await siteSettingsService.initTable()
+    await adminAuditLogService.initTable()
 
     // Hydrate per-purpose storage clients and path configs from DB
     try {

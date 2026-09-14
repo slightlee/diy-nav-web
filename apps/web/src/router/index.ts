@@ -92,6 +92,12 @@ const router = createRouter({
       meta: { requiresAdmin: true }
     },
     {
+      path: '/admin/audit-logs',
+      name: 'admin-audit-logs',
+      component: () => import('@/views/AdminView.vue'),
+      meta: { requiresAdmin: true }
+    },
+    {
       path: '/oauth2/callback',
       alias: '/oauth/callback',
       name: 'oauth2-callback',
