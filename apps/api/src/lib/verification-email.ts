@@ -60,7 +60,7 @@ export class SmtpVerificationEmailSender implements EmailVerificationSender {
       })
     } catch (error) {
       logger.error({ err: error }, 'Failed to send email binding verification through SMTP')
-      throw new AppError('Verification email could not be sent', 'EMAIL_DELIVERY_FAILED', 502)
+      throw new AppError('验证邮件发送失败，请稍后重试', 'EMAIL_DELIVERY_FAILED', 502)
     }
   }
 

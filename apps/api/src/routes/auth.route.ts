@@ -38,7 +38,7 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
   const getOAuthProvider = async (providerName: 'github' | 'google' | 'linuxdo') => {
     const provider = await app.oauthProviderConfigService.getEnabledProvider(providerName)
     if (!provider) {
-      throw new AppError('OAuth provider is unavailable', 'OAUTH_PROVIDER_UNAVAILABLE', 503)
+      throw new AppError('第三方登录服务暂不可用，请稍后重试', 'OAUTH_PROVIDER_UNAVAILABLE', 503)
     }
     return provider
   }
@@ -93,7 +93,7 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
       const { email, password } = req.body
       const user = await authService.validateUser(email, password)
       if (!user) {
-        throw new AppError('Invalid email or password', 'INVALID_CREDENTIALS', 401)
+        throw new AppError('邮箱或密码不正确', 'INVALID_CREDENTIALS', 401)
       }
 
       // Update stats
@@ -128,7 +128,7 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
       const userId = req.user.sub
       const user = await authService.getUserById(userId)
       if (!user) {
-        throw new AppError('User not found', 'USER_NOT_FOUND', 404)
+        throw new AppError('用户不存在', 'USER_NOT_FOUND', 404)
       }
       return {
         success: true,
@@ -365,7 +365,7 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
         intent.purpose !== 'bind' ||
         intent.provider !== providerName
       ) {
-        throw new AppError('OAuth binding request is invalid', 'OAUTH_BINDING_INVALID', 400)
+        throw new AppError('第三方绑定请求无效，请重新操作', 'OAUTH_BINDING_INVALID', 400)
       }
 
       const provider = await getOAuthProvider(providerName)

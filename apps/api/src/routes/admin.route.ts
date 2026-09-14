@@ -86,7 +86,7 @@ const updateSiteSettingsSchema = z.object({
     .trim()
     .max(512)
     .refine(value => value === '' || /^https?:\/\/.+/i.test(value), {
-      message: 'Site logo must be a valid HTTP(S) URL'
+      message: '站点 Logo 必须是合法的 HTTP(S) 地址'
     })
     .optional(),
   webAppUrl: z.string().trim().url().optional(),
@@ -99,7 +99,7 @@ const adminRoutes: FastifyPluginAsyncZod = async app => {
   const requireAdmin = async (userId: string) => {
     const currentUser = await authService.getUserById(userId)
     if (!currentUser || currentUser.role !== 'ADMIN' || currentUser.status !== 'ACTIVE') {
-      throw new AppError('Administrator access is required', 'ADMIN_REQUIRED', 403)
+      throw new AppError('需要管理员权限', 'ADMIN_REQUIRED', 403)
     }
   }
 
