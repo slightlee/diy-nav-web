@@ -358,6 +358,7 @@ const adminRoutes: FastifyPluginAsyncZod = async app => {
         smtpPassword || undefined
       )
       verificationEmailSender.setFromName(updated.siteName)
+      verificationEmailSender.setSiteLogo(updated.siteLogo || undefined)
       emailBindingService.setWebAppUrl(updated.webAppUrl)
 
       void adminAuditLogService.log({
