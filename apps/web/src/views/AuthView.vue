@@ -73,7 +73,7 @@
           </BaseButton>
 
           <div class="row-helper">
-            <a href="#">忘记密码？</a>
+            <RouterLink to="/forgot-password">忘记密码？</RouterLink>
           </div>
 
           <div v-if="showOAuthSection" class="divider">

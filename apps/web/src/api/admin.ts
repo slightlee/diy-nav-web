@@ -220,7 +220,8 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   ADMIN_STORAGE_CONNECTION_TEST: '存储连接测试',
   ADMIN_SITE_SETTINGS_UPDATE: '站点配置更新',
   AUTH_LOGIN_SUCCESS: '登录成功',
-  AUTH_LOGIN_FAILED: '登录失败'
+  AUTH_LOGIN_FAILED: '登录失败',
+  AUTH_PASSWORD_RESET: '密码重置成功'
 }
 
 export interface AuditLogItem {

@@ -132,6 +132,32 @@ export const useAuthStore = defineStore('auth', () => {
     return data.user
   }
 
+  async function requestPasswordReset(email: string): Promise<{ expiresAt: number }> {
+    const response = await request.post<{ expiresAt: number }>('/api/auth/password-reset', {
+      email
+    })
+    return requireData(response)
+  }
+
+  async function validatePasswordResetToken(token: string): Promise<{ maskedEmail: string }> {
+    const response = await request.get<{ maskedEmail: string; expiresAt: number }>(
+      '/api/auth/password-reset/verify',
+      { token }
+    )
+    return requireData(response)
+  }
+
+  async function completePasswordReset(token: string, password: string): Promise<void> {
+    const response = await request.post('/api/auth/password-reset/complete', {
+      token,
+      password
+    })
+    // 该接口成功时无 data 字段，不能用 requireData（它要求 data 非空）
+    if (!response.success) {
+      throw new AuthRequestError(response.message || '密码重置失败，请稍后重试', response.code)
+    }
+  }
+
   async function createProviderBindingIntent(provider: OAuthProvider): Promise<string> {
     const response = await request.post<{ state: string }>(`/api/auth/${provider}/bind-intent`)
     return requireData(response).state
@@ -238,6 +264,9 @@ export const useAuthStore = defineStore('auth', () => {
     requestEmailBinding,
     validateEmailBinding,
     completeEmailBinding,
+    requestPasswordReset,
+    validatePasswordResetToken,
+    completePasswordReset,
     createProviderBindingIntent,
     bindProvider,
     unbindEmailLogin,
