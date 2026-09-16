@@ -1,4 +1,9 @@
-import { AppError, type EmailVerificationMessage, type EmailVerificationSender } from '@nav/core'
+import {
+  AppError,
+  type EmailVerificationMessage,
+  type EmailVerificationSender,
+  type PasswordResetSender
+} from '@nav/core'
 import type { Logger } from '@nav/logger'
 import nodemailer, { type Transporter } from 'nodemailer'
 
@@ -6,6 +11,8 @@ export interface SmtpVerificationEmailSenderOptions {
   user?: string
   password?: string
   fromName: string
+  /** 站点 Logo（管理后台配置的 HTTP(S) 地址）；邮件品牌区优先展示，未配置回退站名首字符 */
+  siteLogo?: string
   environment: 'development' | 'production' | 'test'
   logger: Logger
 }
@@ -16,7 +23,7 @@ const NETEASE_SMTP_CONFIG = {
   secure: true
 } as const
 
-export class SmtpVerificationEmailSender implements EmailVerificationSender {
+export class SmtpVerificationEmailSender implements EmailVerificationSender, PasswordResetSender {
   private transporter?: Transporter
 
   constructor(private options: SmtpVerificationEmailSenderOptions) {}
@@ -30,6 +37,39 @@ export class SmtpVerificationEmailSender implements EmailVerificationSender {
   /** Hot-swap the brand name used in verification emails (follows admin site name) */
   setFromName(fromName: string): void {
     this.options = { ...this.options, fromName }
+  }
+
+  /** Hot-swap the site logo used in verification emails (follows admin site settings) */
+  setSiteLogo(siteLogo: string | undefined): void {
+    this.options = { ...this.options, siteLogo }
+  }
+
+  async sendPasswordResetVerification(message: EmailVerificationMessage): Promise<void> {
+    const { user, password, fromName, environment, logger } = this.options
+    if (!user || !password) {
+      if (environment !== 'production') {
+        logger.warn(
+          { to: message.to, verificationUrl: message.verificationUrl },
+          'Email delivery is not configured; use the development verification URL'
+        )
+        return
+      }
+      throw new AppError('邮件服务暂未配置，请联系管理员', 'EMAIL_DELIVERY_UNAVAILABLE', 503)
+    }
+
+    try {
+      await this.getTransporter(user, password).sendMail({
+        from: { name: fromName, address: user },
+        to: message.to,
+        subject: `【${fromName}】重置登录密码`,
+        html: this.buildResetHtml(message),
+        text: this.buildResetText(message),
+        messageId: `<${message.idempotencyKey}@${this.getEmailDomain(user)}>`
+      })
+    } catch (error) {
+      logger.error({ err: error }, 'Failed to send password reset email through SMTP')
+      throw new AppError('重置邮件发送失败，请稍后重试', 'EMAIL_DELIVERY_FAILED', 502)
+    }
   }
 
   async sendEmailBindingVerification(message: EmailVerificationMessage): Promise<void> {
@@ -77,6 +117,21 @@ export class SmtpVerificationEmailSender implements EmailVerificationSender {
     return this.transporter
   }
 
+  /**
+   * 品牌区 <td>：配置了站点 Logo 时展示图片（邮件客户端默认屏蔽外链图片时
+   * 仍有 alt 与旁边站名文字兜底），否则回退到站名首字符方块。
+   */
+  private buildBrandBadgeCell(): string {
+    const brandName = this.escapeHtml(this.options.fromName)
+    const logo = this.options.siteLogo?.trim()
+    if (logo && /^https?:\/\/.+/i.test(logo)) {
+      const logoUrl = this.escapeHtml(logo)
+      return `<td align="center" valign="middle" style="width:42px;height:42px;border-radius:12px;overflow:hidden;background:#edf3ff;font-size:0;line-height:0;"><img src="${logoUrl}" alt="${brandName}" width="42" height="42" style="display:block;width:42px;height:42px;border-radius:12px;object-fit:cover;" /></td>`
+    }
+    const brandInitial = this.escapeHtml(Array.from(this.options.fromName.trim())[0] || 'D')
+    return `<td align="center" valign="middle" style="width:42px;height:42px;border-radius:12px;background:#edf3ff;color:#4f7df3;font-size:19px;font-weight:700;">${brandInitial}</td>`
+  }
+
   private buildText(message: EmailVerificationMessage): string {
     return [
       `你正在为 ${this.options.fromName} 账号验证邮箱并启用密码登录。`,
@@ -90,7 +145,7 @@ export class SmtpVerificationEmailSender implements EmailVerificationSender {
   private buildHtml(message: EmailVerificationMessage): string {
     const url = this.escapeHtml(message.verificationUrl)
     const brandName = this.escapeHtml(this.options.fromName)
-    const brandInitial = this.escapeHtml(Array.from(this.options.fromName.trim())[0] || 'D')
+    const brandBadgeCell = this.buildBrandBadgeCell()
     const expiresInMinutes = message.expiresInMinutes
 
     return `<!doctype html>
@@ -116,7 +171,7 @@ export class SmtpVerificationEmailSender implements EmailVerificationSender {
                     <td style="padding-bottom:30px;">
                       <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                         <tr>
-                          <td align="center" valign="middle" style="width:42px;height:42px;border-radius:12px;background:#edf3ff;color:#4f7df3;font-size:19px;font-weight:700;">${brandInitial}</td>
+                          ${brandBadgeCell}
                           <td style="padding-left:12px;color:#1f2937;font-size:16px;font-weight:700;">${brandName}</td>
                         </tr>
                       </table>
@@ -178,5 +233,89 @@ export class SmtpVerificationEmailSender implements EmailVerificationSender {
 
   private getEmailDomain(email: string): string {
     return email.split('@')[1] || 'localhost'
+  }
+  private buildResetText(message: EmailVerificationMessage): string {
+    return [
+      `你正在重置 ${this.options.fromName} 账号的登录密码。`,
+      `请在 ${message.expiresInMinutes} 分钟内打开以下链接完成重置：`,
+      message.verificationUrl,
+      '如果不是你本人操作，请忽略本邮件，账号密码不会发生变化。'
+    ].join('\n\n')
+  }
+
+  private buildResetHtml(message: EmailVerificationMessage): string {
+    const url = this.escapeHtml(message.verificationUrl)
+    const brandName = this.escapeHtml(this.options.fromName)
+    const brandBadgeCell = this.buildBrandBadgeCell()
+    const expiresInMinutes = message.expiresInMinutes
+
+    return `<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>重置登录密码</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f4f6fa;color:#1f2937;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">请在 ${expiresInMinutes} 分钟内完成密码重置。</div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#f4f6fa;">
+      <tr>
+        <td align="center" style="padding:40px 16px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:560px;background:#ffffff;border:1px solid #e5e9f2;border-radius:18px;overflow:hidden;box-shadow:0 18px 45px rgba(30,55,90,0.08);">
+            <tr>
+              <td style="height:4px;background:#4f7df3;font-size:0;line-height:0;">&nbsp;</td>
+            </tr>
+            <tr>
+              <td style="padding:34px 40px 36px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td style="padding-bottom:30px;">
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                        <tr>
+                          ${brandBadgeCell}
+                          <td style="padding-left:12px;color:#1f2937;font-size:16px;font-weight:700;">${brandName}</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div style="margin-bottom:10px;color:#4f7df3;font-size:12px;font-weight:700;letter-spacing:0.08em;">账号安全</div>
+                      <h1 style="margin:0 0 14px;color:#172033;font-size:26px;line-height:1.35;font-weight:750;">重置登录密码</h1>
+                      <p style="margin:0 0 24px;color:#667085;font-size:15px;line-height:1.8;">我们收到了 <strong style="color:#344054;">${brandName}</strong> 账号的重置密码请求。点击下方按钮即可设置新密码。</p>
+
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 24px;">
+                        <tr>
+                          <td align="center" bgcolor="#4f7df3" style="border-radius:10px;">
+                            <a href="${url}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:13px 24px;color:#ffffff;font-size:15px;font-weight:700;line-height:1.2;text-decoration:none;">重置密码</a>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;margin-bottom:24px;background:#f8faff;border:1px solid #e8eefc;border-radius:10px;">
+                        <tr>
+                          <td style="padding:13px 15px;color:#526078;font-size:13px;line-height:1.65;">
+                            此链接将在 <strong style="color:#344054;">${expiresInMinutes} 分钟</strong>后失效，且只能使用一次。
+                          </td>
+                        </tr>
+                      </table>
+
+                      <p style="margin:0 0 8px;color:#98a2b3;font-size:12px;line-height:1.6;">按钮无法打开时，请复制以下链接到浏览器：</p>
+                      <p style="margin:0;padding:11px 13px;background:#f6f7f9;border-radius:8px;color:#667085;font-size:11px;line-height:1.6;word-break:break-all;">${url}</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:18px 40px;border-top:1px solid #eef1f5;background:#fbfcfd;color:#98a2b3;font-size:12px;line-height:1.65;">如果不是你本人操作，请忽略本邮件，你的账号密码不会发生变化。建议不要将此邮件转发给他人。</td>
+            </tr>
+          </table>
+          <p style="margin:18px 0 0;color:#a4acb9;font-size:11px;line-height:1.6;">此邮件由 ${brandName} 自动发送</p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`
   }
 }

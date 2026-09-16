@@ -69,9 +69,14 @@ export function toFrameworkClientError(error: unknown): NormalizedInfraError | n
   const statusCode = typeof err.statusCode === 'number' ? err.statusCode : NaN
   if (!Number.isFinite(statusCode) || statusCode < 400 || statusCode >= 500) return null
   const code = codeOf(err) || 'REQUEST_ERROR'
+  // @fastify/rate-limit 抛出的错误没有 code 字段，按状态码归中文文案
+  const message =
+    statusCode === 429
+      ? '请求过于频繁，请稍后再试'
+      : (FRAMEWORK_ERROR_MESSAGES[code] ?? messageOf(err) ?? '请求不合法')
   return {
     statusCode,
     code,
-    message: FRAMEWORK_ERROR_MESSAGES[code] ?? messageOf(err) ?? '请求不合法'
+    message
   }
 }

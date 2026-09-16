@@ -58,6 +58,19 @@ describe('toFrameworkClientError', () => {
     ).toMatchObject({ statusCode: 429, message: '请求过于频繁，请稍后再试' })
   })
 
+  it('@fastify/rate-limit 抛出的错误无 code 字段，按状态码同样映射中文', () => {
+    expect(
+      toFrameworkClientError({
+        statusCode: 429,
+        message: 'Rate limit exceeded, retry in 15 minutes'
+      })
+    ).toMatchObject({
+      statusCode: 429,
+      code: 'REQUEST_ERROR',
+      message: '请求过于频繁，请稍后再试'
+    })
+  })
+
   it('忽略 5xx、无 statusCode 与非对象错误', () => {
     expect(toFrameworkClientError({ statusCode: 500, code: 'X', message: 'boom' })).toBeNull()
     expect(toFrameworkClientError(new Error('no status'))).toBeNull()

@@ -62,3 +62,12 @@ export const completeEmailBindingSchema = z.object({
   token: z.string().min(20),
   password: z.string().min(8).max(128)
 })
+
+export const requestPasswordResetSchema = z.object({
+  email: z.string().trim().email()
+})
+
+export const completePasswordResetSchema = z.object({
+  token: z.string().min(20),
+  password: z.string().min(8).max(128)
+})

@@ -13,12 +13,15 @@ import {
   updatePreferencesSchema,
   updateProfileSchema,
   updateAvatarSchema,
-  verifyEmailBindingSchema
+  verifyEmailBindingSchema,
+  requestPasswordResetSchema,
+  completePasswordResetSchema
 } from '../schemas/auth.schema.js'
 import {
   authService,
   avatarService,
   emailBindingService,
+  passwordResetService,
   preferencesService,
   siteSettingsService,
   adminAuditLogService
@@ -264,6 +267,57 @@ const authRoutes: FastifyPluginAsyncZod = async app => {
       const user = await emailBindingService.completeBinding(req.body.token, req.body.password)
       setAuthCookie(reply, generateAccessToken(app, user))
       return { success: true, data: { user: toUserDto(user) } }
+    }
+  )
+
+  // ── Password Reset (forgot password) ─────────────────────────────────
+  // 均为未认证接口；请求接口严格限流防枚举/防刷信
+
+  app.post(
+    '/auth/password-reset',
+    {
+      schema: { body: requestPasswordResetSchema },
+      config: { rateLimit: { max: 3, timeWindow: '15 minutes' } }
+    },
+    async req => ({
+      success: true,
+      data: await passwordResetService.requestReset(req.body.email)
+    })
+  )
+
+  app.get(
+    '/auth/password-reset/verify',
+    {
+      schema: { querystring: verifyEmailBindingSchema },
+      config: { rateLimit: { max: 20, timeWindow: '1 minute' } }
+    },
+    async req => ({
+      success: true,
+      data: await passwordResetService.validateResetToken(req.query.token)
+    })
+  )
+
+  app.post(
+    '/auth/password-reset/complete',
+    {
+      schema: { body: completePasswordResetSchema },
+      config: { rateLimit: { max: 5, timeWindow: '15 minutes' } }
+    },
+    async req => {
+      const { maskedEmail } = await passwordResetService.completeReset(
+        req.body.token,
+        req.body.password
+      )
+      // 密码被改属安全敏感事件：落审计记录（脱敏邮箱 + IP，便于回溯异常重置）
+      void adminAuditLogService.log({
+        actorUserId: null,
+        actorEmail: maskedEmail,
+        action: 'AUTH_PASSWORD_RESET',
+        targetType: 'auth',
+        summary: `密码重置成功：${maskedEmail}`,
+        ip: req.ip
+      })
+      return { success: true }
     }
   )
 

@@ -8,6 +8,7 @@ import {
   AuthService,
   AvatarService,
   EmailBindingService,
+  PasswordResetService,
   PreferencesService,
   SyncService
 } from '@nav/core'
@@ -185,6 +186,14 @@ export const emailBindingService = new EmailBindingService({
   exposeVerificationUrl: config.server.env !== 'production'
 })
 
+// --- Password Reset Service (shares email_binding_challenges table) ---
+export const passwordResetService = new PasswordResetService({
+  db: databaseClient,
+  sender: verificationEmailSender,
+  webAppUrl: 'http://localhost:3000', // replaced from DB during initServices
+  exposeVerificationUrl: config.server.env !== 'production'
+})
+
 export const preferencesService = new PreferencesService(databaseClient)
 
 // --- Icon Services ---
@@ -235,7 +244,9 @@ export const initServices = async (logger: FastifyBaseLogger): Promise<void> => 
         siteSettingsService.getSmtpPassword() || undefined
       )
       verificationEmailSender.setFromName(settings.siteName)
+      verificationEmailSender.setSiteLogo(settings.siteLogo || undefined)
       emailBindingService.setWebAppUrl(settings.webAppUrl)
+      passwordResetService.setWebAppUrl(settings.webAppUrl)
       logger.info(
         { webAppUrl: settings.webAppUrl, smtpConfigured: settings.hasSmtpPassword },
         'Site settings loaded from DB'
