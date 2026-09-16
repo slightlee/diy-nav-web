@@ -217,6 +217,16 @@ export class UserRepository {
     }
   }
 
+  async updatePassword(userId: string, passwordHash: string, updatedAt: number): Promise<void> {
+    const result = await this.db.execute(
+      'UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?',
+      [passwordHash, updatedAt, userId]
+    )
+    if (result.changes === 0) {
+      throw new Error('User not found while updating password')
+    }
+  }
+
   async unbindEmailLogin(userId: string, updatedAt: number): Promise<boolean> {
     const result = await this.db.execute(
       `UPDATE users
