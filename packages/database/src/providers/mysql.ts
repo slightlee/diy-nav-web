@@ -19,6 +19,23 @@ export interface MysqlClientConfig {
 }
 
 /**
+ * 连接池稳定性参数。
+ * 本地/云主机连远程 MySQL 时，中间设备（NAT、防火墙、云安全组）会静默
+ * 掐断空闲 TCP 连接——死连接留在池里被复用就表现为请求级 read ETIMEDOUT，
+ * 只能重启进程恢复。三层防御：
+ * - enableKeepAlive：TCP 层心跳保活，穿越 NAT 并尽早感知断连
+ * - keepAliveInitialDelay：心跳起始间隔
+ * - maxIdle：池内常驻连接数收紧，空闲连接更少地暴露给中间设备
+ */
+const POOL_STABILITY_OPTIONS = {
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 30_000,
+  maxIdle: 5,
+  idleTimeout: 60_000,
+  connectTimeout: 10_000
+} as const
+
+/**
  * MySQL implementation of DatabaseClient (mysql2 connection pool).
  *
  * - 使用 pool.query（客户端侧参数转义）而非 prepare，保证 DDL 与各类语句通用
@@ -37,7 +54,8 @@ export class MysqlClient implements DatabaseClient {
       password: config.password ?? '',
       database: config.database,
       connectionLimit: config.connectionLimit ?? 10,
-      charset: 'utf8mb4'
+      charset: 'utf8mb4',
+      ...POOL_STABILITY_OPTIONS
     })
   }
 
